@@ -1,5 +1,5 @@
 package org.ppsspp.ppsspp;
-import com.skinpsp.app.R;
+import com.rudy.chambre.R;   // la classe de ressources de cette application
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Keep;
