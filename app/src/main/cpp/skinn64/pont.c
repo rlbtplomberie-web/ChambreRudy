@@ -17,7 +17,7 @@
 #include <string.h>
 #include <android/log.h>
 
-#define TAG "SkinSNES"
+#define TAG "SkinN64"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
 
@@ -68,8 +68,8 @@ static char g_dossier[512] = "/data/local/tmp";
 static int g_format = PIX_0RGB1555;
 
 /* ---------- image ---------- */
-#define MAXW 512
-#define MAXH 478
+#define MAXW 1024
+#define MAXH 1024
 static uint32_t g_image[MAXW * MAXH];
 static unsigned g_w = 256, g_h = 224;
 static bool g_nouvelle = false;

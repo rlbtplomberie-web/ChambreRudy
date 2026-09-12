@@ -13,9 +13,9 @@ import java.io.File
 class CoeurSnes(ctx: Context) {
 
     companion object {
-        init { System.loadLibrary("skinsnes") }
-        const val MAX_L = 512
-        const val MAX_H = 478
+        init { System.loadLibrary("skinn64") }
+        const val MAX_L = 1024
+        const val MAX_H = 1024
     }
 
     private external fun natInit(cheminCoeur: String, dossier: String): Boolean
