@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Vitrine Nintendo 3DS</title>
+<style>
+  :root{ --W:230px; --H:242px; --D:46px; }   /* boîtier 3DS : même format que la Game Boy */
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;margin:0;overflow:hidden;background:#120c07}
+  body{font-family:"Trebuchet MS",Avenir,system-ui,sans-serif;color:#f0e5d2;
+       display:flex;flex-direction:column;touch-action:none;user-select:none}
+
+  /* ---------- l'armoire ---------- */
+  .armoire{position:relative;flex:1;min-height:0;overflow:hidden}
+  .paroi{position:absolute;inset:0}
+  .fond{
+    background:
+      repeating-linear-gradient(90deg, rgba(0,0,0,.22) 0 2px, transparent 2px 34px),
+      repeating-linear-gradient(90deg, rgba(255,220,170,.05) 0 1px, transparent 1px 9px),
+      linear-gradient(180deg,#7a5330,#4d3018 70%,#2e1b0c);
+    clip-path:polygon(14% 0%, 86% 0%, 86% 74%, 14% 74%);
+  }
+  .gauche{background:linear-gradient(90deg,#2a1809,#5c3a1e);clip-path:polygon(0% 0%, 14% 0%, 14% 74%, 0% 100%)}
+  .droite{background:linear-gradient(270deg,#2a1809,#5c3a1e);clip-path:polygon(100% 0%, 86% 0%, 86% 74%, 100% 100%)}
+  .lumiere{background:radial-gradient(60% 42% at 50% 4%, rgba(255,224,170,.42), rgba(255,200,140,.08) 45%, transparent 72%);
+           mix-blend-mode:screen}
+  .etagere{
+    position:absolute;left:0;right:0;top:74%;bottom:0;
+    background:
+      repeating-linear-gradient(96deg, rgba(0,0,0,.14) 0 3px, transparent 3px 26px),
+      linear-gradient(180deg,#9a6a3d,#6b4526 34%,#442a13);
+    box-shadow:inset 0 6px 14px rgba(0,0,0,.5);
+  }
+  .etagere::before{content:"";position:absolute;left:0;right:0;top:0;height:9px;
+    background:linear-gradient(180deg,rgba(255,225,180,.55),rgba(255,225,180,0))}
+  .ombreHaute{position:absolute;left:0;right:0;top:0;height:34%;
+    background:linear-gradient(180deg,rgba(0,0,0,.55),transparent)}
+  .vignette{position:absolute;inset:0;pointer-events:none;
+    box-shadow:inset 0 0 90px rgba(0,0,0,.75), inset 0 0 26px rgba(0,0,0,.5)}
+
+  /* ---------- carrousel ---------- */
+  .scene{position:absolute;left:0;right:0;top:0;bottom:26%;
+         display:flex;align-items:flex-end;justify-content:center;
+         perspective:1200px;perspective-origin:50% 44%}
+  .rangee{position:relative;width:var(--W);height:var(--H);transform-style:preserve-3d;margin-bottom:2px}
+  .boite{position:absolute;left:0;top:0;width:var(--W);height:var(--H);
+         transform-style:preserve-3d;cursor:pointer;
+         transition:transform .55s cubic-bezier(.22,.85,.28,1), opacity .45s ease, filter .45s ease}
+  .face{position:absolute;background:#9b9b9b;overflow:hidden;backface-visibility:hidden}
+  .avant{inset:0;transform:translateZ(calc(var(--D)/2));box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)}
+  .arriere{inset:0;transform:rotateY(180deg) translateZ(calc(var(--D)/2));
+           box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)}
+  .cote{top:0;height:var(--H);width:var(--D);left:calc(50% - var(--D)/2);
+        background:linear-gradient(90deg,#8d8d8d,#a6a6a6)}
+  .cote.g{transform:rotateY(-90deg) translateZ(calc(var(--W)/2))}
+  .cote.d{transform:rotateY(90deg) translateZ(calc(var(--W)/2))}
+  .haut{left:0;width:var(--W);height:var(--D);top:calc(50% - var(--D)/2);
+        transform:rotateX(90deg) translateZ(calc(var(--H)/2));
+        background:linear-gradient(180deg,#c2c2c2,#9a9a9a)}
+  .bas{left:0;width:var(--W);height:var(--D);top:calc(50% - var(--D)/2);
+       transform:rotateX(-90deg) translateZ(calc(var(--H)/2));background:#7e7e7e}
+  .ombreSol{position:absolute;left:50%;bottom:-10px;width:118%;height:22px;transform:translateX(-50%);
+            border-radius:50%;background:radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,.75), transparent 70%);
+            transition:opacity .45s ease}
+
+  .plein{position:absolute;inset:0;background-size:cover;background-position:center}
+  .vierge{position:absolute;inset:0;background:linear-gradient(160deg,#b4b4b4,#9b9b9b 62%,#8a8a8a)}
+  .tranche{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+           background:linear-gradient(90deg,#a8a8a8,#8f8f8f)}
+  .tranche.imprimee{background:linear-gradient(90deg,var(--teinte,#b8332b),#191510 78%)}
+  .tranche span{font-size:9px;font-weight:700;letter-spacing:.08em;color:#fdf6e6;white-space:nowrap;
+                transform:rotate(90deg);text-transform:uppercase}
+
+  /* ---------- bas d'écran ---------- */
+  .bas-ecran{position:relative;z-index:5;padding:10px 12px calc(12px + env(safe-area-inset-bottom));
+             background:linear-gradient(180deg,rgba(10,6,3,.1),rgba(10,6,3,.92) 40%);
+             display:flex;flex-direction:column;align-items:center;gap:8px}
+  .nom{font-size:17px;font-weight:700;text-align:center;text-shadow:0 2px 6px rgba(0,0,0,.8);min-height:22px}
+  .compte{font-size:12px;color:#c8b590;letter-spacing:.1em}
+  .commandes{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center}
+  button{font:inherit;font-size:13px;padding:9px 14px;border-radius:6px;cursor:pointer;
+         background:linear-gradient(#3a2a1a,#241a10);color:#f0e2c8;border:1px solid #6b5335}
+  button:active{transform:translateY(1px)}
+  button.rond{width:44px;padding:9px 0;font-size:18px;line-height:1}
+  button.jouer{background:linear-gradient(#c8862f,#96601c);border-color:#5f3c0d;color:#fff8e8;font-weight:700}
+  input[type=file]{display:none}
+
+  /* ---------- loupe sur le dos ---------- */
+  .loupe{position:fixed;inset:0;z-index:40;background:rgba(6,4,2,.94);display:none;
+         align-items:center;justify-content:center;overflow:hidden;touch-action:none}
+  .loupe.ouvert{display:flex}
+  .loupe .cadre{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+  .loupe img{max-width:96%;max-height:88%;border-radius:3px;box-shadow:0 14px 40px rgba(0,0,0,.8);
+             transform-origin:center center;will-change:transform;transition:transform .18s ease-out}
+  .loupe .vide{width:78%;aspect-ratio:190/133;background:linear-gradient(160deg,#2b2620,#14110e);
+               border:1px solid #4a3d2c;border-radius:4px;display:flex;align-items:center;justify-content:center;
+               color:#7d7160;font-size:13px;text-align:center;padding:20px}
+  .loupe .fermerLoupe{position:absolute;top:calc(10px + env(safe-area-inset-top));right:12px;
+                      background:rgba(40,28,16,.9);border:1px solid #6b5335;color:#f0e2c8;
+                      border-radius:6px;padding:9px 13px;font-size:13px}
+  .loupe .legende{position:absolute;left:0;right:0;bottom:calc(14px + env(safe-area-inset-bottom));
+                  text-align:center;font-size:12.5px;color:#c0ac86}
+
+  /* ---------- menu ---------- */
+  .voile{position:fixed;inset:0;background:rgba(6,4,2,.72);z-index:30;display:none;
+         align-items:flex-end;justify-content:center}
+  .voile.ouvert{display:flex}
+  .feuille{width:100%;max-width:460px;background:#241a11;border:1px solid #6b5335;border-bottom:0;
+           border-radius:14px 14px 0 0;padding:14px 14px calc(16px + env(safe-area-inset-bottom));
+           max-height:88vh;overflow-y:auto}
+  .feuille h3{margin:2px 0 10px;font-family:Georgia,serif;font-size:16px;color:#e8d5ac;letter-spacing:.04em}
+  .ligne{display:flex;align-items:center;gap:10px;width:100%;padding:13px 12px;margin-bottom:7px;
+         background:#312417;border:1px solid #5c472d;border-radius:8px;font-size:14px;color:#f2e6cd;
+         text-align:left;cursor:pointer}
+  .ligne small{display:block;font-size:11.5px;color:#a8946f;margin-top:2px;line-height:1.35}
+  .ligne .fleche{margin-left:auto;color:#8a7452}
+  .info{font-size:12px;color:#b8a582;line-height:1.45;margin:2px 2px 10px}
+</style>
+</head>
+<body>
+
+<div class="armoire" id="armoire">
+  <div class="paroi fond"></div>
+  <div class="paroi gauche"></div>
+  <div class="paroi droite"></div>
+  <div class="paroi lumiere"></div>
+  <div class="ombreHaute"></div>
+  <div class="etagere"></div>
+  <div class="scene"><div class="rangee" id="rangee"></div></div>
+  <div class="vignette"></div>
+</div>
+
+<div class="bas-ecran">
+  <div class="nom" id="nom"></div>
+  <div class="compte" id="compte"></div>
+  <div class="commandes">
+    <button class="rond" id="prec" aria-label="Précédent">‹</button>
+    <button class="jouer" id="jouer">Lancer le jeu</button>
+    <button class="rond" id="suiv" aria-label="Suivant">›</button>
+  </div>
+  <div class="commandes">
+    <button id="menu">Menu</button>
+  </div>
+</div>
+
+<div class="loupe" id="loupe">
+  <div class="cadre" id="cadreLoupe"></div>
+  <button class="fermerLoupe" id="fermerLoupe">Fermer</button>
+  <div class="legende">Pince pour agrandir, glisse pour te déplacer</div>
+</div>
+
+<div class="voile" id="voile">
+  <div class="feuille" id="feuille"></div>
+</div>
+
+<input type="file" id="dossier" webkitdirectory directory multiple>
+<input type="file" id="uneFace" accept="image/*">
+<input type="file" id="unDos" accept="image/*">
+
+<script>
+const CONSOLE_ID = "3ds";
+const TEINTES = ["#b8332b","#2f6fd0","#d9a020","#2f9e5b","#7b4fd6","#d1508f","#e07a1f","#1f8f8f"];
+const DEFAUT = ["", "", "", "", "", ""];      // boîtiers vierges tant qu'aucune jaquette n'est chargée
+let jeux = DEFAUT.map((titre, i) => ({ titre, teinte:TEINTES[i % TEINTES.length], image:null, dos:null }));
+let exemples = true;
+let index = 0, retournee = false;
+let ratio = 120/126, epaisseur = 24/120;
+
+const rangee = document.getElementById("rangee");
+const nomEl = document.getElementById("nom"), compteEl = document.getElementById("compte");
+const voile = document.getElementById("voile"), feuille = document.getElementById("feuille");
+
+/* ---------- rendu ---------- */
+function faceAvant(j){
+  if(j.image) return `<div class="plein" style="background-image:url(${j.image})"></div>`;
+  return `<div class="vierge"></div>`;
+}
+function faceDos(j){
+  if(j.dos) return `<div class="plein" style="background-image:url(${j.dos})"></div>`;
+  return `<div class="vierge"></div>`;
+}
+function tranche(j){
+  if(!j.titre) return `<div class="tranche"></div>`;
+  return `<div class="tranche imprimee" style="--teinte:${j.teinte}"><span>${j.titre}</span></div>`;
+}
+function construire(){
+  rangee.innerHTML = jeux.map((j, i) => `
+    <div class="boite" data-i="${i}">
+      <div class="face avant">${faceAvant(j)}</div>
+      <div class="face arriere">${faceDos(j)}</div>
+      <div class="face cote g">${tranche(j)}</div>
+      <div class="face cote d">${tranche(j)}</div>
+      <div class="face haut"></div>
+      <div class="face bas"></div>
+      <div class="ombreSol"></div>
+    </div>`).join("");
+  rangee.querySelectorAll(".boite").forEach(b =>
+    b.addEventListener("click", ()=>{
+      const i = +b.dataset.i;
+      if(i !== index){ index = i; retournee = false; placer(); }
+      else if(retournee) ouvrirLoupe();
+      else { retournee = true; placer(); }
+    }));
+  placer();
+}
+function placer(){
+  const n = jeux.length;
+  rangee.querySelectorAll(".boite").forEach(b=>{
+    const i = +b.dataset.i;
+    let d = i - index;
+    if(d > n/2) d -= n;
+    if(d < -n/2) d += n;
+    const abs = Math.abs(d), dehors = abs > 2;
+    const x = d === 0 ? 0 : Math.sign(d) * (70 + (abs-1)*44);
+    const z = d === 0 ? 40 : -120 - (abs-1)*90;
+    const rot = d === 0 ? (retournee ? 180 : 0) : -Math.sign(d) * 52;
+    b.style.transform = `translateX(${x}%) translateZ(${z}px) rotateY(${rot}deg) scale(${d === 0 ? 1 : .94})`;
+    b.style.opacity = dehors ? 0 : (abs === 2 ? .35 : 1);
+    b.style.zIndex = 10 - abs;
+    b.style.pointerEvents = dehors ? "none" : "auto";
+    b.style.filter = d === 0 ? "none" : `brightness(${abs === 1 ? .62 : .4})`;
+    const om = b.querySelector(".ombreSol");
+    if(om) om.style.opacity = dehors ? 0 : (d === 0 ? .9 : .45);
+  });
+  nomEl.textContent = (jeux[index] && jeux[index].titre) ? jeux[index].titre : "";
+  compteEl.textContent = jeux.length ? (index+1) + " / " + jeux.length : "";
+  const btnR=document.getElementById("retourner"); if(btnR) btnR.textContent="";
+}
+function bouger(pas){
+  if(!jeux.length) return;
+  index = (index + pas + jeux.length) % jeux.length;
+  retournee = false;
+  placer();
+}
+function ajuster(){
+  const h = document.getElementById("armoire").clientHeight;
+  const l = Math.min(window.innerWidth * .56, h * .54 * ratio, 320);
+  const st = document.documentElement.style;
+  st.setProperty("--W", Math.round(l) + "px");
+  st.setProperty("--H", Math.round(l / ratio) + "px");
+  st.setProperty("--D", Math.round(l * epaisseur) + "px");
+}
+
+/* ---------- navigation ---------- */
+let depart = null;
+const armoire = document.getElementById("armoire");
+armoire.addEventListener("pointerdown", e => depart = e.clientX);
+armoire.addEventListener("pointerup", e => {
+  if(depart === null) return;
+  const dx = e.clientX - depart; depart = null;
+  if(Math.abs(dx) > 36) bouger(dx < 0 ? 1 : -1);
+});
+armoire.addEventListener("pointercancel", ()=> depart = null);
+document.getElementById("prec").onclick = ()=> bouger(-1);
+document.getElementById("suiv").onclick = ()=> bouger(1);
+const bR=document.getElementById("retourner"); if(bR) bR.onclick = ()=>{ retournee=!retournee; placer(); };
+window.addEventListener("keydown", e=>{
+  if(e.key === "ArrowLeft") bouger(-1);
+  if(e.key === "ArrowRight") bouger(1);
+});
+document.getElementById("jouer").onclick = ()=>{
+  const t = (jeux[index] && jeux[index].titre) ? jeux[index].titre : "boîtier vierge";
+  nomEl.textContent = "Lancement de « " + t + " »…";
+  setTimeout(()=> nomEl.textContent = (jeux[index] && jeux[index].titre) ? jeux[index].titre : "", 1400);
+};
+window.addEventListener("resize", ajuster);
+
+/* ---------- images ---------- */
+function lire(f){
+  return new Promise(ok=>{ const l = new FileReader(); l.onload = ()=> ok(l.result); l.onerror = ()=> ok(null); l.readAsDataURL(f); });
+}
+function reduire(src, maxL){
+  return new Promise(ok=>{
+    const im = new Image();
+    im.onload = ()=>{
+      const k = Math.min(1, maxL / (im.naturalWidth || maxL));
+      const c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(im.naturalWidth * k));
+      c.height = Math.max(1, Math.round(im.naturalHeight * k));
+      c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+      let out = src;
+      try{ out = c.toDataURL("image/jpeg", .84); }catch(e){}
+      ok({ src:out, l:im.naturalWidth, h:im.naturalHeight });
+    };
+    im.onerror = ()=> ok(null);
+    im.src = src;
+  });
+}
+const estImage = f => /\.(png|jpe?g|webp|gif|bmp|avif)$/i.test(f.name);
+function sansExt(n){ return n.replace(/\.[^.]+$/, ""); }
+function normaliser(t){
+  return sansExt(String(t)).normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().replace(/\(.*?\)|\[.*?\]/g, "").replace(/[^a-z0-9]/g, "");
+}
+
+document.getElementById("dossier").onchange = async e=>{
+  const fichiers = [...e.target.files].filter(estImage);
+  e.target.value = "";
+  if(!fichiers.length){ ouvrirMenu("Aucune image trouvée dans ce dossier."); return; }
+  ouvrirMenu("Lecture de " + fichiers.length + " jaquettes…");
+  const lues = [];
+  for(const f of fichiers){
+    const brut = await lire(f);
+    if(!brut) continue;
+    const r = await reduire(brut, 700);
+    lues.push({ nom:sansExt(f.name), image:r ? r.src : brut, l:r ? r.l : 0, h:r ? r.h : 0 });
+  }
+  let associees = 0, ajoutees = 0;
+  if(exemples || !jeux.length){
+    jeux = lues.map((x, i) => ({ titre:x.nom.replace(/[_-]+/g, " "), image:x.image, dos:null,
+                                 teinte:TEINTES[i % TEINTES.length] }));
+    ajoutees = lues.length;
+    exemples = false;
+  } else {
+    const restantes = [...lues];
+    for(const j of jeux){
+      const cible = normaliser(j.titre);
+      let k = restantes.findIndex(x => normaliser(x.nom) === cible);
+      if(k < 0) k = restantes.findIndex(x => normaliser(x.nom).includes(cible) || cible.includes(normaliser(x.nom)));
+      if(k >= 0){ j.image = restantes[k].image; restantes.splice(k, 1); associees++; }
+    }
+    for(const x of restantes){
+      jeux.push({ titre:x.nom.replace(/[_-]+/g, " "), image:x.image, dos:null,
+                  teinte:TEINTES[jeux.length % TEINTES.length] });
+      ajoutees++;
+    }
+  }
+  const premiere = lues.find(x => x.l && x.h);
+  if(premiere){ const r = premiere.l / premiere.h; if(r > .35 && r < 2.6){ ratio = r; ajuster(); } }
+  index = Math.min(index, jeux.length - 1); retournee = false;
+  construire();
+  const msg = await sauver();
+  ouvrirMenu(`${lues.length} images lues — ${associees} associées à un jeu, ${ajoutees} ajoutées.` + (msg || ""));
+};
+document.getElementById("uneFace").onchange = async e=>{
+  const f = e.target.files[0]; e.target.value = "";
+  if(!f) return;
+  const brut = await lire(f); if(!brut) return;
+  const r = await reduire(brut, 900);
+  jeux[index].image = r ? r.src : brut;
+  if(r && r.l && r.h){ const p = r.l / r.h; if(p > .35 && p < 2.6){ ratio = p; ajuster(); } }
+  exemples = false;
+  construire(); const msg = await sauver();
+  ouvrirMenu("Jaquette posée sur ce boîtier." + (msg || ""));
+};
+document.getElementById("unDos").onchange = async e=>{
+  const f = e.target.files[0]; e.target.value = "";
+  if(!f) return;
+  const brut = await lire(f); if(!brut) return;
+  const r = await reduire(brut, 900);
+  jeux[index].dos = r ? r.src : brut;
+  construire(); retournee = true; placer();
+  const msg = await sauver();
+  ouvrirMenu("Dos enregistré." + (msg || ""));
+};
+
+/* ---------- mémoire ---------- */
+const cleMemoire = () => "vitrine:3ds";
+async function sauver(){
+  if(typeof window === "undefined" || !window.storage) return "";
+  try{
+    await window.storage.set(cleMemoire(), JSON.stringify({ ratio, epaisseur, exemples, jeux }));
+    return "";
+  }catch(err){
+    return " Les images sont trop lourdes pour être conservées : elles valent pour cette session.";
+  }
+}
+async function relire(){
+  ratio = 120/126; epaisseur = 24/120;
+  jeux = DEFAUT.map((titre, i) => ({ titre, teinte:TEINTES[i % TEINTES.length], image:null, dos:null }));
+  exemples = true; index = 0; retournee = false;
+  if(typeof window !== "undefined" && window.storage){
+    try{
+      const r = await window.storage.get(cleMemoire());
+      if(r && r.value){
+        const v = JSON.parse(r.value);
+        if(v.ratio > .35 && v.ratio < 2.6) ratio = v.ratio;
+        if(v.epaisseur) epaisseur = v.epaisseur;
+        if(Array.isArray(v.jeux) && v.jeux.length){ jeux = v.jeux; exemples = !!v.exemples && false; }
+      }
+    }catch(e){}
+  }
+  ajuster();
+}
+
+/* ---------- loupe sur le dos ---------- */
+const loupe = document.getElementById("loupe"), cadreLoupe = document.getElementById("cadreLoupe");
+let zoom = 1, zx = 0, zy = 0, doigts = new Map(), pince = null, glisse = null;
+
+function appliquerZoom(){
+  const im = cadreLoupe.querySelector("img, .vide");
+  if(im) im.style.transform = `translate(${zx}px, ${zy}px) scale(${zoom})`;
+}
+function ouvrirLoupe(){
+  const j = jeux[index]; if(!j) return;
+  cadreLoupe.innerHTML = j.dos
+    ? `<img src="${j.dos}" alt="Dos de jaquette">`
+    : `<div class="vide">Aucun dos pour ce boîtier</div>`;
+  zoom = 1; zx = zy = 0; appliquerZoom();
+  loupe.classList.add("ouvert");
+}
+function fermerLoupe(){ loupe.classList.remove("ouvert"); doigts.clear(); pince = glisse = null; }
+document.getElementById("fermerLoupe").onclick = fermerLoupe;
+loupe.addEventListener("click", e =>{ if(e.target === loupe || e.target === cadreLoupe) fermerLoupe(); });
+window.addEventListener("keydown", e =>{ if(e.key === "Escape") fermerLoupe(); });
+
+loupe.addEventListener("pointerdown", e=>{
+  doigts.set(e.pointerId, e);
+  if(doigts.size === 1) glisse = { x:e.clientX - zx, y:e.clientY - zy };
+  if(doigts.size === 2){
+    const [a, b] = [...doigts.values()];
+    pince = { d:Math.hypot(a.clientX-b.clientX, a.clientY-b.clientY), z:zoom };
+    glisse = null;
+  }
+});
+loupe.addEventListener("pointermove", e=>{
+  if(!doigts.has(e.pointerId)) return;
+  doigts.set(e.pointerId, e);
+  if(doigts.size >= 2 && pince){
+    const [a, b] = [...doigts.values()];
+    const d = Math.hypot(a.clientX-b.clientX, a.clientY-b.clientY);
+    zoom = Math.max(1, Math.min(4.5, pince.z * d / pince.d));
+    if(zoom === 1){ zx = zy = 0; }
+    appliquerZoom();
+  } else if(glisse && zoom > 1){
+    zx = e.clientX - glisse.x; zy = e.clientY - glisse.y;
+    const lim = 260 * (zoom - 1);
+    zx = Math.max(-lim, Math.min(lim, zx));
+    zy = Math.max(-lim, Math.min(lim, zy));
+    appliquerZoom();
+  }
+}, {passive:true});
+["pointerup","pointercancel","pointerleave"].forEach(t =>
+  loupe.addEventListener(t, e =>{ doigts.delete(e.pointerId); if(doigts.size < 2) pince = null; if(!doigts.size) glisse = null; }));
+loupe.addEventListener("dblclick", ()=>{ zoom = zoom > 1 ? 1 : 2.4; zx = zy = 0; appliquerZoom(); });
+
+/* ---------- menu ---------- */
+function ouvrirMenu(info){
+  const j = jeux[index] || {};
+  feuille.innerHTML =
+    `<h3>${j.titre || "Vitrine Nintendo 3DS"}</h3>` +
+    (info ? `<div class="info">${info}</div>` : "") +
+    `<button class="ligne" data-act="roms">Chercher les ROMs
+       <small>Choisir le dossier des jeux de cette console.</small><span class="fleche">›</span></button>
+     <button class="ligne" data-act="sync">Synchroniser les jaquettes
+       <small>Choisis le dossier : chaque image rejoint le jeu qui porte le même nom.</small>
+       <span class="fleche">›</span></button>
+     <button class="ligne" data-act="face">Modifier la jaquette
+       <small>Prendre une image dans tes photos pour cette boîte.</small><span class="fleche">›</span></button>
+     <button class="ligne" data-act="renommer">Renommer le jeu<span class="fleche">›</span></button>
+     <button class="ligne" data-act="format">Format des boîtiers
+       <small>Actuellement ${ratio.toFixed(2)} — 1.43 pour le carton N64.</small><span class="fleche">›</span></button>
+     <button class="ligne" data-act="vider">Tout effacer<span class="fleche">›</span></button>
+     <button class="ligne" data-act="fermer" style="justify-content:center;background:#4a3720">Fermer</button>`;
+  feuille.querySelectorAll("[data-act]").forEach(b => b.onclick = ()=> action(b.dataset.act));
+  voile.classList.add("ouvert");
+}
+async function action(a){
+  if(a === "fermer"){ voile.classList.remove("ouvert"); return; }
+  if(a === "sync"){ document.getElementById("dossier").click(); return; }
+  if(a === "face"){ document.getElementById("uneFace").click(); return; }
+  if(a === "dos"){ document.getElementById("unDos").click(); return; }
+  if(a === "roms"){
+    const cons = (document.title.match(/Vitrine\s+(.+)/)||[])[1] || "";
+    if(parent && parent.chercherRoms) parent.chercherRoms(CONSOLE_ID||cons.toLowerCase());
+    else alert("Disponible dans l'application.");
+    voile.classList.remove("ouvert"); return;
+  }
+  if(a === "retourner"){ retournee = !retournee; placer(); voile.classList.remove("ouvert"); return; }
+  if(a === "agrandir"){ voile.classList.remove("ouvert"); retournee = true; placer(); ouvrirLoupe(); return; }
+  if(a === "renommer"){
+    const t = prompt("Titre du jeu :", jeux[index] ? jeux[index].titre : "");
+    if(t !== null && t.trim()){ jeux[index].titre = t.trim(); construire(); await sauver(); ouvrirMenu("Titre modifié."); }
+    return;
+  }
+  if(a === "format"){
+    const v = prompt("Rapport largeur / hauteur (0.95 boîtier 3DS, 1.00 carré, 0.86 plus haut) :", ratio.toFixed(2));
+    if(v === null) return;
+    const p = parseFloat(String(v).replace(",", "."));
+    if(p > .35 && p < 2.6){ ratio = p; ajuster(); await sauver(); ouvrirMenu("Format réglé sur " + p.toFixed(2) + "."); }
+    return;
+  }
+  if(a === "vider"){
+    if(!confirm("Effacer toutes les jaquettes ?")) return;
+    jeux = DEFAUT.map((titre, i) => ({ titre, teinte:TEINTES[i % TEINTES.length], image:null, dos:null }));
+    exemples = true; index = 0; retournee = false; ratio = 120/126; ajuster();
+    if(window.storage){ try{ await window.storage.delete(cleMemoire()); }catch(e){} }
+    construire(); ouvrirMenu("Vitrine remise à zéro.");
+  }
+}
+document.getElementById("menu").onclick = ()=> ouvrirMenu("");
+voile.addEventListener("click", e =>{ if(e.target === voile) voile.classList.remove("ouvert"); });
+
+ajuster();
+relire().then(construire);
+</script>
+</body>
+</html>
