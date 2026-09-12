@@ -55,6 +55,11 @@ android {
         }
         resources.excludes += setOf("META-INF/*")   // repris de ton projet PSP
     }
+    androidResources {
+        // Ce dossier vient des ressources de PPSSPP et porte le meme nom que
+        // celui qu'Android fabrique lui-meme : on l'ecarte une fois pour toutes.
+        ignoreAssetsPatterns += listOf("dexopt")
+    }
     androidResources { noCompress += listOf("png", "jpg", "webp", "bin", "txt", "app", "romfs", "tmd", "bcfnt", "zim", "pgf", "ini", "meta", "json") }
 }
 
