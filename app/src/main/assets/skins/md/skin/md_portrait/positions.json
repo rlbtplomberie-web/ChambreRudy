@@ -1,0 +1,216 @@
+{
+ "largeur": 853,
+ "hauteur": 1843,
+ "ecran": [
+  92,
+  129,
+  669,
+  847
+ ],
+ "elements": [
+  {
+   "id": "ff",
+   "type": "touche",
+   "x": 273,
+   "y": 1673,
+   "w": 67,
+   "h": 67,
+   "images": {
+    "repos": "ff_0.png",
+    "appui": [
+     "ff_1.png",
+     "ff_2.png"
+    ]
+   },
+   "marge": 19
+  },
+  {
+   "id": "menu",
+   "type": "touche",
+   "x": 395,
+   "y": 1669,
+   "w": 67,
+   "h": 67,
+   "images": {
+    "repos": "menu_0.png",
+    "appui": [
+     "menu_1.png",
+     "menu_2.png"
+    ]
+   },
+   "marge": 19
+  },
+  {
+   "id": "jeux",
+   "type": "touche",
+   "x": 515,
+   "y": 1669,
+   "w": 67,
+   "h": 67,
+   "images": {
+    "repos": "jeux_0.png",
+    "appui": [
+     "jeux_1.png",
+     "jeux_2.png"
+    ]
+   },
+   "marge": 19
+  },
+  {
+   "id": "X",
+   "type": "disque",
+   "x": 444,
+   "y": 1302,
+   "w": 105,
+   "h": 105,
+   "images": {
+    "repos": "X_0.png",
+    "appui": [
+     "X_1.png",
+     "X_2.png"
+    ]
+   },
+   "marge": 29
+  },
+  {
+   "id": "Y",
+   "type": "disque",
+   "x": 577,
+   "y": 1254,
+   "w": 105,
+   "h": 105,
+   "images": {
+    "repos": "Y_0.png",
+    "appui": [
+     "Y_1.png",
+     "Y_2.png"
+    ]
+   },
+   "marge": 29
+  },
+  {
+   "id": "Z",
+   "type": "disque",
+   "x": 710,
+   "y": 1224,
+   "w": 105,
+   "h": 105,
+   "images": {
+    "repos": "Z_0.png",
+    "appui": [
+     "Z_1.png",
+     "Z_2.png"
+    ]
+   },
+   "marge": 29
+  },
+  {
+   "id": "A",
+   "type": "disque",
+   "x": 435,
+   "y": 1431,
+   "w": 105,
+   "h": 105,
+   "images": {
+    "repos": "A_0.png",
+    "appui": [
+     "A_1.png",
+     "A_2.png"
+    ]
+   },
+   "marge": 29
+  },
+  {
+   "id": "B",
+   "type": "disque",
+   "x": 572,
+   "y": 1397,
+   "w": 105,
+   "h": 105,
+   "images": {
+    "repos": "B_0.png",
+    "appui": [
+     "B_1.png",
+     "B_2.png"
+    ]
+   },
+   "marge": 29
+  },
+  {
+   "id": "C",
+   "type": "disque",
+   "x": 709,
+   "y": 1359,
+   "w": 105,
+   "h": 105,
+   "images": {
+    "repos": "C_0.png",
+    "appui": [
+     "C_1.png",
+     "C_2.png"
+    ]
+   },
+   "marge": 29
+  },
+  {
+   "id": "croix",
+   "type": "croix",
+   "x": 65,
+   "y": 1225,
+   "w": 245,
+   "h": 245,
+   "images": {
+    "repos": "croix_0.png",
+    "h": [
+     "croix_h1.png",
+     "croix_h2.png"
+    ],
+    "b": [
+     "croix_b1.png",
+     "croix_b2.png"
+    ],
+    "g": [
+     "croix_g1.png",
+     "croix_g2.png"
+    ],
+    "d": [
+     "croix_d1.png",
+     "croix_d2.png"
+    ],
+    "hg": [
+     "croix_hg1.png",
+     "croix_hg2.png"
+    ],
+    "hd": [
+     "croix_hd1.png",
+     "croix_hd2.png"
+    ],
+    "bg": [
+     "croix_bg1.png",
+     "croix_bg2.png"
+    ],
+    "bd": [
+     "croix_bd1.png",
+     "croix_bd2.png"
+    ]
+   },
+   "marge": 64
+  },
+  {
+   "id": "start",
+   "type": "pilule",
+   "x": 682,
+   "y": 1667,
+   "w": 152,
+   "h": 67,
+   "images": {
+    "repos": "start_0.png",
+    "appui": [
+     "start_1.png",
+     "start_2.png"
+    ]
+   },
+   "marge": 36
+  }
+ ]
+}

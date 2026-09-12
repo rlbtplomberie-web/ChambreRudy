@@ -160,11 +160,6 @@ class EmulateurActivity : ComponentActivity() {
         bordABord()
 
         EnCours.console = idConsole
-        // l'habillage de la NES suit un autre format : tant qu'il n'est pas converti,
-        // on retombe sur celui de la Super Nintendo plutot que de fermer l'application
-        if (idConsole == "nes" && !assetsPossede("skins/nes/skin/portrait/positions.json")) {
-            EnCours.console = "snes"
-        }
         // la NES a son propre moteur, ecrit en Kotlin ; les autres passent par libretro
         val nomCoeur = Consoles.parId(idConsole)?.coeur
         coeur = if (nomCoeur == null) CoeurNes() else CoeurLibretro(this, nomCoeur)

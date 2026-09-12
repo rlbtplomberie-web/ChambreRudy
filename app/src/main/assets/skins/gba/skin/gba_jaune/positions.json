@@ -1,0 +1,216 @@
+{
+ "largeur": 1844,
+ "hauteur": 853,
+ "ecran": [
+  392,
+  60,
+  1065,
+  710
+ ],
+ "elements": [
+  {
+   "id": "A",
+   "type": "disque",
+   "x": 1679,
+   "y": 270,
+   "w": 129,
+   "h": 130,
+   "images": {
+    "repos": "A_0.png",
+    "appui": [
+     "A_1.png",
+     "A_2.png"
+    ]
+   },
+   "marge": 36
+  },
+  {
+   "id": "B",
+   "type": "disque",
+   "x": 1531,
+   "y": 340,
+   "w": 132,
+   "h": 131,
+   "images": {
+    "repos": "B_0.png",
+    "appui": [
+     "B_1.png",
+     "B_2.png"
+    ]
+   },
+   "marge": 37
+  },
+  {
+   "id": "L",
+   "type": "touche",
+   "x": 0,
+   "y": 0,
+   "w": 269,
+   "h": 96,
+   "images": {
+    "repos": "L_0.png",
+    "appui": [
+     "L_1.png",
+     "L_2.png"
+    ]
+   },
+   "marge": 81
+  },
+  {
+   "id": "R",
+   "type": "touche",
+   "x": 1576,
+   "y": 0,
+   "w": 268,
+   "h": 96,
+   "images": {
+    "repos": "R_0.png",
+    "appui": [
+     "R_1.png",
+     "R_2.png"
+    ]
+   },
+   "marge": 80
+  },
+  {
+   "id": "croix",
+   "type": "croix",
+   "x": 74,
+   "y": 252,
+   "w": 228,
+   "h": 231,
+   "images": {
+    "repos": "croix_0.png",
+    "h": [
+     "croix_h1.png",
+     "croix_h2.png"
+    ],
+    "b": [
+     "croix_b1.png",
+     "croix_b2.png"
+    ],
+    "g": [
+     "croix_g1.png",
+     "croix_g2.png"
+    ],
+    "d": [
+     "croix_d1.png",
+     "croix_d2.png"
+    ],
+    "hg": [
+     "croix_hg1.png",
+     "croix_hg2.png"
+    ],
+    "hd": [
+     "croix_hd1.png",
+     "croix_hd2.png"
+    ],
+    "bg": [
+     "croix_bg1.png",
+     "croix_bg2.png"
+    ],
+    "bd": [
+     "croix_bd1.png",
+     "croix_bd2.png"
+    ]
+   },
+   "marge": 60
+  },
+  {
+   "id": "ff",
+   "type": "disque",
+   "x": 1731,
+   "y": 647,
+   "w": 80,
+   "h": 79,
+   "images": {
+    "repos": "ff_0.png",
+    "appui": [
+     "ff_1.png",
+     "ff_2.png"
+    ]
+   },
+   "marge": 22
+  },
+  {
+   "id": "jeux",
+   "type": "disque",
+   "x": 1529,
+   "y": 647,
+   "w": 80,
+   "h": 80,
+   "images": {
+    "repos": "jeux_0.png",
+    "appui": [
+     "jeux_1.png",
+     "jeux_2.png"
+    ]
+   },
+   "marge": 22
+  },
+  {
+   "id": "manette",
+   "type": "disque",
+   "x": 1534,
+   "y": 744,
+   "w": 72,
+   "h": 71,
+   "images": {
+    "repos": "manette_0.png",
+    "appui": [
+     "manette_1.png",
+     "manette_2.png"
+    ]
+   },
+   "marge": 20
+  },
+  {
+   "id": "menu",
+   "type": "disque",
+   "x": 1630,
+   "y": 648,
+   "w": 82,
+   "h": 78,
+   "images": {
+    "repos": "menu_0.png",
+    "appui": [
+     "menu_1.png",
+     "menu_2.png"
+    ]
+   },
+   "marge": 23
+  },
+  {
+   "id": "select",
+   "type": "pilule",
+   "x": 228,
+   "y": 661,
+   "w": 60,
+   "h": 59,
+   "images": {
+    "repos": "select_0.png",
+    "appui": [
+     "select_1.png",
+     "select_2.png"
+    ]
+   },
+   "marge": 18
+  },
+  {
+   "id": "start",
+   "type": "pilule",
+   "x": 229,
+   "y": 569,
+   "w": 60,
+   "h": 59,
+   "images": {
+    "repos": "start_0.png",
+    "appui": [
+     "start_1.png",
+     "start_2.png"
+    ]
+   },
+   "marge": 18
+  }
+ ]
+}

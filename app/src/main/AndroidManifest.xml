@@ -22,6 +22,31 @@
         </activity>
 
         <!-- L'emulateur, une seule activite pour toutes les consoles -->
+        <!-- La NES garde son interface d'origine -->
+        <activity
+            android:name=".nesui.NesActivity"
+            android:exported="false"
+            android:screenOrientation="fullUser"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
+
+        <activity
+            android:name=".mdui.MdActivity"
+            android:exported="false"
+            android:screenOrientation="fullUser"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
+
+        <activity
+            android:name=".gbui.GbActivity"
+            android:exported="false"
+            android:screenOrientation="fullUser"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
+
+        <activity
+            android:name=".gbaui.GbaActivity"
+            android:exported="false"
+            android:screenOrientation="fullUser"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
+
         <activity
             android:name=".EmulateurActivity"
             android:exported="false"

@@ -98,17 +98,22 @@ class MainActivity : ComponentActivity() {
         /** Lance l'emulateur de la console sur cette ROM. */
         @JavascriptInterface
         fun lancer(console: String, uriRom: String) {
-            val i = Intent(this@MainActivity, EmulateurActivity::class.java)
-                .putExtra("console", console)
-                .putExtra("rom", uriRom)
-            startActivity(i)
+            startActivity(ecran(console).putExtra("console", console).putExtra("rom", uriRom))
         }
 
         /** Ouvre l'emulateur sur son catalogue, sans jeu precis. */
         @JavascriptInterface
         fun ouvrirConsole(console: String) {
-            startActivity(Intent(this@MainActivity, EmulateurActivity::class.java)
-                .putExtra("console", console))
+            startActivity(ecran(console).putExtra("console", console))
+        }
+
+        /** La NES garde son interface d'origine ; les autres passent par l'ecran commun. */
+        private fun ecran(console: String): Intent = when (console) {
+            "nes" -> Intent(this@MainActivity, com.rudy.chambre.nesui.NesActivity::class.java)
+            "md"  -> Intent(this@MainActivity, com.rudy.chambre.mdui.MdActivity::class.java)
+            "gb"  -> Intent(this@MainActivity, com.rudy.chambre.gbui.GbActivity::class.java)
+            "gba" -> Intent(this@MainActivity, com.rudy.chambre.gbaui.GbaActivity::class.java)
+            else  -> Intent(this@MainActivity, EmulateurActivity::class.java)
         }
     }
 }

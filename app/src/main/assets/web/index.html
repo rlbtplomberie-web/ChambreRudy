@@ -2,23 +2,31 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>La chambre de Rudy</title>
 <style>
- html,body{margin:0;height:100%;background:#100b1e;color:#ffeec2;
-   font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center}
- .b{text-align:center;padding:24px;max-width:340px}
- h1{font-size:22px;margin-bottom:10px}
- p{font-size:14px;color:#c9b8f0;line-height:1.5;margin:0 0 18px}
- button{display:block;width:100%;margin:8px 0;padding:13px;border-radius:12px;font-size:15px;
+ html,body{margin:0;min-height:100%;background:#100b1e;color:#ffeec2;font-family:system-ui,sans-serif}
+ .b{max-width:360px;margin:0 auto;padding:28px 20px;text-align:center}
+ h1{font-size:22px;margin-bottom:8px}
+ p{font-size:13.5px;color:#c9b8f0;line-height:1.5;margin:0 0 16px}
+ h2{font-size:13px;color:#8d80b5;text-align:left;margin:18px 0 6px;font-weight:600}
+ button{display:block;width:100%;margin:7px 0;padding:12px;border-radius:12px;font-size:15px;
    font-weight:700;color:#2a1c06;background:#f2c14e;border:0}
- .s{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.25)}
- small{display:block;margin-top:14px;color:#8d80b5;font-size:12px}
+ .s{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.25);font-size:13.5px}
+ small{display:block;margin-top:16px;color:#8d80b5;font-size:12px}
 </style></head><body>
 <div class="b">
   <h1>La chambre de Rudy</h1>
-  <p>Page d'essai des emulateurs. Le decor complet la remplacera des qu'il sera decoupe en fichiers.</p>
-  <button onclick="ouvrir('snes')">Emulateur Super Nintendo</button>
-  <button onclick="ouvrir('nes')">Emulateur NES</button>
-  <button class="s" onclick="dossier('snes')">Dossier des ROMs SNES</button>
-  <button class="s" onclick="dossier('nes')">Dossier des ROMs NES</button>
+  <p>Page d'essai des emulateurs. Le decor complet la remplacera.</p>
+  <h2>Lancer une console</h2>
+  <button onclick="ouvrir('nes')">NES</button>
+  <button onclick="ouvrir('snes')">Super Nintendo</button>
+  <button onclick="ouvrir('gb')">Game Boy / Color</button>
+  <button onclick="ouvrir('gba')">Game Boy Advance</button>
+  <button onclick="ouvrir('md')">Mega Drive</button>
+  <h2>Choisir un dossier de ROMs</h2>
+  <button class="s" onclick="dossier('nes')">Dossier NES</button>
+  <button class="s" onclick="dossier('snes')">Dossier SNES</button>
+  <button class="s" onclick="dossier('gb')">Dossier Game Boy</button>
+  <button class="s" onclick="dossier('gba')">Dossier GBA</button>
+  <button class="s" onclick="dossier('md')">Dossier Mega Drive</button>
   <small id="etat">&mdash;</small>
 </div>
 <script>
