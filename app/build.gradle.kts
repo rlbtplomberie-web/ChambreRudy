@@ -27,6 +27,16 @@ android {
         }
     }
 
+    lint {
+        /* Ce controle sert a publier sur le Play Store, ou une cible recente
+           est exigee. Nous visons volontairement Android 9, sans quoi les
+           coeurs qui compilent a la volee — Dolphin, Citra, PPSSPP — sont
+           tues des qu'un jeu demarre. On ecarte donc cette regle. */
+        disable += "ExpiredTargetSdkVersion"
+        abortOnError = false
+        checkReleaseBuilds = false
+    }
+
     buildTypes {
         release { isMinifyEnabled = false }
         /* L'APK qu'on installe est celui-ci. Par defaut il tourne en mode

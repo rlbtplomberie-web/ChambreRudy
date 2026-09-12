@@ -1,1 +1,1 @@
-version 44 - chambre native
+version 45 - chambre native, controle de publication ecarte
