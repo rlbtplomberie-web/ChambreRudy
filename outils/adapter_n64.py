@@ -45,6 +45,33 @@ def adapter_compilation(chemin: str) -> None:
     print('fichier de compilation adapte :', chemin)
 
 
+def poser_espace_de_noms(gradle: str, manifeste: str) -> None:
+    """
+    Les outils Android récents exigent que chaque morceau déclare son espace de
+    noms dans son fichier de compilation, alors que les projets plus anciens le
+    mettaient dans le manifeste. On déplace donc l'information.
+    """
+    m = open(manifeste, encoding='utf-8').read()
+    trouve = re.search(r'package\s*=\s*"([^"]+)"', m)
+    if not trouve:
+        return
+    paquet = trouve.group(1)
+    m = m.replace(trouve.group(0), '')
+    open(manifeste, 'w', encoding='utf-8').write(m)
+
+    t = open(gradle, encoding='utf-8').read()
+    if 'namespace' in t:
+        return
+    # on l'insere juste apres l'ouverture du bloc android
+    i = t.find('android')
+    j = t.find('{', i)
+    if j == -1:
+        return
+    t = t[:j + 1] + "\n    namespace '" + paquet + "'\n" + t[j + 1:]
+    open(gradle, 'w', encoding='utf-8').write(t)
+    print('espace de noms pose :', paquet)
+
+
 def adapter_manifeste(chemin: str) -> None:
     """Son écran d'accueil ne doit plus se déclarer comme celui du téléphone."""
     t = open(chemin, encoding='utf-8').read()
@@ -57,3 +84,4 @@ if __name__ == '__main__':
     adapter_compilation(sys.argv[1])
     if len(sys.argv) > 2:
         adapter_manifeste(sys.argv[2])
+        poser_espace_de_noms(sys.argv[1], sys.argv[2])

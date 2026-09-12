@@ -176,7 +176,22 @@ async function ouvrirLivre(i){
     try{ livre.pages = JSON.parse(A.pagesDuLivre(livre.id) || "[]"); }catch(e){ livre.pages = []; }
   }
   currentBook = i;
-  if(livre.pages.length) refreshCurrentBook();
+  if(livre.pages.length){
+    refreshCurrentBook();
+    // le telephone continue de preparer les pages suivantes : on les recupere
+    let essais = 0;
+    const suivre = setInterval(() => {
+      essais++;
+      try{
+        const pretes = JSON.parse(A.pagesPretes(livre.id) || "[]");
+        if(pretes.length > livre.pages.length){
+          livre.pages = pretes;
+          if(currentBook === i){ PAGES.length = 0; pretes.forEach(x => PAGES.push(x)); }
+        }
+      }catch(e){}
+      if(essais > 120) clearInterval(suivre);
+    }, 1500);
+  }
   else $(".name").textContent = livre.title + " — illisible";
 }
 

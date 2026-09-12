@@ -101,16 +101,25 @@ object Livres {
         return sortie
     }
 
-    /** Dessine chaque page du PDF en image, une fois pour toutes. */
-    private fun dessiner(ctx: Context, id: String, uri: Uri) {
+    /**
+     * Dessine les pages du PDF en images.
+     *
+     * Les premieres d'abord, pour qu'on puisse commencer a lire tout de suite ;
+     * le reste continue tout seul pendant la lecture. Un livre de deux cents
+     * pages s'ouvre ainsi en une seconde au lieu d'une minute.
+     */
+    private fun dessiner(ctx: Context, id: String, uri: Uri, premieres: Int = 6) {
         val cible = File(File(ctx.filesDir, "livres"), id)
-        if (cible.isDirectory && (cible.listFiles()?.isNotEmpty() == true)) return
+        if (File(cible, "complet").exists()) return
         cible.mkdirs()
         try {
             val pfd = ctx.contentResolver.openFileDescriptor(uri, "r") ?: return
             PdfRenderer(pfd).use { lecteur ->
-                val largeur = 1100                       // assez fin pour lire, assez leger pour tenir
-                for (i in 0 until lecteur.pageCount) {
+                val largeur = 950                        // assez fin pour lire, assez leger pour tenir
+                val jusqua = if (premieres > 0) minOf(premieres, lecteur.pageCount) else lecteur.pageCount
+                for (i in 0 until jusqua) {
+                    val nomAttendu = File(cible, String.format("p%04d.jpg", i))
+                    if (nomAttendu.exists()) continue
                     val p = lecteur.openPage(i)
                     val hauteur = (largeur.toFloat() * p.height / p.width).toInt()
                     val image = Bitmap.createBitmap(largeur, hauteur, Bitmap.Config.ARGB_8888)
@@ -123,8 +132,25 @@ object Livres {
                     }
                     image.recycle()
                 }
+                if (jusqua >= lecteur.pageCount) File(cible, "complet").writeText("ok")
             }
             pfd.close()
         } catch (_: Throwable) {}
+
+        // la suite se prepare en arriere-plan, pendant qu'on lit les premieres
+        if (premieres > 0 && !File(cible, "complet").exists()) {
+            Thread { dessiner(ctx, id, uri, 0) }
+                .apply { priority = Thread.MIN_PRIORITY }.start()
+        }
+    }
+
+    /** Les pages deja pretes d'un livre, pour rafraichir pendant la lecture. */
+    fun pagesPretes(ctx: Context, id: String): JSONArray {
+        val sortie = JSONArray()
+        val cible = File(File(ctx.filesDir, "livres"), id)
+        cible.listFiles { f -> f.name.endsWith(".jpg") }?.sortedBy { it.name }?.forEach {
+            sortie.put("https://appassets.androidplatform.net/livres/$id/${it.name}")
+        }
+        return sortie
     }
 }

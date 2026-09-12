@@ -238,6 +238,10 @@ class PageActivity : ComponentActivity() {
         @JavascriptInterface
         fun pagesDuLivre(id: String): String = Livres.pages(this@PageActivity, id).toString()
 
+        /** Les pages preparees depuis : le livre s'allonge pendant la lecture. */
+        @JavascriptInterface
+        fun pagesPretes(id: String): String = Livres.pagesPretes(this@PageActivity, id).toString()
+
         @JavascriptInterface
         fun ouvrirConsole(console: String) {
             runOnUiThread {
