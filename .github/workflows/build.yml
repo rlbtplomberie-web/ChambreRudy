@@ -55,15 +55,16 @@ jobs:
           snes9x:libsnes9x
           gambatte:libgambatte
           mgba:libmgba
-          genesis_plus_gx:libgenesis
+          genesis_plus_gx:libgenesisplusgx
           pcsx_rearmed:libpcsx
-          ppsspp:libppsspp
           flycast:libflycast
           melondsds:libmelonds
+          dolphin:libdolphin
+          ppsspp:libppsspp
           citra:libcitra
           "
           manquants=""
-          for abi in arm64-v8a armeabi-v7a; do
+          for abi in arm64-v8a; do
             mkdir -p app/src/main/jniLibs/$abi
             for paire in $liste; do
               coeur="${paire%%:*}"; cible="${paire##*:}"
