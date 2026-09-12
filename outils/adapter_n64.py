@@ -34,7 +34,11 @@ def retirer_bloc(texte: str, mot: str) -> str:
 def adapter_compilation(chemin: str) -> None:
     t = open(chemin, encoding='utf-8').read()
     t = t.replace('com.android.application', 'com.android.library')
-    t = re.sub(r'^\s*applicationId\s.*$', '', t, flags=re.M)
+    # tous les reglages qui n'ont de sens que pour une application autonome
+    for mot in ('applicationId', 'applicationIdSuffix', 'versionNameSuffix',
+                'testApplicationId', 'versionCode', 'versionName'):
+        t = re.sub(r'^\s*' + mot + r'\s.*$', '', t, flags=re.M)
+        t = re.sub(r'^\s*' + mot + r'\s*=.*$', '', t, flags=re.M)
     for mot in ('applicationVariants', 'splits', 'bundle'):
         t = retirer_bloc(t, mot)
     open(chemin, 'w', encoding='utf-8').write(t)

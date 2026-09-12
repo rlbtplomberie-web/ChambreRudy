@@ -1,1 +1,1 @@
-version 59 - tous les modules de Mupen64Plus
+version 60 - nettoyage elargi pour Mupen64Plus
