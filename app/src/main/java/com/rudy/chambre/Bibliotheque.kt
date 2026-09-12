@@ -18,12 +18,13 @@ data class Rom(val nom: String, val uri: Uri)
 object Bibliotheque {
 
     private const val PREFS = "chambre_rudy"
-    
-    
 
-    fun dossier(ctx: Context): Uri? {
+    /** Une cle de reglage par console : chacune garde son propre dossier. */
+    private fun cle(console: String) = "dossier_roms_" + console
+
+    fun dossier(ctx: Context, console: String): Uri? {
         val brut = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getString(CLE_DOSSIER, null) ?: return null
+            .getString(cle(console), null) ?: return null
         return try { Uri.parse(brut) } catch (_: Exception) { null }
     }
 
@@ -42,31 +43,32 @@ object Bibliotheque {
             .putString(cle(console), uri.toString()).apply()
     }
 
-    fun oublier(ctx: Context) {
+    fun oublier(ctx: Context, console: String) {
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .remove(CLE_DOSSIER).apply()
+            .remove(cle(console)).apply()
     }
 
     /**
-     * Liste les ROMs Super Nintendo du dossier, sous-dossiers compris.
+     * Liste les ROMs de cette console dans le dossier, sous-dossiers compris.
      * Lent sur un gros dossier : a appeler hors du fil principal.
      */
     fun lister(ctx: Context, console: String): List<Rom> {
-        val racine = dossier(ctx) ?: return emptyList()
+        val exts = Consoles.parId(console)?.extensions ?: return emptyList()
+        val racine = dossier(ctx, console) ?: return emptyList()
         val doc = try { DocumentFile.fromTreeUri(ctx, racine) } catch (_: Exception) { null }
             ?: return emptyList()
         val trouvees = ArrayList<Rom>()
-        parcourir(doc, trouvees, 0)
+        parcourir(doc, exts, trouvees, 0)
         trouvees.sortBy { it.nom.lowercase() }
         return trouvees
     }
 
-    private fun parcourir(doc: DocumentFile, sortie: MutableList<Rom>, profondeur: Int) {
+    private fun parcourir(doc: DocumentFile, exts: List<String>, sortie: MutableList<Rom>, profondeur: Int) {
         if (profondeur > 3 || sortie.size > 3000) return
         val enfants = try { doc.listFiles() } catch (_: Exception) { return }
         for (f in enfants) {
             if (f.isDirectory) {
-                parcourir(f, sortie, profondeur + 1)
+                parcourir(f, exts, sortie, profondeur + 1)
             } else {
                 val n = f.name ?: continue
                 if (exts.any { n.lowercase().endsWith(it) }) sortie.add(Rom(n, f.uri))

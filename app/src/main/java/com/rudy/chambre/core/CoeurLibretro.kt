@@ -14,8 +14,8 @@ class CoeurLibretro(ctx: Context, nomCoeur: String) {
 
     companion object {
         init { System.loadLibrary("pont") }
-        const val MAX_L = 512
-        const val MAX_H = 478
+        const val MAX_L = 1024
+        const val MAX_H = 1024
     }
 
     private external fun natInit(cheminCoeur: String, dossier: String): Boolean

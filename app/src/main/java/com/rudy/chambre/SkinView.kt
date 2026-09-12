@@ -5,7 +5,7 @@ import android.graphics.*
 import android.view.Choreographer
 import android.view.MotionEvent
 import android.view.View
-import com.rudy.chambre.core.CoeurSnes
+import com.rudy.chambre.core.CoeurLibretro
 import com.rudy.chambre.core.Pad
 import kotlin.math.abs
 import kotlin.math.max
@@ -30,7 +30,7 @@ class SkinView(ctx: Context) : View(ctx) {
     var appuiMiniMs = 110L
     // --------------------------------
 
-    lateinit var coeur: CoeurSnes
+    lateinit var coeur: CoeurLibretro
     var son: Son? = null
     var surTouche: (() -> Unit)? = null
     var surMenu: (() -> Unit)? = null
@@ -103,7 +103,7 @@ class SkinView(ctx: Context) : View(ctx) {
     private var enPaysage = false
     private var dispoChargee = false
 
-    private val cadreJeu = Bitmap.createBitmap(CoeurSnes.MAX_L, CoeurSnes.MAX_H, Bitmap.Config.ARGB_8888)
+    private val cadreJeu = Bitmap.createBitmap(CoeurLibretro.MAX_L, CoeurLibretro.MAX_H, Bitmap.Config.ARGB_8888)
     private var jeuL = 256
     private var jeuH = 224
     private val srcJeu = Rect(0, 0, 256, 224)
@@ -142,24 +142,24 @@ class SkinView(ctx: Context) : View(ctx) {
 
     /** Lit positions.json et charge toutes les images d'un skin. */
     private fun chargerSkin(dossier: String, cible: HashMap<String, Touche>): Bitmap {
-        val texte = context.assets.open("skin/$dossier/positions.json").bufferedReader().use { it.readText() }
+        val texte = context.assets.open("skins/${EnCours.console}/skin/$dossier/positions.json").bufferedReader().use { it.readText() }
         val els = org.json.JSONObject(texte).getJSONArray("elements")
         for (i in 0 until els.length()) {
             val e = els.getJSONObject(i)
             val id = e.getString("id")
             val im = e.getJSONObject("images")
-            val repos = charge("skin/$dossier/" + im.getString("repos"))
+            val repos = charge("skins/${EnCours.console}/skin/$dossier/" + im.getString("repos"))
             val appui = ArrayList<Bitmap>()
             val dirs = HashMap<String, List<Bitmap>>()
             im.keys().forEach { k ->
                 if (k == "repos") return@forEach
                 val liste = im.getJSONArray(k)
-                val bms = (0 until liste.length()).map { charge("skin/$dossier/" + liste.getString(it)) }
+                val bms = (0 until liste.length()).map { charge("skins/${EnCours.console}/skin/$dossier/" + liste.getString(it)) }
                 if (k == "appui") appui.addAll(bms) else dirs[k] = bms
             }
             cible[id] = Touche(repos, appui, dirs)
         }
-        return charge("skin/$dossier/fond.png")
+        return charge("skins/${EnCours.console}/skin/$dossier/fond.png")
     }
 
     // ================= boucle =================

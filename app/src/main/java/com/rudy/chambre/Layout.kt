@@ -51,7 +51,7 @@ class Disposition(val sw: Float, val sh: Float, val items: MutableMap<String, Re
     companion object {
         /** Positions par defaut : celles du fichier positions.json du skin. */
         fun depuisSkin(ctx: Context, dossier: String, ecran: Rect4): Disposition {
-            val texte = ctx.assets.open("skin/$dossier/positions.json").bufferedReader().use { it.readText() }
+            val texte = ctx.assets.open("skins/${EnCours.console}/skin/$dossier/positions.json").bufferedReader().use { it.readText() }
             val o = JSONObject(texte)
             val items = mutableMapOf<String, Rect4>()
             val marges = mutableMapOf<String, Int>()
@@ -98,7 +98,7 @@ object Dispositions {
      */
     private val ECRAN_PAYSAGE3 = Rect4(0f, 0f, 1774f, 887f)
 
-    private const val PREFS = "skin_snes"
+    private const val PREFS = "chambre_rudy"
     private const val CLE_P = "dispo_portrait"
     private const val CLE_L = "dispo_paysage"
     private const val CLE_L2 = "dispo_paysage2"
@@ -140,8 +140,8 @@ object Dispositions {
         else when (variante(ctx)) { 1 -> "paysage2"; 2 -> "paysage3"; else -> "paysage" }
 
     private fun cle(ctx: Context, paysage: Boolean): String =
-        if (!paysage) CLE_P
-        else when (variante(ctx)) { 1 -> CLE_L2; 2 -> CLE_L3; else -> CLE_L }
+        EnCours.console + "_" + (if (!paysage) CLE_P
+            else when (variante(ctx)) { 1 -> CLE_L2; 2 -> CLE_L3; else -> CLE_L })
 
     fun parDefaut(ctx: Context, paysage: Boolean) = when {
         !paysage -> Disposition.depuisSkin(ctx, "portrait", ECRAN_PORTRAIT.copy4())

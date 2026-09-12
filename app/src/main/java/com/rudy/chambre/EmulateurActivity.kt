@@ -30,7 +30,9 @@ class EmulateurActivity : ComponentActivity() {
     private lateinit var barre: HorizontalScrollView
     /** Curseur d'opacite, propre a la troisieme presentation horizontale. */
     private lateinit var reglageOpacite: LinearLayout
-    private lateinit var coeur: CoeurSnes
+    private lateinit var coeur: CoeurLibretro
+    /** Console demandee par la chambre ; la Super Nintendo par defaut. */
+    private var idConsole: String = "snes"
     private var son: Son? = null
     private var romsAffichees: List<Rom> = emptyList()
 
@@ -109,7 +111,7 @@ class EmulateurActivity : ComponentActivity() {
 
     private fun ouvrirCatalogue() {
         if (vue.listeOuverte) { vue.fermerListe(); return }
-        if (Bibliotheque.dossier(this) == null) { choisirDossier.launch(null); return }
+        if (Bibliotheque.dossier(this, idConsole) == null) { choisirDossier.launch(null); return }
         Toast.makeText(this, "Lecture du dossier…", Toast.LENGTH_SHORT).show()
         Thread {
             val roms = Bibliotheque.lister(this, idConsole)
@@ -148,11 +150,11 @@ class EmulateurActivity : ComponentActivity() {
 
     override fun onCreate(s: Bundle?) {
         super.onCreate(s)
+        idConsole = intent.getStringExtra("console") ?: "snes"
         bordABord()
 
-        idConsole = intent.getStringExtra("console") ?: "snes"
-        val fiche = Consoles.parId(idConsole)
-        coeur = CoeurLibretro(this, fiche?.coeur ?: "libsnes9x.so")
+        EnCours.console = idConsole
+        coeur = CoeurLibretro(this, Consoles.parId(idConsole)?.coeur ?: "libsnes9x.so")
         vue = SkinView(this)
         vue.coeur = coeur
         val racine = FrameLayout(this)
@@ -262,7 +264,7 @@ class EmulateurActivity : ComponentActivity() {
                 }
                 override fun onStartTrackingTouch(sb: SeekBar) {}
                 override fun onStopTrackingTouch(sb: SeekBar) {
-                    Dispositions.poserOpacite(this@MainActivity, vue.opaciteBoutons)
+                    Dispositions.poserOpacite(this@EmulateurActivity, vue.opaciteBoutons)
                 }
             })
         }, LinearLayout.LayoutParams((260 * d).toInt(), -2).apply { topMargin = (4 * d).toInt() })
@@ -298,7 +300,7 @@ class EmulateurActivity : ComponentActivity() {
         }
         bouton("Défaut") { vue.reinitialiserDisposition() }
         bouton("Jeux") { ouvrirCatalogue() }
-        bouton("Dossier") { Bibliotheque.oublier(this); choisirDossier.launch(null) }
+        bouton("Dossier") { Bibliotheque.oublier(this, idConsole); choisirDossier.launch(null) }
         bouton("1 ROM") { choisirRom.launch(arrayOf("*/*")) }
         bouton("Sauver") { sauverEtat() }
         bouton("Charger") { chargerEtat() }
