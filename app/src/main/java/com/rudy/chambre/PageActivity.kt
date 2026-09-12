@@ -38,6 +38,17 @@ class PageActivity : ComponentActivity() {
     /** Ce que la page attend quand elle demande un fichier. */
     private var attenteFichier: ValueCallback<Array<Uri>>? = null
 
+    private val choisirDossierLivres =
+        registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+            if (uri != null) {
+                try { contentResolver.takePersistableUriPermission(
+                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: Throwable) {}
+                getSharedPreferences("chambre_rudy", MODE_PRIVATE).edit()
+                    .putString("dossier_livres", uri.toString()).apply()
+            }
+            runOnUiThread { vue.evaluateJavascript("window.livresChanges && window.livresChanges()", null) }
+        }
+
     private val choisirFichiers =
         registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { liste ->
             attenteFichier?.onReceiveValue(liste.toTypedArray())
@@ -67,6 +78,9 @@ class PageActivity : ComponentActivity() {
 
         val serveur = WebViewAssetLoader.Builder()
             .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
+            // les pages de livres, fabriquees a la demande dans l'espace de l'application
+            .addPathHandler("/livres/", WebViewAssetLoader.InternalStoragePathHandler(
+                this, java.io.File(filesDir, "livres")))
             .build()
 
         vue = WebView(this).apply {
@@ -177,6 +191,25 @@ class PageActivity : ComponentActivity() {
                 }
             }
         }
+
+        /** Ouvre le selecteur pour choisir le dossier des livres. */
+        @JavascriptInterface
+        fun choisirDossierLivres() {
+            runOnUiThread { choisirDossierLivres.launch(null) }
+        }
+
+        /** La liste des livres du dossier : titre et identifiant. */
+        @JavascriptInterface
+        fun listerLivres(): String = Livres.lister(this@PageActivity).toString()
+
+        /**
+         * Fabrique les pages d'un livre et renvoie leurs adresses.
+         *
+         * Android sait ouvrir un PDF : on dessine chaque page en image, une
+         * fois pour toutes, et la page web n'a plus qu'a les afficher.
+         */
+        @JavascriptInterface
+        fun pagesDuLivre(id: String): String = Livres.pages(this@PageActivity, id).toString()
 
         @JavascriptInterface
         fun ouvrirConsole(console: String) {

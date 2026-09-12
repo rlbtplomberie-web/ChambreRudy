@@ -36,14 +36,6 @@
             </intent-filter>
         </activity>
 
-        <!-- La bibliotheque et le lecteur de livres -->
-        <activity
-            android:name="com.rudy.chambre.LivreActivity"
-            android:exported="false"
-            android:screenOrientation="fullUser"
-            android:theme="@style/ThemeChambre"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density" />
-
         <!-- Les jeux, les vitrines et l'atelier, ouverts par-dessus -->
         <activity
             android:name="com.rudy.chambre.PageActivity"
@@ -101,15 +93,6 @@
             android:exported="false"
             android:screenOrientation="fullSensor"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|density"
-            android:theme="@style/ThemePleinEcran" />
-
-        <!-- Nintendo 64 : habillage de Rudy, coeur Mupen64Plus -->
-        <activity
-            android:name="com.skinn64.app.MainActivity"
-            android:exported="false"
-            android:screenOrientation="fullSensor"
-            android:resizeableActivity="true"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
             android:theme="@style/ThemePleinEcran" />
 
         <!-- PlayStation : reglages repris de son projet -->

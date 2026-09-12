@@ -11,10 +11,6 @@ find_library(gles-lib GLESv3)
 add_library(skinsnes SHARED skinsnes/pont.c)
 target_link_libraries(skinsnes ${log-lib} dl)
 
-# Nintendo 64 : meme pont, coeur Mupen64Plus
-add_library(skinn64 SHARED skinn64/pont.c)
-target_link_libraries(skinn64 ${log-lib} dl)
-
 add_library(gbgbc SHARED gbgbc/pont.c)
 target_link_libraries(gbgbc ${log-lib} dl)
 

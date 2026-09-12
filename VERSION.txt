@@ -1,1 +1,1 @@
-version 55 - bibliotheque native, armoire corrigee
+version 57 - Mupen64Plus integre au projet

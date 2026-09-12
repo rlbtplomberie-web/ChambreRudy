@@ -122,7 +122,7 @@ class ChambreActivity : ComponentActivity() {
             }
             "tele" -> vue.consolePosee()?.let { dire(it.nom) }
             "serrure" -> menuDehors()
-            "livre" -> startActivity(Intent(this, LivreActivity::class.java))
+            "livre" -> page("jeux/livre_vide.html", "Bibliothèque")
         }
     }
 
