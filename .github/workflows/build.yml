@@ -62,6 +62,7 @@ jobs:
           # console : nom du coeur chez libretro -> nom attendu par l'application
           liste="
           snes9x:libsnes9x
+          mupen64plus_next:libmupen64plus
           gambatte:libgambatte
           mgba:libmgba
           genesis_plus_gx:libgenesisplusgx
