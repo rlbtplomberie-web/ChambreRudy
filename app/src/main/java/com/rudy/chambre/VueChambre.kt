@@ -22,7 +22,7 @@ class VueChambre(ctx: Context) : View(ctx) {
     /** Ou se trouve l'ecran de la tele, a chaque image : la video l'y suit. */
     var surEcranTele: ((RectF?) -> Unit)? = null
 
-    private val images = HashMap<String, Bitmap>()
+    private val images = java.util.concurrent.ConcurrentHashMap<String, Bitmap>()
     private val peinture = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
     private val ombre = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0x66000000 }
 
@@ -52,7 +52,16 @@ class VueChambre(ctx: Context) : View(ctx) {
 
     init {
         setLayerType(LAYER_TYPE_HARDWARE, null)
-        for (m in murs) charger(m)
+        charger(murs[0])
+        // le reste arrive en tache de fond : la chambre s'ouvre tout de suite,
+        // et plus rien n'attend quand on touche un objet
+        Thread {
+            charger("room.jpg")
+            for (m in murs) charger(m)
+            charger("jeux.webp"); charger("cartes.webp"); charger("cahier.webp")
+            for (console in Decor.CONSOLES) charger(console.image)
+            post { invalidate() }
+        }.apply { priority = Thread.MIN_PRIORITY }.start()
     }
 
     private fun charger(nom: String): Bitmap? {
@@ -195,9 +204,23 @@ class VueChambre(ctx: Context) : View(ctx) {
         val m = zone(Decor.MEUBLE)
         // l'interieur, visible des qu'un battant s'ecarte
         if (porteG > 0.02f || porteD > 0.02f) {
+            fondMeuble.reset(); fondMeuble.isAntiAlias = true
+            // le fond de l'armoire, en bois sombre
             fondMeuble.shader = LinearGradient(m.left, m.top, m.left, m.bottom,
-                intArrayOf(0xFF2A1B10.toInt(), 0xFF120B06.toInt()), null, Shader.TileMode.CLAMP)
+                intArrayOf(0xFF3A2515.toInt(), 0xFF1A0F07.toInt()), null, Shader.TileMode.CLAMP)
             c.drawRect(m, fondMeuble)
+            fondMeuble.shader = null
+            // les parois laterales et l'etagere du milieu, qui donnent la profondeur
+            fondMeuble.color = 0xFF4A3019.toInt()
+            val ep = m.width() * .035f
+            c.drawRect(m.left, m.top, m.left + ep, m.bottom, fondMeuble)
+            c.drawRect(m.right - ep, m.top, m.right, m.bottom, fondMeuble)
+            fondMeuble.color = 0xFF5A3A1E.toInt()
+            c.drawRect(m.left, m.centerY() - ep * .5f, m.right, m.centerY() + ep * .5f, fondMeuble)
+            // l'ombre du haut, comme une lumiere qui n'entre qu'a moitie
+            fondMeuble.shader = LinearGradient(0f, m.top, 0f, m.top + m.height() * .3f,
+                intArrayOf(0x99000000.toInt(), 0x00000000), null, Shader.TileMode.CLAMP)
+            c.drawRect(m.left, m.top, m.right, m.top + m.height() * .3f, fondMeuble)
             fondMeuble.shader = null
             // a gauche, la pile de jeux de societe ; a droite, la console posee
             if (porteG > 0.25f) charger("jeux.webp")?.let { img ->

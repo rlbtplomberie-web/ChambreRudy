@@ -63,12 +63,12 @@ object Decor {
 
     /** Les sept morceaux de la radio, dans l'ordre. */
     val MUSIQUES = listOf(
-        "mus1.webm" to "Ocarina of Time — File Select",
-        "mus2.webm" to "Ocarina of Time — Thème principal",
-        "mus3.webm" to "Ocarina of Time — Lon Lon Ranch",
-        "mus4.webm" to "Majora's Mask — Song of Healing",
-        "mus5.webm" to "Majora's Mask — Thème des Géants",
-        "mus6.webm" to "Ocarina of Time — Vallée Gerudo",
-        "mus7.webm" to "The Wind Waker — Ocean"
+        "mus1.m4a" to "Ocarina of Time — File Select",
+        "mus2.m4a" to "Ocarina of Time — Thème principal",
+        "mus3.m4a" to "Ocarina of Time — Lon Lon Ranch",
+        "mus4.m4a" to "Majora's Mask — Song of Healing",
+        "mus5.m4a" to "Majora's Mask — Thème des Géants",
+        "mus6.m4a" to "Ocarina of Time — Vallée Gerudo",
+        "mus7.m4a" to "The Wind Waker — Ocean"
     )
 }

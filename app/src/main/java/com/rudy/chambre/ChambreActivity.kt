@@ -52,7 +52,7 @@ class ChambreActivity : ComponentActivity() {
                 "chambre" -> {
                     son.bruit("pose.mp3")
                     son.radio()
-                    vue.radioAllumee = true       // la radio s'allume en arrivant
+                    vue.radioAllumee = son.allumee()   // la radio s'allume en arrivant
                     vue.cadrerSurLaTele()
                 }
             }
@@ -69,6 +69,8 @@ class ChambreActivity : ComponentActivity() {
 
         // l'ouverture du carton, une seule fois par lancement
         if (etat == null) vue.post { vue.jouerIntro() }
+        // la premiere console est prete avant meme qu'on touche le carton
+        vue.postDelayed({ preparerVideo(Decor.CONSOLES[0]) }, 1200)
     }
 
     /** Un menu sombre, lisible par-dessus le decor. */
@@ -92,11 +94,14 @@ class ChambreActivity : ComponentActivity() {
                     son.bruit("pose.mp3")
                     dire(console.nom)
                     allumerLaTele(console)
+                    // et on prepare deja celle d'apres
+                    val suivante = Decor.CONSOLES[(Decor.CONSOLES.indexOf(console) + 1) % Decor.CONSOLES.size]
+                    vue.postDelayed({ preparerVideo(suivante) }, 900)
                 }
             }
             "radio" -> {
                 val morceau = son.radio()
-                vue.radioAllumee = morceau.isNotEmpty()
+                vue.radioAllumee = son.allumee()
                 vue.invalidate()
                 dire(morceau.ifEmpty { "radio éteinte" })
             }
@@ -144,6 +149,26 @@ class ChambreActivity : ComponentActivity() {
     }
 
     private var teleAllumee = false
+    /** La video de la prochaine console, deja prete a partir. */
+    private var lecteurPret: android.media.MediaPlayer? = null
+    private var videoPrete: String? = null
+
+    /** Prepare a l'avance la sequence de la console suivante, pour qu'elle parte net. */
+    private fun preparerVideo(console: Decor.ConsolePosee) {
+        if (videoPrete == console.video) return
+        try { lecteurPret?.release() } catch (_: Throwable) {}
+        lecteurPret = null; videoPrete = null
+        try {
+            val d = assets.openFd("chambre/" + console.video)
+            lecteurPret = android.media.MediaPlayer().apply {
+                setDataSource(d.fileDescriptor, d.startOffset, d.length)
+                setVolume(0.85f, 0.85f)
+                prepare()                       // tout le travail se fait ici, avant l'appui
+            }
+            d.close()
+            videoPrete = console.video
+        } catch (_: Throwable) { lecteurPret = null; videoPrete = null }
+    }
 
     /** La tele s'allume et joue la sequence de demarrage de cette console. */
     private fun allumerLaTele(console: Decor.ConsolePosee) {
@@ -156,18 +181,23 @@ class ChambreActivity : ComponentActivity() {
 
         val surface = ecranTele.surfaceTexture ?: return
         try {
-            val d = assets.openFd("chambre/" + console.video)
-            lecteur = android.media.MediaPlayer().apply {
+            // si elle a ete preparee d'avance, elle part a l'instant meme
+            val pret = if (videoPrete == console.video) lecteurPret else null
+            lecteurPret = null; videoPrete = null
+            lecteur = (pret ?: android.media.MediaPlayer().apply {
+                val d = assets.openFd("chambre/" + console.video)
                 setDataSource(d.fileDescriptor, d.startOffset, d.length)
-                setSurface(android.view.Surface(surface))
                 setVolume(0.85f, 0.85f)
+                prepare()
+                d.close()
+            }).apply {
+                setSurface(android.view.Surface(surface))
                 setOnCompletionListener {
                     teleAllumee = false
                     ecranTele.animate().alpha(0f).setDuration(600).start()
                 }
-                prepare(); start()
+                start()
             }
-            d.close()
             son.enPause(true)                       // la radio se tait pendant la sequence
             ecranTele.postDelayed({ son.enPause(false) }, 6000)
         } catch (_: Throwable) { teleAllumee = false; ecranTele.alpha = 0f }
@@ -261,6 +291,7 @@ class ChambreActivity : ComponentActivity() {
 
     override fun onDestroy() {
         try { lecteur?.release() } catch (_: Throwable) {}
+        try { lecteurPret?.release() } catch (_: Throwable) {}
         son.liberer()
         super.onDestroy()
     }

@@ -9,6 +9,14 @@ import android.graphics.*
 object Objets {
 
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    /** Un pinceau remis a neuf : opacite pleine, aucun degrade en cours. */
+    private fun neuf() {
+        p.reset()
+        p.isAntiAlias = true
+        p.style = Paint.Style.FILL
+        p.alpha = 255
+    }
     private val texte = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
         typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
@@ -24,6 +32,7 @@ object Objets {
      * vient de la droite.
      */
     fun cartonPhoto(c: Canvas, face: RectF, profondeur: Float, ouverture: Float) {
+        neuf()
         val h = face.height()
         val l = face.width()
         p.style = Paint.Style.FILL
@@ -137,15 +146,23 @@ object Objets {
             }
         }
 
-        // ---- le nom au feutre, legerement irregulier ----
-        texte.color = 0xE63A2A18.toInt()
+        // ---- le nom au marqueur ----
+        // deux passages : un trait epais, puis le plein par-dessus. C'est ce qui
+        // donne le bord un peu bave d'un feutre sur du carton.
+        texte.typeface = Typeface.create("casual", Typeface.BOLD)
         texte.textSize = h * .40f
-        texte.typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD_ITALIC)
         c.save()
-        c.rotate(-2.5f, face.centerX(), face.centerY())
+        c.rotate(-3.5f, face.centerX(), face.centerY())
+        texte.style = Paint.Style.STROKE
+        texte.strokeWidth = h * .055f
+        texte.strokeJoin = Paint.Join.ROUND
+        texte.strokeCap = Paint.Cap.ROUND
+        texte.color = 0xF2241608.toInt()
+        c.drawText("Rudy", face.centerX(), face.centerY() + h * .14f, texte)
+        texte.style = Paint.Style.FILL
+        texte.color = 0xFF2E1B0A.toInt()
         c.drawText("Rudy", face.centerX(), face.centerY() + h * .14f, texte)
         c.restore()
-        texte.typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
     }
 
 
@@ -156,6 +173,7 @@ object Objets {
      * d'origine, sur une grille de 300 par 210.
      */
     fun radio(c: Canvas, r: RectF, allumee: Boolean) {
+        neuf()
         val e = r.width() / 300f            // l'echelle du dessin d'origine
         fun x(v: Float) = r.left + v * e
         fun y(v: Float) = r.top + v * e
@@ -254,6 +272,7 @@ object Objets {
 
     /** La serrure doree, sous la poignee de la baie vitree. */
     fun serrure(c: Canvas, r: RectF) {
+        neuf()
         val l = r.width()
         p.color = 0xFFD9AB45.toInt()
         p.style = Paint.Style.STROKE
@@ -270,6 +289,7 @@ object Objets {
 
     /** La pastille ronde posee sur la rangee de mangas. */
     fun pastilleLivre(c: Canvas, r: RectF, battement: Float) {
+        neuf()
         val cx = r.centerX(); val cy = r.centerY()
         val rayon = r.width() / 2f * (1f + .12f * battement)
         p.color = 0xB8140C1E.toInt()
@@ -303,6 +323,7 @@ object Objets {
      * bascule vers l'avant. Couleurs reprises de la version web.
      */
     fun tiroir(c: Canvas, r: RectF, ouverture: Float) {
+        neuf()
         // la cavite, toujours dessinee : c'est elle qu'on voit quand ca s'ouvre
         p.style = Paint.Style.FILL
         p.shader = LinearGradient(r.left, r.top, r.left, r.bottom,

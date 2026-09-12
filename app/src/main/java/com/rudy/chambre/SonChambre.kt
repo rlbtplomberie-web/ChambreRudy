@@ -25,6 +25,7 @@ class SonChambre(private val ctx: Context) {
     private var musique: MediaPlayer? = null
     private var morceau = -1
     var volume = 0.55f
+    var derniereErreur = ""; private set
 
     init {
         for (n in listOf("tiroir.mp3", "carton.mp3", "porte_ouvre.mp3",
@@ -39,16 +40,25 @@ class SonChambre(private val ctx: Context) {
         identifiants[nom]?.let { bruits.play(it, 1f, 1f, 1, 0, 1f) }
     }
 
-    /** Allume la radio, passe au morceau suivant, ou l'eteint. */
+    /**
+     * Un appui : on allume, on passe au suivant, puis on eteint en fin de liste.
+     * Renvoie le nom du morceau, ou un message si la lecture a echoue.
+     */
     fun radio(): String {
-        if (musique != null) { jouer(morceau + 1); return Decor.MUSIQUES.getOrNull(morceau)?.second ?: "" }
-        jouer(if (morceau < 0) 0 else morceau)
-        return Decor.MUSIQUES.getOrNull(morceau)?.second ?: ""
+        val suivant = if (musique != null) morceau + 1 else if (morceau < 0) 0 else morceau
+        if (suivant >= Decor.MUSIQUES.size) { arreter(); morceau = -1; return "" }
+        jouer(suivant)
+        if (musique == null) return "musique illisible : " + Decor.MUSIQUES[suivant].first
+        return Decor.MUSIQUES[suivant].second
     }
+
+    /** La radio joue-t-elle en ce moment ? */
+    fun allumee(): Boolean = musique != null
 
     private fun jouer(i: Int) {
         arreter()
         if (i >= Decor.MUSIQUES.size) { morceau = -1; return }
+        derniereErreur = ""
         morceau = i
         try {
             val d = ctx.assets.openFd("chambre/" + Decor.MUSIQUES[i].first)
@@ -59,7 +69,7 @@ class SonChambre(private val ctx: Context) {
                 prepare(); start()
             }
             d.close()
-        } catch (_: Throwable) { musique = null }
+        } catch (e: Throwable) { musique = null; derniereErreur = e.toString() }
     }
 
     fun arreter() {
