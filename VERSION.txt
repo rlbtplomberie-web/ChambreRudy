@@ -1,1 +1,1 @@
-version 27 - PSP avec le moteur officiel PPSSPP
+version 28 - PSP officiel, envois en plusieurs fois

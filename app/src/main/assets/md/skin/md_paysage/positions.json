@@ -1,0 +1,232 @@
+{
+ "largeur": 1844,
+ "hauteur": 853,
+ "ecran": [
+  454,
+  149,
+  922,
+  482
+ ],
+ "elements": [
+  {
+   "id": "manette",
+   "type": "touche",
+   "x": 426,
+   "y": 12,
+   "w": 69,
+   "h": 69,
+   "images": {
+    "repos": "manette_0.png",
+    "appui": [
+     "manette_1.png",
+     "manette_2.png"
+    ]
+   },
+   "marge": 19
+  },
+  {
+   "id": "ff",
+   "type": "touche",
+   "x": 558,
+   "y": 12,
+   "w": 69,
+   "h": 69,
+   "images": {
+    "repos": "ff_0.png",
+    "appui": [
+     "ff_1.png",
+     "ff_2.png"
+    ]
+   },
+   "marge": 19
+  },
+  {
+   "id": "menu",
+   "type": "touche",
+   "x": 1222,
+   "y": 12,
+   "w": 69,
+   "h": 69,
+   "images": {
+    "repos": "menu_0.png",
+    "appui": [
+     "menu_1.png",
+     "menu_2.png"
+    ]
+   },
+   "marge": 19
+  },
+  {
+   "id": "jeux",
+   "type": "touche",
+   "x": 1348,
+   "y": 12,
+   "w": 69,
+   "h": 69,
+   "images": {
+    "repos": "jeux_0.png",
+    "appui": [
+     "jeux_1.png",
+     "jeux_2.png"
+    ]
+   },
+   "marge": 19
+  },
+  {
+   "id": "X",
+   "type": "disque",
+   "x": 1438,
+   "y": 352,
+   "w": 109,
+   "h": 109,
+   "images": {
+    "repos": "X_0.png",
+    "appui": [
+     "X_1.png",
+     "X_2.png"
+    ]
+   },
+   "marge": 31
+  },
+  {
+   "id": "Y",
+   "type": "disque",
+   "x": 1566,
+   "y": 294,
+   "w": 109,
+   "h": 109,
+   "images": {
+    "repos": "Y_0.png",
+    "appui": [
+     "Y_1.png",
+     "Y_2.png"
+    ]
+   },
+   "marge": 31
+  },
+  {
+   "id": "Z",
+   "type": "disque",
+   "x": 1698,
+   "y": 250,
+   "w": 109,
+   "h": 109,
+   "images": {
+    "repos": "Z_0.png",
+    "appui": [
+     "Z_1.png",
+     "Z_2.png"
+    ]
+   },
+   "marge": 31
+  },
+  {
+   "id": "A",
+   "type": "disque",
+   "x": 1444,
+   "y": 490,
+   "w": 109,
+   "h": 109,
+   "images": {
+    "repos": "A_0.png",
+    "appui": [
+     "A_1.png",
+     "A_2.png"
+    ]
+   },
+   "marge": 31
+  },
+  {
+   "id": "B",
+   "type": "disque",
+   "x": 1576,
+   "y": 444,
+   "w": 109,
+   "h": 109,
+   "images": {
+    "repos": "B_0.png",
+    "appui": [
+     "B_1.png",
+     "B_2.png"
+    ]
+   },
+   "marge": 31
+  },
+  {
+   "id": "C",
+   "type": "disque",
+   "x": 1708,
+   "y": 404,
+   "w": 109,
+   "h": 109,
+   "images": {
+    "repos": "C_0.png",
+    "appui": [
+     "C_1.png",
+     "C_2.png"
+    ]
+   },
+   "marge": 31
+  },
+  {
+   "id": "croix",
+   "type": "croix",
+   "x": 76,
+   "y": 280,
+   "w": 255,
+   "h": 255,
+   "images": {
+    "repos": "croix_0.png",
+    "h": [
+     "croix_h1.png",
+     "croix_h2.png"
+    ],
+    "b": [
+     "croix_b1.png",
+     "croix_b2.png"
+    ],
+    "g": [
+     "croix_g1.png",
+     "croix_g2.png"
+    ],
+    "d": [
+     "croix_d1.png",
+     "croix_d2.png"
+    ],
+    "hg": [
+     "croix_hg1.png",
+     "croix_hg2.png"
+    ],
+    "hd": [
+     "croix_hd1.png",
+     "croix_hd2.png"
+    ],
+    "bg": [
+     "croix_bg1.png",
+     "croix_bg2.png"
+    ],
+    "bd": [
+     "croix_bd1.png",
+     "croix_bd2.png"
+    ]
+   },
+   "marge": 66
+  },
+  {
+   "id": "start",
+   "type": "pilule",
+   "x": 1315,
+   "y": 696,
+   "w": 170,
+   "h": 69,
+   "images": {
+    "repos": "start_0.png",
+    "appui": [
+     "start_1.png",
+     "start_2.png"
+    ]
+   },
+   "marge": 41
+  }
+ ]
+}

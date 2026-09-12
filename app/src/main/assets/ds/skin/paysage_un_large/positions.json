@@ -1,0 +1,212 @@
+{
+ "largeur": 1814,
+ "hauteur": 867,
+ "elements": [
+  {
+   "id": "change",
+   "type": "pilule",
+   "x": 1604,
+   "y": 117,
+   "w": 176,
+   "h": 87,
+   "images": {
+    "repos": "change_0.png",
+    "appui": [
+     "change_1.png",
+     "change_2.png"
+    ]
+   },
+   "marge": 48
+  },
+  {
+   "id": "croix",
+   "type": "croix",
+   "x": 56,
+   "y": 227,
+   "w": 292,
+   "h": 300,
+   "images": {
+    "repos": "croix_0.png",
+    "h": [
+     "croix_h1.png",
+     "croix_h2.png"
+    ],
+    "b": [
+     "croix_b1.png",
+     "croix_b2.png"
+    ],
+    "g": [
+     "croix_g1.png",
+     "croix_g2.png"
+    ],
+    "d": [
+     "croix_d1.png",
+     "croix_d2.png"
+    ],
+    "hg": [
+     "croix_hg1.png",
+     "croix_hg2.png"
+    ],
+    "hd": [
+     "croix_hd1.png",
+     "croix_hd2.png"
+    ],
+    "bg": [
+     "croix_bg1.png",
+     "croix_bg2.png"
+    ],
+    "bd": [
+     "croix_bd1.png",
+     "croix_bd2.png"
+    ]
+   },
+   "marge": 66,
+   "course": 0,
+   "zoneMorte": 0.26
+  },
+  {
+   "id": "X",
+   "type": "rond",
+   "x": 1549,
+   "y": 223,
+   "w": 124,
+   "h": 129,
+   "images": {
+    "repos": "X_0.png",
+    "appui": [
+     "X_1.png",
+     "X_2.png"
+    ]
+   },
+   "marge": 36
+  },
+  {
+   "id": "Y",
+   "type": "rond",
+   "x": 1450,
+   "y": 311,
+   "w": 124,
+   "h": 135,
+   "images": {
+    "repos": "Y_0.png",
+    "appui": [
+     "Y_1.png",
+     "Y_2.png"
+    ]
+   },
+   "marge": 38
+  },
+  {
+   "id": "A",
+   "type": "rond",
+   "x": 1648,
+   "y": 311,
+   "w": 128,
+   "h": 133,
+   "images": {
+    "repos": "A_0.png",
+    "appui": [
+     "A_1.png",
+     "A_2.png"
+    ]
+   },
+   "marge": 37
+  },
+  {
+   "id": "B",
+   "type": "rond",
+   "x": 1546,
+   "y": 404,
+   "w": 127,
+   "h": 131,
+   "images": {
+    "repos": "B_0.png",
+    "appui": [
+     "B_1.png",
+     "B_2.png"
+    ]
+   },
+   "marge": 37
+  },
+  {
+   "id": "menu",
+   "type": "rond",
+   "x": 1471,
+   "y": 569,
+   "w": 93,
+   "h": 94,
+   "images": {
+    "repos": "menu_0.png",
+    "appui": [
+     "menu_1.png",
+     "menu_2.png"
+    ]
+   },
+   "marge": 28
+  },
+  {
+   "id": "jeux",
+   "type": "rond",
+   "x": 1651,
+   "y": 569,
+   "w": 94,
+   "h": 94,
+   "images": {
+    "repos": "jeux_0.png",
+    "appui": [
+     "jeux_1.png",
+     "jeux_2.png"
+    ]
+   },
+   "marge": 28
+  },
+  {
+   "id": "select",
+   "type": "pilule",
+   "x": 52,
+   "y": 575,
+   "w": 129,
+   "h": 83,
+   "images": {
+    "repos": "select_0.png",
+    "appui": [
+     "select_1.png",
+     "select_2.png"
+    ]
+   },
+   "marge": 36
+  },
+  {
+   "id": "start",
+   "type": "pilule",
+   "x": 221,
+   "y": 575,
+   "w": 128,
+   "h": 82,
+   "images": {
+    "repos": "start_0.png",
+    "appui": [
+     "start_1.png",
+     "start_2.png"
+    ]
+   },
+   "marge": 36
+  },
+  {
+   "id": "ff",
+   "type": "rond",
+   "x": 62,
+   "y": 701,
+   "w": 103,
+   "h": 107,
+   "images": {
+    "repos": "ff_0.png",
+    "appui": [
+     "ff_1.png",
+     "ff_2.png"
+    ]
+   },
+   "marge": 31
+  }
+ ]
+}
