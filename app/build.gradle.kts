@@ -10,7 +10,12 @@ android {
     defaultConfig {
         applicationId = "com.rudy.chambre"
         minSdk = 24
-        targetSdk = 34
+        // Tes projets Dreamcast, PSP, GameCube, 3DS, DS, Mega Drive et Game Boy
+        // visent tous Android 9. Ce n'est pas un detail : au-dela, Android
+        // interdit d'executer du code fraichement ecrit en memoire, ce que font
+        // les coeurs qui compilent a la volee — Flycast, Dolphin, PPSSPP, Citra.
+        // Viser plus haut les fait quitter des qu'un jeu demarre.
+        targetSdk = 28
         versionCode = 1
         versionName = "1.0"
         // Flycast, melonDS et Citra n'existent qu'en arm64 : on s'aligne sur eux,
@@ -32,12 +37,15 @@ android {
     kotlinOptions { jvmTarget = "17" }
 
     externalNativeBuild {
-        cmake { path = file("src/main/cpp/CMakeLists.txt") }
+        cmake { path = file("src/main/cpp/CMakeLists.txt"); version = "3.22.1" }
     }
     // les coeurs doivent etre extraits sur le disque pour etre ouverts par leur chemin
     // les coeurs doivent etre poses sur le disque pour etre ouverts par leur chemin
-    packaging { jniLibs { useLegacyPackaging = true } }
-    androidResources { noCompress += listOf("png", "jpg", "webp", "bin", "txt", "app", "romfs", "tmd", "bcfnt") }
+    packaging {
+        jniLibs { useLegacyPackaging = true }
+        resources.excludes += setOf("META-INF/*")   // repris de ton projet PSP
+    }
+    androidResources { noCompress += listOf("png", "jpg", "webp", "bin", "txt", "app", "romfs", "tmd", "bcfnt", "zim", "pgf", "ini", "meta", "json") }
 }
 
 dependencies {
