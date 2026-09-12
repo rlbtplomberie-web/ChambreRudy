@@ -1,1 +1,1 @@
-version 31 - une seule bibliotheque C++
+version 32 - GameCube ouverte dans l'application

@@ -42,7 +42,7 @@ object Consoles {
         Console("gc",   "GameCube / Wii",   "com.skingc.app.MainActivity",
                 "skin_gc",   "dossier_roms",  listOf(".iso", ".gcm", ".gcz", ".rvz", ".ciso",
                                                      ".wbfs", ".wad", ".dol", ".elf", ".zip"),
-                coeur = "libdolphin.so", paquetVoisin = "com.skingc.app"),
+                coeur = "libdolphin.so"),
         Console("psp",  "PSP",              "com.skinpsp.app.JeuActivity",
                 "skin_psp",  "dossier_roms",  listOf(".iso", ".cso", ".pbp", ".chd", ".elf"),
                 coeur = "libppsspp_jni.so"),
