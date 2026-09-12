@@ -46,6 +46,19 @@ class CoeurPlus(ctx: Context, nomCoeur: String) {
 
         /** Palettes proposees pour les jeux Game Boy, en noir et blanc. */
         /** Cadences proposees. Zero : celle de la console. */
+
+        /** Palettes de la Game Boy, telles que Gambatte les nomme. */
+        val PALETTES = listOf(
+            "GBC - Grayscale", "GB - DMG", "GB - Pocket", "GB - Light",
+            "GBC - Blue", "GBC - Brown", "GBC - Dark Blue", "GBC - Dark Green",
+            "GBC - Green", "GBC - Inverted", "GBC - Orange", "GBC - Pastel Mix",
+            "GBC - Red", "GBC - Yellow")
+        val PALETTES_FR = listOf(
+            "Gris", "Game Boy d'origine", "Game Boy Pocket", "Game Boy Light",
+            "Bleu", "Brun", "Bleu foncé", "Vert foncé",
+            "Vert", "Inversé", "Orange", "Pastel",
+            "Rouge", "Jaune")
+
         val CADENCES = listOf(0.0, 30.0, 60.0, 120.0)
         val CADENCES_FR = listOf("Native", "30 images/s", "60 images/s", "120 images/s")
 
@@ -115,6 +128,18 @@ class CoeurPlus(ctx: Context, nomCoeur: String) {
 
     fun sauteImages(actif: Boolean) {
         if (pret) natVariable("genesis_plus_gx_frameskip", if (actif) "auto" else "disabled")
+    }
+
+    /** Choisit une palette Game Boy et demande au coeur de ne plus deviner. */
+    fun palette(i: Int) {
+        if (!pret) return
+        natVariable("gambatte_gb_internal_palette", PALETTES[i.coerceIn(0, PALETTES.size - 1)])
+        natVariable("gambatte_gb_colorization", "internal")
+    }
+
+    /** Laisse le coeur choisir les couleurs selon le jeu. */
+    fun couleursAutomatiques() {
+        if (pret) natVariable("gambatte_gb_colorization", "auto")
     }
 
     fun reinitialiser() { if (romChargee) natReinitialiser() }
