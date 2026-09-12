@@ -1,1 +1,1 @@
-version 30 - PSP : ressources de l'application unifiee
+version 31 - une seule bibliotheque C++

@@ -42,7 +42,12 @@ android {
     // les coeurs doivent etre extraits sur le disque pour etre ouverts par leur chemin
     // les coeurs doivent etre poses sur le disque pour etre ouverts par leur chemin
     packaging {
-        jniLibs { useLegacyPackaging = true }
+        jniLibs {
+            useLegacyPackaging = true
+            // si deux bibliotheques C++ se presentent, on garde la premiere
+            // au lieu d'arreter la compilation
+            pickFirsts += "**/libc++_shared.so"
+        }
         resources.excludes += setOf("META-INF/*")   // repris de ton projet PSP
     }
     androidResources { noCompress += listOf("png", "jpg", "webp", "bin", "txt", "app", "romfs", "tmd", "bcfnt", "zim", "pgf", "ini", "meta", "json") }
