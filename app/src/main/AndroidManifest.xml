@@ -48,6 +48,30 @@
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
 
         <activity
+            android:name=".ps1ui.Ps1Activity"
+            android:exported="false"
+            android:screenOrientation="fullUser"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
+
+        <activity
+            android:name=".dcui.DcActivity"
+            android:exported="false"
+            android:screenOrientation="fullUser"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
+
+        <activity
+            android:name=".dsui.DsActivity"
+            android:exported="false"
+            android:screenOrientation="fullUser"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
+
+        <activity
+            android:name=".n3dsui.N3dsActivity"
+            android:exported="false"
+            android:screenOrientation="fullUser"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
+
+        <activity
             android:name=".EmulateurActivity"
             android:exported="false"
             android:screenOrientation="fullUser"

@@ -27,7 +27,11 @@ android {
     kotlinOptions { jvmTarget = "17" }
 
     externalNativeBuild {
-        cmake { path = file("src/main/cpp/CMakeLists.txt") }
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            // Citra reclame la bibliotheque C++ partagee : elle doit etre dans l'APK
+            arguments += "-DANDROID_STL=c++_shared"
+        }
     }
     // le coeur doit etre extrait sur le disque pour etre ouvert par son chemin
     packaging { jniLibs { useLegacyPackaging = true } }

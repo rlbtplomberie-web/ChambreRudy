@@ -113,6 +113,10 @@ class MainActivity : ComponentActivity() {
             "md"  -> Intent(this@MainActivity, com.rudy.chambre.mdui.MdActivity::class.java)
             "gb"  -> Intent(this@MainActivity, com.rudy.chambre.gbui.GbActivity::class.java)
             "gba" -> Intent(this@MainActivity, com.rudy.chambre.gbaui.GbaActivity::class.java)
+            "ps1" -> Intent(this@MainActivity, com.rudy.chambre.ps1ui.Ps1Activity::class.java)
+            "dc"  -> Intent(this@MainActivity, com.rudy.chambre.dcui.DcActivity::class.java)
+            "ds"  -> Intent(this@MainActivity, com.rudy.chambre.dsui.DsActivity::class.java)
+            "3ds" -> Intent(this@MainActivity, com.rudy.chambre.n3dsui.N3dsActivity::class.java)
             else  -> Intent(this@MainActivity, EmulateurActivity::class.java)
         }
     }
