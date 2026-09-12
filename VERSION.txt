@@ -1,1 +1,1 @@
-version 15 - vos emulateurs entiers, paquets d'origine
+version 16 - vos emulateurs entiers, icone ajoutee
