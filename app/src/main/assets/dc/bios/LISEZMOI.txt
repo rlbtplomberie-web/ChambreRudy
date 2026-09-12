@@ -1,0 +1,12 @@
+Depose ici les deux fichiers BIOS Dreamcast avant de compiler : ils seront
+installes tout seuls au premier lancement.
+
+  dc_boot.bin    2 Mo   la ROM de demarrage
+  dc_flash.bin   128 Ko la memoire flash (region, date, reglages)
+
+Flycast ne demarre aucun jeu sans eux. Ce sont des fichiers sous copyright de
+Sega : aucun n'est fourni ici. Ils s'extraient d'une vraie console, ou se
+recuperent par vos propres moyens.
+
+Le bouton BIOS de la barre d'outils permet aussi de les installer depuis le
+telephone, sans recompiler.
