@@ -59,32 +59,29 @@ jobs:
       - name: Preparer l'emulateur N64 de Rudy
         run: |
           set -e
-          if [ -f 64-eMule-Skin64-V7.zip ]; then
-            echo "habillage N64 trouve : on prepare Mupen64Plus"
-            rm -rf m64base
-            git clone --filter=blob:none --quiet \
-              https://github.com/mupen64plus-ae/mupen64plus-ae.git m64base
-            git -C m64base checkout --quiet 33bf7021549d7873e976884370fbd1a8e7333bc7
-            git -C m64base submodule update --init --recursive --depth 1 --quiet || true
-
-            rm -rf paquet-n64 && mkdir -p paquet-n64
-            unzip -q 64-eMule-Skin64-V7.zip -d paquet-n64
-            marque=$(find paquet-n64 -type f -name SKIN64_EMULE_V7 -print -quit)
-            if [ -z "$marque" ]; then echo "::error::habillage N64 incomplet"; exit 1; fi
-            cp -a "$(dirname "$marque")"/. m64base/
-
-            # il devient un morceau de notre application, et non une application
-            gradle_app=m64base/app/build.gradle
-            [ -f "$gradle_app" ] || gradle_app=m64base/app/build.gradle.kts
-            sed -i "s/com\.android\.application/com.android.library/" "$gradle_app"
-            sed -i "/applicationId/d" "$gradle_app"
-            # son ecran d'accueil ne doit plus se declarer comme tel
-            sed -i "s/android.intent.category.LAUNCHER/android.intent.category.DEFAULT/" \
-              m64base/app/src/main/AndroidManifest.xml
-            echo "N64 prete a etre compilee avec l'application"
-          else
+          if [ ! -f 64-eMule-Skin64-V7.zip ]; then
             echo "pas de 64-eMule-Skin64-V7.zip : la N64 ne sera pas dans cet APK."
+            exit 0
           fi
+
+          echo "habillage N64 trouve : on prepare Mupen64Plus"
+          rm -rf m64base
+          git clone --filter=blob:none --quiet \
+            https://github.com/mupen64plus-ae/mupen64plus-ae.git m64base
+          git -C m64base checkout --quiet 33bf7021549d7873e976884370fbd1a8e7333bc7
+          git -C m64base submodule update --init --recursive --depth 1 --quiet || true
+
+          rm -rf paquet-n64 && mkdir -p paquet-n64
+          unzip -q 64-eMule-Skin64-V7.zip -d paquet-n64
+          marque=$(find paquet-n64 -type f -name SKIN64_EMULE_V7 -print -quit)
+          if [ -z "$marque" ]; then echo "::error::habillage N64 incomplet"; exit 1; fi
+          cp -a "$(dirname "$marque")"/. m64base/
+
+          # il devient un morceau de notre application, et non une application
+          gradle_app=m64base/app/build.gradle
+          [ -f "$gradle_app" ] || gradle_app=m64base/app/build.gradle.kts
+          python3 outils/adapter_n64.py "$gradle_app" m64base/app/src/main/AndroidManifest.xml
+          echo "N64 prete a etre compilee avec l'application"
 
       - name: Recuperer les coeurs d'emulation
         run: |
