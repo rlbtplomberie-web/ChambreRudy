@@ -1,0 +1,3 @@
+index.html est la chambre complete. Pour alleger le depot, on peut la remplacer
+par la version decoupee (un fichier par jeu) : le code Android n'a pas a changer,
+il charge simplement web/index.html.
