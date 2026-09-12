@@ -22,25 +22,30 @@ jobs:
       - name: Deballer les mises a jour, s'il y en a
         run: |
           set -e
-          # on accepte plusieurs archives : le projet peut arriver en morceaux,
-          # et le telephone ajoute parfois "(1)" au nom
           archives=$(ls ChambreRudy-maj*.zip 2>/dev/null || true)
           if [ -n "$archives" ]; then
             echo "Archives trouvees :"; echo "$archives"
             mkdir -p /tmp/maj
-
-            # on efface l'ancien code avant de poser le neuf, une seule fois
-            rm -rf app/src/main/java app/src/main/assets app/src/main/cpp app/src/main/res
-
-            # les morceaux se completent : on les deballe tous au meme endroit
             for a in $archives; do
               echo "  deballage de $a"
               unzip -o -q "$a" -d /tmp/maj
             done
-            rm -rf /tmp/maj/.github          # le workflow ne se remplace jamais lui-meme
+            rm -rf /tmp/maj/.github        # le workflow ne se remplace jamais lui-meme
+
+            # Les envois peuvent arriver en plusieurs fois : on n'efface donc
+            # plus tout le code. On supprime seulement ce qui est nomme dans
+            # a_supprimer.txt, la liste des fichiers devenus inutiles.
+            if [ -f /tmp/maj/a_supprimer.txt ]; then
+              while IFS= read -r chemin; do
+                [ -n "$chemin" ] || continue
+                echo "  suppression : $chemin"
+                rm -rf "$chemin"
+              done < /tmp/maj/a_supprimer.txt
+              rm -f /tmp/maj/a_supprimer.txt
+            fi
 
             cp -r /tmp/maj/. .
-            rm -f ChambreRudy-maj*.zip       # et on retire les archives du depot
+            rm -f ChambreRudy-maj*.zip
 
             git config user.name "github-actions"
             git config user.email "actions@github.com"
