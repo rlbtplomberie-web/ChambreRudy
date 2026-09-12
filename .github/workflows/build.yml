@@ -80,7 +80,17 @@ jobs:
           # il devient un morceau de notre application, et non une application
           gradle_app=m64base/app/build.gradle
           [ -f "$gradle_app" ] || gradle_app=m64base/app/build.gradle.kts
-          python3 outils/adapter_n64.py "$gradle_app" m64base/app/src/main/AndroidManifest.xml
+          for module in m64base/*/; do
+            g="$module/build.gradle"
+            [ -f "$g" ] || g="$module/build.gradle.kts"
+            [ -f "$g" ] || continue
+            mf="$module/src/main/AndroidManifest.xml"
+            if [ -f "$mf" ]; then
+              python3 outils/adapter_n64.py "$g" "$mf"
+            else
+              python3 outils/adapter_n64.py "$g"
+            fi
+          done
           echo "N64 prete a etre compilee avec l'application"
 
       - name: Recuperer les coeurs d'emulation
