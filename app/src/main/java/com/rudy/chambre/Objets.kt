@@ -16,59 +16,135 @@ object Objets {
     }
 
 
+
     /**
      * Le carton de la photo, redessine par-dessus lui-meme pour que ses rabats
-     * puissent s'ouvrir. Meme place, meme taille, meme inclinaison : on ne voit
-     * pas la substitution. [ouverture] va de 0 a 1.
+     * s'ouvrent. On cherche ici la matiere : fibres verticales, cannelures sur
+     * la tranche, ruban adhesif, coins uses, et la lumiere chaude du bureau qui
+     * vient de la droite.
      */
     fun cartonPhoto(c: Canvas, face: RectF, profondeur: Float, ouverture: Float) {
         val h = face.height()
-        // le cote droit, en fuite, qui donne l'epaisseur
+        val l = face.width()
         p.style = Paint.Style.FILL
+
+        // ---- la tranche droite, en fuite ----
         val cote = Path()
         cote.moveTo(face.right, face.top)
         cote.lineTo(face.right + profondeur, face.top - profondeur * .55f)
         cote.lineTo(face.right + profondeur, face.bottom - profondeur * .55f)
         cote.lineTo(face.right, face.bottom)
         cote.close()
-        p.color = 0xFF9A6E48.toInt()
+        p.shader = LinearGradient(face.right, 0f, face.right + profondeur, 0f,
+            intArrayOf(0xFF8E6340.toInt(), 0xFF6E4A2E.toInt()), null, Shader.TileMode.CLAMP)
         c.drawPath(cote, p)
+        p.shader = null
 
-        // la face avant, carton clair eclaire par la lampe du bureau
+        // ---- la face avant : kraft, eclairee par la droite ----
         p.shader = LinearGradient(face.left, face.top, face.right, face.bottom,
-            intArrayOf(0xFFD9B489.toInt(), 0xFFB98D63.toInt()), null, Shader.TileMode.CLAMP)
+            intArrayOf(0xFFB98A5E.toInt(), 0xFFC79A6C.toInt(), 0xFF9A6C45.toInt()),
+            floatArrayOf(0f, .55f, 1f), Shader.TileMode.CLAMP)
         c.drawRect(face, p)
         p.shader = null
 
-        // l'interieur sombre, visible des que les rabats se relevent
+        // les fibres du carton : de fines rayures verticales, a peine visibles
+        p.strokeWidth = kotlin.math.max(1f, l * .004f)
+        p.style = Paint.Style.STROKE
+        var x = face.left + l * .02f
+        var i = 0
+        while (x < face.right) {
+            p.color = if (i % 3 == 0) 0x14000000 else 0x10FFE0C0
+            c.drawLine(x, face.top, x, face.bottom, p)
+            x += l * .028f; i++
+        }
+        p.style = Paint.Style.FILL
+
+        // le pli du milieu, la ou les deux rabats se rejoignent
+        p.color = 0x2E2A1608
+        c.drawRect(face.centerX() - l * .006f, face.top, face.centerX() + l * .006f, face.bottom, p)
+
+        // le ruban adhesif, plus clair et un peu brillant
+        p.color = 0x3CFFF3DC
+        c.drawRect(face.centerX() - l * .075f, face.top, face.centerX() + l * .075f, face.bottom, p)
+        p.color = 0x22FFFFFF
+        c.drawRect(face.centerX() - l * .075f, face.top, face.centerX() - l * .045f, face.bottom, p)
+
+        // l'ombre portee sous le rebord haut, et le bas plus sombre
+        p.shader = LinearGradient(0f, face.top, 0f, face.top + h * .18f,
+            intArrayOf(0x4A1E0F05, 0x00000000), null, Shader.TileMode.CLAMP)
+        c.drawRect(face.left, face.top, face.right, face.top + h * .18f, p)
+        p.shader = LinearGradient(0f, face.bottom - h * .22f, 0f, face.bottom,
+            intArrayOf(0x00000000, 0x552A1408), null, Shader.TileMode.CLAMP)
+        c.drawRect(face.left, face.bottom - h * .22f, face.right, face.bottom, p)
+        p.shader = null
+
+        // les coins uses, plus clairs, comme un carton deja transporte
+        p.color = 0x3AF2DCBE
+        c.drawCircle(face.left + l * .04f, face.bottom - h * .05f, l * .045f, p)
+        c.drawCircle(face.right - l * .05f, face.bottom - h * .04f, l * .035f, p)
+        c.drawCircle(face.right - l * .03f, face.top + h * .07f, l * .028f, p)
+
+        // ---- l'interieur, des que ca s'ouvre ----
         if (ouverture > 0f) {
-            p.color = 0xFF2A1A0E.toInt()
-            c.drawRect(face.left, face.top - profondeur * .55f * ouverture,
-                       face.right, face.top + h * .10f, p)
+            p.shader = LinearGradient(0f, face.top - profondeur * .6f * ouverture, 0f, face.top + h * .22f,
+                intArrayOf(0xFF1A0F06.toInt(), 0xFF3A2413.toInt()), null, Shader.TileMode.CLAMP)
+            c.drawRect(face.left, face.top - profondeur * .6f * ouverture,
+                       face.right, face.top + h * .12f, p)
+            p.shader = null
         }
 
-        // les deux rabats, qui basculent vers l'exterieur
+        // ---- les deux rabats ----
         if (ouverture > 0f) {
             val lev = h * .62f * ouverture
-            p.color = 0xFFC49A6C.toInt()
-            val g = Path()
-            g.moveTo(face.left, face.top); g.lineTo(face.centerX(), face.top)
-            g.lineTo(face.centerX() - h * .06f, face.top - lev)
-            g.lineTo(face.left - h * .10f, face.top - lev * .82f); g.close()
-            c.drawPath(g, p)
-            p.color = 0xFFB08658.toInt()
-            val d = Path()
-            d.moveTo(face.centerX(), face.top); d.lineTo(face.right, face.top)
-            d.lineTo(face.right + h * .10f, face.top - lev * .82f)
-            d.lineTo(face.centerX() + h * .06f, face.top - lev); d.close()
-            c.drawPath(d, p)
+            for (cote2 in 0..1) {
+                val chemin = Path()
+                if (cote2 == 0) {
+                    chemin.moveTo(face.left, face.top)
+                    chemin.lineTo(face.centerX(), face.top)
+                    chemin.lineTo(face.centerX() - h * .06f, face.top - lev)
+                    chemin.lineTo(face.left - h * .10f, face.top - lev * .82f)
+                } else {
+                    chemin.moveTo(face.centerX(), face.top)
+                    chemin.lineTo(face.right, face.top)
+                    chemin.lineTo(face.right + h * .10f, face.top - lev * .82f)
+                    chemin.lineTo(face.centerX() + h * .06f, face.top - lev)
+                }
+                chemin.close()
+                p.shader = LinearGradient(0f, face.top - lev, 0f, face.top,
+                    intArrayOf(if (cote2 == 0) 0xFFD2AA80.toInt() else 0xFFC49A6C.toInt(),
+                               0xFF9E7048.toInt()), null, Shader.TileMode.CLAMP)
+                c.drawPath(chemin, p)
+                p.shader = null
+                // la tranche cannelee du rabat : les vagues du carton ondule
+                p.style = Paint.Style.STROKE
+                p.strokeWidth = kotlin.math.max(1f, h * .012f)
+                p.color = 0x55FFF0D8
+                val y0 = face.top - lev
+                val depart = if (cote2 == 0) face.left - h * .10f else face.centerX() + h * .06f
+                val fin = if (cote2 == 0) face.centerX() - h * .06f else face.right + h * .10f
+                val vague = Path()
+                var vx = depart
+                var haut = true
+                vague.moveTo(vx, y0 + h * .02f)
+                while (vx < fin) {
+                    val suivant = kotlin.math.min(vx + l * .035f, fin)
+                    vague.quadTo((vx + suivant) / 2f,
+                                 y0 + (if (haut) -h * .015f else h * .05f), suivant, y0 + h * .02f)
+                    vx = suivant; haut = !haut
+                }
+                c.drawPath(vague, p)
+                p.style = Paint.Style.FILL
+            }
         }
 
-        // le nom au feutre, comme sur la photo
-        texte.color = 0xFF3A2A18.toInt()
-        texte.textSize = h * .42f
+        // ---- le nom au feutre, legerement irregulier ----
+        texte.color = 0xE63A2A18.toInt()
+        texte.textSize = h * .40f
         texte.typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD_ITALIC)
-        c.drawText("Rudy", face.centerX(), face.centerY() + h * .15f, texte)
+        c.save()
+        c.rotate(-2.5f, face.centerX(), face.centerY())
+        c.drawText("Rudy", face.centerX(), face.centerY() + h * .14f, texte)
+        c.restore()
         texte.typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
     }
 

@@ -37,6 +37,7 @@ class ChambreActivity : ComponentActivity() {
         son = SonChambre(this)
         vue = VueChambre(this)
         vue.surObjet = { quoi -> toucheObjet(quoi) }
+        vue.surEcranTele = { r -> placerEcranTele(r) }
 
         etiquette = TextView(this).apply {
             setTextColor(0xFFFFEEC2.toInt())
@@ -120,13 +121,35 @@ class ChambreActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * L'ecran de la tele suit le decor.
+     *
+     * La video est une surface posee sur la vue : elle ne se deplace pas toute
+     * seule quand la camera tourne. On la replace donc a chaque image, et on
+     * l'efface des qu'on regarde un autre mur.
+     */
+    private fun placerEcranTele(r: android.graphics.RectF?) {
+        if (!::ecranTele.isInitialized) return
+        if (r == null || !teleAllumee) { ecranTele.visibility = android.view.View.INVISIBLE; return }
+        val lp = ecranTele.layoutParams as? FrameLayout.LayoutParams ?: return
+        val l = r.width().toInt(); val h = r.height().toInt()
+        if (l <= 0 || h <= 0) { ecranTele.visibility = android.view.View.INVISIBLE; return }
+        if (lp.width != l || lp.height != h || lp.leftMargin != r.left.toInt()
+            || lp.topMargin != r.top.toInt()) {
+            lp.width = l; lp.height = h
+            lp.leftMargin = r.left.toInt(); lp.topMargin = r.top.toInt()
+            ecranTele.layoutParams = lp
+        }
+        ecranTele.visibility = android.view.View.VISIBLE
+    }
+
+    private var teleAllumee = false
+
     /** La tele s'allume et joue la sequence de demarrage de cette console. */
     private fun allumerLaTele(console: Decor.ConsolePosee) {
-        val r = vue.rectangleTele()
-        val lp = FrameLayout.LayoutParams(r.width().toInt(), r.height().toInt())
-        lp.leftMargin = r.left.toInt(); lp.topMargin = r.top.toInt()
-        ecranTele.layoutParams = lp
+        teleAllumee = true
         ecranTele.alpha = 1f
+        placerEcranTele(vue.rectangleTele())
 
         try { lecteur?.release() } catch (_: Throwable) {}
         lecteur = null
@@ -138,13 +161,16 @@ class ChambreActivity : ComponentActivity() {
                 setDataSource(d.fileDescriptor, d.startOffset, d.length)
                 setSurface(android.view.Surface(surface))
                 setVolume(0.85f, 0.85f)
-                setOnCompletionListener { ecranTele.animate().alpha(0f).setDuration(600).start() }
+                setOnCompletionListener {
+                    teleAllumee = false
+                    ecranTele.animate().alpha(0f).setDuration(600).start()
+                }
                 prepare(); start()
             }
             d.close()
             son.enPause(true)                       // la radio se tait pendant la sequence
             ecranTele.postDelayed({ son.enPause(false) }, 6000)
-        } catch (_: Throwable) { ecranTele.alpha = 0f }
+        } catch (_: Throwable) { teleAllumee = false; ecranTele.alpha = 0f }
     }
 
     // ================= les menus =================

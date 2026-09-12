@@ -95,6 +95,15 @@
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|density"
             android:theme="@style/ThemePleinEcran" />
 
+        <!-- Nintendo 64 : habillage de Rudy, coeur Mupen64Plus -->
+        <activity
+            android:name="com.skinn64.app.MainActivity"
+            android:exported="false"
+            android:screenOrientation="fullSensor"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
+            android:theme="@style/ThemePleinEcran" />
+
         <!-- PlayStation : reglages repris de son projet -->
         <activity
             android:name="com.skinps1.app.MainActivity"

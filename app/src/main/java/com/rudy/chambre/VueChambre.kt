@@ -19,6 +19,8 @@ class VueChambre(ctx: Context) : View(ctx) {
 
     /** Ce que la vue demande a l'activite. */
     var surObjet: ((String) -> Unit)? = null
+    /** Ou se trouve l'ecran de la tele, a chaque image : la video l'y suit. */
+    var surEcranTele: ((RectF?) -> Unit)? = null
 
     private val images = HashMap<String, Bitmap>()
     private val peinture = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
@@ -95,6 +97,9 @@ class VueChambre(ctx: Context) : View(ctx) {
         c.drawColor(Color.BLACK)
         val dest = RectF(decX, decY, decX + largeurMur, decY + hauteurMur)
         c.drawBitmap(fond, null, dest, peinture)
+        // la video de la tele suit le decor, ou disparait si on regarde ailleurs
+        surEcranTele?.invoke(if (vue == 0) zone(Decor.TELE) else null)
+
         when (vue) {
             0 -> dessinerBureau(c)
             1 -> {
@@ -188,11 +193,35 @@ class VueChambre(ctx: Context) : View(ctx) {
     /** Deux battants qui pivotent, dessines en perspective. */
     private fun dessinerPortes(c: Canvas) {
         val m = zone(Decor.MEUBLE)
-        // l'interieur sombre, visible des qu'un battant s'ecarte
+        // l'interieur, visible des qu'un battant s'ecarte
         if (porteG > 0.02f || porteD > 0.02f) {
             fondMeuble.shader = LinearGradient(m.left, m.top, m.left, m.bottom,
                 intArrayOf(0xFF2A1B10.toInt(), 0xFF120B06.toInt()), null, Shader.TileMode.CLAMP)
             c.drawRect(m, fondMeuble)
+            fondMeuble.shader = null
+            // a gauche, la pile de jeux de societe ; a droite, la console posee
+            if (porteG > 0.25f) charger("jeux.webp")?.let { img ->
+                val l = m.width() * .46f
+                val hh = l * img.height / img.width
+                val cx = m.left + m.width() * .26f
+                val cy = m.centerY()
+                peinture.alpha = (255 * ((porteG - .25f) / .75f).coerceIn(0f, 1f)).toInt()
+                c.drawBitmap(img, null,
+                    RectF(cx - l/2, cy - hh/2, cx + l/2, cy + hh/2), peinture)
+                peinture.alpha = 255
+            }
+            if (porteD > 0.25f) consolePosee()?.let { console ->
+                charger(console.image)?.let { img ->
+                    val l = m.width() * .40f
+                    val hh = l * img.height / img.width
+                    val cx = m.left + m.width() * .74f
+                    val cy = m.centerY()
+                    peinture.alpha = (255 * ((porteD - .25f) / .75f).coerceIn(0f, 1f)).toInt()
+                    c.drawBitmap(img, null,
+                        RectF(cx - l/2, cy - hh/2, cx + l/2, cy + hh/2), peinture)
+                    peinture.alpha = 255
+                }
+            }
         }
         val demi = m.width() / 2f
         for (cote in 0..1) {

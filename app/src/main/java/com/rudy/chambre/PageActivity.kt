@@ -1,6 +1,7 @@
 package com.rudy.chambre
 
 import android.content.Intent
+import android.net.Uri
 import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.os.Bundle
@@ -9,6 +10,8 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
 import android.webkit.WebViewClient
 import android.widget.Button
 import android.widget.FrameLayout
@@ -32,6 +35,14 @@ class PageActivity : ComponentActivity() {
 
     private lateinit var vue: WebView
     private var consoleEnAttente: String? = null
+    /** Ce que la page attend quand elle demande un fichier. */
+    private var attenteFichier: ValueCallback<Array<Uri>>? = null
+
+    private val choisirFichiers =
+        registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { liste ->
+            attenteFichier?.onReceiveValue(liste.toTypedArray())
+            attenteFichier = null
+        }
 
     private val choisirDossier =
         registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
@@ -69,6 +80,32 @@ class PageActivity : ComponentActivity() {
             webViewClient = object : WebViewClient() {
                 override fun shouldInterceptRequest(v: WebView, r: WebResourceRequest): WebResourceResponse? =
                     serveur.shouldInterceptRequest(r.url)
+            }
+            /*
+             * Une page qui demande un fichier — « Ajouter un livre », une
+             * jaquette — doit ouvrir le selecteur du telephone. Sans ce relais,
+             * le bouton ne fait rien du tout.
+             */
+            webChromeClient = object : WebChromeClient() {
+                override fun onShowFileChooser(
+                    v: WebView?,
+                    retour: ValueCallback<Array<Uri>>?,
+                    parametres: FileChooserParams?
+                ): Boolean {
+                    attenteFichier?.onReceiveValue(null)
+                    attenteFichier = retour
+                    val types = parametres?.acceptTypes
+                        ?.filter { it.isNotBlank() }
+                        ?.toTypedArray()
+                        ?: arrayOf("*/*")
+                    return try {
+                        choisirFichiers.launch(if (types.isEmpty()) arrayOf("*/*") else types)
+                        true
+                    } catch (_: Throwable) {
+                        attenteFichier = null
+                        false
+                    }
+                }
             }
             addJavascriptInterface(Pont(), "Android")
             loadUrl("https://appassets.androidplatform.net/assets/web/$page")
