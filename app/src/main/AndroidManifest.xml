@@ -9,9 +9,9 @@
         android:hardwareAccelerated="true"
         android:theme="@style/Theme.Chambre">
 
-        <!-- La chambre : le decor et tout ce qui s'y ouvre -->
+        <!-- La chambre : l'ecran d'accueil -->
         <activity
-            android:name=".MainActivity"
+            android:name="com.rudy.chambre.MainActivity"
             android:exported="true"
             android:screenOrientation="fullUser"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode">
@@ -21,58 +21,65 @@
             </intent-filter>
         </activity>
 
-        <!-- L'emulateur, une seule activite pour toutes les consoles -->
-        <!-- La NES garde son interface d'origine -->
+        <!-- NES -->
         <activity
-            android:name=".nesui.NesActivity"
+            android:name="com.skinnes.app.MainActivity"
             android:exported="false"
             android:screenOrientation="fullUser"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
 
+        <!-- Super Nintendo -->
         <activity
-            android:name=".mdui.MdActivity"
+            android:name="com.skinsnes.app.MainActivity"
             android:exported="false"
             android:screenOrientation="fullUser"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
 
+        <!-- Game Boy -->
         <activity
-            android:name=".gbui.GbActivity"
+            android:name="com.gbgbc.app.MainActivity"
             android:exported="false"
             android:screenOrientation="fullUser"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
 
+        <!-- Game Boy Advance -->
         <activity
-            android:name=".gbaui.GbaActivity"
+            android:name="com.skingba.app.MainActivity"
             android:exported="false"
             android:screenOrientation="fullUser"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
 
+        <!-- Mega Drive -->
         <activity
-            android:name=".ps1ui.Ps1Activity"
+            android:name="com.skinmd.app.MainActivity"
             android:exported="false"
             android:screenOrientation="fullUser"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
 
+        <!-- PlayStation -->
         <activity
-            android:name=".dcui.DcActivity"
+            android:name="com.skinps1.app.MainActivity"
             android:exported="false"
             android:screenOrientation="fullUser"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
 
+        <!-- Dreamcast -->
         <activity
-            android:name=".dsui.DsActivity"
+            android:name="com.skindc.app.MainActivity"
             android:exported="false"
             android:screenOrientation="fullUser"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
 
+        <!-- Nintendo DS -->
         <activity
-            android:name=".n3dsui.N3dsActivity"
+            android:name="com.skinds.app.MainActivity"
             android:exported="false"
             android:screenOrientation="fullUser"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
 
+        <!-- Nintendo 3DS -->
         <activity
-            android:name=".EmulateurActivity"
+            android:name="com.skin3ds.app.MainActivity"
             android:exported="false"
             android:screenOrientation="fullUser"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />

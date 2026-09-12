@@ -12,8 +12,7 @@ android {
         minSdk = 24
         targetSdk = 34
         versionCode = 1
-        versionName = "0.1"
-        // les coeurs libretro sont fournis pour ces deux architectures
+        versionName = "1.0"
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
         // Citra reclame la bibliotheque C++ partagee : elle doit etre dans l'APK
         externalNativeBuild {
@@ -33,9 +32,9 @@ android {
     externalNativeBuild {
         cmake { path = file("src/main/cpp/CMakeLists.txt") }
     }
-    // le coeur doit etre extrait sur le disque pour etre ouvert par son chemin
+    // les coeurs doivent etre extraits sur le disque pour etre ouverts par leur chemin
     packaging { jniLibs { useLegacyPackaging = true } }
-    androidResources { noCompress += listOf("png", "jpg", "webp", "mp3", "webm", "mp4", "html") }
+    androidResources { noCompress += listOf("png", "jpg", "webp", "bin", "txt", "app", "romfs", "tmd") }
 }
 
 dependencies {

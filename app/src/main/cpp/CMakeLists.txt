@@ -5,27 +5,31 @@ find_library(log-lib log)
 find_library(egl-lib EGL)
 find_library(gles-lib GLESv3)
 
-# Chaque emulateur garde le pont natif de son projet d'origine : ils different
-# trop pour etre fondus en un seul sans risque.
+# Chaque emulateur garde son pont natif, son nom et ses fonctions d'origine :
+# rien n'est renomme, donc rien ne peut se desaccorder.
 
-# NES / Super Nintendo : pont simple
-add_library(pont SHARED pont.c)
-target_link_libraries(pont ${log-lib} dl)
+add_library(skinsnes SHARED skinsnes/pont.c)
+target_link_libraries(skinsnes ${log-lib} dl)
 
-# Mega Drive, Game Boy, Game Boy Advance : triches et reglages de coeur
-add_library(pontplus SHARED pontplus.c)
-target_link_libraries(pontplus ${log-lib} dl)
+add_library(gbgbc SHARED gbgbc/pont.c)
+target_link_libraries(gbgbc ${log-lib} dl)
 
-# PlayStation
-add_library(pont_ps1 SHARED pont_ps1.c)
-target_link_libraries(pont_ps1 ${log-lib} dl)
+add_library(skingba SHARED skingba/pont.c)
+target_link_libraries(skingba ${log-lib} dl)
 
-# Dreamcast, Nintendo DS, Nintendo 3DS : rendu par OpenGL
-add_library(pont_dc SHARED pont_dc.c)
-target_link_libraries(pont_dc ${log-lib} ${egl-lib} ${gles-lib} dl)
+add_library(skinmd SHARED skinmd/pont.c)
+target_link_libraries(skinmd ${log-lib} dl)
 
-add_library(pont_ds SHARED pont_ds.c)
-target_link_libraries(pont_ds ${log-lib} ${egl-lib} ${gles-lib} dl)
+add_library(skinps1 SHARED skinps1/pont.c)
+target_link_libraries(skinps1 ${log-lib} dl)
 
-add_library(pont_n3ds SHARED pont_n3ds.c stl.cpp)
-target_link_libraries(pont_n3ds ${log-lib} ${egl-lib} ${gles-lib} dl)
+add_library(skindc SHARED skindc/pont.c)
+target_link_libraries(skindc ${log-lib} ${egl-lib} ${gles-lib} dl)
+
+add_library(skinds SHARED skinds/pont.c)
+target_link_libraries(skinds ${log-lib} ${egl-lib} ${gles-lib} dl)
+
+# La 3DS : son pont, plus un fichier C++ vide pour que libc++_shared.so
+# soit embarquee dans l'APK, comme Citra l'exige.
+add_library(skin3ds SHARED skin3ds/pont.c stl.cpp)
+target_link_libraries(skin3ds ${log-lib} ${egl-lib} ${gles-lib} dl)

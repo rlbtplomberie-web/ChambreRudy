@@ -1,1 +1,1 @@
-version 14 - neuf consoles, ecran de secours 3DS
+version 15 - vos emulateurs entiers, paquets d'origine
