@@ -170,8 +170,32 @@ class MainActivity : ComponentActivity() {
 
         @JavascriptInterface
         fun lancer(console: String, uriRom: String) {
-            val i = ecran(console)?.putExtra("rom", uriRom) ?: return
-            runOnUiThread { startActivity(i) }
+            runOnUiThread {
+                try {
+                    val fiche = Consoles.parId(console)
+                    if (fiche == null) {
+                        android.widget.Toast.makeText(this@MainActivity,
+                            "console inconnue : " + console, android.widget.Toast.LENGTH_LONG).show()
+                        return@runOnUiThread
+                    }
+                    val i = ecran(console)
+                    if (i == null) {
+                        android.widget.Toast.makeText(this@MainActivity,
+                            fiche.nom + " : ecran introuvable (" + fiche.activite + ")",
+                            android.widget.Toast.LENGTH_LONG).show()
+                        return@runOnUiThread
+                    }
+                    if (uriRom.isBlank()) {
+                        android.widget.Toast.makeText(this@MainActivity,
+                            fiche.nom + " : aucun jeu designe", android.widget.Toast.LENGTH_LONG).show()
+                        return@runOnUiThread
+                    }
+                    startActivity(i.putExtra("rom", uriRom))
+                } catch (e: Throwable) {
+                    android.widget.Toast.makeText(this@MainActivity,
+                        "lancement impossible : " + e, android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
         }
     }
 }
