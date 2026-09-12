@@ -21,17 +21,30 @@ jobs:
 
       - name: Deballer la mise a jour, s'il y en a une
         run: |
-          if [ -f ChambreRudy-maj.zip ]; then
+          set -e
+          # on accepte n'importe quel nom commencant par ChambreRudy-maj :
+          # le telephone ajoute parfois "(1)" quand le fichier existe deja
+          archive=$(ls -t ChambreRudy-maj*.zip 2>/dev/null | head -1 || true)
+          if [ -n "$archive" ]; then
+            echo "Archive trouvee : $archive"
             mkdir -p /tmp/maj
-            unzip -o ChambreRudy-maj.zip -d /tmp/maj
-            rm -rf /tmp/maj/.github
+            unzip -o -q "$archive" -d /tmp/maj
+            rm -rf /tmp/maj/.github          # le workflow ne se remplace jamais lui-meme
+
+            # on efface l'ancien code avant de poser le neuf :
+            # ainsi un fichier supprime chez moi disparait aussi du depot
+            rm -rf app/src/main/java app/src/main/assets app/src/main/cpp app/src/main/res
+
             cp -r /tmp/maj/. .
-            rm -f ChambreRudy-maj.zip
+            rm -f ChambreRudy-maj*.zip       # et on retire les archives du depot
+
             git config user.name "github-actions"
             git config user.email "actions@github.com"
             git add -A
-            git commit -m "Mise a jour depuis le zip" || echo "Rien de nouveau."
+            git commit -m "Mise a jour depuis $archive" || echo "Rien de nouveau."
             git push
+          else
+            echo "Aucune archive : on compile le code deja present."
           fi
 
       - name: Recuperer les coeurs d'emulation
