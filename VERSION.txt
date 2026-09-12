@@ -1,1 +1,1 @@
-version 57 - Mupen64Plus integre au projet
+version 58 - transformation de Mupen64Plus en morceau du projet
