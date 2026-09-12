@@ -28,6 +28,7 @@ class VueChambre(ctx: Context) : View(ctx) {
     private var vue = 0                 // 0 bureau, 1 baie vitree, 2 lit
     private var decX = 0f               // decalage horizontal dans le mur courant
     private var largeurMur = 0f
+    private var decY = 0f
     private var hauteurMur = 0f
     private var enPivot = false
 
@@ -69,9 +70,21 @@ class VueChambre(ctx: Context) : View(ctx) {
     }
 
     private fun recalculer() {
-        hauteurMur = height.toFloat()
-        largeurMur = if (vue == 2) hauteurMur * Decor.RATIO_LIT else hauteurMur * Decor.RATIO_MUR
+        // meme calcul que dans la version web : l'image couvre l'ecran et
+        // deborde de deux pour cent, pour qu'on puisse promener le regard
+        val ratio = if (vue == 2) Decor.RATIO_LIT else Decor.RATIO_MUR
+        largeurMur = max(width.toFloat(), height * ratio) * 1.02f
+        hauteurMur = largeurMur / ratio
         decX = decX.coerceIn(min(0f, width - largeurMur), 0f)
+        decY = (height - hauteurMur).coerceAtMost(0f)
+    }
+
+    /** Le cadrage d'arrivee : la tele au tiers gauche, comme a l'origine. */
+    fun cadrerSurLaTele() {
+        recalculer()
+        decX = (width * .37f - Decor.TELE.x * largeurMur)
+            .coerceIn(min(0f, width - largeurMur), 0f)
+        invalidate()
     }
 
     // ================= dessin =================
@@ -80,7 +93,7 @@ class VueChambre(ctx: Context) : View(ctx) {
         if (etape == 1) { dessinerIntro(c); return }
         val fond = charger(murs[vue]) ?: return
         c.drawColor(Color.BLACK)
-        val dest = RectF(decX, 0f, decX + largeurMur, hauteurMur)
+        val dest = RectF(decX, decY, decX + largeurMur, decY + hauteurMur)
         c.drawBitmap(fond, null, dest, peinture)
         when (vue) {
             0 -> dessinerBureau(c)
@@ -95,9 +108,9 @@ class VueChambre(ctx: Context) : View(ctx) {
     /** Un rectangle du decor, ramene aux pixels de l'ecran. */
     private fun zone(z: Decor.Zone): RectF = RectF(
         decX + z.x * largeurMur,
-        z.y * hauteurMur,
+        decY + z.y * hauteurMur,
         decX + (z.x + z.l) * largeurMur,
-        (z.y + z.h) * hauteurMur
+        decY + (z.y + z.h) * hauteurMur
     )
 
     /** Le battement lent des pastilles, remis a jour a chaque image. */
@@ -150,12 +163,13 @@ class VueChambre(ctx: Context) : View(ctx) {
                 val depart = zone(Decor.CARTON)
                 val t = sortie
                 val cx = depart.centerX() + (p.centerX() - depart.centerX()) * t
-                val arc = -p.height() * 0.9f * (t * (1 - t) * 4f)      // un saut, puis la pose
-                val cy = depart.centerY() + (p.centerY() - depart.centerY()) * t + arc
-                val l = p.width() * (0.72f + 0.28f * t)
+                val arc = -p.height() * 1.4f * (t * (1 - t) * 4f)      // un saut, puis la pose
+                // l'emplacement entre la tele et le carton, pose sur le plateau
+                val l = p.width() * (0.55f + 0.45f * t)
                 val hh = l * img.height / img.width
+                val bas = p.bottom + arc
                 c.drawBitmap(img, null,
-                    RectF(cx - l / 2, cy - hh * 0.8f, cx + l / 2, cy + hh * 0.2f), peinture)
+                    RectF(cx - l / 2, bas - hh, cx + l / 2, bas), peinture)
             }
         }
 
@@ -283,8 +297,13 @@ class VueChambre(ctx: Context) : View(ctx) {
         c.drawBitmap(fond, null, RectF(x, y, x + lFond, y + hFond), peinture)
         c.restore()
 
-        // le carton, au centre du bureau, qui s'ouvre
-        val cartonR = RectF(width * .30f, height * .44f, width * .70f, height * .66f)
+        // le carton, pose sur le bureau de la photo : on suit le meme
+        // rapprochement que l'image, pour qu'il reste a sa place
+        val lCarton = lFond * 0.24f
+        val hCarton = lCarton * 0.62f
+        val cartonR = RectF(
+            x + lFond * 0.44f, y + hFond * 0.50f,
+            x + lFond * 0.44f + lCarton, y + hFond * 0.50f + hCarton)
         val ouv = ((t - .52f) / .12f).coerceIn(0f, 1f)
         c.save()
         if (secousse != 0f) c.rotate(secousse, cartonR.centerX(), cartonR.bottom)
@@ -442,6 +461,9 @@ class VueChambre(ctx: Context) : View(ctx) {
             if (gauche) porteG = v else porteD = v
         }, fin)
     }
+
+    /** Ou se trouve l'ecran de la tele, en pixels : l'activite y pose la video. */
+    fun rectangleTele(): RectF = zone(Decor.TELE)
 
     /** La console posee, s'il y en a une. */
     fun consolePosee(): Decor.ConsolePosee? =

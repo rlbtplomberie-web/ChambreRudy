@@ -3,6 +3,7 @@ package com.rudy.chambre
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
+import android.view.TextureView
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.activity.ComponentActivity
@@ -22,6 +23,8 @@ class ChambreActivity : ComponentActivity() {
     private lateinit var vue: VueChambre
     private lateinit var son: SonChambre
     private lateinit var etiquette: TextView
+    private lateinit var ecranTele: TextureView
+    private var lecteur: android.media.MediaPlayer? = null
 
     override fun onCreate(etat: Bundle?) {
         super.onCreate(etat)
@@ -49,12 +52,17 @@ class ChambreActivity : ComponentActivity() {
                     son.bruit("pose.mp3")
                     son.radio()
                     vue.radioAllumee = true       // la radio s'allume en arrivant
+                    vue.cadrerSurLaTele()
                 }
             }
         }
 
+        // l'ecran de la tele : une surface posee sur le decor, a sa place exacte
+        ecranTele = TextureView(this).apply { alpha = 0f; isOpaque = false }
+
         val racine = FrameLayout(this)
         racine.addView(vue, FrameLayout.LayoutParams(-1, -1))
+        racine.addView(ecranTele, FrameLayout.LayoutParams(1, 1))
         racine.addView(etiquette, FrameLayout.LayoutParams(-2, -2))
         setContentView(racine)
 
@@ -82,6 +90,7 @@ class ChambreActivity : ComponentActivity() {
                 vue.consoleSuivante { console ->
                     son.bruit("pose.mp3")
                     dire(console.nom)
+                    allumerLaTele(console)
                 }
             }
             "radio" -> {
@@ -109,6 +118,33 @@ class ChambreActivity : ComponentActivity() {
             "serrure" -> menuDehors()
             "livre" -> page("jeux/livre_vide.html", "Livre")
         }
+    }
+
+    /** La tele s'allume et joue la sequence de demarrage de cette console. */
+    private fun allumerLaTele(console: Decor.ConsolePosee) {
+        val r = vue.rectangleTele()
+        val lp = FrameLayout.LayoutParams(r.width().toInt(), r.height().toInt())
+        lp.leftMargin = r.left.toInt(); lp.topMargin = r.top.toInt()
+        ecranTele.layoutParams = lp
+        ecranTele.alpha = 1f
+
+        try { lecteur?.release() } catch (_: Throwable) {}
+        lecteur = null
+
+        val surface = ecranTele.surfaceTexture ?: return
+        try {
+            val d = assets.openFd("chambre/" + console.video)
+            lecteur = android.media.MediaPlayer().apply {
+                setDataSource(d.fileDescriptor, d.startOffset, d.length)
+                setSurface(android.view.Surface(surface))
+                setVolume(0.85f, 0.85f)
+                setOnCompletionListener { ecranTele.animate().alpha(0f).setDuration(600).start() }
+                prepare(); start()
+            }
+            d.close()
+            son.enPause(true)                       // la radio se tait pendant la sequence
+            ecranTele.postDelayed({ son.enPause(false) }, 6000)
+        } catch (_: Throwable) { ecranTele.alpha = 0f }
     }
 
     // ================= les menus =================
@@ -198,6 +234,7 @@ class ChambreActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        try { lecteur?.release() } catch (_: Throwable) {}
         son.liberer()
         super.onDestroy()
     }

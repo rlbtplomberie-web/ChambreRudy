@@ -58,33 +58,108 @@ object Objets {
         c.restore()
     }
 
-    /** La petite radio posee a gauche de la tele. */
-    fun radio(c: Canvas, r: RectF, allumee: Boolean) {
-        val h = r.height()
-        p.shader = LinearGradient(r.left, r.top, r.left, r.bottom,
-            intArrayOf(0xFF4A4652.toInt(), 0xFF2A2731.toInt()), null, Shader.TileMode.CLAMP)
-        c.drawRoundRect(r, h * .22f, h * .22f, p)
-        p.shader = null
 
-        // la grille du haut-parleur
-        p.color = 0xFF17151C.toInt()
-        val g = RectF(r.left + r.width() * .07f, r.top + h * .18f,
-                      r.left + r.width() * .46f, r.bottom - h * .18f)
-        c.drawRoundRect(g, h * .10f, h * .10f, p)
-        p.color = 0x22FFFFFF
-        var y = g.top + h * .08f
-        while (y < g.bottom - h * .04f) {
-            c.drawLine(g.left + h * .06f, y, g.right - h * .06f, y, p); y += h * .10f
+    /**
+     * La radio, redessinee trait pour trait d'apres celle de la version web :
+     * antenne, poignee, haut-parleur a cercles, cadran gradue avec son aiguille
+     * rouge, deux molettes, temoin et pieds. Les mesures sont celles du dessin
+     * d'origine, sur une grille de 300 par 210.
+     */
+    fun radio(c: Canvas, r: RectF, allumee: Boolean) {
+        val e = r.width() / 300f            // l'echelle du dessin d'origine
+        fun x(v: Float) = r.left + v * e
+        fun y(v: Float) = r.top + v * e
+        fun t(v: Float) = v * e
+
+        p.style = Paint.Style.STROKE
+        p.strokeCap = Paint.Cap.ROUND
+
+        // antenne
+        p.color = 0xFFC9C6CD.toInt(); p.strokeWidth = t(5f)
+        c.drawLine(x(232f), y(66f), x(286f), y(8f), p)
+        p.style = Paint.Style.FILL; p.color = 0xFFE6E3EA.toInt()
+        c.drawCircle(x(286f), y(8f), t(5f), p)
+
+        // poignee
+        p.style = Paint.Style.STROKE; p.color = 0xFF3A3843.toInt(); p.strokeWidth = t(9f)
+        val poignee = Path()
+        poignee.moveTo(x(96f), y(54f))
+        poignee.quadTo(x(150f), y(20f), x(204f), y(54f))
+        c.drawPath(poignee, p)
+
+        // corps, en bois clair
+        p.style = Paint.Style.FILL
+        p.shader = LinearGradient(x(26f), y(58f), x(26f), y(190f),
+            intArrayOf(0xFFD9C19A.toInt(), 0xFFB99A72.toInt(), 0xFF8D7250.toInt()),
+            floatArrayOf(0f, .55f, 1f), Shader.TileMode.CLAMP)
+        val corps = RectF(x(26f), y(58f), x(274f), y(190f))
+        c.drawRoundRect(corps, t(16f), t(16f), p)
+        p.shader = null
+        p.style = Paint.Style.STROKE; p.color = 0xFF6D5738.toInt(); p.strokeWidth = t(4f)
+        c.drawRoundRect(corps, t(16f), t(16f), p)
+        p.style = Paint.Style.FILL; p.color = 0x8CE4D0AA.toInt()
+        c.drawRoundRect(RectF(x(26f), y(58f), x(274f), y(84f)), t(14f), t(14f), p)
+
+        // haut-parleur
+        p.shader = RadialGradient(x(78f), y(114f), t(44f),
+            intArrayOf(0xFF6A6873.toInt(), 0xFF2A2930.toInt()), null, Shader.TileMode.CLAMP)
+        c.drawCircle(x(92f), y(128f), t(44f), p)
+        p.shader = null
+        p.style = Paint.Style.STROKE; p.color = 0xFF5D4C33.toInt(); p.strokeWidth = t(4f)
+        c.drawCircle(x(92f), y(128f), t(44f), p)
+        p.color = 0xCC15141A.toInt(); p.strokeWidth = t(3f)
+        for (rayon in floatArrayOf(34f, 24f, 14f)) c.drawCircle(x(92f), y(128f), t(rayon), p)
+        p.style = Paint.Style.FILL; p.color = 0xFF15141A.toInt()
+        c.drawCircle(x(92f), y(128f), t(7f), p)
+
+        // cadran
+        p.shader = LinearGradient(x(150f), y(76f), x(258f), y(76f),
+            intArrayOf(0xFF2B2A2F.toInt(), 0xFF46454C.toInt(), 0xFF232227.toInt()),
+            floatArrayOf(0f, .5f, 1f), Shader.TileMode.CLAMP)
+        c.drawRoundRect(RectF(x(150f), y(76f), x(258f), y(118f)), t(6f), t(6f), p)
+        p.shader = null
+        p.color = 0xFFF3D9A0.toInt()
+        c.drawRoundRect(RectF(x(155f), y(81f), x(253f), y(113f)), t(4f), t(4f), p)
+        p.style = Paint.Style.STROKE; p.color = 0xFF7A5A2A.toInt(); p.strokeWidth = t(2f)
+        var i = 0
+        for (gx in floatArrayOf(164f, 178f, 192f, 206f, 220f, 234f, 246f)) {
+            val bas = if (i % 2 == 0) 108f else 102f
+            c.drawLine(x(gx), y(86f), x(gx), y(bas), p); i++
         }
+        p.color = 0xFFC9302C.toInt(); p.strokeWidth = t(3f)
+        c.drawLine(x(199f), y(82f), x(199f), y(112f), p)
 
         // les deux molettes
-        p.color = 0xFFC9C4D2.toInt()
-        c.drawCircle(r.right - r.width() * .28f, r.centerY(), h * .16f, p)
-        c.drawCircle(r.right - r.width() * .12f, r.centerY(), h * .12f, p)
+        for (mx in floatArrayOf(168f, 212f)) {
+            p.style = Paint.Style.FILL
+            p.shader = LinearGradient(x(mx), y(135f), x(mx), y(169f),
+                intArrayOf(0xFFF0E2C4.toInt(), 0xFF9C8560.toInt()), null, Shader.TileMode.CLAMP)
+            c.drawCircle(x(mx), y(152f), t(17f), p)
+            p.shader = null
+            p.style = Paint.Style.STROKE; p.color = 0xFF6D5738.toInt(); p.strokeWidth = t(3f)
+            c.drawCircle(x(mx), y(152f), t(17f), p)
+        }
+        p.color = 0xFF4A3A20.toInt(); p.strokeWidth = t(3f)
+        c.drawLine(x(168f), y(140f), x(168f), y(149f), p)
+        c.drawLine(x(212f), y(152f), x(219f), y(145f), p)
 
-        // le temoin, vert quand la musique tourne
+        // le temoin : vert quand la musique tourne
+        p.style = Paint.Style.FILL; p.color = 0xFF3A3843.toInt()
+        c.drawRoundRect(RectF(x(238f), y(140f), x(264f), y(164f)), t(4f), t(4f), p)
         p.color = if (allumee) 0xFF5CE07A.toInt() else 0xFFFF5F47.toInt()
-        c.drawCircle(r.left + r.width() * .55f, r.top + h * .24f, h * .07f, p)
+        c.drawCircle(x(251f), y(152f), t(4f), p)
+
+        // pieds
+        p.color = 0xFF3A3843.toInt()
+        c.drawRoundRect(RectF(x(52f), y(188f), x(78f), y(197f)), t(4f), t(4f), p)
+        c.drawRoundRect(RectF(x(222f), y(188f), x(248f), y(197f)), t(4f), t(4f), p)
+
+        // la lumiere chaude du bureau a droite, la LED bleue a gauche
+        p.color = 0x40FFB066
+        c.drawRect(x(258f), y(62f), x(274f), y(190f), p)
+        p.color = 0x385A7BFF
+        c.drawRect(x(26f), y(62f), x(42f), y(190f), p)
+        p.style = Paint.Style.FILL
     }
 
     /** La serrure doree, sous la poignee de la baie vitree. */

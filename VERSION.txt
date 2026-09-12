@@ -1,1 +1,1 @@
-version 48 - vitrines : dossier, lancement, jaquettes toujours de face
+version 49 - radio d'origine, cadrage, pose, tele et carton d'intro
