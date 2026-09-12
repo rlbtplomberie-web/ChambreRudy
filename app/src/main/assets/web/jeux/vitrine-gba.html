@@ -204,9 +204,63 @@ setTimeout(() => {
 /* Lance le jeu du boitier en cours dans son emulateur. */
 function lancerLeJeu(){
   const j = jeux[index];
-  if(!j || !j.uri){ ouvrirMenu("Choisis d'abord le dossier des ROMs."); return; }
-  if(parent && parent.lancerJeu) parent.lancerJeu(CONSOLE_ID, j.uri);
-  else alert("Disponible dans l'application.");
+  if(!j){ ouvrirMenu("Aucun boîtier sélectionné."); return; }
+  if(!j.uri){
+    ouvrirMenu("Ce boîtier n'a pas de ROM. Touche « Chercher les ROMs » et choisis le dossier : "
+               + "les boîtiers deviendront alors tes jeux.");
+    return;
+  }
+  if(!parent || !parent.lancerJeu){ ouvrirMenu("Disponible seulement dans l'application."); return; }
+  try{ parent.lancerJeu(CONSOLE_ID, j.uri); }
+  catch(e){ ouvrirMenu("Lancement impossible : " + e.message); }
+}
+
+/* ====== jaquettes trouvees toutes seules ======
+   Les fichiers de jeux portent les noms officiels No-Intro, ceux-la memes
+   qu'emploie la base de jaquettes de libretro. On demande donc, pour chaque
+   boitier, l'image qui porte son nom. Rien n'est telecharge d'avance : seuls
+   les jeux presents ici sont demandes, et une fois obtenus ils sont gardes. */
+const DEPOTS_JAQUETTES = "Nintendo_-_Game_Boy_Advance".split("|").filter(Boolean);
+
+function nomPourDepot(titre){
+  /* la base remplace ces caracteres par un souligne */
+  return titre.replace(/[&*\/:`<>?\\|]/g, "_");
+}
+
+async function imageEnLigne(titre){
+  for(const depot of DEPOTS_JAQUETTES){
+    const url = "https://raw.githubusercontent.com/libretro-thumbnails/" + depot +
+                "/master/Named_Boxarts/" + encodeURIComponent(nomPourDepot(titre)) + ".png";
+    try{
+      const rep = await fetch(url);
+      if(!rep.ok) continue;
+      const blob = await rep.blob();
+      const petite = await reduire(await new Promise(ok => {
+        const l = new FileReader(); l.onload = () => ok(l.result); l.readAsDataURL(blob);
+      }), 700);
+      return petite ? petite.src : null;
+    }catch(e){}
+  }
+  return null;
+}
+
+async function jaquettesEnLigne(){
+  if(!jeux.length){ ouvrirMenu("Choisis d'abord le dossier des ROMs."); return; }
+  let trouvees = 0, manquantes = [];
+  for(let i = 0; i < jeux.length; i++){
+    const j = jeux[i];
+    if(j.image){ continue; }                      // deja habillee
+    ouvrirMenu("Recherche " + (i+1) + " / " + jeux.length + " — " + j.titre);
+    const img = await imageEnLigne(j.titre);
+    if(img){ j.image = img; trouvees++; construire(); placer(); }
+    else manquantes.push(j.titre);
+  }
+  try{ await sauver(); }catch(e){}
+  construire(); placer();
+  ouvrirMenu(trouvees + " jaquette(s) trouvée(s)" +
+             (manquantes.length ? " · " + manquantes.length + " introuvable(s) : "
+                                  + manquantes.slice(0,3).join(", ")
+                                  + (manquantes.length > 3 ? "…" : "") : ""));
 }
 
 const rangee = document.getElementById("rangee");
@@ -487,7 +541,9 @@ function ouvrirMenu(info){
        <small>Ouvre ce jeu dans l'émulateur.</small><span class="fleche">›</span></button>
      <button class="ligne" data-act="roms">Chercher les ROMs
        <small>Choisir le dossier des jeux de cette console.</small><span class="fleche">›</span></button>
-     <button class="ligne" data-act="sync">Synchroniser les jaquettes
+     <button class="ligne" data-act="enligne" style="background:#2b4b7a">Chercher les jaquettes en ligne
+       <small>Télécharge la pochette de chaque jeu trouvé.</small><span class="fleche">›</span></button>
+     <button class="ligne" data-act="sync">Jaquettes depuis un dossier
        <small>Choisis le dossier : chaque image rejoint le jeu qui porte le même nom.</small>
        <span class="fleche">›</span></button>
      <button class="ligne" data-act="face">Modifier la jaquette
@@ -511,6 +567,7 @@ async function action(a){
     else alert("Disponible dans l'application.");
     voile.classList.remove("ouvert"); return;
   }
+  if(a === "enligne"){ jaquettesEnLigne(); return; }
   if(a === "lancer"){ voile.classList.remove("ouvert"); lancerLeJeu(); return; }
   if(a === "retourner"){ retournee = !retournee; placer(); voile.classList.remove("ouvert"); return; }
   if(a === "agrandir"){ voile.classList.remove("ouvert"); retournee = true; placer(); ouvrirLoupe(); return; }

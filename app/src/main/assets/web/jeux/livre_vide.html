@@ -97,7 +97,17 @@ function playPageSound(){
 
 const PAGES=[];   // bibliotheque vide : les tomes s'ajoutent avec le bouton
 const $=s=>document.querySelector(s); let p=0,busy=false,manga=false,sx=0,sy=0,drag=0;
-$(".cover").style.backgroundImage=`url("${PAGES[0]}")`;$("#frontCover").style.backgroundImage=`url("${PAGES[0]}")`;
+/* Bibliotheque vide : pas de couverture a poser, et surtout pas d'erreur
+   qui empecherait le bouton « Ajouter un livre » de fonctionner. */
+if(PAGES.length){
+  $(".cover").style.backgroundImage=`url("${PAGES[0]}")`;
+  $("#frontCover").style.backgroundImage=`url("${PAGES[0]}")`;
+}else{
+  $(".cover").style.background="linear-gradient(160deg,#2a2030,#151018)";
+  $(".name").textContent="Aucun livre";
+  const a=document.querySelector(".hint");
+  if(a) a.textContent="Touche « ＋ Ajouter un livre » pour déposer un PDF";
+}
 const pageCache=[];
 function preloadAround(n){
   for(let i=Math.max(0,n-4);i<=Math.min(PAGES.length-1,n+7);i++){

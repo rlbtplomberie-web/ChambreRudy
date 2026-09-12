@@ -145,14 +145,19 @@ html,body{height:100%;background:#080611;overflow:hidden;font-family:'Baloo 2',s
 
 /* ---------- NUAGE BLANC ---------- */
 #smoke{position:absolute;inset:0;pointer-events:none;opacity:0;z-index:40}
-.puff{position:absolute;border-radius:50%;opacity:0;
-  background:radial-gradient(circle at 40% 38%,#ffffff 0 42%,rgba(255,255,255,.85) 62%,rgba(255,255,255,0) 76%);
-  filter:blur(2px);animation:puff var(--pd,2.6s) cubic-bezier(.22,.7,.3,1) forwards}
+.puff{position:absolute;border-radius:50%;opacity:0;will-change:transform,opacity;
+  /* le degrade fait tout le travail : des bords fondus, sans flou calcule */
+  background:radial-gradient(circle at 42% 40%,
+      rgba(255,255,255,.98) 0 30%,
+      rgba(255,255,255,.80) 48%,
+      rgba(255,255,255,.35) 66%,
+      rgba(255,255,255,0) 80%);
+  animation:puff var(--pd,3s) cubic-bezier(.16,.8,.3,1) forwards}
 @keyframes puff{
-  0%{opacity:0;transform:translate(0,0) scale(.12)}
-  18%{opacity:.95}
-  55%{opacity:1;transform:translate(var(--pxx),var(--pyy)) scale(1)}
-  100%{opacity:0;transform:translate(calc(var(--pxx)*1.5),calc(var(--pyy)*1.5 - 60px)) scale(1.7)}
+  0%{opacity:0;transform:translate(0,0) scale(.18) rotate(0deg)}
+  22%{opacity:.9}
+  60%{opacity:.95;transform:translate(var(--pxx),var(--pyy)) scale(1.05) rotate(var(--pr,12deg))}
+  100%{opacity:0;transform:translate(calc(var(--pxx)*1.35),calc(var(--pyy)*1.35 - 40px)) scale(1.6) rotate(var(--pr,12deg))}
 }
 #veil{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:41}
 
@@ -160,10 +165,11 @@ html,body{height:100%;background:#080611;overflow:hidden;font-family:'Baloo 2',s
 #scene2{position:absolute;inset:0;opacity:0;pointer-events:none;z-index:30;
   background:#1c1436;overflow:hidden;transition:opacity .45s ease}
 #bg2{position:absolute;inset:-10%;width:120%;height:120%;object-fit:cover;
-  filter:blur(30px) brightness(.45) saturate(.85);opacity:0;transition:opacity .4s ease}
-#scene2.recule #bg2{opacity:1;filter:blur(34px) brightness(.28) saturate(.8)}
+  opacity:0;transition:opacity .4s ease}
+#scene2.recule #bg2{opacity:1}
 #scene2.on{opacity:1;pointer-events:auto}
-#deco{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+#deco{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:layout paint}
 #drawer{position:absolute;perspective:900px;cursor:pointer}
 .dw-cavity{position:absolute;inset:0;border-radius:3px;
   background:linear-gradient(180deg,#120704,#25100a 60%,#160a06);
@@ -399,7 +405,7 @@ html,body{height:100%;background:#080611;overflow:hidden;font-family:'Baloo 2',s
   opacity:0;transform:translateY(6%) scale(.98);
   transition:opacity .5s ease .25s, transform .6s ease .25s}
 #cabInt.vu .ci-jeux{opacity:1;transform:none}
-#cab{position:absolute;perspective:1400px;perspective-origin:50% 45%}
+#cab{position:absolute;will-change:transform;perspective:1400px;perspective-origin:50% 45%}
 .door{position:absolute;top:0;height:100%;width:50%;transform-style:preserve-3d;
   transition:transform 1.15s cubic-bezier(.5,.02,.25,1);
   background:
@@ -482,7 +488,7 @@ button.primary{background:#f2c14e;color:#2a1c06;border-color:#f2c14e}
   <div id="smoke"></div>
   <div id="veil"></div>
   <div id="scene2">
-    <img id="bg2" src="med/salon.jpg" alt="">
+    <img id="bg2" src="med/flou_salon.jpg" alt="">
     <div id="deco">
       <img src="med/salon.jpg" alt="">
       <img id="suite" src="med/salon2.jpg" alt="">
@@ -946,16 +952,19 @@ function cloud(){
   const sm=document.getElementById('smoke'), veil=document.getElementById('veil');
   sm.innerHTML=''; sm.style.opacity=1;
 
-  for(let i=0;i<30;i++){
+  /* moins de bouffees, mais plus grosses : le nuage est plus dense et
+     l'animation reste fluide sur telephone */
+  for(let i=0;i<16;i++){
     const p=document.createElement('div'); p.className='puff';
-    const sz=(.4+Math.random()*.9)*W;
+    const sz=(.7+Math.random()*1.1)*W;
     p.style.width=sz+'px'; p.style.height=sz+'px';
     p.style.left=(.5*W-sz/2+(Math.random()-.5)*W*.6)+'px';
     p.style.top =(.52*H-sz/2+(Math.random()-.5)*H*.4)+'px';
-    p.style.setProperty('--pxx',((Math.random()-.5)*W*1.6)+'px');
-    p.style.setProperty('--pyy',((Math.random()-.5)*H*1.2)+'px');
-    p.style.setProperty('--pd',(2.4+Math.random()*1.4)+'s');
-    p.style.animationDelay=(i*32)+'ms';
+    p.style.setProperty('--pxx',((Math.random()-.5)*W*1.1)+'px');
+    p.style.setProperty('--pyy',((Math.random()-.5)*H*.8)+'px');
+    p.style.setProperty('--pd',(2.6+Math.random()*1.2)+'s');
+    p.style.setProperty('--pr',((Math.random()-.5)*40)+'deg');
+    p.style.animationDelay=(i*55)+'ms';
     sm.appendChild(p);
   }
   // voile blanc pilote en JS (aucune dependance CSS)
@@ -1364,8 +1373,9 @@ function tourneTete(dest){
   clampPan();
   PY = (IH2*SC<=H) ? (H-IH2*SC) : Math.min(0,Math.max(H-IH2*SC,PY));  // jamais de vide en bas
   document.getElementById('scene2').classList.toggle('recule', dest==='fenetre');
-  if(dest==='lit') document.getElementById('bg2').src=document.getElementById('suite2').src;
-  document.getElementById('bg2').src=document.getElementById('suite').src;
+  document.getElementById('bg2').src =
+      dest==='lit' ? 'med/flou_chambre3.jpg' : dest==='fenetre' ? 'med/flou_salon2.jpg' : 'med/flou_salon.jpg';
+
   // aller du lit au bureau (ou l'inverse) traverserait toute la piece a l'envers :
   // on coupe alors franchement, comme un regard qui bascule d'un coup
   const traverse = (depart==='lit'&&dest==='bureau')||(depart==='bureau'&&dest==='lit');
@@ -1711,7 +1721,11 @@ window.consolePosee = function(){
 window.romsConnues = function(console){
   try{ return window.DANS_APPLI ? JSON.parse(Android.listerRoms(console)) : []; }catch(e){ return []; }
 };
-window.lancerJeu = function(console, uri){ if(window.DANS_APPLI) Android.lancer(console, uri); };
+window.lancerJeu = function(console, uri){
+  if(!window.DANS_APPLI){ alert("Disponible seulement dans l'application."); return; }
+  if(!console || !uri){ alert("jeu incomplet : console=" + console + " uri=" + uri); return; }
+  Android.lancer(console, uri);
+};
 window.ouvrirConsole = function(console){ if(window.DANS_APPLI) Android.ouvrirConsole(console); };
 /* l'application rappelle ici quand un dossier vient d'etre choisi */
 window.onRoms = function(d){

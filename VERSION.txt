@@ -1,1 +1,1 @@
-version 36 - les jeux du dossier deviennent les boitiers, et se lancent
+version 39 - jaquettes cherchees en ligne
