@@ -167,6 +167,48 @@ let exemples = true;
 let index = 0, retournee = false;
 let ratio = 120/126, epaisseur = 24/120;
 
+/* ====== les jeux du dossier deviennent les boitiers ====== */
+function recevoirRoms(liste){
+  if(!Array.isArray(liste) || !liste.length) return;
+  const sansExt = n => n.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
+  const avant = {};
+  for(const j of jeux) if(j.titre) avant[j.titre.toLowerCase()] = j;   // on garde les jaquettes deja posees
+  jeux = liste.map((r, i) => {
+    const titre = sansExt(r.nom);
+    const vieux = avant[titre.toLowerCase()];
+    return { titre, uri:r.uri, image: vieux ? vieux.image : null, dos:null,
+             teinte: TEINTES[i % TEINTES.length] };
+  });
+  exemples = false;
+  index = Math.min(index, jeux.length - 1);
+  construire(); placer();
+  try{ sauver(); }catch(e){}
+}
+
+/* La chambre previent quand un dossier vient d'etre choisi. */
+window.addEventListener("message", e => {
+  const d = e.data;
+  if(d && d.type === "roms" && (!d.console || d.console === CONSOLE_ID)) recevoirRoms(d.jeux);
+});
+
+/* Et au chargement, on demande ce qu'elle connait deja. */
+setTimeout(() => {
+  try{
+    if(parent && parent.romsConnues){
+      const l = parent.romsConnues(CONSOLE_ID);
+      if(l && l.length) recevoirRoms(l);
+    }
+  }catch(e){}
+}, 250);
+
+/* Lance le jeu du boitier en cours dans son emulateur. */
+function lancerLeJeu(){
+  const j = jeux[index];
+  if(!j || !j.uri){ ouvrirMenu("Choisis d'abord le dossier des ROMs."); return; }
+  if(parent && parent.lancerJeu) parent.lancerJeu(CONSOLE_ID, j.uri);
+  else alert("Disponible dans l'application.");
+}
+
 const rangee = document.getElementById("rangee");
 const nomEl = document.getElementById("nom"), compteEl = document.getElementById("compte");
 const voile = document.getElementById("voile"), feuille = document.getElementById("feuille");
@@ -441,7 +483,9 @@ function ouvrirMenu(info){
   feuille.innerHTML =
     `<h3>${j.titre || "Vitrine Nintendo DS"}</h3>` +
     (info ? `<div class="info">${info}</div>` : "") +
-    `<button class="ligne" data-act="roms">Chercher les ROMs
+    `<button class="ligne" data-act="lancer" style="background:#2f6b33">Lancer le jeu
+       <small>Ouvre ce jeu dans l'émulateur.</small><span class="fleche">›</span></button>
+     <button class="ligne" data-act="roms">Chercher les ROMs
        <small>Choisir le dossier des jeux de cette console.</small><span class="fleche">›</span></button>
      <button class="ligne" data-act="sync">Synchroniser les jaquettes
        <small>Choisis le dossier : chaque image rejoint le jeu qui porte le même nom.</small>
@@ -467,6 +511,7 @@ async function action(a){
     else alert("Disponible dans l'application.");
     voile.classList.remove("ouvert"); return;
   }
+  if(a === "lancer"){ voile.classList.remove("ouvert"); lancerLeJeu(); return; }
   if(a === "retourner"){ retournee = !retournee; placer(); voile.classList.remove("ouvert"); return; }
   if(a === "agrandir"){ voile.classList.remove("ouvert"); retournee = true; placer(); ouvrirLoupe(); return; }
   if(a === "renommer"){

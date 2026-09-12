@@ -1704,6 +1704,10 @@ window.chercherRoms = function(console){
   if(window.DANS_APPLI) Android.choisirDossier(console);
   else alert("Le choix du dossier n'existe que dans l'application.");
 };
+/* La vitrine ouverte est celle de la console posee sur le bureau. */
+window.consolePosee = function(){
+  try{ return (sortieIdx>=0 && SORTIE[sortieIdx]) ? SORTIE[sortieIdx].id : null; }catch(e){ return null; }
+};
 window.romsConnues = function(console){
   try{ return window.DANS_APPLI ? JSON.parse(Android.listerRoms(console)) : []; }catch(e){ return []; }
 };
