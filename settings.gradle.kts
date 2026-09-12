@@ -1,3 +1,5 @@
+import java.io.File
+
 pluginManagement {
     repositories { google(); mavenCentral(); gradlePluginPortal() }
 }
@@ -10,12 +12,19 @@ include(":app")
 /*
  * Mupen64Plus-AE, l'emulateur N64 de Rudy.
  *
- * Le workflow le recupere dans m64base/ et y applique son habillage. S'il est
- * la, il devient un morceau du projet ; sinon on compile sans lui, et la N64
- * reste simplement absente.
+ * Il n'est pas fait d'un seul morceau : son ecran s'appuie sur des modules
+ * voisins — le pont natif, les greffons. On les prend donc tous, sous leur
+ * propre nom, sauf le principal qui devient « m64 » pour ne pas se confondre
+ * avec le notre.
  */
-val n64 = file("m64base/app")
-if (n64.exists()) {
-    include(":m64")
-    project(":m64").projectDir = n64
+val baseN64 = file("m64base")
+if (baseN64.isDirectory) {
+    baseN64.listFiles()?.sortedBy { it.name }?.forEach { d ->
+        val aUnFichier = File(d, "build.gradle").exists() || File(d, "build.gradle.kts").exists()
+        if (d.isDirectory && aUnFichier) {
+            val nom = if (d.name == "app") ":m64" else ":" + d.name
+            include(nom)
+            project(nom).projectDir = d
+        }
+    }
 }

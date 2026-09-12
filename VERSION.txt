@@ -1,1 +1,1 @@
-version 58 - transformation de Mupen64Plus en morceau du projet
+version 59 - tous les modules de Mupen64Plus
