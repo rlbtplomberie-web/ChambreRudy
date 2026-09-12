@@ -42,11 +42,25 @@ class ChambreActivity : ComponentActivity() {
             alpha = 0f
         }
 
+        vue.surEtapeIntro = { quoi ->
+            when (quoi) {
+                "ouverture" -> son.bruit("carton.mp3")
+                "chambre" -> { son.bruit("pose.mp3"); son.radio() }   // la radio s'allume en arrivant
+            }
+        }
+
         val racine = FrameLayout(this)
         racine.addView(vue, FrameLayout.LayoutParams(-1, -1))
         racine.addView(etiquette, FrameLayout.LayoutParams(-2, -2))
         setContentView(racine)
+
+        // l'ouverture du carton, une seule fois par lancement
+        if (etat == null) vue.post { vue.jouerIntro() }
     }
+
+    /** Un menu sombre, lisible par-dessus le decor. */
+    private fun menu(): AlertDialog.Builder =
+        AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
 
     private fun dire(texte: String) {
         etiquette.text = texte
@@ -91,7 +105,7 @@ class ChambreActivity : ComponentActivity() {
     // ================= les menus =================
 
     private fun proposerTiroir() {
-        AlertDialog.Builder(this)
+        menu()
             .setTitle("Le tiroir est ouvert")
             .setItems(arrayOf("Dessiner", "Jouer aux cartes", "Refermer")) { _, i ->
                 when (i) {
@@ -103,7 +117,7 @@ class ChambreActivity : ComponentActivity() {
     }
 
     private fun menuCartes() {
-        AlertDialog.Builder(this)
+        menu()
             .setTitle("Jeu de cartes")
             .setItems(arrayOf("Poker", "Blackjack")) { _, i ->
                 page(if (i == 0) "jeux/poker.html" else "jeux/blackjack.html",
@@ -112,7 +126,7 @@ class ChambreActivity : ComponentActivity() {
     }
 
     private fun menuJeuxDeSociete() {
-        AlertDialog.Builder(this)
+        menu()
             .setTitle("Jeux de société")
             .setItems(arrayOf("Échecs", "Dames", "Monopoly")) { _, i ->
                 page(listOf("jeux/echecs.html", "jeux/dames.html", "jeux/monopoly.html")[i],
@@ -123,7 +137,7 @@ class ChambreActivity : ComponentActivity() {
     }
 
     private fun menuDehors() {
-        AlertDialog.Builder(this)
+        menu()
             .setTitle("Voulez-vous sortir ?")
             .setItems(arrayOf("Tir au but", "Faire des paniers")) { _, i ->
                 page(if (i == 0) "jeux/penalty_leger.html" else "jeux/basket_leger.html",

@@ -28,6 +28,7 @@
             android:name="com.rudy.chambre.ChambreActivity"
             android:exported="true"
             android:screenOrientation="fullUser"
+            android:theme="@style/ThemeChambre"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
