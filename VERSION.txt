@@ -1,1 +1,1 @@
-version 25 - diagnostic des consoles
+version 27 - PSP avec le moteur officiel PPSSPP

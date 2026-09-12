@@ -1,6 +1,7 @@
 {
  "largeur": 1844,
  "hauteur": 853,
+ "ecran": { "x": 320, "y": 54, "w": 1203, "h": 633 },
  "elements": [
   {
    "id": "L",

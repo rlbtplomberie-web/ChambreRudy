@@ -43,8 +43,9 @@ object Consoles {
                 "skin_gc",   "dossier_roms",  listOf(".iso", ".gcm", ".gcz", ".rvz", ".ciso",
                                                      ".wbfs", ".wad", ".dol", ".elf", ".zip"),
                 coeur = "libdolphin.so", paquetVoisin = "com.skingc.app"),
-        Console("psp",  "PSP",              "com.skinpsp.app.MainActivity",
-                "skin_psp",  "dossier_roms",  listOf(".iso", ".cso", ".pbp", ".chd", ".elf"), coeur = "libppsspp.so"),
+        Console("psp",  "PSP",              "com.skinpsp.app.JeuActivity",
+                "skin_psp",  "dossier_roms",  listOf(".iso", ".cso", ".pbp", ".chd", ".elf"),
+                coeur = "libppsspp_jni.so"),
         Console("3ds",  "Nintendo 3DS",     "com.skin3ds.app.MainActivity",
                 "skin_3ds",  "dossier_roms",  listOf(".3ds", ".cci", ".cxi", ".app"), coeur = "libcitra.so")
     )

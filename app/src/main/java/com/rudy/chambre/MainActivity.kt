@@ -81,6 +81,12 @@ class MainActivity : ComponentActivity() {
         val fiche = Consoles.parId(console) ?: return null
         fiche.paquetVoisin?.let { paquet ->
             packageManager.getLaunchIntentForPackage(paquet)?.let { return it }
+            // l'application voisine n'est pas installee : on prefere le dire
+            // plutot que d'ouvrir une version abandonnee qui se fermerait
+            android.widget.Toast.makeText(this,
+                fiche.nom + " : installe ton application " + paquet +
+                ", la chambre l'ouvrira.", android.widget.Toast.LENGTH_LONG).show()
+            return null
         }
         return try { Intent(this, Class.forName(fiche.activite)) } catch (_: Throwable) { null }
     }

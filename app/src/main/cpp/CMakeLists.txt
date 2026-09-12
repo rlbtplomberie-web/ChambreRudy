@@ -33,9 +33,8 @@ target_link_libraries(skinds ${log-lib} ${egl-lib} ${gles-lib} dl)
 add_library(skingc SHARED skingc/pont.c stl.cpp)
 target_link_libraries(skingc ${log-lib} ${egl-lib} ${gles-lib} dl)
 
-# PSP : PPSSPP, avec la bibliotheque C++ partagee
-add_library(skinpsp SHARED skinpsp/pont.c stl.cpp)
-target_link_libraries(skinpsp ${log-lib} ${egl-lib} ${gles-lib} dl)
+# Le PSP n'a plus de pont : il utilise le moteur officiel de PPSSPP,
+# qui apporte sa propre bibliotheque native et sa facade Java.
 
 # La 3DS : son pont, plus un fichier C++ vide pour que libc++_shared.so
 # soit embarquee dans l'APK, comme Citra l'exige.
