@@ -4,30 +4,28 @@
 <style>
  html,body{margin:0;height:100%;background:#100b1e;color:#ffeec2;
    font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center}
- .boite{text-align:center;padding:24px;max-width:340px}
+ .b{text-align:center;padding:24px;max-width:340px}
  h1{font-size:22px;margin-bottom:10px}
  p{font-size:14px;color:#c9b8f0;line-height:1.5;margin:0 0 18px}
  button{display:block;width:100%;margin:8px 0;padding:13px;border-radius:12px;font-size:15px;
    font-weight:700;color:#2a1c06;background:#f2c14e;border:0}
- .sec{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.25)}
+ .s{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.25)}
  small{display:block;margin-top:14px;color:#8d80b5;font-size:12px}
 </style></head><body>
-<div class="boite">
+<div class="b">
   <h1>La chambre de Rudy</h1>
-  <p>Page d'essai : elle verifie que l'application, le choix des dossiers et les
-     emulateurs fonctionnent. Le decor complet la remplacera.</p>
-  <button onclick="essai('nes')">Ouvrir l'emulateur NES</button>
-  <button onclick="essai('snes')">Ouvrir l'emulateur Super Nintendo</button>
-  <button class="sec" onclick="dossier('nes')">Choisir le dossier des ROMs NES</button>
-  <button class="sec" onclick="dossier('snes')">Choisir le dossier des ROMs SNES</button>
+  <p>Page d'essai des emulateurs. Le decor complet la remplacera des qu'il sera decoupe en fichiers.</p>
+  <button onclick="ouvrir('nes')">Emulateur NES</button>
+  <button onclick="ouvrir('snes')">Emulateur Super Nintendo</button>
+  <button class="s" onclick="dossier('nes')">Dossier des ROMs NES</button>
+  <button class="s" onclick="dossier('snes')">Dossier des ROMs SNES</button>
   <small id="etat">&mdash;</small>
 </div>
 <script>
 const dedans = (typeof Android !== 'undefined');
 document.getElementById('etat').textContent = dedans ? "application detectee" : "hors application";
-function essai(c){ if(dedans) Android.ouvrirConsole(c); else alert("Disponible dans l'application."); }
-function dossier(c){ if(dedans) Android.choisirDossier(c); else alert("Disponible dans l'application."); }
-window.onRoms = function(d){
-  document.getElementById('etat').textContent = d.jeux.length + " jeu(x) trouve(s) pour " + d.console;
-};
+function ouvrir(c){ dedans ? Android.ouvrirConsole(c) : alert("Disponible dans l'application."); }
+function dossier(c){ dedans ? Android.choisirDossier(c) : alert("Disponible dans l'application."); }
+window.onRoms = d => document.getElementById('etat').textContent =
+  d.jeux.length + " jeu(x) trouve(s) pour " + d.console;
 </script></body></html>

@@ -5,6 +5,7 @@ import android.graphics.*
 import android.view.Choreographer
 import android.view.MotionEvent
 import android.view.View
+import com.rudy.chambre.core.Coeur
 import com.rudy.chambre.core.CoeurLibretro
 import com.rudy.chambre.core.Pad
 import kotlin.math.abs
@@ -30,7 +31,7 @@ class SkinView(ctx: Context) : View(ctx) {
     var appuiMiniMs = 110L
     // --------------------------------
 
-    lateinit var coeur: CoeurLibretro
+    lateinit var coeur: Coeur
     var son: Son? = null
     var surTouche: (() -> Unit)? = null
     var surMenu: (() -> Unit)? = null
@@ -196,7 +197,12 @@ class SkinView(ctx: Context) : View(ctx) {
 
                 var neuve = false
                 repeat(images) {
-                    if (coeur.imageSuivante(boutons)) neuve = true
+                    val c = coeur
+                    if (c is CoeurLibretro) {
+                        if (c.imageSuivanteBool(boutons)) neuve = true
+                    } else {
+                        c.imageSuivante(boutons); neuve = true
+                    }
                     val ech = coeur.son()
                     if (!rapide) son?.jouer(ech)
                 }

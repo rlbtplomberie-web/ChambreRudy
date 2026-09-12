@@ -10,7 +10,7 @@ import java.io.File
  * que l'etat utile a l'interface : l'image courante, sa taille, la ROM en
  * cours et son empreinte pour nommer les sauvegardes.
  */
-class CoeurLibretro(ctx: Context, nomCoeur: String) {
+class CoeurLibretro(ctx: Context, nomCoeur: String) : Coeur {
 
     companion object {
         init { System.loadLibrary("pont") }
@@ -30,18 +30,18 @@ class CoeurLibretro(ctx: Context, nomCoeur: String) {
     private external fun natRestaurer(donnees: ByteArray): Boolean
 
     /** Pixels ARGB de la derniere image, largeur x hauteur en tete de tampon. */
-    val tampon = IntArray(MAX_L * MAX_H)
-    var largeur = 256
+    override val tampon = IntArray(MAX_L * MAX_H)
+    override var largeur = 256
         private set
-    var hauteur = 224
+    override var hauteur = 224
         private set
 
-    val pret: Boolean
-    var romChargee = false
+    override val pret: Boolean
+    override var romChargee = false
         private set
-    var derniereErreur = ""
+    override var derniereErreur = ""
         private set
-    var cle = ""
+    override var cle = ""
         private set
 
     private val tamponSon = ShortArray(32040 * 2)
@@ -54,7 +54,7 @@ class CoeurLibretro(ctx: Context, nomCoeur: String) {
         java.util.Arrays.fill(tampon, 0xFF000000.toInt())
     }
 
-    fun chargerRom(donnees: ByteArray): Boolean {
+    override fun chargerRom(donnees: ByteArray): Boolean {
         if (!pret) return false
         // certaines ROM ont un en-tete de copieur de 512 octets : le coeur le
         // detecte lui-meme, on lui passe tout
@@ -66,7 +66,10 @@ class CoeurLibretro(ctx: Context, nomCoeur: String) {
     }
 
     /** true si une nouvelle image est disponible dans [tampon]. */
-    fun imageSuivante(boutons: Int): Boolean {
+    /** Avance d'une image. L'interface commune n'attend rien en retour. */
+    override fun imageSuivante(boutons: Int) { imageSuivanteBool(boutons) }
+
+    fun imageSuivanteBool(boutons: Int): Boolean {
         if (!romChargee) return false
         val r = natImage(boutons, tampon)
         if (r == 0) return false
@@ -76,25 +79,25 @@ class CoeurLibretro(ctx: Context, nomCoeur: String) {
     }
 
     /** Echantillons stereo entrelaces produits depuis le dernier appel. */
-    fun son(): ShortArray {
+    override fun son(): ShortArray {
         val n = natSon(tamponSon)
         return if (n <= 0) ShortArray(0) else tamponSon.copyOf(n)
     }
 
     val frequence: Int get() = natFrequence().toInt()
-    val imagesParSeconde: Double get() = natFps()
+    override val imagesParSeconde: Double get() = natFps()
 
-    fun reinitialiser() { if (romChargee) natReset() }
+    override fun reinitialiser() { if (romChargee) natReset() }
 
-    fun eteindre() {
+    override fun eteindre() {
         natEjecter()
         romChargee = false
         cle = ""
         java.util.Arrays.fill(tampon, 0xFF000000.toInt())
     }
 
-    fun sauverEtat(): ByteArray? = if (romChargee) natSauver() else null
-    fun restaurerEtat(o: ByteArray): Boolean = romChargee && natRestaurer(o)
+    override fun sauverEtat(): ByteArray? = if (romChargee) natSauver() else null
+    override fun restaurerEtat(donnees: ByteArray): Boolean = romChargee && natRestaurer(donnees)
 
     private fun empreinte(d: ByteArray): String {
         var h = -3750763034362895579L

@@ -22,7 +22,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.rudy.chambre.core.Coeur
 import com.rudy.chambre.core.CoeurLibretro
+import com.rudy.chambre.core.CoeurNes
 
 class EmulateurActivity : ComponentActivity() {
 
@@ -30,7 +32,7 @@ class EmulateurActivity : ComponentActivity() {
     private lateinit var barre: HorizontalScrollView
     /** Curseur d'opacite, propre a la troisieme presentation horizontale. */
     private lateinit var reglageOpacite: LinearLayout
-    private lateinit var coeur: CoeurLibretro
+    private lateinit var coeur: Coeur
     /** Console demandee par la chambre ; la Super Nintendo par defaut. */
     private var idConsole: String = "snes"
     private var son: Son? = null
@@ -154,7 +156,9 @@ class EmulateurActivity : ComponentActivity() {
         bordABord()
 
         EnCours.console = idConsole
-        coeur = CoeurLibretro(this, Consoles.parId(idConsole)?.coeur ?: "libsnes9x.so")
+        // la NES a son propre moteur, ecrit en Kotlin ; les autres passent par libretro
+        val nomCoeur = Consoles.parId(idConsole)?.coeur
+        coeur = if (nomCoeur == null) CoeurNes() else CoeurLibretro(this, nomCoeur)
         vue = SkinView(this)
         vue.coeur = coeur
         val racine = FrameLayout(this)
