@@ -1,1 +1,1 @@
-version 23 - Android 9 comme tes projets, transparence des pads preservee
+version 25 - diagnostic des consoles

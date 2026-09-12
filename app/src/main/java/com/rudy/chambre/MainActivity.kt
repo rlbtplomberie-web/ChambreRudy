@@ -68,12 +68,21 @@ class MainActivity : ComponentActivity() {
         return a
     }
 
-    /** L'ecran de l'emulateur de cette console, tel qu'il existe dans son paquet. */
+    /**
+     * L'ecran de l'emulateur de cette console.
+     *
+     * La GameCube fait exception : son emulateur n'est pas un coeur qu'on
+     * charge, c'est Dolphin recompile avec les pads de Rudy. Il reste donc une
+     * application a part. Si elle est installee sur le telephone, la chambre
+     * l'ouvre ; sinon on se rabat sur l'ecran interne, qui expliquera pourquoi
+     * il ne peut rien faire.
+     */
     private fun ecran(console: String): Intent? {
-        val nom = Consoles.parId(console)?.activite ?: return null
-        return try {
-            Intent(this, Class.forName(nom))
-        } catch (_: Throwable) { null }
+        val fiche = Consoles.parId(console) ?: return null
+        fiche.paquetVoisin?.let { paquet ->
+            packageManager.getLaunchIntentForPackage(paquet)?.let { return it }
+        }
+        return try { Intent(this, Class.forName(fiche.activite)) } catch (_: Throwable) { null }
     }
 
     /** Ce que la page web peut demander au telephone. */
@@ -87,6 +96,32 @@ class MainActivity : ComponentActivity() {
 
         @JavascriptInterface
         fun listerRoms(console: String): String = listeJson(console).toString()
+
+        /**
+         * Etat de chaque console : son coeur est-il bien dans l'application, et
+         * un dossier de jeux a-t-il ete choisi ? C'est la reponse en une seconde
+         * a la question « pourquoi celle-la ne demarre pas ».
+         */
+        @JavascriptInterface
+        fun diagnostic(): String {
+            val dossierLib = java.io.File(applicationInfo.nativeLibraryDir)
+            val a = JSONArray()
+            for (c in Consoles.TOUTES) {
+                val o = JSONObject().put("id", c.id).put("nom", c.nom)
+                if (c.coeur == null) {
+                    o.put("coeur", "aucun nécessaire").put("ok", true)
+                } else {
+                    val f = java.io.File(dossierLib, c.coeur)
+                    o.put("coeur", if (f.exists()) c.coeur + " · " + (f.length() / 1048576) + " Mo"
+                                   else c.coeur + " ABSENT")
+                    o.put("ok", f.exists())
+                }
+                o.put("dossier", Dossiers.dossier(this@MainActivity, c.id) != null)
+                o.put("jeux", Dossiers.lister(this@MainActivity, c.id).size)
+                a.put(o)
+            }
+            return a.toString()
+        }
 
         @JavascriptInterface
         fun dossierChoisi(console: String): Boolean = Dossiers.dossier(this@MainActivity, console) != null
