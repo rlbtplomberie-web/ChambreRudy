@@ -48,11 +48,13 @@ class ChambreActivity : ComponentActivity() {
 
         vue.surEtapeIntro = { quoi ->
             when (quoi) {
+                "debut" -> {                      // la radio joue des la premiere image
+                    son.radio()
+                    vue.radioAllumee = son.allumee()
+                }
                 "ouverture" -> son.bruit("carton.mp3")
                 "chambre" -> {
                     son.bruit("pose.mp3")
-                    son.radio()
-                    vue.radioAllumee = son.allumee()   // la radio s'allume en arrivant
                     vue.cadrerSurLaTele()
                 }
             }

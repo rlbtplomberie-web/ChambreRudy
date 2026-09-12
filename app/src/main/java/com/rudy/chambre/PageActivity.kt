@@ -49,6 +49,22 @@ class PageActivity : ComponentActivity() {
             runOnUiThread { vue.evaluateJavascript("window.livresChanges && window.livresChanges()", null) }
         }
 
+    /** Un seul livre, choisi a la main. */
+    private val choisirUnLivre =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri == null) return@registerForActivityResult
+            try { contentResolver.takePersistableUriPermission(
+                uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: Throwable) {}
+            val nom = androidx.documentfile.provider.DocumentFile
+                .fromSingleUri(this, uri)?.name ?: "livre.pdf"
+            Thread {
+                Livres.ajouter(this, uri, nom)
+                runOnUiThread {
+                    vue.evaluateJavascript("window.livresChanges && window.livresChanges()", null)
+                }
+            }.start()
+        }
+
     private val choisirFichiers =
         registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { liste ->
             attenteFichier?.onReceiveValue(liste.toTypedArray())
@@ -185,11 +201,22 @@ class PageActivity : ComponentActivity() {
                         .putExtra("rom", uriRom)
                     startActivity(i)
                     finish()                       // la vitrine s'efface derriere le jeu
+                } catch (e: ClassNotFoundException) {
+                    android.widget.Toast.makeText(this@PageActivity,
+                        (Consoles.parId(console)?.nom ?: console) +
+                        " : cet emulateur n'est pas encore dans cet APK.",
+                        android.widget.Toast.LENGTH_LONG).show()
                 } catch (e: Throwable) {
                     android.widget.Toast.makeText(this@PageActivity,
                         "lancement impossible : " + e, android.widget.Toast.LENGTH_LONG).show()
                 }
             }
+        }
+
+        /** Ajoute un seul livre, choisi a la main. */
+        @JavascriptInterface
+        fun ajouterUnLivre() {
+            runOnUiThread { choisirUnLivre.launch(arrayOf("application/pdf")) }
         }
 
         /** Ouvre le selecteur pour choisir le dossier des livres. */

@@ -40,8 +40,8 @@ object Objets {
         // ---- la tranche droite, en fuite ----
         val cote = Path()
         cote.moveTo(face.right, face.top)
-        cote.lineTo(face.right + profondeur, face.top - profondeur * .55f)
-        cote.lineTo(face.right + profondeur, face.bottom - profondeur * .55f)
+        cote.lineTo(face.right + profondeur, face.top + profondeur * .42f)
+        cote.lineTo(face.right + profondeur, face.bottom + profondeur * .42f)
         cote.lineTo(face.right, face.bottom)
         cote.close()
         p.shader = LinearGradient(face.right, 0f, face.right + profondeur, 0f,

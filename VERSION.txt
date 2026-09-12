@@ -1,1 +1,1 @@
-version 60 - nettoyage elargi pour Mupen64Plus
+version 61 - carton, deux boutons livres, son des l'intro

@@ -69,7 +69,7 @@ background:linear-gradient(90deg,#d7c6a9,#f3ead9);border-radius:12px 2px 2px 12p
  #opened{width:min(80vw,920px);height:min(76vh,650px)}
 }
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script></head><body>
-<div id="lib"><button id="addPdfBtn" style="position:absolute;z-index:20;top:16px;right:16px;border:1px solid #ffffff55;background:#111c;color:#fff;border-radius:999px;padding:11px 15px;font-weight:800">＋ Ajouter un livre</button><input id="addPdfInput" type="file" accept="application/pdf" style="display:none"><div id="shelf"><div id="book"><div class="pageside"></div><div class="cover"></div><div class="name">Dragon Ball — Tome 1</div></div></div><div class="hint">Glisse le livre à gauche/droite • touche-le pour l’ouvrir</div></div>
+<div id="lib"><button id="addOneBtn" style="position:absolute;z-index:20;top:16px;right:190px;border:1px solid #ffffff55;background:#111c;color:#fff;border-radius:999px;padding:11px 15px;font-weight:800">＋ Un livre</button><button id="addPdfBtn" style="position:absolute;z-index:20;top:16px;right:16px;border:1px solid #ffffff55;background:#111c;color:#fff;border-radius:999px;padding:11px 15px;font-weight:800">📁 Dossier des livres</button><input id="addPdfInput" type="file" accept="application/pdf" style="display:none"><div id="shelf"><div id="book"><div class="pageside"></div><div class="cover"></div><div class="name">Dragon Ball — Tome 1</div></div></div><div class="hint">Glisse le livre à gauche/droite • touche-le pour l’ouvrir</div></div>
 <div id="reader"><div class="bar"><button id="close">← Armoire</button><button id="prev">‹</button><button id="next">›</button><button id="mode">Sens manga</button><span class="stat" id="stat"></span></div>
 <div id="stage"><div id="opened"><div id="frontCover"></div><div class="pg left"><img id="L"></div><div class="pg right"><img id="R"></div><div class="spine"></div><div id="flip"><div class="face"><img id="F"></div><div class="face b"><img id="B"></div></div></div></div></div>
 <script>
@@ -144,7 +144,47 @@ $("#shelf").onpointerup=e=>{drag=0;$("#book").style.transform=""}
 preloadAround(0);
 
 // --- Ajout local de PDF ---
-let libraryBooks=[{title:"Dragon Ball — Tome 1",pages:PAGES.slice()}];
+let libraryBooks=[];
+
+/* ---- la bibliotheque vient du telephone ---- */
+function android(){ return (typeof Android !== "undefined" && Android.listerLivres) ? Android : null; }
+
+async function chargerBibliotheque(){
+  const A = android();
+  if(!A){ return; }
+  let liste = [];
+  try{ liste = JSON.parse(A.listerLivres() || "[]"); }catch(e){}
+  if(!liste.length){
+    $(".name").textContent = "Aucun livre";
+    const a=document.querySelector(".hint");
+    if(a) a.textContent = "Touche « Dossier » pour choisir tes livres";
+    libraryBooks = [];
+    return;
+  }
+  libraryBooks = liste.map(l => ({ title:l.titre, id:l.id, pages:null }));
+  currentBook = 0;
+  await ouvrirLivre(0);
+}
+
+/* Les pages sont dessinees par le telephone, une fois pour toutes. */
+async function ouvrirLivre(i){
+  const A = android(); if(!A) return;
+  const livre = libraryBooks[i]; if(!livre) return;
+  $(".name").textContent = livre.title + " — préparation…";
+  await new Promise(r => setTimeout(r, 30));
+  if(!livre.pages){
+    try{ livre.pages = JSON.parse(A.pagesDuLivre(livre.id) || "[]"); }catch(e){ livre.pages = []; }
+  }
+  currentBook = i;
+  if(livre.pages.length) refreshCurrentBook();
+  else $(".name").textContent = livre.title + " — illisible";
+}
+
+/* L'application previent quand le dossier change. */
+window.livresChanges = function(){
+  const b=$("#addOneBtn"); if(b) b.textContent="＋ Un livre";
+  chargerBibliotheque();
+};
 let currentBook=0;
 
 function refreshCurrentBook(){
@@ -159,7 +199,18 @@ function refreshCurrentBook(){
   preloadAround(0);
 }
 
-$("#addPdfBtn").onclick=(e)=>{e.stopPropagation();$("#addPdfInput").click()};
+$("#addPdfBtn").onclick=(e)=>{
+  e.stopPropagation();
+  const A = android();
+  if(A && A.choisirDossierLivres) A.choisirDossierLivres();
+  else alert("Disponible dans l'application.");
+};
+$("#addOneBtn").onclick=(e)=>{
+  e.stopPropagation();
+  const A = android();
+  if(A && A.ajouterUnLivre){ A.ajouterUnLivre(); $("#addOneBtn").textContent="＋ préparation…"; }
+  else alert("Disponible dans l'application.");
+};
 $("#addPdfInput").onchange=async e=>{
   const file=e.target.files && e.target.files[0];
   if(!file)return;
@@ -186,7 +237,7 @@ $("#addPdfInput").onchange=async e=>{
   }catch(err){
     alert("Impossible d'ajouter ce PDF : "+err.message);
   }finally{
-    $("#addPdfBtn").textContent="＋ Ajouter un livre";
+    $("#addPdfBtn").textContent="📁 Dossier des livres";
     e.target.value="";
   }
 };
@@ -197,9 +248,11 @@ $("#shelf").addEventListener("pointerdown",e=>{libSwipeX=e.clientX});
 $("#shelf").addEventListener("pointerup",e=>{
   const dx=e.clientX-libSwipeX;
   if(Math.abs(dx)>65 && libraryBooks.length>1){
-    currentBook=(currentBook+(dx<0?1:-1)+libraryBooks.length)%libraryBooks.length;
+    const suivant=(currentBook+(dx<0?1:-1)+libraryBooks.length)%libraryBooks.length;
+    ouvrirLivre(suivant);
     refreshCurrentBook();
   }
 });
 
-</script></body></html>
+</script><script>setTimeout(chargerBibliotheque, 120);</script>
+</body></html>

@@ -29,6 +29,9 @@ object Livres {
 
     fun lister(ctx: Context): JSONArray {
         val sortie = JSONArray()
+        // d'abord les livres ajoutes un par un
+        for ((id, titre, uri) in ajoutes(ctx))
+            sortie.put(JSONObject().put("titre", titre).put("id", id).put("uri", uri))
         val racine = dossier(ctx) ?: return sortie
         fun parcourir(d: DocumentFile, profondeur: Int) {
             if (profondeur > 2) return
@@ -50,6 +53,30 @@ object Livres {
     }
 
     /**
+     * Dessine les pages d'un PDF choisi un par un, et le retient dans la
+     * bibliotheque. C'est le second bouton : ajouter un seul livre.
+     */
+    fun ajouter(ctx: Context, uri: Uri, nom: String): JSONObject {
+        val titre = nom.removeSuffix(".pdf").removeSuffix(".PDF").replace('_', ' ')
+        val id = identifiant(nom)
+        val liste = ctx.getSharedPreferences("chambre_rudy", Context.MODE_PRIVATE)
+        val ajoutes = liste.getStringSet("livres_ajoutes", HashSet())!!.toMutableSet()
+        ajoutes.add(id + "|" + titre + "|" + uri)
+        liste.edit().putStringSet("livres_ajoutes", ajoutes).apply()
+        dessiner(ctx, id, uri)
+        return JSONObject().put("titre", titre).put("id", id)
+    }
+
+    /** Les livres ajoutes un par un, en plus de ceux du dossier. */
+    private fun ajoutes(ctx: Context): List<Triple<String, String, String>> =
+        ctx.getSharedPreferences("chambre_rudy", Context.MODE_PRIVATE)
+            .getStringSet("livres_ajoutes", HashSet())!!
+            .mapNotNull {
+                val p = it.split("|", limit = 3)
+                if (p.size == 3) Triple(p[0], p[1], p[2]) else null
+            }
+
+    /**
      * Dessine les pages du livre en images, et renvoie leurs adresses.
      * Un livre deja prepare n'est pas refait.
      */
@@ -67,10 +94,20 @@ object Livres {
             (0 until l.length()).map { l.getJSONObject(it) }.firstOrNull { it.getString("id") == id }
         } ?: return sortie
 
+        dessiner(ctx, id, Uri.parse(livre.getString("uri")))
+        cible.listFiles { f -> f.name.endsWith(".jpg") }?.sortedBy { it.name }?.forEach {
+            sortie.put("https://appassets.androidplatform.net/livres/$id/${it.name}")
+        }
+        return sortie
+    }
+
+    /** Dessine chaque page du PDF en image, une fois pour toutes. */
+    private fun dessiner(ctx: Context, id: String, uri: Uri) {
+        val cible = File(File(ctx.filesDir, "livres"), id)
+        if (cible.isDirectory && (cible.listFiles()?.isNotEmpty() == true)) return
         cible.mkdirs()
         try {
-            val pfd = ctx.contentResolver.openFileDescriptor(Uri.parse(livre.getString("uri")), "r")
-                ?: return sortie
+            val pfd = ctx.contentResolver.openFileDescriptor(uri, "r") ?: return
             PdfRenderer(pfd).use { lecteur ->
                 val largeur = 1100                       // assez fin pour lire, assez leger pour tenir
                 for (i in 0 until lecteur.pageCount) {
@@ -85,11 +122,9 @@ object Livres {
                         image.compress(Bitmap.CompressFormat.JPEG, 78, it)
                     }
                     image.recycle()
-                    sortie.put("https://appassets.androidplatform.net/livres/$id/$nom")
                 }
             }
             pfd.close()
         } catch (_: Throwable) {}
-        return sortie
     }
 }

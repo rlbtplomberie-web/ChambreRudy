@@ -281,6 +281,7 @@ class VueChambre(ctx: Context) : View(ctx) {
     /** Lance l'ouverture du carton. Trois temps : on approche, ca s'ouvre, tout blanchit. */
     fun jouerIntro() {
         etape = 1; tIntro = 0f; voile = 0f
+        surEtapeIntro?.invoke("debut")          // le son part avec l'image
         bouffees.clear()
         val a = android.animation.ValueAnimator.ofFloat(0f, 1f)
         a.duration = 15200          // 1,6 s d'attente, 7 s de travelling, puis l'ouverture
