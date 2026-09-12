@@ -19,21 +19,25 @@ jobs:
       - name: Recuperer le code
         uses: actions/checkout@v4
 
-      - name: Deballer la mise a jour, s'il y en a une
+      - name: Deballer les mises a jour, s'il y en a
         run: |
           set -e
-          # on accepte n'importe quel nom commencant par ChambreRudy-maj :
-          # le telephone ajoute parfois "(1)" quand le fichier existe deja
-          archive=$(ls -t ChambreRudy-maj*.zip 2>/dev/null | head -1 || true)
-          if [ -n "$archive" ]; then
-            echo "Archive trouvee : $archive"
+          # on accepte plusieurs archives : le projet peut arriver en morceaux,
+          # et le telephone ajoute parfois "(1)" au nom
+          archives=$(ls ChambreRudy-maj*.zip 2>/dev/null || true)
+          if [ -n "$archives" ]; then
+            echo "Archives trouvees :"; echo "$archives"
             mkdir -p /tmp/maj
-            unzip -o -q "$archive" -d /tmp/maj
-            rm -rf /tmp/maj/.github          # le workflow ne se remplace jamais lui-meme
 
-            # on efface l'ancien code avant de poser le neuf :
-            # ainsi un fichier supprime chez moi disparait aussi du depot
+            # on efface l'ancien code avant de poser le neuf, une seule fois
             rm -rf app/src/main/java app/src/main/assets app/src/main/cpp app/src/main/res
+
+            # les morceaux se completent : on les deballe tous au meme endroit
+            for a in $archives; do
+              echo "  deballage de $a"
+              unzip -o -q "$a" -d /tmp/maj
+            done
+            rm -rf /tmp/maj/.github          # le workflow ne se remplace jamais lui-meme
 
             cp -r /tmp/maj/. .
             rm -f ChambreRudy-maj*.zip       # et on retire les archives du depot
@@ -41,7 +45,7 @@ jobs:
             git config user.name "github-actions"
             git config user.email "actions@github.com"
             git add -A
-            git commit -m "Mise a jour depuis $archive" || echo "Rien de nouveau."
+            git commit -m "Mise a jour depuis les archives" || echo "Rien de nouveau."
             git push
           else
             echo "Aucune archive : on compile le code deja present."
