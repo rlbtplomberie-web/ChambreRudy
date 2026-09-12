@@ -36,6 +36,14 @@
             </intent-filter>
         </activity>
 
+        <!-- La bibliotheque et le lecteur de livres -->
+        <activity
+            android:name="com.rudy.chambre.LivreActivity"
+            android:exported="false"
+            android:screenOrientation="fullUser"
+            android:theme="@style/ThemeChambre"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density" />
+
         <!-- Les jeux, les vitrines et l'atelier, ouverts par-dessus -->
         <activity
             android:name="com.rudy.chambre.PageActivity"

@@ -233,18 +233,6 @@ class VueChambre(ctx: Context) : View(ctx) {
                     RectF(cx - l/2, cy - hh/2, cx + l/2, cy + hh/2), peinture)
                 peinture.alpha = 255
             }
-            if (porteD > 0.25f) consolePosee()?.let { console ->
-                charger(console.image)?.let { img ->
-                    val l = m.width() * .40f
-                    val hh = l * img.height / img.width
-                    val cx = m.left + m.width() * .74f
-                    val cy = m.centerY()
-                    peinture.alpha = (255 * ((porteD - .25f) / .75f).coerceIn(0f, 1f)).toInt()
-                    c.drawBitmap(img, null,
-                        RectF(cx - l/2, cy - hh/2, cx + l/2, cy + hh/2), peinture)
-                    peinture.alpha = 255
-                }
-            }
         }
         val demi = m.width() / 2f
         for (cote in 0..1) {
