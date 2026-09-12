@@ -754,6 +754,24 @@ class MainActivity : ComponentActivity() {
     }
 
 
+
+    /** Affiche l'erreur au lieu de disparaitre. (Reprise du projet PSP, ou elle est definie.) */
+    private fun ecranDeSecours(e: Throwable) {
+        try {
+            val d = resources.displayMetrics.density
+            val t = android.widget.TextView(this).apply {
+                setPadding((20 * d).toInt(), (50 * d).toInt(), (20 * d).toInt(), (20 * d).toInt())
+                setBackgroundColor(android.graphics.Color.BLACK)
+                setTextColor(android.graphics.Color.WHITE)
+                textSize = 13f
+                setTextIsSelectable(true)
+                text = "Le démarrage a échoué.\n\n" + e + "\n\n" +
+                       e.stackTrace.take(12).joinToString("\n") { it.toString() }
+            }
+            setContentView(android.widget.ScrollView(this).apply { addView(t) })
+        } catch (_: Throwable) {}
+    }
+
     private fun bordABord() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {

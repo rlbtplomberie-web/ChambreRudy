@@ -1,1 +1,1 @@
-version 16 - vos emulateurs entiers, icone ajoutee
+version 17 - emulateurs intacts, ecran de secours 3DS
