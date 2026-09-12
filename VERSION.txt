@@ -1,1 +1,1 @@
-version 35 - son au demarrage, pont des vitrines, intro allegee
+version 36 - les jeux du dossier deviennent les boitiers, et se lancent

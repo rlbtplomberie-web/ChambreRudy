@@ -80,6 +80,24 @@ class MainActivity : ComponentActivity() {
     @Volatile private var impulsion = 0
     @Volatile private var impulsionRestante = 0
 
+    /**
+     * Un jeu designe par la chambre.
+     *
+     * Elle passe l'adresse du fichier dans l'intention qui ouvre cet ecran :
+     * on le charge alors directement, sans passer par le catalogue.
+     */
+    private fun nomDe(u: android.net.Uri): String =
+        try { androidx.documentfile.provider.DocumentFile.fromSingleUri(this, u)?.name
+              ?: u.lastPathSegment ?: "jeu" } catch (_: Throwable) { "jeu" }
+
+    private fun jeuDemandeParLaChambre() {
+        val brut = intent?.getStringExtra("rom") ?: return
+        val u = try { android.net.Uri.parse(brut) } catch (_: Throwable) { return }
+        try { contentResolver.takePersistableUriPermission(
+                u, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: Throwable) {}
+        vue.postDelayed({ try { charger(u, nomDe(u)) } catch (_: Throwable) {} }, 400)
+    }
+
     private fun envoyer(bit: Int, nom: String) {
         impulsion = bit
         impulsionRestante = 6
@@ -893,6 +911,8 @@ class MainActivity : ComponentActivity() {
             Toast.makeText(this, libelle, Toast.LENGTH_SHORT).show()
         }
         vue.surChoixJeu = { i -> if (i in jeux.indices) charger(jeux[i].uri, jeux[i].nom) }
+
+        jeuDemandeParLaChambre()
     }
 
     override fun onPause() {

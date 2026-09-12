@@ -55,6 +55,24 @@ class MainActivity : ComponentActivity() {
      * l'application ne se ferme. Sans cela, une erreur Java fait disparaitre
      * l'application sans laisser la moindre trace lisible depuis le telephone.
      */
+    /**
+     * Un jeu designe par la chambre.
+     *
+     * Elle passe l'adresse du fichier dans l'intention qui ouvre cet ecran :
+     * on le charge alors directement, sans passer par le catalogue.
+     */
+    private fun nomDe(u: android.net.Uri): String =
+        try { androidx.documentfile.provider.DocumentFile.fromSingleUri(this, u)?.name
+              ?: u.lastPathSegment ?: "jeu" } catch (_: Throwable) { "jeu" }
+
+    private fun jeuDemandeParLaChambre() {
+        val brut = intent?.getStringExtra("rom") ?: return
+        val u = try { android.net.Uri.parse(brut) } catch (_: Throwable) { return }
+        try { contentResolver.takePersistableUriPermission(
+                u, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: Throwable) {}
+        vue.postDelayed({ try { chargerDepuis(u) } catch (_: Throwable) {} }, 400)
+    }
+
     private fun installerCapteur() {
         val precedent = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { fil, e ->
@@ -671,6 +689,8 @@ class MainActivity : ComponentActivity() {
                             bilanBios.ifBlank { "(rien à installer)" })
                 .setPositiveButton("OK", null).show()
         }
+
+        jeuDemandeParLaChambre()
     }
 
     private fun bordABord() {
