@@ -35,6 +35,7 @@ android {
         cmake { path = file("src/main/cpp/CMakeLists.txt") }
     }
     // les coeurs doivent etre extraits sur le disque pour etre ouverts par leur chemin
+    // les coeurs doivent etre poses sur le disque pour etre ouverts par leur chemin
     packaging { jniLibs { useLegacyPackaging = true } }
     androidResources { noCompress += listOf("png", "jpg", "webp", "bin", "txt", "app", "romfs", "tmd", "bcfnt") }
 }

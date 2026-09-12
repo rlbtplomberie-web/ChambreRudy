@@ -626,14 +626,12 @@ Java_com_skingc_app_core_CoeurGC_natInit(JNIEnv *env, jobject self, jstring chem
 
     /* Options du coeur Dolphin, tirees de sa documentation. Un nom qu'il
        journal, qui note chaque option reellement reclamee. */
-     *
-     * Toute la couche OpenGL n'existait que parce que Flycast l'exigeait sur
-     * Dreamcast. Un coeur qui dessine en memoire la rend inutile — et avec
-     * elle disparait la classe entiere de problemes qui nous bloque : plus de
-     * contexte a partager, plus de tampon a relire, plus de moteur graphique
-     * qui abandonne faute d'une fonction manquante.
-     *
-     * C'est plus lent qu'un rendu materiel, mais c'est exact et ca tient. */
+    /* Note laissee dans le projet d'origine :
+       la couche OpenGL n'existait que pour Flycast sur Dreamcast. Un coeur qui
+       dessine en memoire la rend inutile, et avec elle disparait toute une
+       classe de problemes : plus de contexte a partager, plus de tampon a
+       relire, plus de moteur graphique qui abandonne faute d'une fonction.
+       C'est plus lent qu'un rendu materiel, mais c'est exact et ca tient. */
     /* Rendu materiel par defaut, maintenant que le signal de contexte n'est
        plus envoye trois fois. Le filet de securite de l'application ramene au
        rendu logiciel si ca ne tient pas. */
