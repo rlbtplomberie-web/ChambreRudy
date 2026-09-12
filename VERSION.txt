@@ -1,1 +1,1 @@
-version 34 - la chambre complete dans l'application
+version 35 - son au demarrage, pont des vitrines, intro allegee

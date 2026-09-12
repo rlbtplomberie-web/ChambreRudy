@@ -506,10 +506,10 @@ button.primary{background:#f2c14e;color:#2a1c06;border-color:#f2c14e}
           <path d="M20 15 v13" stroke="#8a6a2a" stroke-width="1.4"/>
         </svg>
       </div>
-      <img id="suite2" src="med/chambre3.jpg" alt="">
+      <img id="suite2" loading="lazy" src="med/chambre3.jpg" alt="">
 
       <div id="tvScreen">
-        <video id="tvVid" playsinline webkit-playsinline></video>
+        <video id="tvVid" preload="none" playsinline webkit-playsinline></video>
         <div class="tv-scan"></div>
         <div class="tv-flash"></div>
         <div class="tv-nom"></div>
@@ -579,7 +579,7 @@ button.primary{background:#f2c14e;color:#2a1c06;border-color:#f2c14e}
         <div class="dw-cavity"></div>
         <div class="dw-out">
           <img class="dw-paper" src="med/cahier.webp" alt="">
-          <img class="dw-cartes" id="cartes" src="med/cartes.webp" alt="">
+          <img class="dw-cartes" loading="lazy" id="cartes" src="med/cartes.webp" alt="">
         </div>
         <div class="dw-front"><span class="dw-notch"></span></div>
       </div>
@@ -1098,18 +1098,19 @@ function b64ToBytes(b64){
 let BUF2=null, BUF3=null, BUF4=null, BUF5=null, BUF6=null;
 async function initAudio(){
   if(audioPret) return; audioPret=true;
-  const bytes=b64ToBytes(SND1_B64);
-  // 1) moteur audio : on decode les octets en memoire, aucune URL en jeu
+  // le moteur audio d'abord : tous les sons sont maintenant des fichiers
   try{
     AC=new (window.AudioContext||window.webkitAudioContext)();
     if(AC.state==='suspended') await AC.resume();
+  }catch(e){ audioErr='moteur: '+(e&&e.message||e); }
+  try{
+    const rep=await fetch(SND1_B64); const bb=await rep.arrayBuffer();
     BUF=await new Promise((ok,ko)=>{
-      const r=AC.decodeAudioData(bytes.buffer.slice(0),ok,ko);
+      const r=AC.decodeAudioData(bb.slice(0),ok,ko);
       if(r&&r.then) r.then(ok,ko);
     });
-  }catch(e){ audioErr='decode: '+(e&&e.message||e); BUF=null; }   // on garde le moteur
-  // 2) filet : un lien blob, accepte la ou data: est refuse
-  try{ BLOBURL=URL.createObjectURL(new Blob([bytes],{type:'audio/mpeg'})); }catch(e){}
+    BLOBURL=SND1_B64;
+  }catch(e){ audioErr='decode: '+(e&&e.message||e); BUF=null; }
   const charge=async(url)=>{ try{
       const rep=await fetch(url); const bb=await rep.arrayBuffer();
       return await new Promise((ok,ko)=>{const r=AC.decodeAudioData(bb,ok,ko); if(r&&r.then) r.then(ok,ko);});
@@ -1693,6 +1694,27 @@ document.getElementById('replay').onclick=play;
 document.getElementById('skip').onclick=()=>{stop();
   document.querySelectorAll('.obj').forEach(e=>e.remove()); menu.classList.add('on');};
 play();
+</script>
+
+<script>
+/* ---- pont avec l'application ----
+   Les vitrines l'appellent par parent.chercherRoms(...) */
+window.DANS_APPLI = (typeof Android !== 'undefined');
+window.chercherRoms = function(console){
+  if(window.DANS_APPLI) Android.choisirDossier(console);
+  else alert("Le choix du dossier n'existe que dans l'application.");
+};
+window.romsConnues = function(console){
+  try{ return window.DANS_APPLI ? JSON.parse(Android.listerRoms(console)) : []; }catch(e){ return []; }
+};
+window.lancerJeu = function(console, uri){ if(window.DANS_APPLI) Android.lancer(console, uri); };
+window.ouvrirConsole = function(console){ if(window.DANS_APPLI) Android.ouvrirConsole(console); };
+/* l'application rappelle ici quand un dossier vient d'etre choisi */
+window.onRoms = function(d){
+  window.dispatchEvent(new CustomEvent('roms', {detail:d}));
+  const f = document.getElementById('atelierFrame');
+  if(f && f.contentWindow) f.contentWindow.postMessage(Object.assign({type:'roms'}, d), '*');
+};
 </script>
 </body>
 </html>
