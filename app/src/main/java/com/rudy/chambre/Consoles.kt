@@ -35,6 +35,11 @@ object Consoles {
                 "skin_dc",   "dossier_roms",  listOf(".gdi", ".cdi", ".chd", ".cue")),
         Console("ds",   "Nintendo DS",      "com.skinds.app.MainActivity",
                 "skin_ds",   "dossier_roms",  listOf(".nds", ".zip")),
+        Console("gc",   "GameCube / Wii",   "com.skingc.app.MainActivity",
+                "skin_gc",   "dossier_roms",  listOf(".iso", ".gcm", ".gcz", ".rvz", ".ciso",
+                                                     ".wbfs", ".wad", ".dol", ".elf", ".zip")),
+        Console("psp",  "PSP",              "com.skinpsp.app.MainActivity",
+                "skin_psp",  "dossier_roms",  listOf(".iso", ".cso", ".pbp", ".chd", ".elf")),
         Console("3ds",  "Nintendo 3DS",     "com.skin3ds.app.MainActivity",
                 "skin_3ds",  "dossier_roms",  listOf(".3ds", ".cci", ".cxi", ".app"))
     )

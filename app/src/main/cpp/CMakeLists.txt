@@ -29,6 +29,14 @@ target_link_libraries(skindc ${log-lib} ${egl-lib} ${gles-lib} dl)
 add_library(skinds SHARED skinds/pont.c)
 target_link_libraries(skinds ${log-lib} ${egl-lib} ${gles-lib} dl)
 
+# GameCube et Wii : Dolphin
+add_library(skingc SHARED skingc/pont.c stl.cpp)
+target_link_libraries(skingc ${log-lib} ${egl-lib} ${gles-lib} dl)
+
+# PSP : PPSSPP, avec la bibliotheque C++ partagee
+add_library(skinpsp SHARED skinpsp/pont.c stl.cpp)
+target_link_libraries(skinpsp ${log-lib} ${egl-lib} ${gles-lib} dl)
+
 # La 3DS : son pont, plus un fichier C++ vide pour que libc++_shared.so
 # soit embarquee dans l'APK, comme Citra l'exige.
 add_library(skin3ds SHARED skin3ds/pont.c stl.cpp)

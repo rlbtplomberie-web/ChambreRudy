@@ -13,7 +13,9 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
+        // Flycast, melonDS et Citra n'existent qu'en arm64 : on s'aligne sur eux,
+        // comme le faisaient tes projets Dreamcast, DS et 3DS
+        ndk { abiFilters += listOf("arm64-v8a") }
         // Citra reclame la bibliotheque C++ partagee : elle doit etre dans l'APK
         externalNativeBuild {
             cmake { arguments("-DANDROID_STL=c++_shared") }
@@ -34,7 +36,7 @@ android {
     }
     // les coeurs doivent etre extraits sur le disque pour etre ouverts par leur chemin
     packaging { jniLibs { useLegacyPackaging = true } }
-    androidResources { noCompress += listOf("png", "jpg", "webp", "bin", "txt", "app", "romfs", "tmd") }
+    androidResources { noCompress += listOf("png", "jpg", "webp", "bin", "txt", "app", "romfs", "tmd", "bcfnt") }
 }
 
 dependencies {

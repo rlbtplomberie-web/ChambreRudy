@@ -1,87 +1,131 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Dreamcast, DS et 3DS rendent l'image par OpenGL ES 3 -->
+    <uses-feature android:glEsVersion="0x00030000" android:required="true" />
+
+    <!-- Mega Drive, Game Boy et GBA ouvrent la cartouche par son chemin reel -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="La chambre de Rudy"
         android:supportsRtl="true"
         android:hardwareAccelerated="true"
-        android:theme="@style/Theme.Chambre">
+        android:extractNativeLibs="true"
+        android:requestLegacyExternalStorage="true"
+        android:largeHeap="true"
+        android:theme="@style/ThemePleinEcran">
 
         <!-- La chambre : l'ecran d'accueil -->
         <activity
             android:name="com.rudy.chambre.MainActivity"
             android:exported="true"
-            android:screenOrientation="fullUser"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode">
+            android:screenOrientation="fullSensor"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
+            android:theme="@style/ThemeChambre">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- NES -->
+        <!-- NES : reglages repris de son projet -->
         <activity
             android:name="com.skinnes.app.MainActivity"
             android:exported="false"
-            android:screenOrientation="fullUser"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
+            android:screenOrientation="fullSensor"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
+            android:theme="@style/ThemePleinEcran" />
 
-        <!-- Super Nintendo -->
+        <!-- Super Nintendo : reglages repris de son projet -->
         <activity
             android:name="com.skinsnes.app.MainActivity"
             android:exported="false"
-            android:screenOrientation="fullUser"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
+            android:screenOrientation="fullSensor"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
+            android:theme="@style/ThemePleinEcran" />
 
-        <!-- Game Boy -->
+        <!-- Game Boy : reglages repris de son projet -->
         <activity
             android:name="com.gbgbc.app.MainActivity"
             android:exported="false"
-            android:screenOrientation="fullUser"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
+            android:screenOrientation="fullSensor"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|density"
+            android:theme="@style/ThemePleinEcran" />
 
-        <!-- Game Boy Advance -->
+        <!-- Game Boy Advance : reglages repris de son projet -->
         <activity
             android:name="com.skingba.app.MainActivity"
             android:exported="false"
-            android:screenOrientation="fullUser"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
+            android:screenOrientation="fullSensor"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|density"
+            android:theme="@style/ThemePleinEcran" />
 
-        <!-- Mega Drive -->
+        <!-- Mega Drive : reglages repris de son projet -->
         <activity
             android:name="com.skinmd.app.MainActivity"
             android:exported="false"
-            android:screenOrientation="fullUser"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
+            android:screenOrientation="fullSensor"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|density"
+            android:theme="@style/ThemePleinEcran" />
 
-        <!-- PlayStation -->
+        <!-- PlayStation : reglages repris de son projet -->
         <activity
             android:name="com.skinps1.app.MainActivity"
             android:exported="false"
-            android:screenOrientation="fullUser"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
+            android:screenOrientation="fullSensor"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
+            android:theme="@style/ThemePleinEcran" />
 
-        <!-- Dreamcast -->
+        <!-- Dreamcast : reglages repris de son projet -->
         <activity
             android:name="com.skindc.app.MainActivity"
             android:exported="false"
-            android:screenOrientation="fullUser"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
+            android:screenOrientation="fullSensor"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
+            android:theme="@style/ThemePleinEcran" />
 
-        <!-- Nintendo DS -->
+        <!-- Nintendo DS : reglages repris de son projet -->
         <activity
             android:name="com.skinds.app.MainActivity"
             android:exported="false"
-            android:screenOrientation="fullUser"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
+            android:screenOrientation="fullSensor"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
+            android:theme="@style/ThemePleinEcran" />
 
-        <!-- Nintendo 3DS -->
+        <!-- GameCube et Wii : reglages repris de ton projet -->
+        <activity
+            android:name="com.skingc.app.MainActivity"
+            android:exported="false"
+            android:screenOrientation="fullSensor"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
+            android:theme="@style/ThemePleinEcran" />
+
+        <!-- PSP : largeHeap, comme dans ton projet -->
+        <activity
+            android:name="com.skinpsp.app.MainActivity"
+            android:exported="false"
+            android:screenOrientation="fullSensor"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
+            android:theme="@style/ThemePleinEcran" />
+
+        <!-- Nintendo 3DS : reglages repris de son projet -->
         <activity
             android:name="com.skin3ds.app.MainActivity"
             android:exported="false"
-            android:screenOrientation="fullUser"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode" />
+            android:screenOrientation="fullSensor"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
+            android:theme="@style/ThemePleinEcran" />
+
     </application>
 </manifest>
