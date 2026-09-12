@@ -15,47 +15,61 @@ object Objets {
         textAlign = Paint.Align.CENTER
     }
 
+
     /**
-     * Le carton de Rudy.
-     * [ouverture] va de 0, rabats fermes, a 1, grands ouverts.
+     * Le carton de la photo, redessine par-dessus lui-meme pour que ses rabats
+     * puissent s'ouvrir. Meme place, meme taille, meme inclinaison : on ne voit
+     * pas la substitution. [ouverture] va de 0 a 1.
      */
-    fun carton(c: Canvas, r: RectF, ouverture: Float, tremble: Float = 0f) {
-        c.save()
-        if (tremble != 0f) c.rotate(tremble, r.centerX(), r.bottom)
+    fun cartonPhoto(c: Canvas, face: RectF, profondeur: Float, ouverture: Float) {
+        val h = face.height()
+        // le cote droit, en fuite, qui donne l'epaisseur
+        p.style = Paint.Style.FILL
+        val cote = Path()
+        cote.moveTo(face.right, face.top)
+        cote.lineTo(face.right + profondeur, face.top - profondeur * .55f)
+        cote.lineTo(face.right + profondeur, face.bottom - profondeur * .55f)
+        cote.lineTo(face.right, face.bottom)
+        cote.close()
+        p.color = 0xFF9A6E48.toInt()
+        c.drawPath(cote, p)
 
-        val h = r.height()
-        // les quatre rabats, qui se relevent
-        if (ouverture > 0f) {
-            p.style = Paint.Style.FILL
-            p.shader = null
-            p.color = 0xFFB07C54.toInt()
-            val ouv = h * 0.55f * ouverture
-            val chemin = Path()
-            chemin.moveTo(r.left, r.top); chemin.lineTo(r.centerX(), r.top - ouv * .7f)
-            chemin.lineTo(r.centerX(), r.top); chemin.close()
-            c.drawPath(chemin, p)
-            p.color = 0xFF8A5E3C.toInt()
-            val chemin2 = Path()
-            chemin2.moveTo(r.right, r.top); chemin2.lineTo(r.centerX(), r.top - ouv * .7f)
-            chemin2.lineTo(r.centerX(), r.top); chemin2.close()
-            c.drawPath(chemin2, p)
-        }
-
-        // le corps, en carton brun
-        p.shader = LinearGradient(r.left, r.top, r.right, r.bottom,
-            intArrayOf(0xFFC08A5E.toInt(), 0xFF9B6A44.toInt()), null, Shader.TileMode.CLAMP)
-        c.drawRoundRect(r, h * .06f, h * .06f, p)
+        // la face avant, carton clair eclaire par la lampe du bureau
+        p.shader = LinearGradient(face.left, face.top, face.right, face.bottom,
+            intArrayOf(0xFFD9B489.toInt(), 0xFFB98D63.toInt()), null, Shader.TileMode.CLAMP)
+        c.drawRect(face, p)
         p.shader = null
 
-        // la bande du haut, plus sombre
-        p.color = 0x33000000
-        c.drawRect(r.left, r.top, r.right, r.top + h * .16f, p)
+        // l'interieur sombre, visible des que les rabats se relevent
+        if (ouverture > 0f) {
+            p.color = 0xFF2A1A0E.toInt()
+            c.drawRect(face.left, face.top - profondeur * .55f * ouverture,
+                       face.right, face.top + h * .10f, p)
+        }
 
-        // le nom, ecrit au feutre
-        texte.color = 0xFFF6EFE2.toInt()
-        texte.textSize = h * .30f
-        c.drawText("RUDY", r.centerX(), r.centerY() + h * .10f, texte)
-        c.restore()
+        // les deux rabats, qui basculent vers l'exterieur
+        if (ouverture > 0f) {
+            val lev = h * .62f * ouverture
+            p.color = 0xFFC49A6C.toInt()
+            val g = Path()
+            g.moveTo(face.left, face.top); g.lineTo(face.centerX(), face.top)
+            g.lineTo(face.centerX() - h * .06f, face.top - lev)
+            g.lineTo(face.left - h * .10f, face.top - lev * .82f); g.close()
+            c.drawPath(g, p)
+            p.color = 0xFFB08658.toInt()
+            val d = Path()
+            d.moveTo(face.centerX(), face.top); d.lineTo(face.right, face.top)
+            d.lineTo(face.right + h * .10f, face.top - lev * .82f)
+            d.lineTo(face.centerX() + h * .06f, face.top - lev); d.close()
+            c.drawPath(d, p)
+        }
+
+        // le nom au feutre, comme sur la photo
+        texte.color = 0xFF3A2A18.toInt()
+        texte.textSize = h * .42f
+        texte.typeface = Typeface.create(Typeface.SERIF, Typeface.BOLD_ITALIC)
+        c.drawText("Rudy", face.centerX(), face.centerY() + h * .15f, texte)
+        texte.typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
     }
 
 
@@ -207,16 +221,38 @@ object Objets {
         c.drawPath(chemin2, p)
     }
 
-    /** La façade du tiroir, avec sa poignee. */
-    fun tiroir(c: Canvas, r: RectF) {
+
+    /**
+     * Le tiroir du bureau : la cavite sombre au fond, la facade en bois qui
+     * bascule vers l'avant. Couleurs reprises de la version web.
+     */
+    fun tiroir(c: Canvas, r: RectF, ouverture: Float) {
+        // la cavite, toujours dessinee : c'est elle qu'on voit quand ca s'ouvre
+        p.style = Paint.Style.FILL
         p.shader = LinearGradient(r.left, r.top, r.left, r.bottom,
-            intArrayOf(0xFF8A5A32.toInt(), 0xFF5E3A1E.toInt()), null, Shader.TileMode.CLAMP)
-        c.drawRoundRect(r, r.height() * .12f, r.height() * .12f, p)
+            intArrayOf(0xFF120704.toInt(), 0xFF25100A.toInt(), 0xFF160A06.toInt()),
+            floatArrayOf(0f, .6f, 1f), Shader.TileMode.CLAMP)
+        c.drawRect(r, p)
         p.shader = null
-        p.color = 0xFFC8922F.toInt()
+
+        // la facade, qui s'incline en glissant vers le bas
         val h = r.height()
-        c.drawRoundRect(RectF(r.centerX() - r.width() * .18f, r.centerY() - h * .07f,
-                              r.centerX() + r.width() * .18f, r.centerY() + h * .07f),
-                        h * .07f, h * .07f, p)
+        val avance = h * .62f * ouverture
+        val facade = RectF(r.left, r.top + avance, r.right, r.bottom + avance * .35f)
+        p.shader = LinearGradient(facade.left, facade.top, facade.left, facade.bottom,
+            intArrayOf(0xFFA5643C.toInt(), 0xFF8C5030.toInt(), 0xFF71401F.toInt()),
+            floatArrayOf(0f, .55f, 1f), Shader.TileMode.CLAMP)
+        c.drawRect(facade, p)
+        p.shader = null
+        // le liset clair du haut et l'ombre du bas, comme dans la page
+        p.color = 0xCCBE7E54.toInt()
+        c.drawRect(facade.left, facade.top, facade.right, facade.top + h * .05f, p)
+        p.color = 0x73301C04
+        c.drawRect(facade.left, facade.bottom - h * .12f, facade.right, facade.bottom, p)
+        // la poignee
+        p.color = 0xFFC8922F.toInt()
+        c.drawRoundRect(RectF(facade.centerX() - r.width() * .16f, facade.centerY() - h * .06f,
+                              facade.centerX() + r.width() * .16f, facade.centerY() + h * .06f),
+                        h * .06f, h * .06f, p)
     }
 }

@@ -121,16 +121,15 @@ class VueChambre(ctx: Context) : View(ctx) {
         // le meuble et ses deux battants, toujours visibles
         dessinerPortes(c)
 
-        // la facade du tiroir
-        Objets.tiroir(c, zone(Decor.TIROIR).let {
-            RectF(it.left, it.top + it.height() * 0.55f * tiroir,
-                  it.right, it.bottom + it.height() * 0.55f * tiroir) })
+        // le tiroir : cavite et facade
+        Objets.tiroir(c, zone(Decor.TIROIR), tiroir)
 
         // la radio
         Objets.radio(c, zone(Decor.RADIO), radioAllumee)
 
-        // le carton, ferme, a droite de la tele
-        Objets.carton(c, zone(Decor.CARTON), 0f, tremble)
+        // le carton du bureau : celui de la photo, redessine pour pouvoir bouger
+        Objets.cartonPhoto(c, zone(Decor.CARTON),
+                           Decor.BOITE_PROFONDEUR * largeurMur * .5f, 0f)
 
         // le tiroir coulisse
         if (tiroir > 0f) {
@@ -244,19 +243,20 @@ class VueChambre(ctx: Context) : View(ctx) {
         etape = 1; tIntro = 0f; voile = 0f
         bouffees.clear()
         val a = android.animation.ValueAnimator.ofFloat(0f, 1f)
-        a.duration = 7200
+        a.duration = 15200          // 1,6 s d'attente, 7 s de travelling, puis l'ouverture
         a.interpolator = android.view.animation.LinearInterpolator()
         a.addUpdateListener {
             tIntro = it.animatedValue as Float
             // le carton tressaille juste avant de s'ouvrir
-            secousse = if (tIntro > .52f && tIntro < .62f)
-                kotlin.math.sin(tIntro * 320f) * (1f - (tIntro - .52f) / .10f) * 2.4f else 0f
-            if (tIntro > .60f && bouffees.isEmpty()) {
+            // la secousse, juste avant l'ouverture
+            secousse = if (tIntro > .68f && tIntro < .745f)
+                kotlin.math.sin((tIntro - .68f) * 420f) * (1f - (tIntro - .68f) / .065f) * 2.2f else 0f
+            if (tIntro > .80f && bouffees.isEmpty()) {
                 surEtapeIntro?.invoke("ouverture")
                 sortirLesConsoles()
             }
-            if (tIntro > .74f) {
-                val u = ((tIntro - .74f) / .26f).coerceIn(0f, 1f)
+            if (tIntro > .90f) {
+                val u = ((tIntro - .90f) / .10f).coerceIn(0f, 1f)
                 voile = if (u < .45f) u / .45f else (1f - (u - .45f) / .55f).coerceAtLeast(0f)
                 if (u > .45f && etape == 1) { etape = 2; surEtapeIntro?.invoke("chambre") }
             }
@@ -282,74 +282,89 @@ class VueChambre(ctx: Context) : View(ctx) {
         }
     }
 
-    /** Le premier decor : la chambre de nuit, vue de loin, puis on approche du carton. */
+
+    /** Le dessin de l'intro, cale sur les memes mesures que la version web. */
     private fun dessinerIntro(c: Canvas) {
         val fond = charger("room.jpg") ?: return
         val t = tIntro
-        // travelling : on part de la gauche et on se rapproche du bureau
-        val zoom = 1.12f + 0.34f * lisser(min(1f, t / .62f))
-        val lFond = width * zoom * 1.25f
-        val hFond = lFond * fond.height / fond.width
-        val x = -(lFond - width) * (0.18f + 0.62f * lisser(min(1f, t / .62f)))
-        val y = -(hFond - height) * 0.52f
+
+        // l'image couvre l'ecran, sans bord visible
+        val iw = max(width.toFloat(), height * Decor.RATIO_INTRO)
+        val ih = iw / Decor.RATIO_INTRO
+
+        // la camera : de la gauche de la chambre jusqu'au carton
+        val k0 = 1f
+        val k1 = Decor.ZOOM_INTRO
+        val sx = 0f
+        val sy = min(0f, (height - ih) / 2f)
+        val ox = (Decor.BOITE.x + Decor.BOITE.l / 2f) * iw
+        val oy = (Decor.BOITE.y + Decor.BOITE.h / 2f) * ih
+        val tx = .50f * width - k1 * ox
+        val ty = .46f * height - k1 * oy
+
+        val avance = doux(((t - .10f) / .58f).coerceIn(0f, 1f))   // le travelling
+        val k = k0 + (k1 - k0) * avance
+        val px = sx + (tx - sx) * avance
+        val py = sy + (ty - sy) * avance
+
         c.save()
-        if (secousse != 0f) c.rotate(secousse, width / 2f, height / 2f)
-        c.drawBitmap(fond, null, RectF(x, y, x + lFond, y + hFond), peinture)
+        c.translate(px, py)
+        c.scale(k, k)
+        c.drawBitmap(fond, null, RectF(0f, 0f, iw, ih), peinture)
+
+        // le carton, pose sur la photo a sa place exacte
+        val b = RectF(Decor.BOITE.x * iw, Decor.BOITE.y * ih,
+                      (Decor.BOITE.x + Decor.BOITE.l) * iw,
+                      (Decor.BOITE.y + Decor.BOITE.h) * ih)
+        val profondeur = Decor.BOITE_PROFONDEUR * iw
+        val ouv = ((t - .74f) / .06f).coerceIn(0f, 1f)
+        c.save()
+        if (secousse != 0f) c.rotate(secousse, b.left, b.bottom)   // la secousse pivote au coin
+        Objets.cartonPhoto(c, b, profondeur, ouv)
         c.restore()
 
-        // le carton, pose sur le bureau de la photo : on suit le meme
-        // rapprochement que l'image, pour qu'il reste a sa place
-        val lCarton = lFond * 0.24f
-        val hCarton = lCarton * 0.62f
-        val cartonR = RectF(
-            x + lFond * 0.44f, y + hFond * 0.50f,
-            x + lFond * 0.44f + lCarton, y + hFond * 0.50f + hCarton)
-        val ouv = ((t - .52f) / .12f).coerceIn(0f, 1f)
-        c.save()
-        if (secousse != 0f) c.rotate(secousse, cartonR.centerX(), cartonR.bottom)
-        Objets.carton(c, cartonR, ouv, 0f)
-        c.restore()
-
-        // les consoles jaillissent du carton
-        if (t > .60f) {
-            val u = ((t - .60f) / .28f).coerceIn(0f, 1f)
-            val cx = cartonR.centerX()
-            val cy = cartonR.centerY()
+        // les consoles jaillissent de la bouche du carton
+        if (t > .80f) {
+            val u = ((t - .80f) / .14f).coerceIn(0f, 1f)
+            val cx = b.centerX()
+            val cy = b.top + b.height() * .25f
             for ((i, console) in Decor.CONSOLES.withIndex()) {
                 val img = charger(console.image) ?: continue
-                val retard = i * .045f
+                val retard = if (i < 3) i * .05f else .19f + (i - 3) * .075f
                 val p = ((u - retard) / (1f - retard)).coerceIn(0f, 1f)
                 if (p <= 0f) continue
-                val angle = (i.toFloat() / Decor.CONSOLES.size) * 6.2832f
-                val d = width * .62f * lisser(p)
-                val px = cx + kotlin.math.cos(angle) * d
-                val py = cy + kotlin.math.sin(angle) * d * .7f - height * .12f * p
-                val l = width * .17f * (0.35f + 0.65f * p)
+                val angle = -1.57f + (i - 6f) * 0.22f
+                val d = iw * .30f * doux(p)
+                val hx = cx + kotlin.math.cos(angle) * d
+                val hy = cy + kotlin.math.sin(angle) * d - iw * .06f * p * p
+                val l = iw * .085f
                 val hh = l * img.height / img.width
-                peinture.alpha = (255 * (1f - p * .35f)).toInt()
-                c.drawBitmap(img, null, RectF(px - l/2, py - hh/2, px + l/2, py + hh/2), peinture)
+                peinture.alpha = (255 * (1f - (p - .6f).coerceAtLeast(0f) / .4f)).toInt()
+                c.drawBitmap(img, null, RectF(hx - l/2, hy - hh/2, hx + l/2, hy + hh/2), peinture)
                 peinture.alpha = 255
             }
         }
 
-        // la fumee : des bouffees rondes aux bords fondus, puis un voile blanc
+        // la fumee monte de la bouche du carton
         if (bouffees.isNotEmpty()) {
-            val u = ((t - .60f) / .40f).coerceIn(0f, 1f)
-            for (b in bouffees) {
-                val p = ((u - b[3]) / (1f - b[3])).coerceIn(0f, 1f)
+            val u = ((t - .82f) / .18f).coerceIn(0f, 1f)
+            for (bo in bouffees) {
+                val p = ((u - bo[3]) / (1f - bo[3])).coerceIn(0f, 1f)
                 if (p <= 0f) continue
-                val taille = width * b[2] * (0.25f + 1.15f * p)
-                val px = cartonR.centerX() + b[0] * width * .5f * p
-                val py = cartonR.centerY() + b[1] * height * .4f * p - height * .10f * p
-                val opacite = (255 * (if (p < .25f) p / .25f else (1f - (p - .25f) / .75f))).toInt()
-                degrade.shader = RadialGradient(px, py, taille,
+                val taille = iw * .22f * bo[2] * (0.3f + 1.4f * p)
+                val fx = b.centerX() + bo[0] * iw * .22f * p
+                val fy = b.top + bo[1] * ih * .12f * p - ih * .10f * p
+                val opacite = 255 * (if (p < .25f) p / .25f else (1f - (p - .25f) / .75f))
+                degrade.shader = RadialGradient(fx, fy, taille,
                     intArrayOf(Color.WHITE, 0x66FFFFFF, 0x00FFFFFF),
                     floatArrayOf(0f, .55f, 1f), Shader.TileMode.CLAMP)
-                degrade.alpha = opacite.coerceIn(0, 255)
-                c.drawCircle(px, py, taille, degrade)
+                degrade.alpha = opacite.toInt().coerceIn(0, 255)
+                c.drawCircle(fx, fy, taille, degrade)
             }
             degrade.shader = null
         }
+        c.restore()
+
         if (voile > 0f) {
             blanc.color = Color.WHITE
             blanc.alpha = (255 * voile.coerceIn(0f, 1f)).toInt()
@@ -357,7 +372,7 @@ class VueChambre(ctx: Context) : View(ctx) {
         }
     }
 
-    private fun lisser(t: Float) = t * t * (3f - 2f * t)
+    private fun doux(t: Float) = t * t * (3f - 2f * t)
 
     // ================= le doigt =================
 

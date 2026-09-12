@@ -18,6 +18,18 @@ object Decor {
 
     val VUES = listOf("bureau", "fenetre", "lit")
 
+    // ----- l'intro, mesures reprises telles quelles de la version web -----
+    const val RATIO_INTRO = 1536f / 1024f
+    /** Le carton sur la photo : face avant, et sa profondeur. */
+    val BOITE = Zone(0.7880f, 0.4330f, 0.1055f, 0.1065f)
+    const val BOITE_PROFONDEUR = 0.0355f
+    const val ZOOM_INTRO = 1.55f          // rapprochement final
+    const val TRAVELLING_MS = 7000L       // duree du travelling
+    const val ATTENTE_MS = 1600L          // avant que la camera parte
+    const val SECOUSSE_MS = 800L          // apres l'arrivee
+    const val OUVERTURE_MS = 1900L        // le carton s'ouvre
+    const val CONSOLES_MS = 2150L         // les consoles jaillissent
+
     // ----- les objets du bureau -----
     val TELE    = Zone(528f / 1672f, 437f / 941f, 294f / 1672f, 143f / 941f)
     val RADIO   = Zone(236f / 1672f, 498f / 941f, 158f / 1672f, 158f / 1672f * 0.62f)
