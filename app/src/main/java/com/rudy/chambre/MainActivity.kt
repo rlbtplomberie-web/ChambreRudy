@@ -3,8 +3,11 @@ package com.rudy.chambre
 import android.content.Intent
 import android.os.Bundle
 import android.webkit.JavascriptInterface
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.webkit.WebViewAssetLoader
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.WindowCompat
@@ -41,14 +44,28 @@ class MainActivity : ComponentActivity() {
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
 
+        /*
+         * Les fichiers de la chambre sont servis comme un petit site local.
+         *
+         * Une page ouverte en file:// n'a pas le droit d'aller chercher ses
+         * propres fichiers : les musiques et les videos resteraient muettes.
+         * Servis sous une adresse, ils se chargent normalement.
+         */
+        val serveur = WebViewAssetLoader.Builder()
+            .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
+            .build()
+
         vue = WebView(this).apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.mediaPlaybackRequiresUserGesture = false
             settings.allowFileAccess = true
-            webViewClient = WebViewClient()
+            webViewClient = object : WebViewClient() {
+                override fun shouldInterceptRequest(v: WebView, r: WebResourceRequest): WebResourceResponse? =
+                    serveur.shouldInterceptRequest(r.url)
+            }
             addJavascriptInterface(Pont(), "Android")
-            loadUrl("file:///android_asset/web/index.html")
+            loadUrl("https://appassets.androidplatform.net/assets/web/index.html")
         }
         setContentView(vue)
     }
@@ -98,6 +115,19 @@ class MainActivity : ComponentActivity() {
         fun choisirDossier(console: String) {
             consoleEnAttente = console
             runOnUiThread { choisirDossier.launch(null) }
+        }
+
+        /** Le dernier plantage note, ou une chaine vide. */
+        @JavascriptInterface
+        fun dernierPlantage(): String =
+            try {
+                val f = java.io.File(filesDir, "dernier_plantage.txt")
+                if (f.exists()) f.readText() else ""
+            } catch (_: Throwable) { "" }
+
+        @JavascriptInterface
+        fun effacerPlantage() {
+            try { java.io.File(filesDir, "dernier_plantage.txt").delete() } catch (_: Throwable) {}
         }
 
         @JavascriptInterface

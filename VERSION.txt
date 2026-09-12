@@ -1,1 +1,1 @@
-version 32 - GameCube ouverte dans l'application
+version 34 - la chambre complete dans l'application
