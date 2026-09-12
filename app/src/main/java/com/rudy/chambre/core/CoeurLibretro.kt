@@ -84,7 +84,7 @@ class CoeurLibretro(ctx: Context, nomCoeur: String) : Coeur {
         return if (n <= 0) ShortArray(0) else tamponSon.copyOf(n)
     }
 
-    val frequence: Int get() = natFrequence().toInt()
+    override val frequence: Int get() = natFrequence().toInt()
     override val imagesParSeconde: Double get() = natFps()
 
     override fun reinitialiser() { if (romChargee) natReset() }

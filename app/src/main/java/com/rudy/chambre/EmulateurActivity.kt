@@ -38,6 +38,10 @@ class EmulateurActivity : ComponentActivity() {
     private var son: Son? = null
     private var romsAffichees: List<Rom> = emptyList()
 
+    /** Un fichier existe-t-il dans les assets ? */
+    private fun assetsPossede(chemin: String): Boolean =
+        try { assets.open(chemin).close(); true } catch (_: Exception) { false }
+
     private val replieur = Runnable { if (!vue.modeEdition) replier(true) }
 
     private fun replier(oui: Boolean) {
@@ -156,6 +160,11 @@ class EmulateurActivity : ComponentActivity() {
         bordABord()
 
         EnCours.console = idConsole
+        // l'habillage de la NES suit un autre format : tant qu'il n'est pas converti,
+        // on retombe sur celui de la Super Nintendo plutot que de fermer l'application
+        if (idConsole == "nes" && !assetsPossede("skins/nes/skin/portrait/positions.json")) {
+            EnCours.console = "snes"
+        }
         // la NES a son propre moteur, ecrit en Kotlin ; les autres passent par libretro
         val nomCoeur = Consoles.parId(idConsole)?.coeur
         coeur = if (nomCoeur == null) CoeurNes() else CoeurLibretro(this, nomCoeur)

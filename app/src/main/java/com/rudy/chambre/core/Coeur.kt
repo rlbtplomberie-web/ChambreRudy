@@ -10,6 +10,8 @@ interface Coeur {
     val hauteur: Int
     val romChargee: Boolean
     val imagesParSeconde: Double
+    /** Frequence d'echantillonnage du son, en hertz. */
+    val frequence: Int
     val pret: Boolean
     val derniereErreur: String
     val cle: String

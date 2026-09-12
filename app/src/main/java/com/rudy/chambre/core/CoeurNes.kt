@@ -12,6 +12,10 @@ class CoeurNes : NesCore, Coeur {
 
     private var console: Nes? = null
     override val tampon = IntArray(256 * 240)
+    // NesCore fournit une valeur par defaut, Coeur les declare : il faut trancher ici
+    override val largeur: Int get() = 256
+    override val hauteur: Int get() = 240
+    override val frequence: Int get() = 44100
     override var derniereErreur: String = ""
         private set
 
