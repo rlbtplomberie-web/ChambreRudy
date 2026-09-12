@@ -121,16 +121,16 @@
             android:screenOrientation="fullSensor"
             android:configChanges="orientation|screenSize|screenLayout|keyboard|keyboardHidden|navigation|smallestScreenSize|density|uiMode"
             android:launchMode="singleTask"
-            android:theme="@style/ThemePleinEcran">
+            android:theme="@style/ThemePSP">
             <meta-data android:name="android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY"
                        android:value="true" />
         </activity>
         <activity android:name="org.ppsspp.ppsspp.DocumentResultProxyActivity"
-                  android:exported="false" android:theme="@style/ThemePleinEcran" />
+                  android:exported="false" android:theme="@style/ThemePSP" />
         <activity android:name="org.ppsspp.ppsspp.ImageResultProxyActivity"
-                  android:exported="false" android:theme="@style/ThemePleinEcran" />
+                  android:exported="false" android:theme="@style/ThemePSP" />
         <activity android:name="org.ppsspp.ppsspp.ShortcutActivity"
-                  android:exported="false" android:theme="@style/ThemePleinEcran" />
+                  android:exported="false" android:theme="@style/ThemePSP" />
 
         <!-- Nintendo 3DS : reglages repris de son projet -->
         <activity

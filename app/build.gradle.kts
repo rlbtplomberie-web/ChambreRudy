@@ -49,6 +49,8 @@ android {
 }
 
 dependencies {
+    // reclamee par la facade de PPSSPP : PpssppActivity en herite
+    implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-ktx:1.9.2")
     implementation("androidx.documentfile:documentfile:1.0.1")
