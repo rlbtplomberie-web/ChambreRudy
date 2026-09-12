@@ -106,12 +106,37 @@ jobs:
             rm -rf /tmp/psp && mkdir -p /tmp/psp
             unzip -o -q moteur-psp.zip -d /tmp/psp
             src=/tmp/psp/lib/arm64-v8a
+            if [ ! -f "$src/libppsspp_jni.so" ]; then
+              echo "::error::moteur-psp.zip ne contient pas lib/arm64-v8a/libppsspp_jni.so"
+              find /tmp/psp -name "*.so" | head -10
+              exit 1
+            fi
             mkdir -p app/src/main/jniLibs/arm64-v8a
             cp "$src/libppsspp_jni.so" app/src/main/jniLibs/arm64-v8a/
-            cp "$src/libc++_shared.so" app/src/main/jniLibs/arm64-v8a/ 2>/dev/null || true
-            echo "moteur PSP : $(du -h app/src/main/jniLibs/arm64-v8a/libppsspp_jni.so | cut -f1)"
+            # on NE copie PAS son libc++_shared.so : la chaine de compilation
+            # en fournit deja une, et Android refuse d'en embarquer deux
+            rm -f app/src/main/jniLibs/arm64-v8a/libc++_shared.so
           else
-            echo "::warning::moteur-psp.zip absent : le PSP ne pourra pas demarrer."
+            echo "::error::moteur-psp.zip est absent de la racine du depot."
+            echo "Sans lui le PSP affichera « The native part of PPSSPP is missing »."
+            echo "Depose-le, puis relance la compilation."
+            exit 1
+          fi
+
+      - name: Verifier ce que l'application embarque
+        run: |
+          echo "=== bibliotheques natives arm64-v8a ==="
+          ls -la app/src/main/jniLibs/arm64-v8a/ || true
+          manquants=""
+          for f in libsnes9x.so libgambatte.so libmgba.so libgenesisplusgx.so \
+                   libpcsx.so libflycast.so libmelonds.so libcitra.so \
+                   libdolphin.so libppsspp_jni.so; do
+            [ -f "app/src/main/jniLibs/arm64-v8a/$f" ] || manquants="$manquants $f"
+          done
+          if [ -n "$manquants" ]; then
+            echo "::warning::consoles sans moteur dans cet APK :$manquants"
+          else
+            echo "les onze consoles ont leur moteur"
           fi
 
       - name: Installer Java 17
