@@ -164,7 +164,8 @@ const TEINTES = ["#b8332b","#2f6fd0","#d9a020","#2f9e5b","#7b4fd6","#d1508f","#e
 const DEFAUT = ["", "", "", "", "", ""];      // boîtiers vierges tant qu'aucune jaquette n'est chargée
 let jeux = DEFAUT.map((titre, i) => ({ titre, teinte:TEINTES[i % TEINTES.length], image:null, dos:null }));
 let exemples = true;
-let index = 0, retournee = false;
+let index = 0;
+const retournee = false;      // les jaquettes restent toujours de face
 let ratio = 135/191, epaisseur = 14/135;
 
 /* ====== les jeux du dossier deviennent les boitiers ====== */
@@ -194,14 +195,26 @@ window.addEventListener("message", e => {
 /* Et au chargement, on demande ce qu'elle connait deja. */
 setTimeout(() => {
   try{
-    if(parent && parent.romsConnues){
-      const l = parent.romsConnues(CONSOLE_ID);
+    const P = pont();
+    if(P){
+      const l = JSON.parse(P.listerRoms(CONSOLE_ID) || "[]");
       if(l && l.length) recevoirRoms(l);
     }
   }catch(e){}
 }, 250);
 
 /* Lance le jeu du boitier en cours dans son emulateur. */
+/* Le telephone est joignable soit directement, soit par la chambre. */
+function pont(){
+  if(typeof Android !== "undefined" && Android.choisirDossier) return Android;
+  try{ if(parent && parent !== window && parent.chercherRoms) return {
+    choisirDossier: c => parent.chercherRoms(c),
+    listerRoms: c => JSON.stringify(parent.romsConnues(c) || []),
+    lancer: (c,u) => parent.lancerJeu(c,u)
+  }; }catch(e){}
+  return null;
+}
+
 function lancerLeJeu(){
   const j = jeux[index];
   if(!j){ ouvrirMenu("Aucun boîtier sélectionné."); return; }
@@ -210,8 +223,9 @@ function lancerLeJeu(){
                + "les boîtiers deviendront alors tes jeux.");
     return;
   }
-  if(!parent || !parent.lancerJeu){ ouvrirMenu("Disponible seulement dans l'application."); return; }
-  try{ parent.lancerJeu(CONSOLE_ID, j.uri); }
+  const P = pont();
+  if(!P){ ouvrirMenu("Disponible seulement dans l'application."); return; }
+  try{ P.lancer(CONSOLE_ID, j.uri); }
   catch(e){ ouvrirMenu("Lancement impossible : " + e.message); }
 }
 
@@ -294,9 +308,10 @@ function construire(){
   rangee.querySelectorAll(".boite").forEach(b =>
     b.addEventListener("click", ()=>{
       const i = +b.dataset.i;
-      if(i !== index){ index = i; retournee = false; placer(); }
-      else if(retournee) ouvrirLoupe();
-      else { retournee = true; placer(); }
+      /* premier appui : on amene le boitier devant.
+         deuxieme appui sur celui qui est deja devant : le jeu se lance. */
+      if(i !== index){ index = i;  placer(); }
+      else lancerLeJeu();
     }));
   placer();
 }
@@ -326,7 +341,7 @@ function placer(){
 function bouger(pas){
   if(!jeux.length) return;
   index = (index + pas + jeux.length) % jeux.length;
-  retournee = false;
+  
   placer();
 }
 function ajuster(){
@@ -350,7 +365,7 @@ armoire.addEventListener("pointerup", e => {
 armoire.addEventListener("pointercancel", ()=> depart = null);
 document.getElementById("prec").onclick = ()=> bouger(-1);
 document.getElementById("suiv").onclick = ()=> bouger(1);
-const bR=document.getElementById("retourner"); if(bR) bR.onclick = ()=>{ retournee=!retournee; placer(); };
+const bR=document.getElementById("retourner"); if(bR) bR.onclick = ()=>{  placer(); };
 window.addEventListener("keydown", e=>{
   if(e.key === "ArrowLeft") bouger(-1);
   if(e.key === "ArrowRight") bouger(1);
@@ -424,7 +439,7 @@ document.getElementById("dossier").onchange = async e=>{
   }
   const premiere = lues.find(x => x.l && x.h);
   if(premiere){ const r = premiere.l / premiere.h; if(r > .35 && r < 2.6){ ratio = r; ajuster(); } }
-  index = Math.min(index, jeux.length - 1); retournee = false;
+  index = Math.min(index, jeux.length - 1); 
   construire();
   const msg = await sauver();
   ouvrirMenu(`${lues.length} images lues — ${associees} associées à un jeu, ${ajoutees} ajoutées.` + (msg || ""));
@@ -446,7 +461,7 @@ document.getElementById("unDos").onchange = async e=>{
   const brut = await lire(f); if(!brut) return;
   const r = await reduire(brut, 900);
   jeux[index].dos = r ? r.src : brut;
-  construire(); retournee = true; placer();
+  construire();  placer();
   const msg = await sauver();
   ouvrirMenu("Dos enregistré." + (msg || ""));
 };
@@ -465,7 +480,7 @@ async function sauver(){
 async function relire(){
   ratio = 135/191; epaisseur = 14/135;
   jeux = DEFAUT.map((titre, i) => ({ titre, teinte:TEINTES[i % TEINTES.length], image:null, dos:null }));
-  exemples = true; index = 0; retournee = false;
+  exemples = true; index = 0; 
   if(typeof window !== "undefined" && window.storage){
     try{
       const r = await window.storage.get(cleMemoire());
@@ -563,14 +578,15 @@ async function action(a){
   if(a === "dos"){ document.getElementById("unDos").click(); return; }
   if(a === "roms"){
     const cons = (document.title.match(/Vitrine\s+(.+)/)||[])[1] || "";
-    if(parent && parent.chercherRoms) parent.chercherRoms(CONSOLE_ID||cons.toLowerCase());
+    const P = pont();
+    if(P) P.choisirDossier(CONSOLE_ID);
     else alert("Disponible dans l'application.");
     voile.classList.remove("ouvert"); return;
   }
   if(a === "enligne"){ jaquettesEnLigne(); return; }
   if(a === "lancer"){ voile.classList.remove("ouvert"); lancerLeJeu(); return; }
-  if(a === "retourner"){ retournee = !retournee; placer(); voile.classList.remove("ouvert"); return; }
-  if(a === "agrandir"){ voile.classList.remove("ouvert"); retournee = true; placer(); ouvrirLoupe(); return; }
+  if(a === "retourner"){  placer(); voile.classList.remove("ouvert"); return; }
+  if(a === "agrandir"){ voile.classList.remove("ouvert");  placer(); ouvrirLoupe(); return; }
   if(a === "renommer"){
     const t = prompt("Titre du jeu :", jeux[index] ? jeux[index].titre : "");
     if(t !== null && t.trim()){ jeux[index].titre = t.trim(); construire(); await sauver(); ouvrirMenu("Titre modifié."); }
@@ -586,7 +602,7 @@ async function action(a){
   if(a === "vider"){
     if(!confirm("Effacer toutes les jaquettes ?")) return;
     jeux = DEFAUT.map((titre, i) => ({ titre, teinte:TEINTES[i % TEINTES.length], image:null, dos:null }));
-    exemples = true; index = 0; retournee = false; ratio = 135/191; ajuster();
+    exemples = true; index = 0;  ratio = 135/191; ajuster();
     if(window.storage){ try{ await window.storage.delete(cleMemoire()); }catch(e){} }
     construire(); ouvrirMenu("Vitrine remise à zéro.");
   }

@@ -45,7 +45,11 @@ class ChambreActivity : ComponentActivity() {
         vue.surEtapeIntro = { quoi ->
             when (quoi) {
                 "ouverture" -> son.bruit("carton.mp3")
-                "chambre" -> { son.bruit("pose.mp3"); son.radio() }   // la radio s'allume en arrivant
+                "chambre" -> {
+                    son.bruit("pose.mp3")
+                    son.radio()
+                    vue.radioAllumee = true       // la radio s'allume en arrivant
+                }
             }
         }
 
@@ -80,7 +84,12 @@ class ChambreActivity : ComponentActivity() {
                     dire(console.nom)
                 }
             }
-            "radio" -> dire(son.radio().ifEmpty { "radio éteinte" })
+            "radio" -> {
+                val morceau = son.radio()
+                vue.radioAllumee = morceau.isNotEmpty()
+                vue.invalidate()
+                dire(morceau.ifEmpty { "radio éteinte" })
+            }
             "tiroir" -> {
                 son.bruit("tiroir.mp3")
                 val ouvrir = vue.tiroir < 0.5f

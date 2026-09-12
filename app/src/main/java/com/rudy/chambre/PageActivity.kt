@@ -91,16 +91,17 @@ class PageActivity : ComponentActivity() {
         setContentView(racine)
     }
 
+    /** Renvoie la liste a la page, dans la forme qu'elle attend. */
     private fun repondre(console: String) {
         val jeux = JSONArray()
         Dossiers.lister(this, console).forEach {
             jeux.put(JSONObject().put("nom", it.nom).put("uri", it.uri.toString()))
         }
-        val message = JSONObject().put("console", console).put("jeux", jeux)
+        val donnees = JSONObject().put("type", "roms").put("console", console).put("jeux", jeux)
         runOnUiThread {
+            vue.evaluateJavascript("window.recevoirRoms && window.recevoirRoms($jeux)", null)
             vue.evaluateJavascript(
-                "window.dispatchEvent(new MessageEvent('message',{data:" +
-                JSONObject().put("type", "roms").put("console", console).put("jeux", jeux) + "}))", null)
+                "window.dispatchEvent(new MessageEvent('message',{data:$donnees}))", null)
         }
     }
 

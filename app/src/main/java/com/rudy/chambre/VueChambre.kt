@@ -43,6 +43,7 @@ class VueChambre(ctx: Context) : View(ctx) {
 
     // --- tiroir ---
     var tiroir = 0f; private set
+    var radioAllumee = false
 
     private val murs = arrayOf("salon.jpg", "salon2.jpg", "chambre3.jpg")
 
@@ -81,7 +82,14 @@ class VueChambre(ctx: Context) : View(ctx) {
         c.drawColor(Color.BLACK)
         val dest = RectF(decX, 0f, decX + largeurMur, hauteurMur)
         c.drawBitmap(fond, null, dest, peinture)
-        if (vue == 0) dessinerBureau(c)
+        when (vue) {
+            0 -> dessinerBureau(c)
+            1 -> {
+                Objets.serrure(c, zone(Decor.SERRURE))
+                Objets.pastilleLivre(c, zone(Decor.LIVRE), battement())
+                invalidate()                       // la pastille bat doucement
+            }
+        }
     }
 
     /** Un rectangle du decor, ramene aux pixels de l'ecran. */
@@ -92,7 +100,25 @@ class VueChambre(ctx: Context) : View(ctx) {
         (z.y + z.h) * hauteurMur
     )
 
+    /** Le battement lent des pastilles, remis a jour a chaque image. */
+    private fun battement(): Float =
+        (kotlin.math.sin(System.currentTimeMillis() / 420.0).toFloat() + 1f) / 2f
+
     private fun dessinerBureau(c: Canvas) {
+        // le meuble et ses deux battants, toujours visibles
+        dessinerPortes(c)
+
+        // la facade du tiroir
+        Objets.tiroir(c, zone(Decor.TIROIR).let {
+            RectF(it.left, it.top + it.height() * 0.55f * tiroir,
+                  it.right, it.bottom + it.height() * 0.55f * tiroir) })
+
+        // la radio
+        Objets.radio(c, zone(Decor.RADIO), radioAllumee)
+
+        // le carton, ferme, a droite de la tele
+        Objets.carton(c, zone(Decor.CARTON), 0f, tremble)
+
         // le tiroir coulisse
         if (tiroir > 0f) {
             val t = zone(Decor.TIROIR)
@@ -141,8 +167,6 @@ class VueChambre(ctx: Context) : View(ctx) {
             c.restore()
         }
 
-        // les portes du meuble
-        if (porteG > 0f || porteD > 0f) dessinerPortes(c)
     }
 
     private val cam = Camera()
@@ -151,10 +175,15 @@ class VueChambre(ctx: Context) : View(ctx) {
     /** Deux battants qui pivotent, dessines en perspective. */
     private fun dessinerPortes(c: Canvas) {
         val m = zone(Decor.MEUBLE)
+        // l'interieur sombre, visible des qu'un battant s'ecarte
+        if (porteG > 0.02f || porteD > 0.02f) {
+            fondMeuble.shader = LinearGradient(m.left, m.top, m.left, m.bottom,
+                intArrayOf(0xFF2A1B10.toInt(), 0xFF120B06.toInt()), null, Shader.TileMode.CLAMP)
+            c.drawRect(m, fondMeuble)
+        }
         val demi = m.width() / 2f
         for (cote in 0..1) {
             val ouv = if (cote == 0) porteG else porteD
-            if (ouv <= 0f) continue
             val gauche = if (cote == 0) m.left else m.left + demi
             val angle = 110f * ouv * (if (cote == 0) -1f else 1f)
             c.save()
@@ -177,6 +206,7 @@ class VueChambre(ctx: Context) : View(ctx) {
         }
     }
 
+    private val fondMeuble = Paint(Paint.ANTI_ALIAS_FLAG)
     private val boisFonce = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFF5F3319.toInt() }
     private val boisClair = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFF7A4526.toInt() }
     private val laiton    = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFFC8922F.toInt() }
@@ -253,11 +283,19 @@ class VueChambre(ctx: Context) : View(ctx) {
         c.drawBitmap(fond, null, RectF(x, y, x + lFond, y + hFond), peinture)
         c.restore()
 
+        // le carton, au centre du bureau, qui s'ouvre
+        val cartonR = RectF(width * .30f, height * .44f, width * .70f, height * .66f)
+        val ouv = ((t - .52f) / .12f).coerceIn(0f, 1f)
+        c.save()
+        if (secousse != 0f) c.rotate(secousse, cartonR.centerX(), cartonR.bottom)
+        Objets.carton(c, cartonR, ouv, 0f)
+        c.restore()
+
         // les consoles jaillissent du carton
         if (t > .60f) {
             val u = ((t - .60f) / .28f).coerceIn(0f, 1f)
-            val cx = width * .52f
-            val cy = height * .55f
+            val cx = cartonR.centerX()
+            val cy = cartonR.centerY()
             for ((i, console) in Decor.CONSOLES.withIndex()) {
                 val img = charger(console.image) ?: continue
                 val retard = i * .045f
@@ -282,8 +320,8 @@ class VueChambre(ctx: Context) : View(ctx) {
                 val p = ((u - b[3]) / (1f - b[3])).coerceIn(0f, 1f)
                 if (p <= 0f) continue
                 val taille = width * b[2] * (0.25f + 1.15f * p)
-                val px = width * .5f + b[0] * width * .5f * p
-                val py = height * .55f + b[1] * height * .4f * p - height * .08f * p
+                val px = cartonR.centerX() + b[0] * width * .5f * p
+                val py = cartonR.centerY() + b[1] * height * .4f * p - height * .10f * p
                 val opacite = (255 * (if (p < .25f) p / .25f else (1f - (p - .25f) / .75f))).toInt()
                 degrade.shader = RadialGradient(px, py, taille,
                     intArrayOf(Color.WHITE, 0x66FFFFFF, 0x00FFFFFF),
