@@ -29,6 +29,11 @@ android {
 
     buildTypes {
         release { isMinifyEnabled = false }
+        /* L'APK qu'on installe est celui-ci. Par defaut il tourne en mode
+           « mise au point », qui surveille chaque operation et ralentit
+           l'affichage. On le desactive : l'application garde sa signature
+           d'essai, donc elle s'installe toujours, mais elle tourne vite. */
+        debug { isDebuggable = false }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

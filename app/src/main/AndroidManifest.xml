@@ -23,19 +23,34 @@
         android:largeHeap="true"
         android:theme="@style/ThemePleinEcran">
 
-        <!-- La chambre : l'ecran d'accueil -->
+        <!-- La chambre, dessinee en natif : l'ecran d'accueil -->
         <activity
-            android:name="com.rudy.chambre.MainActivity"
+            android:name="com.rudy.chambre.ChambreActivity"
             android:exported="true"
-            android:screenOrientation="fullSensor"
-            android:resizeableActivity="true"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
-            android:theme="@style/ThemeChambre">
+            android:screenOrientation="fullUser"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Les jeux, les vitrines et l'atelier, ouverts par-dessus -->
+        <activity
+            android:name="com.rudy.chambre.PageActivity"
+            android:exported="false"
+            android:screenOrientation="fullUser"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
+            android:theme="@style/ThemeChambre" />
+
+        <!-- L'ancienne chambre en page web, gardee sous la main -->
+        <activity
+            android:name="com.rudy.chambre.MainActivity"
+            android:exported="false"
+            android:screenOrientation="fullSensor"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
+            android:theme="@style/ThemeChambre" />
 
         <!-- NES : reglages repris de son projet -->
         <activity

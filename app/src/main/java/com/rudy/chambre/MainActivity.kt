@@ -60,6 +60,17 @@ class MainActivity : ComponentActivity() {
             settings.domStorageEnabled = true
             settings.mediaPlaybackRequiresUserGesture = false
             settings.allowFileAccess = true
+            settings.cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
+            settings.setGeolocationEnabled(false)
+            // dessin par la puce graphique, sur une couche a part
+            setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
+            // pas de barres ni de rebond : autant d'images en moins a calculer
+            isVerticalScrollBarEnabled = false
+            isHorizontalScrollBarEnabled = false
+            overScrollMode = android.view.View.OVER_SCROLL_NEVER
+            setBackgroundColor(android.graphics.Color.BLACK)
+            // garde une image prete hors de l'ecran : moins de saccades au defilement
+            try { androidx.webkit.WebSettingsCompat.setOffscreenPreRaster(settings, true) } catch (_: Throwable) {}
             webViewClient = object : WebViewClient() {
                 override fun shouldInterceptRequest(v: WebView, r: WebResourceRequest): WebResourceResponse? =
                     serveur.shouldInterceptRequest(r.url)
