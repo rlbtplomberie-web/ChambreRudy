@@ -232,6 +232,11 @@ jobs:
           grep -E "^e: |^ERROR:|error:" /tmp/compilation.log | head -25 | while read -r ligne; do
             echo "::error::$ligne"
           done
+          # le detail des conflits de manifeste, s'il y en a
+          grep -E "Manifest merger|is also present at|Suggestion:" /tmp/compilation.log \
+            | head -12 | while read -r ligne; do
+            echo "::error::$ligne"
+          done
           sed -n "/What went wrong/,/^\* Try/p" /tmp/compilation.log | head -20 | while read -r ligne; do
             [ -n "$ligne" ] && echo "::error::$ligne"
           done
