@@ -341,6 +341,8 @@ fun Partie.update(dt: Float) {
             }
 
             if (B.held === p) {
+                // depuis sa prison, il vise aussi : c'est sa seule chance
+                // de revenir sur le terrain
                 val ts = ciblesDe(p)
                 if (ts.isNotEmpty() && p.cool <= 0f) {
                     val prisonniers = P.any { it.team == p.team && it.prison }
@@ -475,7 +477,7 @@ fun Partie.update(dt: Float) {
 
     // ---- touche, rattrape, ou ramasse ----
     for (p in P) {
-        if (p.pendingJail || p.fallA > 0f || p.hitA > 0f || p.prison) continue
+        if (p.pendingJail || p.fallA > 0f || p.hitA > 0f) continue
         if (B.held === p) continue        // il l'a deja en main
         val d = hypot(B.x - p.x, B.y - p.y)
         val s = hypot(B.vx, B.vy)
@@ -483,7 +485,9 @@ fun Partie.update(dt: Float) {
         // touche le sol ou un mur, elle devient inoffensive et ramassable.
         val dangereuse = B.thrower != null && B.lastTeam != null && !B.deadBall
         if (d < 24f && B.z < 34f) {
-            if (dangereuse && s > 225f && B.lastTeam != p.team && p.dodge <= 0f) {
+            // un prisonnier ne peut plus etre touche : il est deja enferme.
+            // La balle qui arrive jusqu'a lui, il peut la ramasser.
+            if (dangereuse && s > 225f && B.lastTeam != p.team && p.dodge <= 0f && !p.prison) {
                 if (p.h && p.catchTry > 0f) {
                     B.held = p; B.passTarget = null; B.charged = false; B.deadBall = true
                     B.lastTeam = null; B.thrower = null

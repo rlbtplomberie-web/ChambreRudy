@@ -1,10 +1,5 @@
-version 96
-  balle : le porteur ne ramasse plus la balle en boucle (c'etait la cause du
-          tremblement et du tir impossible), planches selon ses consignes
-          — rattrapage 5 en main, reception 7 a 3, lancer 4 fige pendant la
-          charge puis 4 a 8 — pour les six personnages, balle dans les mains
-          de chacun
-  tir au but : decor anime en permanence, arbres seuls, herbe discrete
-  atelier : feuille posee sur le vrai bois de son bureau
-  chambre : apres la 3DS tout se range, un nouvel appui fait ressortir la NES
-  vitrines : recherche de jaquettes par index du depot, six en parallele
+version 97
+  atelier : le bureau est peint (veines, nervures, lumiere du haut) dans la
+            teinte de son plateau, plus d'image decoupee
+  balle : un prisonnier peut ramasser la balle qui arrive jusqu'a lui et
+          viser un ennemi pour se liberer ; il n'est plus touchable

@@ -233,11 +233,6 @@ class AtelierActivity : ComponentActivity() {
  */
 class Papier(ctx: Context) : View(ctx) {
 
-    /** Le plateau du bureau, decoupe dans l'image de sa chambre. */
-    private val plateau: Bitmap? = try {
-        ctx.assets.open("atelier/bureau.webp").use { BitmapFactory.decodeStream(it) }
-    } catch (_: Throwable) { null }
-
     /** Le calque de dessin : il a exactement la taille de la feuille. */
     private var calque: Bitmap? = null
     private var pinceauCalque: Canvas? = null
@@ -308,32 +303,59 @@ class Papier(ctx: Context) : View(ctx) {
 
     override fun onDraw(c: Canvas) {
         /*
-         * Le bureau : le vrai bois de sa chambre, celui qu'on voit sous les
-         * consoles. Un morceau du plateau a ete decoupe dans son image, et
-         * on le repete sur toute la hauteur en alternant le sens, pour que
-         * les veines ne se repetent pas visiblement.
+         * Le bureau : un bois peint, dans la teinte relevee sur le plateau de
+         * sa chambre — #702714. Trois couches font la matiere : le fond, les
+         * veines longues qui ondulent, et de fines rayures plus claires.
          */
-        c.drawColor(0xFF702714.toInt())          // sa teinte de plateau
-        val bois = plateau
-        if (bois != null) {
-            val bande = width * bois.height.toFloat() / bois.width
-            var y = 0f
-            var rang = 0
-            while (y < height) {
-                c.save()
-                c.translate(0f, y)
-                if (rang % 2 == 1) { c.scale(-1f, 1f, width / 2f, 0f) }
-                c.drawBitmap(bois, null, RectF(0f, 0f, width.toFloat(), bande), copie)
-                c.restore()
-                y += bande
-                rang++
+        c.drawColor(0xFF702714.toInt())
+
+        p.style = Paint.Style.STROKE
+        p.strokeWidth = 1f
+
+        // les veines : de longues lignes qui ondulent doucement
+        var y = -10f
+        var rang = 0
+        while (y < height + 10f) {
+            val fonce = rang % 3 == 0
+            p.color = if (fonce) 0x33000000 else 0x1AFFFFFF
+            p.strokeWidth = if (fonce) 2.2f else 1.1f
+            val veine = Path()
+            veine.moveTo(0f, y)
+            var x = 0f
+            var k = 0
+            while (x < width) {
+                val pas = width * .18f
+                // chaque veine ondule a sa maniere
+                val creux = kotlin.math.sin((rang * .7f + k * 1.3f).toDouble()).toFloat() * 3.2f
+                veine.quadTo(x + pas * .5f, y + creux, x + pas, y)
+                x += pas
+                k++
             }
+            c.drawPath(veine, p)
+            y += 9f
+            rang++
         }
-        // l'ombre douce des bords, comme un plateau eclaire par le haut
+
+        // quelques nervures plus marquees, comme les noeuds du bois
+        p.color = 0x26000000
+        p.strokeWidth = 3.4f
+        var n = 0
+        while (n < 5) {
+            val cy = height * (.12f + n * .19f)
+            val nerf = Path()
+            nerf.moveTo(0f, cy)
+            nerf.quadTo(width * .35f, cy - 7f, width * .62f, cy + 4f)
+            nerf.quadTo(width * .85f, cy + 10f, width.toFloat(), cy - 2f)
+            c.drawPath(nerf, p)
+            n++
+        }
+        p.style = Paint.Style.FILL
+
+        // la lumiere tombe du haut : le plateau s'assombrit vers le bas
         val voile = Paint(Paint.ANTI_ALIAS_FLAG)
         voile.shader = LinearGradient(0f, 0f, 0f, height.toFloat(),
-            intArrayOf(0x22000000, 0x00000000, 0x33000000),
-            floatArrayOf(0f, .42f, 1f), Shader.TileMode.CLAMP)
+            intArrayOf(0x1AFFFFFF, 0x00000000, 0x40000000),
+            floatArrayOf(0f, .38f, 1f), Shader.TileMode.CLAMP)
         c.drawRect(0f, 0f, width.toFloat(), height.toFloat(), voile)
 
         val page = cadreA4()
