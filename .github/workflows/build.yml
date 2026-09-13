@@ -173,7 +173,19 @@ jobs:
           if [ -n "$manquants" ]; then
             echo "::warning::consoles sans moteur dans cet APK :$manquants"
           else
-            echo "les onze consoles ont leur moteur"
+            echo "tous les coeurs sont la"
+          fi
+
+          echo "=== emulateurs assembles depuis leur projet ==="
+          if [ -d m64base/app ]; then
+            echo "  Nintendo 64 : Mupen64Plus present"
+          else
+            echo "::warning::Nintendo 64 ABSENTE : depose 64-eMule-Skin64-V7.zip a la racine du depot"
+          fi
+          if [ -d dolphin/Source/Android ]; then
+            echo "  GameCube / Wii : Dolphin present"
+          else
+            echo "::warning::GameCube / Wii : Dolphin pas encore integre"
           fi
 
       - name: Installer Java 17
