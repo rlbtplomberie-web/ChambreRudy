@@ -1,15 +1,16 @@
-version 106
-  GameCube et Wii : la chambre ouvre DOLPHIN lui-meme — son EmulationActivity,
-      celle que son patch/apply.py habille — et non plus l'ecran que j'avais
-      ecrit. Le jeu lui est passe sous « SelectedGames » et « SelectedTitle »,
-      comme il l'attend.
-  3DS : ses reglages Citra jeu par jeu enfin installes (config-games.ini,
-      input-layout.ini). C'etait la cause de l'ecran opaque.
-  Nintendo 64 : retour exact a son README — depot mupen64plus-ae d'origine,
-      revision 33bf702. Mes ajouts « variante pro » sont annules : son
-      build.gradle n'a aucune variante.
-  Reste a faire sur la N64 : elle ouvre SplashActivity, donc le menu de
-      M64Plus. Son ecran de jeu est GameActivity, qui reclame l'empreinte et
-      l'en-tete de la ROM.
+version 107
+  Les deux erreurs de compilation, enfin identifiees sur ses captures :
+
+  1. « android.jar is located outside the root directory » venait du SUCRAGE
+     (isCoreLibraryDesugaringEnabled), defaut connu avec des modules
+     bibliotheque. Retire, avec sa bibliotheque desugar_jdk_libs. Mes reglages
+     precedents s'attaquaient au symptome.
+
+  2. « use a compatible library with a minSdk of at most 26 » : une
+     bibliotheque de Mupen64Plus reclame davantage. Minimum porte a 29, et
+     l'adaptateur aligne tous ses modules sur la meme valeur. En montant a 29,
+     les fonctions Java recentes sont d'origine : le sucrage ne manque pas.
+
+  Effet de bord : l'application demande desormais Android 10 au minimum.
 
   A DEPOSER A LA RACINE DU DEPOT : SkinGC-corrige.zip

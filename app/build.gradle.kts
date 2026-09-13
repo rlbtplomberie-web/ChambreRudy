@@ -11,7 +11,15 @@ android {
 
     defaultConfig {
         applicationId = "com.rudy.chambre"
-        minSdk = 26        // une bibliotheque de Mupen64Plus l exige
+        /*
+         * Android 29 au minimum.
+         *
+         * Le fusionneur de manifestes refusait une bibliotheque de
+         * Mupen64Plus : « use a compatible library with a minSdk of at most
+         * 26 ». Elle en reclame donc davantage. 29 couvre largement, et rend
+         * au passage le sucrage inutile.
+         */
+        minSdk = 29
         // Tes projets Dreamcast, PSP, GameCube, 3DS, DS, Mega Drive et Game Boy
         // visent tous Android 9. Ce n'est pas un detail : au-dela, Android
         // interdit d'executer du code fraichement ecrit en memoire, ce que font
@@ -52,10 +60,15 @@ android {
         debug { isDebuggable = false }
     }
     compileOptions {
-        /* Mupen64Plus emploie des fonctions de Java recentes. Cette traduction
-           les rend utilisables sur les telephones plus anciens ; sans elle,
-           Android refuse de l'assembler avec notre application. */
-        isCoreLibraryDesugaringEnabled = true
+        /*
+         * Le sucrage a ete retire.
+         *
+         * Il traduisait les fonctions Java recentes pour les vieux telephones,
+         * mais c'est lui qui declenchait « android.jar is located outside the
+         * root directory » : un defaut connu quand il s'applique a des modules
+         * bibliotheque. En montant le minimum d'Android, ces fonctions sont
+         * disponibles d'origine et la traduction ne sert plus a rien.
+         */
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -87,7 +100,6 @@ dependencies {
     // la bibliotheque qui assure cette traduction
     // la variante « nio » : Mupen64Plus se sert des fonctions de fichiers
     // recentes de Java, que la version ordinaire ne sait pas traduire
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.5")
 
     /*
      * L'emulateur N64 de Rudy : Mupen64Plus, prepare par le workflow dans
