@@ -28,6 +28,37 @@ class ChambreActivity : ComponentActivity() {
 
     override fun onCreate(etat: Bundle?) {
         super.onCreate(etat)
+        try {
+            demarrer(etat)
+        } catch (e: Throwable) {
+            // Plutot que de se fermer sans rien dire, la chambre affiche ce qui
+            // a echoue : la ligne exacte est alors lisible a l'ecran.
+            afficherLeSouci(e)
+        }
+    }
+
+    /** L'ecran de secours : le detail de l'erreur, et de quoi le recopier. */
+    private fun afficherLeSouci(e: Throwable) {
+        val texte = StringBuilder("La chambre n'a pas pu démarrer.\n\n")
+        texte.append(e.toString()).append('\n')
+        for (ligne in e.stackTrace.take(12))
+            if (ligne.className.startsWith("com.rudy")) texte.append("  ").append(ligne).append('\n')
+        try {
+            java.io.File(filesDir, "dernier_plantage.txt").writeText(texte.toString())
+        } catch (_: Throwable) {}
+        val vueTexte = TextView(this).apply {
+            setTextColor(0xFFFFD9D2.toInt())
+            setBackgroundColor(0xFF1A0E0E.toInt())
+            textSize = 12f
+            setPadding(36, 90, 36, 36)
+            setTextIsSelectable(true)
+            text = texte.toString()
+        }
+        setContentView(android.widget.ScrollView(this).apply { addView(vueTexte) })
+    }
+
+    /** Le vrai demarrage, appele a l'abri. */
+    private fun demarrer(etat: Bundle?) {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).apply {
             hide(WindowInsetsCompat.Type.systemBars())

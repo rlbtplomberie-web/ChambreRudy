@@ -1,1 +1,1 @@
-version 87 - trois lignes remises dans le bon ordre
+version 88 - la chambre affiche l'erreur au lieu de se fermer
