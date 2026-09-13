@@ -33,6 +33,15 @@ def retirer_bloc(texte: str, mot: str) -> str:
 
 def adapter_compilation(chemin: str) -> None:
     t = open(chemin, encoding='utf-8').read()
+
+    # le fichier racine ne declare pas de module : on n'y touche qu'aux
+    # valeurs partagees, sans le transformer en bibliotheque
+    if 'android {' not in t and 'ext' in t:
+        t = aligner_version_minimale(t)
+        open(chemin, 'w', encoding='utf-8').write(t)
+        print('valeurs partagees alignees :', chemin)
+        return
+
     t = t.replace('com.android.application', 'com.android.library')
     # tous les reglages qui n'ont de sens que pour une application autonome
     # les plus longs d'abord : « applicationIdSuffix » contient « applicationId »
@@ -109,9 +118,12 @@ def aligner_version_minimale(t: str) -> str:
     refuse alors de les assembler : « use a compatible library with a minSdk of
     at most 24 ». On ramene donc chacun a 24, comme notre application.
     """
+    # les quatre ecritures rencontrees, y compris dans les valeurs partagees
+    # du fichier racine (« ext { minSdkVersion = 26 } »)
+    t = re.sub(r'minSdkVersion\s*=\s*\d+', 'minSdkVersion = 24', t)
     t = re.sub(r'minSdkVersion\s+\d+', 'minSdkVersion 24', t)
-    t = re.sub(r'minSdk\s+\d+', 'minSdk 24', t)
     t = re.sub(r'minSdk\s*=\s*\d+', 'minSdk = 24', t)
+    t = re.sub(r'minSdk\s+\d+', 'minSdk 24', t)
     return t
 
 
@@ -161,6 +173,8 @@ def adapter_manifeste(chemin: str) -> None:
     """
     t = open(chemin, encoding='utf-8').read()
     t = t.replace('android.intent.category.LAUNCHER', 'android.intent.category.DEFAULT')
+    # une version minimale inscrite ici ferait echouer la fusion des manifestes
+    t = re.sub(r'<uses-sdk[^>]*/>', '', t)
 
     # les attributs generaux : on les efface, les notres s'appliqueront
     for attribut in ('android:name', 'android:label', 'android:icon',

@@ -1,1 +1,1 @@
-version 79 - script verifie de bout en bout
+version 80 - version minimale partout, D8 corrige
