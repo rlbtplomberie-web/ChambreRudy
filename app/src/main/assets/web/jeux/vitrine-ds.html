@@ -476,9 +476,12 @@ window.addEventListener("keydown", e=>{
   if(e.key === "ArrowRight") bouger(1);
 });
 document.getElementById("jouer").onclick = ()=>{
+  /* Ce bouton se contentait d'afficher « Lancement de… » : il ne demandait
+     rien a personne. Il appelle desormais le lancement pour de bon. */
   const t = (jeux[index] && jeux[index].titre) ? jeux[index].titre : "boîtier vierge";
   nomEl.textContent = "Lancement de « " + t + " »…";
   setTimeout(()=> nomEl.textContent = (jeux[index] && jeux[index].titre) ? jeux[index].titre : "", 1400);
+  lancerLeJeu();
 };
 window.addEventListener("resize", ajuster);
 

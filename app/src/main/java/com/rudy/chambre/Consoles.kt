@@ -42,9 +42,18 @@ object Consoles {
                 "skin_dc",   "dossier_roms",  listOf(".gdi", ".cdi", ".chd", ".cue"), coeur = "libflycast.so"),
         Console("ds",   "Nintendo DS",      "com.skinds.app.MainActivity",
                 "skin_ds",   "dossier_roms",  listOf(".nds", ".zip"), coeur = "libmelonds.so"),
-        Console("gc",   "GameCube / Wii",   "com.skingc.app.MainActivity",
+        Console("gc",   "GameCube",         "com.skingc.app.MainActivity",
                 "skin_gc",   "dossier_roms",  listOf(".iso", ".gcm", ".gcz", ".rvz", ".ciso",
-                                                     ".wbfs", ".wad", ".dol", ".elf", ".zip"),
+                                                     ".dol", ".elf", ".zip"),
+                coeur = "libdolphin.so"),
+        /*
+         * La Wii ouvre le meme ecran que la GameCube — Dolphin fait les deux —
+         * mais elle garde son propre dossier de jeux et ses propres formats,
+         * pour ne pas melanger les deux bibliotheques.
+         */
+        Console("wii",  "Wii",              "com.skingc.app.MainActivity",
+                "skin_wii",  "dossier_roms",  listOf(".iso", ".wbfs", ".wad", ".rvz", ".ciso",
+                                                     ".gcz", ".dol", ".elf", ".zip"),
                 coeur = "libdolphin.so"),
         Console("psp",  "PSP",              "com.skinpsp.app.JeuActivity",
                 "skin_psp",  "dossier_roms",  listOf(".iso", ".cso", ".pbp", ".chd", ".elf"),

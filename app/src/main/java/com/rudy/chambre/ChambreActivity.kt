@@ -323,7 +323,11 @@ class ChambreActivity : ComponentActivity() {
             else {
                 val lignes = f.readLines()
                 if (posee == null) {
-                    "\n\nSors une console du carton pour voir son compte rendu."
+                    // aucune console sur la table : on montre quand meme les
+                    // dernieres traces, c'est souvent la que se cache la panne
+                    val suite = lignes.filter { it.isNotBlank() }.takeLast(22)
+                    if (suite.isEmpty()) "\n\n(rien n'a encore ete tente)"
+                    else "\n\nDernieres traces :\n" + suite.joinToString("\n")
                 } else {
                     val marque = "=== CONSOLE " + posee.nom + " "
                     val depart = lignes.indexOfLast { it.startsWith(marque) }

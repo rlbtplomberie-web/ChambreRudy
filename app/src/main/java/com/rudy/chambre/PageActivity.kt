@@ -67,6 +67,40 @@ private const val RANGEMENT = """
     },
     list: function(){ return Promise.resolve({ keys: [], shared: false }); }
   };
+
+  /* ---- le journal : tout ce que la vitrine dit ou tente y tombe ---- */
+  if (Android.noterJournal) {
+    Android.noterJournal("=== VITRINE ouverte : " + document.title);
+
+    /* les messages affiches par la vitrine */
+    if (typeof ouvrirMenu === "function") {
+      var ancienMenu = ouvrirMenu;
+      window.ouvrirMenu = function(m){
+        try{ if (m) Android.noterJournal("message : " + m); }catch(e){}
+        return ancienMenu.apply(this, arguments);
+      };
+      try{ ouvrirMenu = window.ouvrirMenu; }catch(e){}
+    }
+
+    /* l'appui sur « Lancer le jeu », avec ce que la vitrine sait du boitier */
+    var bouton = document.getElementById("jouer");
+    if (bouton) {
+      bouton.addEventListener("click", function(){
+        try{
+          var j = (typeof jeux !== "undefined" && typeof index !== "undefined") ? jeux[index] : null;
+          Android.noterJournal("appui sur Lancer — boitier : " +
+            (j ? (j.titre || "sans titre") : "aucun") +
+            " · ROM : " + (j && j.uri ? "oui" : "NON") +
+            " · pont : " + ((typeof Android !== "undefined" && Android.lancer) ? "oui" : "NON"));
+        }catch(e){ try{ Android.noterJournal("appui sur Lancer — " + e.message); }catch(_){} }
+      }, true);
+    }
+
+    /* toute erreur de la page */
+    window.addEventListener("error", function(ev){
+      try{ Android.noterJournal("ERREUR page : " + ev.message + " (" + ev.lineno + ")"); }catch(e){}
+    });
+  }
 })();
 """
 
@@ -253,6 +287,17 @@ class PageActivity : ComponentActivity() {
          * un fichier par vitrine — sans limite de taille, contrairement a la
          * memoire du navigateur, ce qui compte avec des jaquettes.
          */
+        /** Une ligne dans le journal, ecrite par la page elle-meme. */
+        @JavascriptInterface
+        fun noterJournal(texte: String) {
+            try {
+                val d = java.io.File(filesDir, "systeme").apply { mkdirs() }
+                val heure = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.FRANCE)
+                    .format(java.util.Date())
+                java.io.File(d, "journal_appli.txt").appendText(heure + "  " + texte + "\n")
+            } catch (_: Throwable) {}
+        }
+
         @JavascriptInterface
         fun memoireLire(cle: String): String {
             return try {
@@ -286,16 +331,23 @@ class PageActivity : ComponentActivity() {
         fun lancer(console: String, uriRom: String) {
             runOnUiThread {
                 try {
-                    val fiche = Consoles.parId(console) ?: return@runOnUiThread
+                    val fiche = Consoles.parId(console)
+                    if (fiche == null) {
+                        noterJournal("AUCUNE FICHE pour la console « " + console + " »")
+                        return@runOnUiThread
+                    }
                     marquerLeJournal(fiche.nom, uriRom)
+                    noterJournal("ecran demande : " + fiche.activite)
                     // la chambre ne doit pas relancer sa musique en repassant
                     // devant : la console a la sienne
                     SonPartage.consoleLanceeA = System.currentTimeMillis()
                     val i = Intent(this@PageActivity, Class.forName(fiche.activite))
                         .putExtra("rom", uriRom)
                     startActivity(i)
+                    noterJournal("ecran lance sans erreur")
                     finish()                       // la vitrine s'efface derriere le jeu
                 } catch (e: Throwable) {
+                    noterJournal("ECHEC du lancement : " + e.toString().take(140))
                     expliquerEchec(console, e)
                 }
             }
