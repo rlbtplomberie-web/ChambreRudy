@@ -1,11 +1,9 @@
-version 102
-  GameCube et Wii : le stick C n'avait pas de manche — l'ecran s'arretait des
-      la premiere image (SkinView.kt:353). Tous les acces forces retires.
-  PSP : le jeu choisi est transmis a PPSSPP dans les donnees de l'intention,
-      et non dans un supplement : il ouvrait son menu au lieu du jeu.
-  consoles du carton : l'image TIENT dans sa zone (236 x 104), comme son
-      object-fit contain — la Wii etait 3,4 fois trop haute.
-  Nintendo 64 : le workflow prenait le mauvais depot. Il prend desormais
-      fzurita/mupen64plus-ae a la revision f3c381b, avec la variante « pro »
-      versee dans les sources principales. Si elle echoue encore, la raison
-      est ecrite dans le bilan de l'APK.
+version 103
+  gradle.properties : retour au reglage recommande par Android. Celui que
+      j'avais mis, « enableDexingArtifactTransform », a ete supprime en
+      version 8.3 du greffon : il faisait echouer toute la compilation.
+  GameCube et Wii : le stick C n'avait pas de manche (SkinView.kt:353)
+  PSP : le jeu est transmis a PPSSPP dans les donnees de l'intention
+  consoles du carton : l'image tient dans sa zone 236 x 104
+  Nintendo 64 : depot fzurita/mupen64plus-ae, revision f3c381b, variante
+      « pro » versee dans les sources principales
