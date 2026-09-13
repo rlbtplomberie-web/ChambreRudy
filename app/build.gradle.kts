@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.rudy.chambre"
-        minSdk = 24
+        minSdk = 26        // une bibliotheque de Mupen64Plus l exige
         // Tes projets Dreamcast, PSP, GameCube, 3DS, DS, Mega Drive et Game Boy
         // visent tous Android 9. Ce n'est pas un detail : au-dela, Android
         // interdit d'executer du code fraichement ecrit en memoire, ce que font

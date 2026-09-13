@@ -100,7 +100,7 @@ class AtelierActivity : ComponentActivity() {
                             c.drawRect(x0 + avance + long * .60f, y - corps * .58f,
                                        x0 + avance + long * .74f, y + corps * .58f, p)
                             // les poils
-                            p.color = o.trait
+                            p.color = o.couleur
                             val poils = Path()
                             poils.moveTo(x0 + avance + long * .74f, y - corps * .55f)
                             poils.lineTo(x0 + avance + long, y)
@@ -113,7 +113,7 @@ class AtelierActivity : ComponentActivity() {
                             c.drawRoundRect(RectF(x0 + avance, y - corps * .58f,
                                 x0 + avance + long * .72f, y + corps * .58f), corps * .3f, corps * .3f, p)
                             // le capuchon, de la couleur de l'encre
-                            p.color = o.trait
+                            p.color = o.couleur
                             c.drawRoundRect(RectF(x0 + avance + long * .70f, y - corps * .52f,
                                 x0 + avance + long, y + corps * .52f), corps * .3f, corps * .3f, p)
                         }
@@ -131,7 +131,7 @@ class AtelierActivity : ComponentActivity() {
                             bois.close()
                             c.drawPath(bois, p)
                             // la mine
-                            p.color = o.trait
+                            p.color = o.couleur
                             val mine = Path()
                             mine.moveTo(x0 + avance + long * .90f, y - corps * .14f)
                             mine.lineTo(x0 + avance + long, y)
@@ -364,8 +364,8 @@ class Papier(ctx: Context) : View(ctx) {
             p.strokeWidth = 26f * epaisseur
         } else {
             p.xfermode = null
-            p.color = outil.trait
-            p.alpha = (255 * outil.opacite).toInt().coerceIn(20, 255)
+            p.color = outil.couleur
+            p.alpha = (255 * outil.alpha).toInt().coerceIn(20, 255)
             p.strokeWidth = outil.taille * 1.6f * epaisseur
         }
     }

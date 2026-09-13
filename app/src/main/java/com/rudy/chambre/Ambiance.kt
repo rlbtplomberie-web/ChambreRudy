@@ -2,7 +2,6 @@ package com.rudy.chambre
 
 import android.app.Activity
 import android.graphics.BitmapFactory
-import android.graphics.Color
 import android.view.Gravity
 import android.widget.Button
 import android.widget.FrameLayout

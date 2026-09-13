@@ -120,10 +120,10 @@ def aligner_version_minimale(t: str) -> str:
     """
     # les quatre ecritures rencontrees, y compris dans les valeurs partagees
     # du fichier racine (« ext { minSdkVersion = 26 } »)
-    t = re.sub(r'minSdkVersion\s*=\s*\d+', 'minSdkVersion = 24', t)
-    t = re.sub(r'minSdkVersion\s+\d+', 'minSdkVersion 24', t)
-    t = re.sub(r'minSdk\s*=\s*\d+', 'minSdk = 24', t)
-    t = re.sub(r'minSdk\s+\d+', 'minSdk 24', t)
+    t = re.sub(r'minSdkVersion\s*=\s*\d+', 'minSdkVersion = 26', t)
+    t = re.sub(r'minSdkVersion\s+\d+', 'minSdkVersion 26', t)
+    t = re.sub(r'minSdk\s*=\s*\d+', 'minSdk = 26', t)
+    t = re.sub(r'minSdk\s+\d+', 'minSdk 26', t)
     return t
 
 

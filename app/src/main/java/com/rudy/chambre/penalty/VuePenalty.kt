@@ -47,6 +47,7 @@ class VuePenalty(ctx: Context) : View(ctx) {
     // ---- l'etat de la sequence ----
     private var phase = "attente"     // attente, course, arret, vol, impact, roule
     private var t = 0f
+    private var tTotal = 0f            // le temps qui passe, pour la respiration
     private var etape = 0
     private var tir = "ul"
     private var plongeonEnCours = "ul"
@@ -131,6 +132,7 @@ class VuePenalty(ctx: Context) : View(ctx) {
         if (phase == "attente") return
         // le temps du gardien continue de courir meme apres la frappe :
         // sinon il restait fige en plein saut au lieu de retomber
+        tTotal += dt
         tPlongeon += dt
         if (phase == "fini") return
         t += dt
@@ -242,9 +244,18 @@ class VuePenalty(ctx: Context) : View(ctx) {
         val nom = if (rudyArret >= 0) "stop_${min(rudyArret, 5)}.webp"
                   else String.format("rudy_%02d.webp", rudyImage)
         val im = charger(nom) ?: return
-        val h = height * .52f * rudyEchelle       // le tireur, au premier plan
+        // sa respiration, « rudyBreathing » : 2,8 secondes, a peine visible
+        var souffleY = 0f; var souffleX = 1f; var souffleH = 1f
+        if (phase == "attente") {
+            val q = (tTotal % 2.8f) / 2.8f
+            val d = (1f - kotlin.math.cos(q * 2f * Math.PI.toFloat())) / 2f
+            souffleY = -0.0018f * d
+            souffleX = 1f + .003f * d
+            souffleH = 1f + .009f * d
+        }
+        val h = height * .52f * rudyEchelle * souffleH   // le tireur, au premier plan
         val l = im.width * (h / im.height)
-        val cx = px(rudyX); val cy = py(rudyY)
+        val cx = px(rudyX); val cy = py(rudyY) + height * souffleY
         c.drawBitmap(im, null, RectF(cx - l / 2f, cy - h / 2f, cx + l / 2f, cy + h / 2f), pinceau)
     }
 

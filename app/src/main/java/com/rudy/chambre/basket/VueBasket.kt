@@ -49,6 +49,7 @@ class VueBasket(ctx: Context) : View(ctx) {
     private var chuteT = -1f
     private var filetT = -1f        // l'agitation du filet apres le panier
     private var dernier = 0L
+    private var T = 0f                 // le temps qui passe, pour le vent
 
     init {
         setLayerType(LAYER_TYPE_HARDWARE, null)
@@ -90,11 +91,15 @@ class VueBasket(ctx: Context) : View(ctx) {
         dernier = maintenant
         calculerCadre()
         avancer(min(dt, .05f))
+        T += min(dt, .05f)
 
         c.drawColor(Color.BLACK)
         charger("terrain.webp")?.let {
             c.drawBitmap(it, null, RectF(cadreX, cadreY, cadreX + cadreL, cadreY + cadreH), pinceau)
+            dessinerVent(c, it)          // sa seconde couche qui ondule
         }
+        dessinerHalo(c)
+        dessinerFeuilles(c)
         dessinerPanier(c)
         dessinerJoueur(c)
         dessinerBalleEnVol(c)
@@ -204,6 +209,74 @@ class VueBasket(ctx: Context) : View(ctx) {
     }
 
     /** Son panier : l'anneau orange et le filet blanc. */
+    /**
+     * Son terrain anime, repris de sa page :
+     *  — une seconde couche du terrain qui ondule (« sway », 3,2 s),
+     *  — cinq feuilles qui traversent en tournant (« fly »),
+     *  — le halo du lampadaire qui scintille (« glow », 2,8 s).
+     */
+    private fun dessinerVent(c: Canvas, im: Bitmap) {
+        val q = ((T % 6.4f) / 3.2f).let { if (it > 1f) 2f - it else it }
+        val d = (1f - kotlin.math.cos(q * Math.PI.toFloat())) / 2f   // son ease-in-out
+        val dx = -1f + d * 3f
+        val dy = -d
+        val angle = -.18f + d * .34f
+        val echelle = 1.002f + d * .002f
+        c.save()
+        c.rotate(angle, width / 2f, height / 2f)
+        c.scale(echelle, echelle, width / 2f, height / 2f)
+        c.translate(dx, dy)
+        pinceau.alpha = 140
+        c.drawBitmap(im, null, RectF(cadreX, cadreY, cadreX + cadreL, cadreY + cadreH), pinceau)
+        pinceau.alpha = 255
+        c.restore()
+    }
+
+    /** Ses cinq feuilles : chacune sa duree et son decalage. */
+    private val feuilles = arrayOf(
+        Triple(8f, 0f, true), Triple(10f, -4f, false), Triple(9f, -6f, true),
+        Triple(12f, -8f, false), Triple(11f, -2f, false)
+    )
+
+    private fun dessinerFeuilles(c: Canvas) {
+        val f = Paint(Paint.ANTI_ALIAS_FLAG)
+        for ((duree, retard, grosse) in feuilles) {
+            var q = ((T - retard) % duree) / duree
+            if (q < 0f) q += 1f
+            val x = cadreX + cadreL * (-.12f + .60f * q)
+            val y = cadreY + cadreH * (-.08f + .46f * q)
+            val opacite = when {
+                q < .10f -> q / .10f * .75f
+                q < .55f -> .75f + (q - .10f) / .45f * .10f
+                else -> .85f * (1f - (q - .55f) / .45f)
+            }
+            if (opacite <= .02f) continue
+            c.save()
+            c.rotate(420f * q, x, y)
+            f.color = 0xFF7B6B2C.toInt()
+            f.alpha = (255 * opacite).toInt().coerceIn(0, 255)
+            val l = if (grosse) cadreL * .012f else cadreL * .008f
+            c.drawOval(RectF(x - l, y - l * .55f, x + l, y + l * .55f), f)
+            c.restore()
+        }
+    }
+
+    /** Le halo du lampadaire, a 5,7 % et 6,2 % chez lui. */
+    private fun dessinerHalo(c: Canvas) {
+        val q = ((T % 5.6f) / 2.8f).let { if (it > 1f) 2f - it else it }
+        val d = (1f - kotlin.math.cos(q * Math.PI.toFloat())) / 2f
+        val echelle = .98f + d * .06f
+        val cx = cadreX + cadreL * .1120f
+        val cy = cadreY + cadreH * .1570f
+        val rx = cadreL * .055f * echelle
+        val ry = cadreH * .095f * echelle
+        val halo = Paint(Paint.ANTI_ALIAS_FLAG)
+        halo.shader = RadialGradient(cx, cy, kotlin.math.max(rx, ry),
+            intArrayOf(0x40FFD890, 0x00FFD890), floatArrayOf(0f, .68f), Shader.TileMode.CLAMP)
+        halo.alpha = (255 * (.55f + d * .35f)).toInt().coerceIn(0, 255)
+        c.drawOval(RectF(cx - rx, cy - ry, cx + rx, cy + ry), halo)
+    }
+
     private fun dessinerPanier(c: Canvas) {
         val l = cadreL * panierLargeur / 100f
         val h = cadreH * panierHauteur / 100f

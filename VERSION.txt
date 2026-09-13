@@ -1,6 +1,5 @@
-version 91 - corrections sur les points signales
-  dames : boite 16/9 decoupee comme son clip-path
-  tir au but : 108 images redetourees, tireur agrandi
-  basket : ballon dans le cadre 520x760, tir debloque
-  poker : cartes entre le prenom du fond et les textes
-  atelier : moteur de dessin reecrit, crayons couches sur le bureau
+version 92
+  corrige l'erreur de compilation (champs d'Outil : couleur et alpha)
+  minimum Android porte a 26, exige par une bibliotheque de Mupen64Plus
+  terrains animes : vent, cinq feuilles et halo au basket,
+  respiration du tireur au tir au but
