@@ -2,7 +2,6 @@ package com.rudy.chambre.balle
 
 import android.app.AlertDialog
 import android.content.pm.ActivityInfo
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
@@ -35,7 +34,7 @@ class BalleActivity : ComponentActivity() {
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
 
-        son = SonBalle(this)
+        son = SonBalle()
         vue = VueBalle(this)
         vue.jeu.surSon = { quoi -> son?.jouer(quoi) }
         vue.surFin = { titre -> finDePartie(titre) }
@@ -53,7 +52,7 @@ class BalleActivity : ComponentActivity() {
     /** L'affiche du match, avant le coup d'envoi. */
     private fun montrerAffiche() {
         val image = try {
-            context.assets.open("balle/affiche.jpg").use { BitmapFactory.decodeStream(it) }
+            assets.open("balle/affiche.jpg").use { BitmapFactory.decodeStream(it) }
         } catch (_: Throwable) { null }
 
         val bloc = FrameLayout(this)
@@ -80,8 +79,6 @@ class BalleActivity : ComponentActivity() {
 
         racine.addView(bloc, FrameLayout.LayoutParams(-1, -1))
     }
-
-    private val context get() = this
 
     private fun barreDuHaut(): LinearLayout = LinearLayout(this).apply {
         orientation = LinearLayout.HORIZONTAL

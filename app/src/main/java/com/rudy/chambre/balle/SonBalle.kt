@@ -13,7 +13,7 @@ import kotlin.math.sin
  * plutot que lus depuis des fichiers. On fait pareil : chaque bruit est une
  * courte suite de tons, calculee au moment ou on en a besoin.
  */
-class SonBalle(ctx: android.content.Context) {
+class SonBalle {
 
     private val frequenceEchantillon = 22050
 

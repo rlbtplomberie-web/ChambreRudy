@@ -19,7 +19,7 @@ class VueBalle(ctx: Context) : View(ctx) {
     val jeu = Jeu(1f, 1f)
     var surFin: ((String) -> Unit)? = null
 
-    private val images = HashMap<String, Bitmap>()
+    private val images = java.util.concurrent.ConcurrentHashMap<String, Bitmap>()
     private val peinture = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
     private val texte = Paint(Paint.ANTI_ALIAS_FLAG).apply {

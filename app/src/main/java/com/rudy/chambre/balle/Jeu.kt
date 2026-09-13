@@ -272,7 +272,6 @@ class Jeu(var largeur: Float, var hauteur: Float) {
             p.energie = 0f
 
             // sans la balle : il la suit si elle traine, sinon il se replace
-            val versBalle = balle.porteur == null && !balle.morte.not()
             val cx: Float; val cy: Float
             if (balle.porteur == null) { cx = balle.x; cy = balle.y }
             else { cx = p.x; cy = (Terrain.HAUT + Terrain.BAS) / 2f * hauteur }
