@@ -201,16 +201,41 @@ class PageActivity : ComponentActivity() {
                         .putExtra("rom", uriRom)
                     startActivity(i)
                     finish()                       // la vitrine s'efface derriere le jeu
-                } catch (e: ClassNotFoundException) {
-                    android.widget.Toast.makeText(this@PageActivity,
-                        (Consoles.parId(console)?.nom ?: console) +
-                        " : cet emulateur n'est pas encore dans cet APK.",
-                        android.widget.Toast.LENGTH_LONG).show()
                 } catch (e: Throwable) {
-                    android.widget.Toast.makeText(this@PageActivity,
-                        "lancement impossible : " + e, android.widget.Toast.LENGTH_LONG).show()
+                    expliquerEchec(console, e)
                 }
             }
+        }
+
+        /**
+         * Dire franchement pourquoi une console n'a pas demarre : son ecran
+         * manque, son moteur manque, ou elle a plante — et dans ce dernier cas,
+         * a quelle ligne.
+         */
+        private fun expliquerEchec(console: String, e: Throwable) {
+            val fiche = Consoles.parId(console)
+            val nom = fiche?.nom ?: console
+            val cause = when {
+                e is ClassNotFoundException ->
+                    "son ecran n'est pas dans cet APK"
+                e is UnsatisfiedLinkError ->
+                    "son moteur (.so) manque ou ne se charge pas"
+                else -> e.toString().take(160)
+            }
+            val moteur = fiche?.let { f ->
+                try {
+                    val dossier = applicationInfo.nativeLibraryDir
+                    val fichiers = java.io.File(dossier).list()?.joinToString(" ") ?: ""
+                    val c = f.coeur
+                    if (c != null && !fichiers.contains(c)) "\nmoteur absent : " + c else ""
+                } catch (_: Throwable) { "" }
+            } ?: ""
+            android.app.AlertDialog.Builder(this@PageActivity,
+                    android.R.style.Theme_Material_Dialog_Alert)
+                .setTitle(nom + " ne demarre pas")
+                .setMessage(cause + moteur)
+                .setPositiveButton("Fermer", null)
+                .show()
         }
 
         /** Ajoute un seul livre, choisi a la main. */
