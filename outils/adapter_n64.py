@@ -88,15 +88,22 @@ def limiter_architecture(t: str) -> str:
     t = re.sub(r"abiFilters\s*[^\n]*", "abiFilters 'arm64-v8a'", t)
     if "abiFilters 'arm64-v8a'" in t:
         return t
-    # sinon on l'ajoute dans defaultConfig, ou dans android faute de mieux
-    for bloc in ('defaultConfig', 'android'):
-        i = t.find(bloc)
-        if i == -1:
-            continue
+    # Sinon on l'ajoute. Attention : ce reglage n'existe que dans defaultConfig.
+    # Le poser directement dans android provoque « Could not find method ndk() ».
+    i = t.find('defaultConfig')
+    if i != -1:
         j = t.find('{', i)
-        if j == -1:
-            continue
-        return t[:j + 1] + "\n        ndk { abiFilters 'arm64-v8a' }\n" + t[j + 1:]
+        if j != -1:
+            return t[:j + 1] + "\n        ndk { abiFilters 'arm64-v8a' }\n" + t[j + 1:]
+
+    # pas de defaultConfig : on en cree un dans le bloc android
+    i = t.find('android')
+    if i != -1:
+        j = t.find('{', i)
+        if j != -1:
+            return (t[:j + 1]
+                    + "\n    defaultConfig {\n        ndk { abiFilters 'arm64-v8a' }\n    }\n"
+                    + t[j + 1:])
     return t
 
 

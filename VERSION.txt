@@ -1,1 +1,1 @@
-version 67 - N64 compilee pour arm64 seulement
+version 68 - architecture posee au bon endroit
