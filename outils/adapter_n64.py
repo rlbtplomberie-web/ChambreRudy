@@ -144,9 +144,25 @@ def limiter_architecture(t: str) -> str:
 
 
 def adapter_manifeste(chemin: str) -> None:
-    """Son écran d'accueil ne doit plus se déclarer comme celui du téléphone."""
+    """
+    Son manifeste ne doit plus se comporter en application autonome.
+
+    On lui retire son écran d'accueil, sa classe d'application et les réglages
+    généraux qu'il voudrait imposer : c'est le manifeste de la Chambre qui
+    décide, sinon la fusion échoue.
+    """
     t = open(chemin, encoding='utf-8').read()
     t = t.replace('android.intent.category.LAUNCHER', 'android.intent.category.DEFAULT')
+
+    # les attributs generaux : on les efface, les notres s'appliqueront
+    for attribut in ('android:name', 'android:label', 'android:icon',
+                     'android:roundIcon', 'android:theme', 'android:allowBackup',
+                     'android:supportsRtl', 'android:largeHeap',
+                     'android:hardwareAccelerated', 'android:banner',
+                     'android:requestLegacyExternalStorage',
+                     'android:appComponentFactory', 'android:networkSecurityConfig'):
+        t = re.sub(r'(<application\b[^>]*?)\s' + attribut + r'\s*=\s*"[^"]*"',
+                   r'\1', t, flags=re.S)
     open(chemin, 'w', encoding='utf-8').write(t)
     print('manifeste adapte :', chemin)
 
