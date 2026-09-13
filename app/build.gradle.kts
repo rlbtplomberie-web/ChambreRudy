@@ -1,3 +1,5 @@
+import java.io.File
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -74,6 +76,13 @@ android {
 }
 
 dependencies {
+    /*
+     * L'emulateur N64 de Rudy : Mupen64Plus, prepare par le workflow dans
+     * m64base/. On regarde le dossier lui-meme, ce qui est vrai des la lecture
+     * du fichier ; sans cette ligne il etait prepare, puis ignore.
+     */
+    if (File(rootDir, "m64base/app").isDirectory) implementation(project(":m64"))
+
     // reclamee par la facade de PPSSPP : PpssppActivity en herite
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.core:core-ktx:1.13.1")

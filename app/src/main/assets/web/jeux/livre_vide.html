@@ -11,12 +11,12 @@
   touch-action:none;perspective:1400px}
 /* le rayon : cinq emplacements, celui du milieu de face, les autres de profil */
 #rayon{position:relative;width:100%;height:100%;transform-style:preserve-3d}
-.livre3d{position:absolute;left:50%;top:50%;width:min(48vw,250px);aspect-ratio:.69;
+.livre3d{position:absolute;left:50%;top:50%;width:min(52vw,270px);aspect-ratio:.70;
   transform-style:preserve-3d;cursor:pointer;
   transition:transform .42s cubic-bezier(.22,.8,.3,1), opacity .42s ease;
   will-change:transform,opacity}
 #book{position:relative}
-.cover{position:absolute;inset:0;background:center/cover no-repeat;border-radius:5px 12px 12px 5px;box-shadow:0 30px 50px #000c,inset -14px 0 18px #0005;border:1px solid #ffffff30}
+.cover{position:absolute;inset:0;background:#120c18 center/contain no-repeat;border-radius:5px 12px 12px 5px;box-shadow:0 30px 50px #000c,inset -14px 0 18px #0005;border:1px solid #ffffff30}
 .cover:before{content:"";position:absolute;left:-12px;top:3px;bottom:3px;width:15px;background:linear-gradient(90deg,#1c0b04,#87471f,#2a1107);transform:rotateY(-60deg);transform-origin:right}
 .pageside{position:absolute;right:-12px;top:8px;bottom:8px;width:16px;background:repeating-linear-gradient(#fff9e8 0 2px,#c7bba6 2px 3px);transform:rotateY(70deg);transform-origin:left}
 .name{position:absolute;bottom:6%;left:0;right:0;text-align:center;white-space:nowrap;
@@ -46,6 +46,12 @@ box-shadow:inset 0 0 18px #6e553422}
 .pg.left{left:0;border-radius:10px 1px 1px 10px;box-shadow:inset -22px 0 25px -25px #000}.pg.right{right:0;border-radius:1px 10px 10px 1px;box-shadow:inset 22px 0 25px -25px #000}
 .pg img,.face img{width:100%;height:100%;object-fit:contain;background:#fff;user-select:none;-webkit-user-drag:none}
 .pg{background:#f7f2e8}
+/* Telephone tenu debout : une seule page, qui remplit le livre.
+   C'est ce qui evite qu'une page de manga deborde du cadre. */
+#opened.unePage .pg.left{width:100%;border-radius:10px}
+#opened.unePage .pg.right{display:none}
+#opened.unePage .spine{display:none}
+#opened.unePage .pg.left img{object-position:center}
 .pg img{display:block}
 .pg.left img{object-position:right center}
 .pg.right img{object-position:left center}
@@ -60,7 +66,7 @@ box-shadow:-10px 0 18px #0005,10px 0 18px #0005;border-radius:50%;pointer-events
 
 #frontCover{position:absolute;z-index:35;top:-1.8%;left:50%;width:51.8%;height:103.6%;
 transform-origin:left center;transform-style:preserve-3d;border-radius:2px 12px 12px 2px;
-background:center/cover no-repeat;box-shadow:0 18px 28px #000b,inset 12px 0 16px #0005;
+background:#120c18 center/contain no-repeat;box-shadow:0 18px 28px #000b,inset 12px 0 16px #0005;
 backface-visibility:hidden;pointer-events:none}
 #frontCover:after{content:"";position:absolute;inset:0;transform:translateZ(-2px) rotateY(180deg);
 background:linear-gradient(90deg,#d7c6a9,#f3ead9);border-radius:12px 2px 2px 12px}
@@ -141,7 +147,21 @@ function setImg(id,n){
     $(id).src=pageCache[n].src;
   } else $(id).removeAttribute("src");
 }
-function render(){let a=p,b=p+1;if(manga){setImg("#L",b);setImg("#R",a)}else{setImg("#L",a);setImg("#R",b)}$("#stat").textContent=`${p+1}–${Math.min(p+2,PAGES.length)} / ${PAGES.length}`;preloadAround(p)}
+function cadrerSelonEcran(){
+  const seul = window.innerHeight > window.innerWidth;   // debout : une page
+  const o = $("#opened");
+  if(o) o.classList.toggle("unePage", seul);
+  return seul;
+}
+window.addEventListener("resize", () => { cadrerSelonEcran(); render(); });
+
+function render(){
+  if(cadrerSelonEcran()){
+    setImg("#L", p);
+    $("#stat").textContent = `${p+1} / ${PAGES.length}`;
+    preloadAround(p);
+    return;
+  }let a=p,b=p+1;if(manga){setImg("#L",b);setImg("#R",a)}else{setImg("#L",a);setImg("#R",b)}$("#stat").textContent=`${p+1}–${Math.min(p+2,PAGES.length)} / ${PAGES.length}`;preloadAround(p)}
 function openBook(){
  const r=$("#reader"); r.className="show opening"; render();
  setTimeout(()=>{r.className="show opened"},900);

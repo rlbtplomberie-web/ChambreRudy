@@ -103,7 +103,7 @@ html,body{height:100%;background:#080611;overflow:hidden;font-family:'Baloo 2',s
 /* ---------- CONSOLES ---------- */
 .obj{position:absolute;transform-style:preserve-3d;opacity:0;will-change:transform,filter}
 .obj img.lay{width:100%;height:100%;object-fit:contain;display:block;
-  filter:drop-shadow(0 14px 16px rgba(0,0,0,.55)) drop-shadow(0 0 14px rgba(255,214,140,.28))}
+  filter:none}
 .obj.fly{animation:fly 1.55s cubic-bezier(.2,.85,.25,1) forwards, unblur .5s ease-out forwards}
 @keyframes unblur{0%{filter:blur(4px)}100%{filter:blur(0)}}
 /* sortie bien de face : la console ne depasse jamais sa taille reelle */
@@ -169,7 +169,7 @@ html,body{height:100%;background:#080611;overflow:hidden;font-family:'Baloo 2',s
 #scene2.recule #bg2{opacity:1}
 #scene2.on{opacity:1;pointer-events:auto}
 #deco{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;
-  backface-visibility:hidden;-webkit-backface-visibility:hidden;contain:layout paint}
+  backface-visibility:hidden;-webkit-backface-visibility:hidden}
 #drawer{position:absolute;perspective:900px;cursor:pointer}
 .dw-cavity{position:absolute;inset:0;border-radius:3px;
   background:linear-gradient(180deg,#120704,#25100a 60%,#160a06);
@@ -196,7 +196,6 @@ html,body{height:100%;background:#080611;overflow:hidden;font-family:'Baloo 2',s
 .dw-cartes{position:absolute;right:-16%;width:52%;bottom:0;height:auto;display:block;
   transform-origin:50% 100%;opacity:0;cursor:pointer;
   transform:translateY(22%) scale(.4) rotate(6deg);
-  filter:drop-shadow(0 12px 14px rgba(0,0,0,.6));
   transition:transform .95s cubic-bezier(.28,1.25,.4,1) .45s, opacity .5s ease .45s}
 #drawer.open .dw-cartes{transform:translateY(-58%) scale(1) rotate(5deg);opacity:1}
 #tvScreen{position:absolute;overflow:hidden;opacity:0;pointer-events:none;
@@ -357,7 +356,7 @@ html,body{height:100%;background:#080611;overflow:hidden;font-family:'Baloo 2',s
 #atelierClose{position:absolute;left:10px;top:calc(10px + env(safe-area-inset-top));
   z-index:96;flex:none;width:auto;padding:8px 14px;font-size:13px;
   background:rgba(12,8,24,.8);border:1.5px solid rgba(255,255,255,.35);border-radius:18px;color:#fff;
-  backdrop-filter:blur(4px)}
+  }
 #sonBtn{position:absolute;right:12px;top:calc(12px + env(safe-area-inset-top));z-index:100;
   display:none;width:auto;flex:none;font-size:13px;padding:9px 14px;border-radius:20px;
   background:rgba(12,8,24,.82);border:1.5px solid rgba(255,225,160,.5);color:#ffeec2}
@@ -373,13 +372,14 @@ html,body{height:100%;background:#080611;overflow:hidden;font-family:'Baloo 2',s
 #deco>img#suite{left:auto;right:auto;top:0;height:100%;width:auto}
 /* angle de mur : une ombre verticale marque la jonction, pas de transparence */
 #deco>img#suite2{left:auto;right:auto;top:0;height:100%;width:auto;display:block}
-#serrure{position:absolute;cursor:pointer;z-index:3;filter:drop-shadow(0 2px 5px rgba(0,0,0,.8));
+#serrure{position:absolute;cursor:pointer;z-index:3;
   animation:pulseLivre 2.8s ease-in-out infinite}
 #serrure svg{width:100%;height:100%;display:block}
-#livreBtn{position:absolute;cursor:pointer;z-index:3;filter:drop-shadow(0 3px 6px rgba(0,0,0,.7));
+#livreBtn{position:absolute;cursor:pointer;z-index:3;
   animation:pulseLivre 2.4s ease-in-out infinite}
 #livreBtn svg{width:100%;height:100%;display:block}
 @keyframes pulseLivre{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.12);opacity:1}}
+#livreBtn,#serrure{will-change:transform,opacity}
 #coin{position:absolute;top:0;bottom:0;pointer-events:none;
   background:linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,.55) 45%,rgba(0,0,0,.55) 55%,rgba(0,0,0,0))}
 
@@ -512,7 +512,7 @@ button.primary{background:#f2c14e;color:#2a1c06;border-color:#f2c14e}
           <path d="M20 15 v13" stroke="#8a6a2a" stroke-width="1.4"/>
         </svg>
       </div>
-      <img id="suite2" loading="lazy" src="med/chambre3.jpg" alt="">
+      <img id="suite2" src="med/chambre3.jpg" alt="">
 
       <div id="tvScreen">
         <video id="tvVid" preload="none" playsinline webkit-playsinline></video>
@@ -585,7 +585,7 @@ button.primary{background:#f2c14e;color:#2a1c06;border-color:#f2c14e}
         <div class="dw-cavity"></div>
         <div class="dw-out">
           <img class="dw-paper" src="med/cahier.webp" alt="">
-          <img class="dw-cartes" loading="lazy" id="cartes" src="med/cartes.webp" alt="">
+          <img class="dw-cartes" id="cartes" src="med/cartes.webp" alt="">
         </div>
         <div class="dw-front"><span class="dw-notch"></span></div>
       </div>
@@ -1714,6 +1714,17 @@ window.chercherRoms = function(console){
   if(window.DANS_APPLI) Android.choisirDossier(console);
   else alert("Le choix du dossier n'existe que dans l'application.");
 };
+/* Coupe la radio et la musique de jeu : l'emulateur prend le relais. */
+window.silenceChambre = function(){
+  try{ stopJeuMusique(false); }catch(e){}
+  try{ arreteMusique(false); }catch(e){}
+  try{ if(AC && AC.state==='running') AC.suspend(); }catch(e){}
+};
+/* Au retour dans la chambre, le son revient. */
+document.addEventListener('visibilitychange', ()=>{
+  if(!document.hidden){ try{ if(AC && AC.state==='suspended') AC.resume(); }catch(e){} }
+});
+
 /* La vitrine ouverte est celle de la console posee sur le bureau. */
 window.consolePosee = function(){
   try{ return (sortieIdx>=0 && SORTIE[sortieIdx]) ? SORTIE[sortieIdx].id : null; }catch(e){ return null; }
@@ -1724,6 +1735,8 @@ window.romsConnues = function(console){
 window.lancerJeu = function(console, uri){
   if(!window.DANS_APPLI){ alert("Disponible seulement dans l'application."); return; }
   if(!console || !uri){ alert("jeu incomplet : console=" + console + " uri=" + uri); return; }
+  /* la chambre se tait : c'est l'emulateur qui prend le son */
+  try{ silenceChambre(); }catch(e){}
   Android.lancer(console, uri);
 };
 window.ouvrirConsole = function(console){ if(window.DANS_APPLI) Android.ouvrirConsole(console); };

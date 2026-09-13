@@ -445,7 +445,10 @@ class VueChambre(ctx: Context) : View(ctx) {
                 return true
             }
             MotionEvent.ACTION_UP -> {
-                if (!bouge) toucher(e.x, e.y)
+                val duree = System.currentTimeMillis() - tempsDepart
+                if (!bouge && duree > 650 && vue == 0 && zone(Decor.TELE).contains(e.x, e.y)) {
+                    surObjet?.invoke("teleLong")     // appui long sur la tele : le bilan
+                } else if (!bouge) toucher(e.x, e.y)
                 return true
             }
         }

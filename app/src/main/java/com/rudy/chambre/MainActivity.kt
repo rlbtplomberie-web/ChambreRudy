@@ -163,6 +163,10 @@ class MainActivity : ComponentActivity() {
                                    else c.coeur + " ABSENT")
                     o.put("ok", f.exists())
                 }
+                // l'ecran de cet emulateur existe-t-il vraiment dans cet APK ?
+                val present = try { Class.forName(c.activite); true } catch (_: Throwable) { false }
+                o.put("ecran", present)
+                if (!present) o.put("ok", false)
                 o.put("dossier", Dossiers.dossier(this@MainActivity, c.id) != null)
                 o.put("jeux", Dossiers.lister(this@MainActivity, c.id).size)
                 a.put(o)

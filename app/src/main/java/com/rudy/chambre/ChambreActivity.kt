@@ -123,6 +123,7 @@ class ChambreActivity : ComponentActivity() {
                 vue.bougerPorte(false, ouvrir) { if (ouvrir) ouvrirVitrine() }
             }
             "tele" -> vue.consolePosee()?.let { dire(it.nom) }
+            "teleLong" -> montrerAssemblage()
             "serrure" -> menuDehors()
             "livre" -> page("jeux/livre_vide.html", "Bibliothèque")
         }
@@ -203,6 +204,28 @@ class ChambreActivity : ComponentActivity() {
             son.enPause(true)                       // la radio se tait pendant la sequence
             ecranTele.postDelayed({ son.enPause(false) }, 6000)
         } catch (_: Throwable) { teleAllumee = false; ecranTele.alpha = 0f }
+    }
+
+    /**
+     * Ce que l'APK contient reellement : les moteurs presents, et les
+     * emulateurs assembles depuis leur propre projet. Le bilan est ecrit a la
+     * compilation, donc il ne ment pas.
+     */
+    private fun montrerAssemblage() {
+        val texte = try {
+            assets.open("chambre/assemblage.txt").bufferedReader().use { it.readText() }
+        } catch (_: Throwable) { "aucun bilan : cet APK date d'avant cette mesure." }
+        val plantage = try {
+            val f = java.io.File(filesDir, "dernier_plantage.txt")
+            if (f.exists()) "\n\nDernier plantage :\n" + f.readText() else ""
+        } catch (_: Throwable) { "" }
+        menu().setTitle("Ce que contient cet APK")
+            .setMessage(texte + plantage)
+            .setPositiveButton("Fermer", null)
+            .setNegativeButton("Effacer le plantage") { _, _ ->
+                try { java.io.File(filesDir, "dernier_plantage.txt").delete() } catch (_: Throwable) {}
+            }
+            .show()
     }
 
     // ================= les menus =================
