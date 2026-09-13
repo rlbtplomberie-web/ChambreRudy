@@ -176,6 +176,25 @@ jobs:
             echo "tous les coeurs sont la"
           fi
 
+          # on ecrit le bilan dans l'application : lisible depuis le telephone
+          rapport=app/src/main/assets/chambre/assemblage.txt
+          : > "$rapport"
+          for f in app/src/main/jniLibs/arm64-v8a/*.so; do
+            [ -e "$f" ] || continue
+            echo "$(basename "$f") $(( $(stat -c%s "$f") / 1048576 )) Mo" >> "$rapport"
+          done
+          if [ -d m64base/app ]; then
+            echo "Nintendo 64 : Mupen64Plus assemble" >> "$rapport"
+          else
+            echo "Nintendo 64 : ABSENT (depose 64-eMule-Skin64-V7.zip)" >> "$rapport"
+          fi
+          if [ -d dolphin/Source/Android ]; then
+            echo "GameCube / Wii : Dolphin assemble" >> "$rapport"
+          else
+            echo "GameCube / Wii : Dolphin pas encore integre" >> "$rapport"
+          fi
+          echo "compile le $(date -u '+%d/%m %H:%M') UTC" >> "$rapport"
+
           echo "=== emulateurs assembles depuis leur projet ==="
           if [ -d m64base/app ]; then
             echo "  Nintendo 64 : Mupen64Plus present"
@@ -201,6 +220,23 @@ jobs:
 
       - name: Compiler
         run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Verifier que les emulateurs sont bien dans l'APK
+        run: |
+          set -e
+          manifeste=$(find app/build/intermediates -name AndroidManifest.xml -path "*merged*" | head -1)
+          if [ -n "$manifeste" ]; then
+            echo "=== ecrans presents dans l'APK ==="
+            grep -o 'android:name="[a-z0-9.]*\(Activity\|SplashActivity\)"' "$manifeste" | sort -u | head -30
+            if [ -d m64base/app ]; then
+              if grep -q "mupen64plusae" "$manifeste"; then
+                echo "  Nintendo 64 : son ecran est dans l'APK"
+              else
+                echo "::error::Mupen64Plus a ete prepare mais n'est PAS dans l'APK"
+                exit 1
+              fi
+            fi
+          fi
 
       - name: Publier l'APK
         uses: actions/upload-artifact@v4
