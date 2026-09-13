@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Dreamcast, DS et 3DS rendent l'image par OpenGL ES 3 -->
     <uses-feature android:glEsVersion="0x00030000" android:required="true" />
@@ -21,7 +22,8 @@
         android:hardwareAccelerated="true"
         android:requestLegacyExternalStorage="true"
         android:largeHeap="true"
-        android:theme="@style/ThemePleinEcran">
+        android:theme="@style/ThemePleinEcran"
+        tools:replace="android:theme,android:label,android:icon,android:allowBackup,android:supportsRtl">
 
         <!-- La chambre, dessinee en natif : l'ecran d'accueil -->
         <activity
@@ -35,6 +37,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- La balle au prisonnier, en natif -->
+        <activity
+            android:name="com.rudy.chambre.balle.BalleActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/ThemeChambre"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density" />
 
         <!-- Les jeux, les vitrines et l'atelier, ouverts par-dessus -->
         <activity
