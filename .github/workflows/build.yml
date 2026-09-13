@@ -219,7 +219,23 @@ jobs:
           gradle-version: '8.7'
 
       - name: Compiler
-        run: gradle assembleDebug --no-daemon --stacktrace
+        run: |
+          set -o pipefail
+          # on garde une copie du journal pour en extraire les erreurs
+          if gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/compilation.log; then
+            echo "compilation reussie"
+            exit 0
+          fi
+
+          echo "=== erreurs relevees ==="
+          # les erreurs Kotlin et Java, puis la raison donnee par Gradle
+          grep -E "^e: |^ERROR:|error:" /tmp/compilation.log | head -25 | while read -r ligne; do
+            echo "::error::$ligne"
+          done
+          sed -n "/What went wrong/,/^\* Try/p" /tmp/compilation.log | head -20 | while read -r ligne; do
+            [ -n "$ligne" ] && echo "::error::$ligne"
+          done
+          exit 1
 
       - name: Verifier que les emulateurs sont bien dans l'APK
         run: |
