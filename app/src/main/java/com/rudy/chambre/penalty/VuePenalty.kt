@@ -117,6 +117,7 @@ class VuePenalty(ctx: Context) : View(ctx) {
             val cadre = RectF(0f, 0f, width.toFloat(), height.toFloat())
             c.drawBitmap(it, null, cadre, pinceau)
             dessinerVent(c, it, cadre)      // les arbres et l'herbe bougent
+            dessinerPetales(c, cadre)       // et les petales tombent
         }
         dessinerGardien(c)
         if (balleVisible) dessinerBalle(c)
@@ -318,15 +319,73 @@ class VuePenalty(ctx: Context) : View(ctx) {
      * Le terrain qui vit : les arbres du fond se balancent sous le vent, et
      * l'herbe frissonne par plaques, a des rythmes differents.
      */
+    /** Ses deux bosquets de cerisiers, releves sur son image de terrain. */
+    private val bosquets = arrayOf(
+        floatArrayOf(.17f, .28f, .16f, .18f),    // a gauche
+        floatArrayOf(.73f, .26f, .22f, .20f)     // a droite
+    )
+
+    /**
+     * Les petales qui tombent des cerisiers : chacun a sa duree, son point de
+     * depart et sa derive. Ils tournent en descendant et se balancent.
+     */
+    private val petales = arrayOf(
+        floatArrayOf(.18f, 9f, 0f), floatArrayOf(.76f, 11f, -3f),
+        floatArrayOf(.24f, 13f, -6f), floatArrayOf(.81f, 10f, -8f),
+        floatArrayOf(.14f, 12f, -2f), floatArrayOf(.88f, 14f, -5f),
+        floatArrayOf(.70f, 8.5f, -7f), floatArrayOf(.30f, 10.5f, -4f)
+    )
+
+    private fun dessinerPetales(c: Canvas, cadre: RectF) {
+        val f = Paint(Paint.ANTI_ALIAS_FLAG)
+        for (q in petales) {
+            var avance = ((tTotal - q[2]) % q[1]) / q[1]
+            if (avance < 0f) avance += 1f
+            // il part du feuillage et descend jusqu'a l'herbe
+            val yDepart = cadre.top + cadre.height() * .30f
+            val yFin = cadre.top + cadre.height() * .72f
+            val y = yDepart + (yFin - yDepart) * avance
+            // sa derive : il se balance en tombant
+            val derive = sin(avance * 7.5f + q[0] * 10f) * cadre.width() * .035f
+            val x = cadre.left + cadre.width() * q[0] + derive
+            // il palit en arrivant au sol
+            val opacite = when {
+                avance < .08f -> avance / .08f
+                avance > .82f -> (1f - avance) / .18f
+                else -> 1f
+            }
+            f.color = 0xFFF3C6DC.toInt()
+            f.alpha = (210 * opacite).toInt().coerceIn(0, 255)
+            val r = cadre.width() * .0045f
+            c.save()
+            c.rotate(avance * 540f + q[0] * 180f, x, y)
+            // un petale : un ovale aplati, comme une fleur de cerisier
+            c.drawOval(RectF(x - r, y - r * .45f, x + r, y + r * .45f), f)
+            c.restore()
+        }
+    }
+
     private fun dessinerVent(c: Canvas, fond: Bitmap, cadre: RectF) {
-        // les arbres : la bande du fond, entre 30 et 48 % de la hauteur
-        val balance = sin(tTotal * .9f) * 2.4f + sin(tTotal * 1.7f) * 1.1f
-        c.save()
-        c.clipRect(cadre.left, cadre.top + cadre.height() * .30f,
-                   cadre.right, cadre.top + cadre.height() * .48f)
-        c.translate(balance, sin(tTotal * 1.3f) * .7f)
-        c.drawBitmap(fond, null, cadre, pinceau)
-        c.restore()
+        // les arbres : chaque bosquet se balance a son rythme, et la cime
+        // bouge bien plus que le tronc
+        bosquets.forEachIndexed { i, b ->
+            val x0 = cadre.left + cadre.width() * b[0]
+            val y0 = cadre.top + cadre.height() * b[1]
+            val l = cadre.width() * b[2]
+            val h = cadre.height() * b[3]
+            val souffle = sin(tTotal * (.95f + i * .21f)) * 3.6f +
+                          sin(tTotal * (1.9f + i * .13f)) * 1.5f
+            for (tranche in 0 until 3) {
+                val haut = y0 + h * tranche / 3f
+                val bas = y0 + h * (tranche + 1) / 3f
+                val force = when (tranche) { 0 -> 1f; 1 -> .52f; else -> .16f }
+                c.save()
+                c.clipRect(x0, haut, x0 + l, bas)
+                c.translate(souffle * force, kotlin.math.abs(souffle) * force * .22f)
+                c.drawBitmap(fond, null, cadre, pinceau)
+                c.restore()
+            }
+        }
 
         // l'herbe : quatre plaques qui frissonnent chacune a son rythme
         val plaques = arrayOf(

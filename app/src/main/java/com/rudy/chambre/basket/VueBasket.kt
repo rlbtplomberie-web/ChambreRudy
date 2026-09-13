@@ -97,6 +97,7 @@ class VueBasket(ctx: Context) : View(ctx) {
         charger("terrain.webp")?.let {
             c.drawBitmap(it, null, RectF(cadreX, cadreY, cadreX + cadreL, cadreY + cadreH), pinceau)
             dessinerVent(c, it)          // sa seconde couche qui ondule
+            dessinerArbres(c, it)        // et les arbres se balancent
         }
         dessinerHalo(c)
         dessinerFeuilles(c)
@@ -141,16 +142,23 @@ class VueBasket(ctx: Context) : View(ctx) {
         if (volT >= 0f) {
             volT += dt
             if (volT >= .78f) {                              // ses 780 ms de vol
-                volT = -1f; chuteT = 0f; filetT = 0f
-                surPanier?.invoke()
+                volT = -1f
+                val rentre = sortDuTir == "vert" || sortDuTir == "orange"
+                chuteT = if (rentre) 0f else -1f
+                filetT = if (rentre) 0f else -1f
+                if (rentre) surPanier?.invoke()
             }
         }
         if (chuteT >= 0f) { chuteT += dt; if (chuteT >= .36f) chuteT = -1f }
         if (filetT >= 0f) { filetT += dt; if (filetT >= .62f) filetT = -1f }
     }
 
-    fun tirer() {
-        if (mode != "dribble" || pauseDribble > 0f && false) return
+    /** Ce que vaut le tir : « vert », « orange », « rougeclair », « rouge ». */
+    private var sortDuTir = "vert"
+
+    fun tirer(resultat: String = "vert") {
+        if (mode != "dribble") return
+        sortDuTir = resultat
         mode = "tir"; iTir = 0; tempsImage = 0f; pauseDribble = 0f
     }
 
@@ -230,6 +238,33 @@ class VueBasket(ctx: Context) : View(ctx) {
         c.drawBitmap(im, null, RectF(cadreX, cadreY, cadreX + cadreL, cadreY + cadreH), pinceau)
         pinceau.alpha = 255
         c.restore()
+    }
+
+    /** Son bosquet, releve sur l'image : a gauche, du haut au tiers. */
+    private val arbres = arrayOf(
+        floatArrayOf(.00f, .03f, .20f, .34f),
+        floatArrayOf(.18f, .06f, .16f, .26f)
+    )
+
+    private fun dessinerArbres(c: Canvas, im: Bitmap) {
+        arbres.forEachIndexed { i, b ->
+            val x0 = cadreX + cadreL * b[0]
+            val y0 = cadreY + cadreH * b[1]
+            val l = cadreL * b[2]
+            val h = cadreH * b[3]
+            val souffle = kotlin.math.sin(T * (1.05f + i * .23f)) * 3.4f +
+                          kotlin.math.sin(T * (2.1f + i * .15f)) * 1.4f
+            for (tranche in 0 until 3) {
+                val haut = y0 + h * tranche / 3f
+                val bas = y0 + h * (tranche + 1) / 3f
+                val force = when (tranche) { 0 -> 1f; 1 -> .5f; else -> .15f }
+                c.save()
+                c.clipRect(x0, haut, x0 + l, bas)
+                c.translate(souffle * force, kotlin.math.abs(souffle) * force * .2f)
+                c.drawBitmap(im, null, RectF(cadreX, cadreY, cadreX + cadreL, cadreY + cadreH), pinceau)
+                c.restore()
+            }
+        }
     }
 
     /** Ses cinq feuilles : chacune sa duree et son decalage. */
@@ -321,10 +356,58 @@ class VueBasket(ctx: Context) : View(ctx) {
             val q = volT / .78f
             val dx = if (departVolX > 0f) departVolX else px(departBalle.first)
             val dy = if (departVolY > 0f) departVolY else py(departBalle.second)
-            val x = dx + (panierCX - dx) * q
-            val yBase = dy + (panierCY - dy) * q
-            val cloche = -25f * 4f * q * (1f - q) * cadreH / 100f    // son arc
-            ballon(c, x, yBase + cloche, r)
+
+            when (sortDuTir) {
+                // rouge fonce : le tir est trop court, il n'atteint pas le cerceau
+                "rougefonce" -> {
+                    val portee = .62f
+                    val x = dx + (panierCX - dx) * q * portee
+                    val yBase = dy + (panierCY - dy) * q * portee
+                    // apres le sommet il retombe au sol, de plus en plus vite
+                    val chute = if (q > .55f) ((q - .55f) / .45f).let { it * it } * cadreH * .30f else 0f
+                    val cloche = -25f * 4f * q * (1f - q) * cadreH / 100f
+                    ballon(c, x, yBase + cloche + chute, r)
+                }
+                // rouge clair : il touche le cerceau et ressort
+                "rougeclair" -> {
+                    if (q < .82f) {
+                        val k = q / .82f
+                        val x = dx + (panierCX - dx) * k
+                        val yBase = dy + (panierCY - dy) * k
+                        val cloche = -25f * 4f * k * (1f - k) * cadreH / 100f
+                        ballon(c, x, yBase + cloche, r)
+                    } else {
+                        // le rebond sur l'anneau : il repart vers le tireur
+                        val k = (q - .82f) / .18f
+                        val x = panierCX - (panierCX - dx) * .22f * k
+                        val y = panierCY + cadreH * .16f * k * k
+                        ballon(c, x, y, r)
+                    }
+                }
+                // orange : il touche le cerceau, hesite, puis tombe dedans
+                "orange" -> {
+                    if (q < .80f) {
+                        val k = q / .80f
+                        val x = dx + (panierCX - dx) * k
+                        val yBase = dy + (panierCY - dy) * k
+                        val cloche = -25f * 4f * k * (1f - k) * cadreH / 100f
+                        ballon(c, x, yBase + cloche, r)
+                    } else {
+                        // il roule sur l'anneau avant de rentrer
+                        val k = (q - .80f) / .20f
+                        val x = panierCX + kotlin.math.sin(k * 9f) * cadreL * .012f * (1f - k)
+                        val y = panierCY + cadreH * .02f * k
+                        ballon(c, x, y, r)
+                    }
+                }
+                // vert : la cloche parfaite, en plein centre
+                else -> {
+                    val x = dx + (panierCX - dx) * q
+                    val yBase = dy + (panierCY - dy) * q
+                    val cloche = -25f * 4f * q * (1f - q) * cadreH / 100f
+                    ballon(c, x, yBase + cloche, r)
+                }
+            }
         } else if (chuteT >= 0f) {
             val q = min(1f, chuteT / .28f)
             val echelle = 1f - .18f * q

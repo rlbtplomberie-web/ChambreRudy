@@ -51,8 +51,8 @@ class AtelierActivity : ComponentActivity() {
         papier.surZoom = { z -> niveau.text = "${Math.round(z * 100)} %" }
 
         val racine = FrameLayout(this)
-        racine.setBackgroundColor(0xFF96613A.toInt())      // son bois : --bois
-        val largeurTrousse = (resources.displayMetrics.widthPixels * .26f).toInt()
+        racine.setBackgroundColor(0xFFF3E7D2.toInt())      // son fond de page, beige
+        val largeurTrousse = (resources.displayMetrics.widthPixels * .22f).toInt()
         papier.margeGauche = largeurTrousse.toFloat()
         racine.addView(papier, FrameLayout.LayoutParams(-1, -1))
         racine.addView(trousse(), FrameLayout.LayoutParams(largeurTrousse, -1, Gravity.START))
@@ -68,104 +68,112 @@ class AtelierActivity : ComponentActivity() {
      * un corps de couleur, une pointe de bois taillee et une mine. Le feutre
      * a un capuchon, le pinceau des poils. La gomme est en bas.
      */
+    /**
+     * Sa trousse, reproduite trait pour trait depuis son SVG.
+     *
+     * Le dessin vit dans son repere d'origine — 118 sur 296, decale de 6 vers
+     * le bas — et l'on met simplement ce repere a l'echelle. Chaque crayon est
+     * pose a (40 ; 46 + 32 i) et incline de trois degres par rang, la pochette
+     * verte est peinte par-dessus, et le crayon choisi sort de seize points.
+     */
     private fun trousse(): View {
         val vue = object : View(this) {
             private val p = Paint(Paint.ANTI_ALIAS_FLAG)
+            private val bord = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE
+                strokeWidth = 3f
+                strokeJoin = Paint.Join.ROUND
+                color = 0xFF17140F.toInt()
+            }
+
+            /** Son repere : viewBox « 0 6 118 296 ». */
+            private fun repere(c: Canvas) {
+                val k = kotlin.math.min(width / 118f, height / 296f)
+                c.translate((width - 118f * k) / 2f, (height - 296f * k) / 2f)
+                c.scale(k, k)
+                c.translate(0f, -6f)
+            }
+
+            private fun rect(c: Canvas, x: Float, y: Float, l: Float, h: Float,
+                             couleur: Int, contour: Boolean = true, r: Float = 0f) {
+                p.style = Paint.Style.FILL; p.color = couleur
+                if (r > 0f) c.drawRoundRect(RectF(x, y, x + l, y + h), r, r, p)
+                else c.drawRect(x, y, x + l, y + h, p)
+                if (contour) {
+                    if (r > 0f) c.drawRoundRect(RectF(x, y, x + l, y + h), r, r, bord)
+                    else c.drawRect(x, y, x + l, y + h, bord)
+                }
+            }
+
+            private fun triangle(c: Canvas, pts: FloatArray, couleur: Int) {
+                val f = Path()
+                f.moveTo(pts[0], pts[1]); f.lineTo(pts[2], pts[3]); f.lineTo(pts[4], pts[5])
+                f.close()
+                p.style = Paint.Style.FILL; p.color = couleur
+                c.drawPath(f, p)
+                c.drawPath(f, bord)
+            }
 
             override fun onDraw(c: Canvas) {
-                val l = width.toFloat(); val h = height.toFloat()
-                val pas = h / (OUTILS.size + 1.6f)
-                val corps = pas * .42f              // l'epaisseur d'un crayon
-                val long = l * .78f
+                c.save()
+                repere(c)
 
+                // ---- les crayons, un par rang ----
                 OUTILS.forEachIndexed { i, o ->
-                    val y = pas * (i + .8f)
-                    val x0 = l * .10f
-                    val choisi = i == papier.iOutil && !papier.gomme
-                    val avance = if (choisi) l * .10f else 0f
+                    val y = 46f + i * 32f
+                    val angle = (i - (OUTILS.size - 1) / 2f) * 3f
+                    val sorti = if (i == papier.iOutil && !papier.gomme) 16f else 0f
+                    c.save()
+                    c.translate(40f + sorti, y)
+                    c.rotate(angle)
 
-                    // son ombre sur le bureau
-                    p.color = 0x44231104
-                    c.drawRoundRect(RectF(x0 + avance + 3f, y - corps / 2f + 4f,
-                        x0 + avance + long + 3f, y + corps / 2f + 4f), corps / 2f, corps / 2f, p)
-
-                    when (o.nom) {
-                        "Pinceau" -> {
-                            // le manche
-                            p.color = 0xFF8A5A2B.toInt()
-                            c.drawRoundRect(RectF(x0 + avance, y - corps / 2f,
-                                x0 + avance + long * .62f, y + corps / 2f), corps / 2f, corps / 2f, p)
-                            // la virole
-                            p.color = 0xFFB9B3A6.toInt()
-                            c.drawRect(x0 + avance + long * .60f, y - corps * .58f,
-                                       x0 + avance + long * .74f, y + corps * .58f, p)
-                            // les poils
-                            p.color = o.couleur
-                            val poils = Path()
-                            poils.moveTo(x0 + avance + long * .74f, y - corps * .55f)
-                            poils.lineTo(x0 + avance + long, y)
-                            poils.lineTo(x0 + avance + long * .74f, y + corps * .55f)
-                            poils.close()
-                            c.drawPath(poils, p)
-                        }
-                        "Feutre" -> {
-                            p.color = 0xFF2B2B2B.toInt()
-                            c.drawRoundRect(RectF(x0 + avance, y - corps * .58f,
-                                x0 + avance + long * .72f, y + corps * .58f), corps * .3f, corps * .3f, p)
-                            // le capuchon, de la couleur de l'encre
-                            p.color = o.couleur
-                            c.drawRoundRect(RectF(x0 + avance + long * .70f, y - corps * .52f,
-                                x0 + avance + long, y + corps * .52f), corps * .3f, corps * .3f, p)
-                        }
-                        else -> {
-                            // le corps du crayon, peint de sa couleur
-                            p.color = o.corps
-                            c.drawRoundRect(RectF(x0 + avance, y - corps / 2f,
-                                x0 + avance + long * .74f, y + corps / 2f), corps * .22f, corps * .22f, p)
-                            // le bois taille
-                            p.color = 0xFFE3C08A.toInt()
-                            val bois = Path()
-                            bois.moveTo(x0 + avance + long * .74f, y - corps / 2f)
-                            bois.lineTo(x0 + avance + long * .94f, y)
-                            bois.lineTo(x0 + avance + long * .74f, y + corps / 2f)
-                            bois.close()
-                            c.drawPath(bois, p)
-                            // la mine
-                            p.color = o.couleur
-                            val mine = Path()
-                            mine.moveTo(x0 + avance + long * .90f, y - corps * .14f)
-                            mine.lineTo(x0 + avance + long, y)
-                            mine.lineTo(x0 + avance + long * .90f, y + corps * .14f)
-                            mine.close()
-                            c.drawPath(mine, p)
-                        }
-                    }
+                    rect(c, 0f, -8f, 46f, 16f, o.corps)                 // le corps
+                    rect(c, 4f, -4.5f, 38f, 3f, 0x4DFFFFFF, contour = false)  // le reflet
+                    rect(c, 46f, -8f, 7f, 16f, 0xFFE6E2D8.toInt())      // la bague
+                    triangle(c, floatArrayOf(53f, -8f, 53f, 8f, 71f, 0f), 0xFFECCFA6.toInt())
+                    triangle(c, floatArrayOf(65f, -3.5f, 65f, 3.5f, 71f, 0f), o.mine)
+                    c.restore()
                 }
 
-                // la gomme, posee en bas
-                val gy = pas * (OUTILS.size + .9f)
-                val gl = l * .52f
-                val choisieG = papier.gomme
-                p.color = 0x44231104
-                c.drawRoundRect(RectF(l * .12f + 3f, gy - pas * .30f + 4f,
-                    l * .12f + gl + 3f, gy + pas * .30f + 4f), 6f, 6f, p)
-                p.color = if (choisieG) 0xFFFFE0E6.toInt() else 0xFFF3D9DE.toInt()
-                c.drawRoundRect(RectF(l * .12f, gy - pas * .30f,
-                    l * .12f + gl, gy + pas * .30f), 6f, 6f, p)
-                p.color = 0xFF9A7F84.toInt(); p.style = Paint.Style.STROKE; p.strokeWidth = 2f
-                c.drawRoundRect(RectF(l * .12f, gy - pas * .30f,
-                    l * .12f + gl, gy + pas * .30f), 6f, 6f, p)
+                // ---- la pochette verte, peinte par-dessus ----
+                rect(c, 6f, 18f, 52f, 272f, 0xFF1F4B33.toInt(), r = 22f)
+
+                // sa couture : un trait sombre double d'un pointille clair
+                p.style = Paint.Style.STROKE
+                p.color = 0xFF0E2B1D.toInt(); p.strokeWidth = 6f
+                c.drawLine(24f, 22f, 24f, 286f, p)
+                p.color = 0xFF5C8F70.toInt(); p.strokeWidth = 2f
+                p.pathEffect = DashPathEffect(floatArrayOf(6f, 6f), 0f)
+                c.drawLine(24f, 22f, 24f, 286f, p)
+                p.pathEffect = null
+
+                // ---- la gomme, dans sa pochette ----
+                rect(c, 14f, 248f, 22f, 24f,
+                     if (papier.gomme) 0xFFFFFFFF.toInt() else 0xFFD8D3C4.toInt(), r = 5f)
+                p.style = Paint.Style.STROKE; p.color = 0xFF17140F.toInt(); p.strokeWidth = 3f
+                c.drawLine(14f, 260f, 3f, 260f, p)
+
+                // le pli du tissu
+                p.color = 0x800E2B1D.toInt(); p.strokeWidth = 4f
+                p.strokeCap = Paint.Cap.ROUND
+                val pli = Path()
+                pli.moveTo(40f, 44f)
+                pli.quadTo(51f, 90f, 49f, 156f)
+                c.drawPath(pli, p)
                 p.style = Paint.Style.FILL
+
+                c.restore()
             }
 
             override fun onTouchEvent(e: MotionEvent): Boolean {
                 if (e.actionMasked != MotionEvent.ACTION_DOWN) return true
-                val h = height.toFloat()
-                val pas = h / (OUTILS.size + 1.6f)
-                if (e.y > pas * (OUTILS.size + .55f)) {
+                // on repasse du doigt vers son repere
+                val k = kotlin.math.min(width / 118f, height / 296f)
+                val y = (e.y - (height - 296f * k) / 2f) / k + 6f
+                if (y > 244f) {
                     papier.gomme = true
                 } else {
-                    val i = ((e.y / pas) - .8f + .5f).toInt()
+                    val i = kotlin.math.round((y - 46f) / 32f).toInt()
                     if (i in OUTILS.indices) { papier.iOutil = i; papier.gomme = false }
                 }
                 invalidate()
@@ -289,16 +297,17 @@ class Papier(ctx: Context) : View(ctx) {
     }
 
     override fun onDraw(c: Canvas) {
-        // le bureau : son bois, veine en diagonale
-        c.drawColor(0xFF96613A.toInt())
+        // son fond de page : un beige avec deux trames tres legeres,
+        // l'une penchee de 2 degres, l'autre de 1,5 dans l'autre sens
+        c.drawColor(0xFFF3E7D2.toInt())
         p.style = Paint.Style.STROKE
         p.strokeWidth = 1f
         p.color = 0x1A3C1E0A
-        var y = -20f
-        while (y < height + 20f) { c.drawLine(0f, y, width.toFloat(), y + 14f, p); y += 9f }
-        p.color = 0x12FFE1BE
-        y = -20f
-        while (y < height + 20f) { c.drawLine(0f, y + 5f, width.toFloat(), y - 8f, p); y += 15f }
+        var y = -30f
+        while (y < height + 30f) { c.drawLine(0f, y, width.toFloat(), y + width * .035f, p); y += 7f }
+        p.color = 0x1AFFE1BE
+        y = -30f
+        while (y < height + 30f) { c.drawLine(0f, y, width.toFloat(), y - width * .026f, p); y += 13f }
         p.style = Paint.Style.FILL
 
         val page = cadreA4()

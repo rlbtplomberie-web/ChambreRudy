@@ -1,11 +1,8 @@
-version 93
-  musiques : ses neuf pistes, une par jeu, trouvees dans MUSJEUX
-  tir au but : detourage refait, ballon realiste, arbres et herbe au vent,
-               ecrans GAGNE et PERDU avec applaudissements
-  dessin : trait a la bonne epaisseur, crayon qui vit
-  poker : cartes sous les prenoms
-  basket : ecran de fin
-  carton : rabat droit redresse
-  balle au prisonnier : tir mis en attente (ne se perd plus), porteur qui
-               marche et court, personnages agrandis, vent sur les arbres
-               et les banderoles, ballon blanc a rayures qui roule
+version 94
+  balle : planche « passe » a la reception, jauge de charge qui monte a
+          chaque lancer
+  tir au but : cerisiers du fond qui se balancent, huit petales qui tombent
+  basket : arbres animes, trajectoire selon la jauge (rouge fonce trop court,
+          rouge clair cerceau et ressort, orange cerceau et rentre, vert net)
+  carton : « Retro » au marqueur, ruban adhesif et traces d'usure
+  atelier : sa trousse verte reproduite depuis son SVG, fond beige

@@ -189,7 +189,7 @@ class BasketActivity : ComponentActivity() {
             } else {
                 val resultat = regles.tirer()
                 dernierResultat = resultat
-                vue.tirer()
+                vue.tirer(resultat)          // la trajectoire suit sa jauge
                 postDelayed({
                     message = regles.message(resultat); messageT = .95f
                     son?.jouer(if (resultat == "vert" || resultat == "orange") "panier" else "rate")

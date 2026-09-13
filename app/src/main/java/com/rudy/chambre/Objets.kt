@@ -147,6 +147,27 @@ object Objets {
             }
         }
 
+        // ---- le ruban adhesif qui ferme le carton ----
+        if (ouverture < .25f) {
+            p.style = Paint.Style.FILL
+            p.color = 0x66C9AE84
+            val ruban = h * .085f
+            c.drawRect(face.centerX() - ruban / 2f, face.top, face.centerX() + ruban / 2f, face.bottom, p)
+            p.color = 0x33FFFFFF
+            c.drawRect(face.centerX() - ruban / 2f, face.top,
+                       face.centerX() - ruban / 2f + ruban * .22f, face.bottom, p)
+        }
+
+        // ---- les traces d'usure : coins frottes et rayures ----
+        p.style = Paint.Style.STROKE
+        p.strokeWidth = h * .006f
+        p.color = 0x22000000
+        c.drawLine(face.left + l * .10f, face.top + h * .70f,
+                   face.left + l * .34f, face.top + h * .66f, p)
+        c.drawLine(face.right - l * .16f, face.top + h * .38f,
+                   face.right - l * .05f, face.top + h * .44f, p)
+        p.style = Paint.Style.FILL
+
         // ---- le nom au marqueur ----
         // deux passages : un trait epais, puis le plein par-dessus. C'est ce qui
         // donne le bord un peu bave d'un feutre sur du carton.
@@ -159,10 +180,10 @@ object Objets {
         texte.strokeJoin = Paint.Join.ROUND
         texte.strokeCap = Paint.Cap.ROUND
         texte.color = 0xF2241608.toInt()
-        c.drawText("Rudy", face.centerX(), face.centerY() + h * .14f, texte)
+        c.drawText("Retro", face.centerX(), face.centerY() + h * .14f, texte)
         texte.style = Paint.Style.FILL
         texte.color = 0xFF2E1B0A.toInt()
-        c.drawText("Rudy", face.centerX(), face.centerY() + h * .14f, texte)
+        c.drawText("Retro", face.centerX(), face.centerY() + h * .14f, texte)
         c.restore()
     }
 

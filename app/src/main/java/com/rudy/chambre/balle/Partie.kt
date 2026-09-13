@@ -187,6 +187,8 @@ class Partie(var W: Float, var H: Float) {
         B.held = null; B.lastTeam = p.team; B.thrower = p; B.deadBall = false; B.pickupOwner = null
         val canCharged = p.energy >= 100f && charge >= 3f
         B.charged = canCharged
+        // sa jauge : elle monte d'un quart a chaque lancer, rate ou non, et ne
+        // retombe a zero que lorsqu'un tir charge part vraiment
         if (canCharged) p.energy = 0f else p.energy = min(100f, p.energy + 25f)
         p.readyPlayed = false
         B.x = p.x + dx / l * 24f; B.y = p.y + dy / l * 24f; B.z = 17f
@@ -251,6 +253,8 @@ fun Partie.update(dt: Float) {
     }
 
     // ---- la charge du tir, quand l'energie est pleine ----
+    // un tir charge en cours ne doit pas se vider quand la main tremble :
+    // tant que le doigt est sur le bouton et que la balle est en main, il monte
     if (charging && B.held === P[0] && P[0].energy >= 100f) {
         shotCharge = min(3f, shotCharge + dt)
         surTexteTir?.invoke(if (shotCharge >= 3f) "FEU !" else "TIR " + Math.ceil(shotCharge.toDouble()).toInt() + "/3")
@@ -454,7 +458,8 @@ fun Partie.update(dt: Float) {
             B.x = hx; B.y = hy; B.z = 20f; B.held = t; B.passTarget = null
             B.charged = false; B.deadBall = true; B.lastTeam = null; B.thrower = null
             B.vx = 0f; B.vy = 0f; B.vz = 0f
-            t.catchA = .62f; t.cool = .22f
+            // il recoit la passe : c'est la planche « passe » qui joue
+            t.passA = .55f; t.catchA = 0f; t.cool = .22f
             son("attrape")
         }
     }
