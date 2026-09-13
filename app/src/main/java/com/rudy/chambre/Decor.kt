@@ -23,6 +23,20 @@ object Decor {
     /** Le carton sur la photo : face avant, et sa profondeur. */
     val BOITE = Zone(0.7880f, 0.4330f, 0.1055f, 0.1065f)
     const val BOITE_PROFONDEUR = 0.0355f
+
+    /**
+     * Ou les consoles se posent quand elles jaillissent du carton.
+     *
+     * Ses quatorze places, en fractions d'ecran depuis le carton, avec
+     * l'inclinaison de chaque console — c'est ce qui donne son etoile.
+     */
+    val ETOILE = listOf(
+        Triple(-.60f, -.32f, 40f), Triple(-.30f, -.42f, 10f), Triple(-.02f, -.34f, -30f),
+        Triple(-.66f, -.12f, 60f), Triple(-.34f, -.16f, 90f), Triple(-.04f, -.10f, 120f),
+        Triple(-.62f, .10f, 20f), Triple(-.32f, .12f, 50f), Triple(-.02f, .16f, 80f),
+        Triple(-.48f, -.28f, 150f), Triple(-.18f, -.26f, 170f), Triple(-.50f, .30f, -10f),
+        Triple(-.16f, .30f, 30f), Triple(-.34f, -.02f, 110f)
+    )
     const val ZOOM_INTRO = 1.55f          // rapprochement final
     const val TRAVELLING_MS = 7000L       // duree du travelling
     const val ATTENTE_MS = 1600L          // avant que la camera parte

@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
-import android.view.MotionEvent
 import android.view.View
 import android.widget.*
 import androidx.activity.ComponentActivity
@@ -26,7 +25,7 @@ class PartieActivity : ComponentActivity() {
     private lateinit var vue: VuePartie
     private lateinit var racine: FrameLayout
     private var son: SonBalle? = null
-    private var boutonTir: Button? = null
+    private var commandes: Commandes? = null
 
     override fun onCreate(etat: Bundle?) {
         super.onCreate(etat)
@@ -40,14 +39,31 @@ class PartieActivity : ComponentActivity() {
         son = SonBalle()
         vue = VuePartie(this)
         vue.partie.surSon = { quoi, force -> son?.jouer(quoi, force) }
-        vue.partie.surTexteTir = { t -> boutonTir?.text = t }
+        vue.partie.surTexteTir = { t -> commandes?.texteTir = t }
         vue.surFin = { titre -> finDePartie(titre) }
 
         racine = FrameLayout(this)
         racine.setBackgroundColor(Color.BLACK)
         racine.addView(vue, FrameLayout.LayoutParams(-1, -1))
-        racine.addView(mancheABalai())
-        racine.addView(boutons())
+        commandes = Commandes(this, vue.partie).apply {
+            surEsquive = {
+                val me = vue.partie.me()
+                if (me.dodge <= 0f && me.cool <= 0f) { me.dodge = .38f; son?.jouer("esquive", 1f) }
+            }
+            surAttraper = { vue.partie.me().catchTry = .32f }
+            surPasse = { vue.partie.passBall(vue.partie.me()) }
+            surTirDebut = { vue.partie.charging = true; vue.partie.shotCharge = 0f }
+            surTirFin = {
+                val partie = vue.partie
+                val me = partie.me()
+                val cible = partie.ciblesDe(me).minByOrNull {
+                    hypot(it.x - me.x, it.y - me.y)
+                }
+                partie.launch(me, cible, partie.shotCharge)
+                partie.charging = false; partie.shotCharge = 0f
+            }
+        }
+        racine.addView(commandes, FrameLayout.LayoutParams(-1, -1))
         racine.addView(retour())
         setContentView(racine)
 
@@ -85,77 +101,6 @@ class PartieActivity : ComponentActivity() {
         setOnClickListener { finish() }
         layoutParams = FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.START).apply {
             topMargin = 46; leftMargin = 18
-        }
-    }
-
-    /** Le manche a balai : il apparait la ou le doigt se pose, comme chez lui. */
-    private fun mancheABalai(): View {
-        val zone = object : View(this) {
-            private var cx = 0f; private var cy = 0f
-            override fun onTouchEvent(e: MotionEvent): Boolean {
-                when (e.actionMasked) {
-                    MotionEvent.ACTION_DOWN -> { cx = e.x; cy = e.y }
-                    MotionEvent.ACTION_MOVE -> {
-                        val dx = e.x - cx; val dy = e.y - cy
-                        val l = hypot(dx, dy)
-                        val rayon = 90f * resources.displayMetrics.density * .5f
-                        val f = if (l > rayon) rayon / l else 1f
-                        vue.partie.jx = dx * f / rayon
-                        vue.partie.jy = dy * f / rayon
-                    }
-                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                        vue.partie.jx = 0f; vue.partie.jy = 0f
-                    }
-                }
-                return true
-            }
-        }
-        zone.layoutParams = FrameLayout.LayoutParams(
-            (resources.displayMetrics.widthPixels * .45f).toInt(), -1, Gravity.START)
-        return zone
-    }
-
-    /** Ses quatre boutons : esquive, attraper, passe, tir. */
-    private fun boutons(): LinearLayout {
-        fun bouton(titre: String, couleur: Int) = Button(this).apply {
-            text = titre; textSize = 12f
-            setTextColor(Color.WHITE); setBackgroundColor(couleur)
-        }
-        val esquive = bouton("ESQUIVE", 0xCC2B4B7A.toInt()).apply {
-            setOnClickListener {
-                val me = vue.partie.me()
-                if (me.dodge <= 0f && me.cool <= 0f) { me.dodge = .38f; son?.jouer("esquive", 1f) }
-            }
-        }
-        val attraper = bouton("ATTRAPER", 0xCC2F6B33.toInt()).apply {
-            setOnClickListener { vue.partie.me().catchTry = .32f }
-        }
-        val passe = bouton("PASSE", 0xCC6B4A2F.toInt()).apply {
-            setOnClickListener { vue.partie.passBall(vue.partie.me()) }
-        }
-        // le tir se charge tant qu'on garde le doigt appuye
-        val tir = bouton("TIR", 0xCC8A2F2F.toInt()).apply {
-            setOnTouchListener { _, e ->
-                val partie = vue.partie
-                when (e.actionMasked) {
-                    MotionEvent.ACTION_DOWN -> { partie.charging = true; partie.shotCharge = 0f }
-                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                        val me = partie.me()
-                        val cibles = partie.ciblesDe(me).minByOrNull { hypot(it.x - me.x, it.y - me.y) }
-                        partie.launch(me, cibles, partie.shotCharge)
-                        partie.charging = false; partie.shotCharge = 0f
-                    }
-                }
-                true
-            }
-        }
-        boutonTir = tir
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            addView(esquive); addView(attraper); addView(passe); addView(tir)
-            layoutParams = FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM or Gravity.END).apply {
-                rightMargin = 22; bottomMargin = 22
-            }
         }
     }
 

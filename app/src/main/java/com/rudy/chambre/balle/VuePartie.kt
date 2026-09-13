@@ -38,6 +38,16 @@ class VuePartie(ctx: Context) : View(ctx) {
     private var dernier = 0L
     private var finAnnoncee = false
 
+    /**
+     * La finesse de l'ecran.
+     *
+     * Sa page raisonne en points d'ecran — innerWidth et innerHeight — et le
+     * navigateur agrandit ensuite le dessin. On fait pareil : la partie
+     * travaille en points, et on agrandit au moment de dessiner. Sans cela les
+     * personnages sont deux a trois fois trop petits et tout va trop lentement.
+     */
+    private val finesse: Float get() = resources.displayMetrics.density
+
     /** Les cases des planches : une ligne par action, comme chez lui. */
     private val lignes = mapOf(
         "walk" to 0, "run" to 1, "throw" to 2, "dodge" to 3, "catch" to 4,
@@ -83,7 +93,7 @@ class VuePartie(ctx: Context) : View(ctx) {
 
     override fun onSizeChanged(l: Int, h: Int, al: Int, ah: Int) {
         super.onSizeChanged(l, h, al, ah)
-        partie.W = l.toFloat(); partie.H = h.toFloat()
+        partie.W = l / finesse; partie.H = h / finesse
         partie.reset()
     }
 
@@ -95,34 +105,89 @@ class VuePartie(ctx: Context) : View(ctx) {
         dernier = maintenant
         partie.update(min(dt, 0.05f))
 
+        c.save()
+        c.scale(finesse, finesse)          // on passe dans son repere
+
         dessinerTerrain(c)
         // les plus loin d'abord, pour que les plus proches passent devant
         for (j in partie.P.sortedBy { it.y }) { personnage(c, j); eclairDeCharge(c, j) }
         jaugeEnergie(c)
+        tableauDeScore(c)
         decompte(c)
         impact(c)
         balle(c)
         petitMot(c)
+        c.restore()
 
         if (partie.over && !finAnnoncee) { finAnnoncee = true; surFin?.invoke(partie.msg) }
         invalidate()
+    }
+
+    /**
+     * Ses zones d'arbres et de banderoles, en coordonnees de son image
+     * (1536 x 864). Elles ondulent sous le vent, comme dans son decor anime.
+     */
+    private val zonesArbres = listOf(
+        "42,42 165,38 184,72 164,116 72,126 38,90",
+        "211,78 281,54 353,66 411,105 501,151 514,188 441,193 370,173 311,183 250,158 211,127",
+        "908,147 945,137 982,151 987,180 950,193 912,184",
+        "1132,39 1285,41 1314,83 1302,138 1244,157 1153,145 1121,101",
+        "1362,36 1442,32 1491,65 1496,121 1459,157 1380,157 1341,117"
+    )
+    private val zonesBanderoles = listOf(
+        "304,217 470,213 496,249 489,319 449,339 354,333 309,306",
+        "625,205 880,203 919,230 913,304 874,323 669,321 629,302",
+        "996,219 1199,220 1232,246 1220,306 1183,325 1024,319 990,300"
+    )
+
+    /** Fabrique un contour a partir d'une suite de points, a l'echelle voulue. */
+    private fun contour(points: String, ox: Float, oy: Float, s: Float): Path {
+        val chemin = Path()
+        points.trim().split(" ").forEachIndexed { i, pt ->
+            val (a, b) = pt.split(",")
+            val x = ox + a.toFloat() * s
+            val y = oy + b.toFloat() * s
+            if (i == 0) chemin.moveTo(x, y) else chemin.lineTo(x, y)
+        }
+        chemin.close()
+        return chemin
     }
 
     /** Son « drawBG » : l'image couvre l'ecran sans se deformer. */
     private fun dessinerTerrain(c: Canvas) {
         val bg = terrain
         if (bg == null) { c.drawColor(0xFF0B2A12.toInt()); return }
-        val s = max(width.toFloat() / bg.width, height.toFloat() / bg.height)
+        val s = max(partie.W / bg.width, partie.H / bg.height)
         val dw = bg.width * s; val dh = bg.height * s
         c.drawBitmap(bg, null,
-            RectF((width - dw) / 2f, (height - dh) / 2f, (width + dw) / 2f, (height + dh) / 2f),
-            pinceau)
+            RectF((partie.W - dw) / 2f, (partie.H - dh) / 2f,
+                  (partie.W + dw) / 2f, (partie.H + dh) / 2f), pinceau)
+        // les arbres et les banderoles ondulent : on redessine ces zones
+        // decalees, doucement pour les arbres, plus vivement pour le tissu
+        val ox = (partie.W - dw) / 2f; val oy = (partie.H - dh) / 2f
+        val cadre = RectF(ox, oy, ox + dw, oy + dh)
+        ondulation(c, bg, cadre, s, ox, oy, zonesArbres, sin(partie.T * 1.1f) * 2.2f, .9f)
+        ondulation(c, bg, cadre, s, ox, oy, zonesBanderoles, sin(partie.T * 2.6f) * 3.4f, 1.8f)
+
         p.color = 0x22001020
-        c.drawRect(0f, 0f, width.toFloat(), height.toFloat(), p)
+        c.drawRect(0f, 0f, partie.W, partie.H, p)
+    }
+
+    /** Une zone du decor, redessinee legerement decalee : c'est le vent. */
+    private fun ondulation(c: Canvas, bg: Bitmap, cadre: RectF, s: Float,
+                           ox: Float, oy: Float, zones: List<String>,
+                           decalage: Float, amplitude: Float) {
+        for (z in zones) {
+            c.save()
+            c.clipPath(contour(z, ox, oy, s))
+            c.translate(decalage * amplitude, sin(partie.T * 1.7f) * amplitude * .4f)
+            c.drawBitmap(bg, null, cadre, pinceau)
+            c.restore()
+        }
     }
 
     /** La hauteur commune a tous les personnages, comme chez lui. */
-    private fun hauteurCible() = min(118f, max(92f, height * .145f))
+    private fun hauteurCible() = min(118f, max(92f, partie.H * .145f))
 
     /** L'action en cours et la pose correspondante (son « person »). */
     private fun actionEtPose(j: Partie.Joueur): Pair<String, Int> {
@@ -162,7 +227,7 @@ class VuePartie(ctx: Context) : View(ctx) {
             heroDW = dw; heroDH = dh; heroDY = dy
             heroPose = if (action == "catch") pose else -1
             dessinerImage(c, im, j, dw, dh, dy + saut)
-            texte.color = Color.WHITE; texte.textSize = 10f * resources.displayMetrics.density * .8f
+            texte.color = Color.WHITE; texte.textSize = 10f
             c.drawText("TOI" + (if (j.prison) " • PRISON" else ""), j.x, dy - 4f, texte)
             return
         }
@@ -180,7 +245,7 @@ class VuePartie(ctx: Context) : View(ctx) {
         val dy = j.y - dh
         dessinerCase(c, planche, src, j, dw, dh, dy + saut)
         texte.color = if (j.prison) 0xFFFFB3A0.toInt() else 0xFFF2E6C8.toInt()
-        texte.textSize = 10f * resources.displayMetrics.density * .8f
+        texte.textSize = 10f
         c.drawText(j.nom + (if (j.prison) " • PRISON" else ""), j.x, dy - 4f, texte)
     }
 
@@ -277,23 +342,23 @@ class VuePartie(ctx: Context) : View(ctx) {
     /** Son « drawEnergyHUD » : trois jauges a gauche, trois a droite. */
     private fun jaugeEnergie(c: Canvas) {
         val marge = 12f; val ecart = 7f
-        val groupe = min(width * .43f, 330f)
+        val groupe = min(partie.W * .43f, 330f)
         val bw = (groupe - ecart * 2f) / 3f
         val y = 10f; val bh = 9f
 
         fun une(j: Partie.Joueur, i: Int, gauche: Boolean) {
             val x0 = if (gauche) marge + i * (bw + ecart)
-                     else width - marge - groupe + i * (bw + ecart)
+                     else partie.W - marge - groupe + i * (bw + ecart)
             val e = j.energy.coerceIn(0f, 100f)
 
-            texte.textSize = 11f * resources.displayMetrics.density * .8f
+            texte.textSize = 11f
             texte.style = Paint.Style.STROKE; texte.strokeWidth = 3f
             texte.color = 0xB8000000.toInt()
-            c.drawText(j.nom, x0 + bw / 2f, y + texte.textSize, texte)
+            c.drawText(j.nom, x0 + bw / 2f, y + 11f, texte)
             texte.style = Paint.Style.FILL; texte.color = Color.WHITE
-            c.drawText(j.nom, x0 + bw / 2f, y + texte.textSize, texte)
+            c.drawText(j.nom, x0 + bw / 2f, y + 11f, texte)
 
-            val by = y + 15f + texte.textSize
+            val by = y + 15f
             p.color = 0x94000000.toInt()
             c.drawRect(x0 - 1f, by - 1f, x0 + bw + 1f, by + bh + 1f, p)
             p.color = if (e >= 100f) 0xFFFFF36A.toInt() else 0xFF57D7FF.toInt()
@@ -315,6 +380,23 @@ class VuePartie(ctx: Context) : View(ctx) {
         for (i in 0 until 3) une(partie.P[i + 3], i, false)
     }
 
+    /** Son « stats » : combien sur le terrain, combien en prison. */
+    private fun tableauDeScore(c: Canvas) {
+        val a = partie.P.count { it.team == 0 && !it.prison }
+        val b = partie.P.count { it.team == 1 && !it.prison }
+        val libelle = "🔵 $a terrain • ${4 - a} prison     🔴 $b terrain • ${4 - b} prison"
+        texte.textSize = 12f
+        val l = texte.measureText(libelle)
+        val cx = partie.W / 2f
+        p.color = 0xDD06101D.toInt()
+        c.drawRoundRect(RectF(cx - l / 2f - 14f, 7f, cx + l / 2f + 14f, 7f + 26f), 8f, 8f, p)
+        p.style = Paint.Style.STROKE; p.strokeWidth = 1f; p.color = 0x55FFFFFF
+        c.drawRoundRect(RectF(cx - l / 2f - 14f, 7f, cx + l / 2f + 14f, 7f + 26f), 8f, 8f, p)
+        p.style = Paint.Style.FILL
+        texte.style = Paint.Style.FILL; texte.color = Color.WHITE
+        c.drawText(libelle, cx, 7f + 18f, texte)
+    }
+
     // ================= le decompte =================
 
     /** Son « drawCountdown » : jaune, gros contour rouge, ombre noire. */
@@ -324,9 +406,9 @@ class VuePartie(ctx: Context) : View(ctx) {
         val txt = if (elapsed < 1f) "3" else if (elapsed < 2f) "2" else if (elapsed < 3f) "1" else "GO!"
         val pulse = 1f + .08f * sin(partie.T * 14f)
         c.save()
-        c.translate(width / 2f, height * .46f)
+        c.translate(partie.W / 2f, partie.H * .46f)
         c.scale(pulse, pulse)
-        texte.textSize = min(width, height) * .17f
+        texte.textSize = min(partie.W, partie.H) * .17f
         texte.style = Paint.Style.STROKE
         texte.strokeJoin = Paint.Join.ROUND
         texte.strokeWidth = 11f; texte.color = 0x8C000000.toInt()
@@ -386,11 +468,11 @@ class VuePartie(ctx: Context) : View(ctx) {
     /** Son petit mot, en haut de l'ecran. */
     private fun petitMot(c: Canvas) {
         if (partie.note.isEmpty()) return
-        texte.textSize = 16f * resources.displayMetrics.density * .8f
+        texte.textSize = 15f
         texte.style = Paint.Style.STROKE; texte.strokeWidth = 4f; texte.color = 0xCC000000.toInt()
-        c.drawText(partie.note, width / 2f, height * .12f, texte)
-        texte.style = Paint.Style.FILL; texte.color = 0xFFFFE9A8.toInt()
-        c.drawText(partie.note, width / 2f, height * .12f, texte)
+        c.drawText(partie.note, partie.W / 2f, 58f, texte)
+        texte.style = Paint.Style.FILL; texte.color = 0xFFFFE171.toInt()
+        c.drawText(partie.note, partie.W / 2f, 58f, texte)
     }
 
     fun rejouer() { finAnnoncee = false; partie.reset(); invalidate() }

@@ -1,1 +1,4 @@
-version 84 - anciens fichiers ecartes
+version 86 - les dix jeux en natif
+  balle au prisonnier, basket, tir au but, dames, echecs,
+  monopoly, poker, blackjack, atelier de dessin, livre
+  + la chambre alignee sur le HTML d'origine

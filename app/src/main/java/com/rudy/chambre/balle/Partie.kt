@@ -89,7 +89,7 @@ class Partie(var W: Float, var H: Float) {
     fun son(quoi: String, force: Float = 1f) { surSon?.invoke(quoi, force) }
 
     /** Son « say » : le petit mot qui s'affiche en haut. */
-    fun dire(t: String) { note = t; noteT = 1.6f }
+    fun dire(t: String) { note = t; noteT = 1.35f }
 
     /** Le petit mot s'efface tout seul. */
     fun majNote(dt: Float) {

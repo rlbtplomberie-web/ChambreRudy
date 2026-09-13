@@ -86,7 +86,7 @@ object Livres {
         if (cible.isDirectory) {
             val dejaLa = cible.listFiles { f -> f.name.endsWith(".jpg") }?.sortedBy { it.name }
             if (!dejaLa.isNullOrEmpty()) {
-                dejaLa.forEach { sortie.put("https://appassets.androidplatform.net/livres/$id/${it.name}") }
+                dejaLa.forEach { sortie.put(it.absolutePath) }
                 return sortie
             }
         }
@@ -96,7 +96,7 @@ object Livres {
 
         dessiner(ctx, id, Uri.parse(livre.getString("uri")), premieres = 4)
         cible.listFiles { f -> f.name.endsWith(".jpg") }?.sortedBy { it.name }?.forEach {
-            sortie.put("https://appassets.androidplatform.net/livres/$id/${it.name}")
+            sortie.put(it.absolutePath)
         }
         return sortie
     }
@@ -155,8 +155,7 @@ object Livres {
             } ?: return ""
             dessiner(ctx, id, Uri.parse(livre.getString("uri")), premieres = 1)
         }
-        return if (premiere.exists())
-            "https://appassets.androidplatform.net/livres/$id/p0000.jpg" else ""
+        return if (premiere.exists()) premiere.absolutePath else ""
     }
 
     /** Les pages deja pretes d'un livre, pour rafraichir pendant la lecture. */
@@ -164,7 +163,7 @@ object Livres {
         val sortie = JSONArray()
         val cible = File(File(ctx.filesDir, "livres"), id)
         cible.listFiles { f -> f.name.endsWith(".jpg") }?.sortedBy { it.name }?.forEach {
-            sortie.put("https://appassets.androidplatform.net/livres/$id/${it.name}")
+            sortie.put(it.absolutePath)
         }
         return sortie
     }

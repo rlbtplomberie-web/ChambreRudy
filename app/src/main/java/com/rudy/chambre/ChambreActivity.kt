@@ -36,6 +36,8 @@ class ChambreActivity : ComponentActivity() {
 
         son = SonChambre(this)
         SonPartage.radio = son
+        // le bouton de la radio regle vraiment le volume de la musique
+        vue.surVolume = { v -> son.majVolume(v) }
         vue = VueChambre(this)
         vue.surObjet = { quoi -> toucheObjet(quoi) }
         vue.surEcranTele = { r -> placerEcranTele(r) }
@@ -126,7 +128,8 @@ class ChambreActivity : ComponentActivity() {
             "tele" -> vue.consolePosee()?.let { dire(it.nom) }
             "teleLong" -> montrerAssemblage()
             "serrure" -> menuDehors()
-            "livre" -> page("jeux/livre_vide.html", "Bibliothèque")
+            "livre" -> startActivity(Intent(this,
+                com.rudy.chambre.livre.LivreActivity::class.java))
         }
     }
 
@@ -236,7 +239,8 @@ class ChambreActivity : ComponentActivity() {
             .setTitle("Le tiroir est ouvert")
             .setItems(arrayOf("Dessiner", "Jouer aux cartes", "Refermer")) { _, i ->
                 when (i) {
-                    0 -> page("jeux/atelier.html", "Atelier de dessin")
+                    0 -> startActivity(Intent(this,
+                        com.rudy.chambre.atelier.AtelierActivity::class.java))
                     1 -> menuCartes()
                     else -> { son.bruit("tiroir.mp3"); vue.ouvrirTiroir(false) }
                 }
@@ -247,8 +251,9 @@ class ChambreActivity : ComponentActivity() {
         menu()
             .setTitle("Jeu de cartes")
             .setItems(arrayOf("Poker", "Blackjack")) { _, i ->
-                page(if (i == 0) "jeux/poker.html" else "jeux/blackjack.html",
-                     if (i == 0) "Poker" else "Blackjack", paysage = true)
+                startActivity(Intent(this, if (i == 0)
+                    com.rudy.chambre.cartes.PokerActivity::class.java
+                else com.rudy.chambre.cartes.BlackjackActivity::class.java))
             }.show()
     }
 
@@ -256,8 +261,12 @@ class ChambreActivity : ComponentActivity() {
         menu()
             .setTitle("Jeux de société")
             .setItems(arrayOf("Échecs", "Dames", "Monopoly")) { _, i ->
-                page(listOf("jeux/echecs.html", "jeux/dames.html", "jeux/monopoly.html")[i],
-                     listOf("Échecs", "Dames", "Monopoly")[i])
+                when (i) {
+                    0 -> startActivity(Intent(this, com.rudy.chambre.echecs.EchecsActivity::class.java))
+                    1 -> startActivity(Intent(this, com.rudy.chambre.dames.DamesActivity::class.java))
+                    else -> startActivity(Intent(this,
+                        com.rudy.chambre.monopoly.MonopolyActivity::class.java))
+                }
             }
             .setOnDismissListener { if (vue.porteG > 0.5f) fermerPortes() }
             .show()
@@ -267,13 +276,13 @@ class ChambreActivity : ComponentActivity() {
         menu()
             .setTitle("Voulez-vous sortir ?")
             .setItems(arrayOf("Tir au but", "Faire des paniers", "Balle au prisonnier")) { _, i ->
-                when (i) {
-                    // la balle au prisonnier est desormais en natif
-                    2 -> startActivity(Intent(this, com.rudy.chambre.balle.PartieActivity::class.java))
-                    else -> page(
-                        if (i == 0) "jeux/penalty_leger.html" else "jeux/basket_leger.html",
-                        if (i == 0) "Tir au but" else "Basket", paysage = true)
-                }
+                // les trois jeux de plein air, desormais en natif
+                val ecrans = listOf(
+                    com.rudy.chambre.penalty.PenaltyActivity::class.java,
+                    com.rudy.chambre.basket.BasketActivity::class.java,
+                    com.rudy.chambre.balle.PartieActivity::class.java
+                )
+                startActivity(Intent(this, ecrans[i]))
             }
             .setNegativeButton("Rester", null)
             .show()

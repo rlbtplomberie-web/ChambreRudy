@@ -90,12 +90,48 @@ class VueChambre(ctx: Context) : View(ctx) {
         decY = (height - hauteurMur).coerceAtMost(0f)
     }
 
-    /** Le cadrage d'arrivee : la tele au tiers gauche, comme a l'origine. */
+    /**
+     * Le cadrage d'arrivee, repris de sa page : la tele au tiers gauche de
+     * l'ecran, et a un peu plus de la moitie en hauteur.
+     */
     fun cadrerSurLaTele() {
         recalculer()
         decX = (width * .37f - Decor.TELE.x * largeurMur)
             .coerceIn(min(0f, width - largeurMur), 0f)
+        decY = (height * .52f - Decor.TELE.y * hauteurMur)
+            .coerceIn(min(0f, height - hauteurMur), 0f)
         invalidate()
+    }
+
+    /**
+     * Son « approcheArmoire » : la camera se rapproche du meuble jusqu'a le
+     * cadrer en entier, portes comprises, sans depasser deux fois deux.
+     */
+    var zoomMeuble = 1f; private set
+    private var zoomVise = 1f
+
+    fun approcherLeMeuble() {
+        recalculer()
+        zoomVise = min(2.2f, .98f * width / (Decor.MEUBLE.l * largeurMur))
+        animerLeZoom()
+    }
+
+    fun revenirAuBureau() { zoomVise = 1f; animerLeZoom() }
+
+    /** Le rapprochement se fait en 1,9 seconde, comme chez lui. */
+    private fun animerLeZoom() {
+        val depart = zoomMeuble
+        val debut = System.nanoTime()
+        post(object : Runnable {
+            override fun run() {
+                val t = ((System.nanoTime() - debut) / 1_000_000_000f / 1.9f).coerceAtMost(1f)
+                // sa courbe : lent au depart, lent a l'arrivee
+                val d = if (t < .5f) 2f * t * t else 1f - (-2f * t + 2f) * (-2f * t + 2f) / 2f
+                zoomMeuble = depart + (zoomVise - depart) * d
+                invalidate()
+                if (t < 1f) postDelayed(this, 16)
+            }
+        })
     }
 
     // ================= dessin =================
@@ -369,20 +405,24 @@ class VueChambre(ctx: Context) : View(ctx) {
             val u = ((t - .80f) / .14f).coerceIn(0f, 1f)
             val cx = b.centerX()
             val cy = b.top + b.height() * .25f
+            // ses quatorze places : chaque console rejoint la sienne, inclinee
             for ((i, console) in Decor.CONSOLES.withIndex()) {
                 val img = charger(console.image) ?: continue
                 val retard = if (i < 3) i * .05f else .19f + (i - 3) * .075f
                 val p = ((u - retard) / (1f - retard)).coerceIn(0f, 1f)
                 if (p <= 0f) continue
-                val angle = -1.57f + (i - 6f) * 0.22f
-                val d = iw * .30f * doux(p)
-                val hx = cx + kotlin.math.cos(angle) * d
-                val hy = cy + kotlin.math.sin(angle) * d - iw * .06f * p * p
+                val place = Decor.ETOILE.getOrNull(i) ?: continue
+                val avance = doux(p)
+                val hx = cx + place.first * width * avance
+                val hy = cy + place.second * height * avance - iw * .05f * p * (1f - p) * 4f
                 val l = iw * .085f
                 val hh = l * img.height / img.width
+                c.save()
+                c.rotate(place.third * avance, hx, hy)
                 peinture.alpha = (255 * (1f - (p - .6f).coerceAtLeast(0f) / .4f)).toInt()
                 c.drawBitmap(img, null, RectF(hx - l/2, hy - hh/2, hx + l/2, hy + hh/2), peinture)
                 peinture.alpha = 255
+                c.restore()
             }
         }
 
@@ -419,6 +459,50 @@ class VueChambre(ctx: Context) : View(ctx) {
 
     private var xDepart = 0f
     private var yDepart = 0f
+    /**
+     * Le bouton de volume de sa radio.
+     *
+     * On pose le doigt sur le bouton et on tourne : dans le sens horaire le son
+     * monte, et il faut trois cents degres pour aller du silence au maximum,
+     * comme dans sa page.
+     */
+    private var volumeEnCours = false
+    private var angleVolume = 0f
+    var volumeRadio = 0.55f; private set
+    var surVolume: ((Float) -> Unit)? = null
+
+    private fun angleDepuisLaRadio(x: Float, y: Float): Float {
+        val r = zone(Decor.RADIO)
+        return kotlin.math.atan2(y - r.centerY(), x - r.centerX())
+    }
+
+    /** Le doigt est-il pose sur le bouton de la radio ? */
+    fun surLeBoutonDeVolume(x: Float, y: Float): Boolean {
+        if (vue != 0) return false
+        val r = zone(Decor.RADIO)
+        return kotlin.math.hypot(x - r.centerX(), y - r.centerY()) < r.width() * .55f
+    }
+
+    fun commencerLeVolume(x: Float, y: Float) {
+        volumeEnCours = true
+        angleVolume = angleDepuisLaRadio(x, y)
+    }
+
+    fun tournerLeVolume(x: Float, y: Float) {
+        if (!volumeEnCours) return
+        val a = angleDepuisLaRadio(x, y)
+        var d = a - angleVolume
+        while (d > Math.PI) d -= (2 * Math.PI).toFloat()
+        while (d < -Math.PI) d += (2 * Math.PI).toFloat()
+        angleVolume = a
+        val degres = Math.toDegrees(d.toDouble()).toFloat()
+        volumeRadio = (volumeRadio + degres / 300f).coerceIn(0f, 1f)
+        surVolume?.invoke(volumeRadio)
+        invalidate()
+    }
+
+    fun lacherLeVolume() { volumeEnCours = false }
+
     private var xPrec = 0f
     private var bouge = false
     private var tempsDepart = 0L
@@ -429,9 +513,11 @@ class VueChambre(ctx: Context) : View(ctx) {
             MotionEvent.ACTION_DOWN -> {
                 xDepart = e.x; yDepart = e.y; xPrec = e.x; bouge = false
                 tempsDepart = System.currentTimeMillis()
+                if (surLeBoutonDeVolume(e.x, e.y)) commencerLeVolume(e.x, e.y)
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
+                if (volumeEnCours) { tournerLeVolume(e.x, e.y); bouge = true; return true }
                 val dx = e.x - xPrec
                 xPrec = e.x
                 if (abs(e.x - xDepart) > 12f || abs(e.y - yDepart) > 12f) bouge = true
@@ -445,6 +531,7 @@ class VueChambre(ctx: Context) : View(ctx) {
                 return true
             }
             MotionEvent.ACTION_UP -> {
+                if (volumeEnCours) { lacherLeVolume(); return true }
                 val duree = System.currentTimeMillis() - tempsDepart
                 if (!bouge && duree > 650 && vue == 0 && zone(Decor.TELE).contains(e.x, e.y)) {
                     surObjet?.invoke("teleLong")     // appui long sur la tele : le bilan
