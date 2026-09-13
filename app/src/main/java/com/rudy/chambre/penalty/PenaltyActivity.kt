@@ -18,6 +18,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 class PenaltyActivity : ComponentActivity() {
 
     private lateinit var vue: VuePenalty
+    private lateinit var racine: FrameLayout
     private lateinit var compteur: TextView
     private lateinit var message: TextView
     private var son: SonPenalty? = null
@@ -44,7 +45,7 @@ class PenaltyActivity : ComponentActivity() {
         vue.surSon = { quoi -> son?.jouer(quoi) }
         vue.surFinDeFrappe = { arrete -> finDeFrappe(arrete) }
 
-        val racine = FrameLayout(this)
+        racine = FrameLayout(this)
         racine.setBackgroundColor(Color.BLACK)
         racine.addView(vue, FrameLayout.LayoutParams(-1, -1))
         racine.addView(tableauDeBord())
@@ -57,7 +58,7 @@ class PenaltyActivity : ComponentActivity() {
         }
         racine.addView(message, FrameLayout.LayoutParams(-2, -2, Gravity.CENTER))
         setContentView(racine)
-        com.rudy.chambre.Ambiance.adoucirLaMusique()
+        com.rudy.chambre.Ambiance.musiqueDuJeu(this, "penalty/musique_penalty.webm", 0.34f)
         // son affiche d'avant-match : le jeu ne demarre qu'au bouton
         com.rudy.chambre.Ambiance.affiche(this, racine, "penalty/affiche.jpg") {}
     }
@@ -171,17 +172,20 @@ class PenaltyActivity : ComponentActivity() {
         }, ms)
     }
 
+    /**
+     * Sa fin de partie : son image de victoire ou de defaite, avec les
+     * applaudissements s'il gagne et un soupir de foule s'il perd.
+     */
     private fun finDePartie(titre: String, texte: String) {
-        AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
-            .setTitle(titre).setMessage(texte)
-            .setPositiveButton("Rejouer") { _, _ ->
-                buts = 0; arrets = 0; finie = false; enCours = false
-                directionChoisie = null; majCompteur()
-                message.visibility = android.view.View.GONE
-                vue.remettre()
-            }
-            .setNegativeButton("Retour au bureau") { _, _ -> finish() }
-            .setCancelable(false)
-            .show()
+        val gagne = titre.contains("RUDY")
+        son?.jouer(if (gagne) "applaudissements" else "hue")
+        com.rudy.chambre.Ambiance.ecranDeFin(this, racine,
+            if (gagne) "penalty/gagne.webp" else "penalty/perdu.webp",
+            titre, texte) {
+            buts = 0; arrets = 0; finie = false; enCours = false
+            directionChoisie = null; majCompteur()
+            message.visibility = android.view.View.GONE
+            vue.remettre()
+        }
     }
 }

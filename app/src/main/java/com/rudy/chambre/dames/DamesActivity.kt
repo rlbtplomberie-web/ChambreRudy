@@ -68,7 +68,7 @@ class DamesActivity : ComponentActivity() {
         racine.addView(recommencer, FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.END)
             .apply { topMargin = 18; rightMargin = 18 })
         setContentView(racine)
-        com.rudy.chambre.Ambiance.adoucirLaMusique()
+        com.rudy.chambre.Ambiance.musiqueDuJeu(this, "dames/musique_dames.webm", 1f)
     }
 
     /** Apres le coup du joueur : Majora reflechit, puis joue, en enchainant ses prises. */

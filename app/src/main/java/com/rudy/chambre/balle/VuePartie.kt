@@ -172,11 +172,68 @@ class VuePartie(ctx: Context) : View(ctx) {
         // decalees, doucement pour les arbres, plus vivement pour le tissu
         val ox = (partie.W - dw) / 2f; val oy = (partie.H - dh) / 2f
         val cadre = RectF(ox, oy, ox + dw, oy + dh)
-        ondulation(c, bg, cadre, s, ox, oy, zonesArbres, sin(partie.T * 1.1f) * 2.2f, .9f)
-        ondulation(c, bg, cadre, s, ox, oy, zonesBanderoles, sin(partie.T * 2.6f) * 3.4f, 1.8f)
+        // les arbres : deux rythmes croises, et le haut bouge plus que le bas
+        arbresAuVent(c, bg, cadre, s, ox, oy)
+        // les banderoles : elles claquent, chacune a son tempo
+        banderolesAuVent(c, bg, cadre, s, ox, oy)
 
         p.color = 0x22001020
         c.drawRect(0f, 0f, partie.W, partie.H, p)
+    }
+
+    /**
+     * Les arbres du fond. Chaque bosquet se balance a son propre rythme, et
+     * la cime bouge plus que le tronc : on redessine la zone en trois tranches
+     * horizontales, de plus en plus decalees vers le haut.
+     */
+    private fun arbresAuVent(c: Canvas, bg: Bitmap, cadre: RectF, s: Float, ox: Float, oy: Float) {
+        zonesArbres.forEachIndexed { i, z ->
+            val contour = contour(z, ox, oy, s)
+            val boite = RectF()
+            contour.computeBounds(boite, true)
+            val souffle = sin(partie.T * (1.0f + i * .17f)) * 3.2f +
+                          sin(partie.T * (2.3f + i * .11f)) * 1.4f
+            for (tranche in 0 until 3) {
+                val haut = boite.top + boite.height() * tranche / 3f
+                val bas = boite.top + boite.height() * (tranche + 1) / 3f
+                // la cime, tranche 0, prend tout le vent ; le pied presque rien
+                val force = when (tranche) { 0 -> 1f; 1 -> .55f; else -> .18f }
+                c.save()
+                c.clipPath(contour)
+                c.clipRect(boite.left - 20f, haut, boite.right + 20f, bas)
+                c.translate(souffle * force, kotlin.math.abs(souffle) * force * .25f)
+                c.drawBitmap(bg, null, cadre, pinceau)
+                c.restore()
+            }
+        }
+    }
+
+    /**
+     * Les banderoles accrochees au grillage : elles claquent au vent. Le
+     * tissu ondule en vague, plus fort vers son bord libre.
+     */
+    private fun banderolesAuVent(c: Canvas, bg: Bitmap, cadre: RectF, s: Float, ox: Float, oy: Float) {
+        zonesBanderoles.forEachIndexed { i, z ->
+            val contour = contour(z, ox, oy, s)
+            val boite = RectF()
+            contour.computeBounds(boite, true)
+            val tempo = 2.2f + i * .45f
+            val bandes = 6
+            for (k in 0 until bandes) {
+                val x0 = boite.left + boite.width() * k / bandes
+                val x1 = boite.left + boite.width() * (k + 1) / bandes
+                // la vague parcourt le tissu de gauche a droite
+                val phase = partie.T * tempo - k * .55f
+                val onde = sin(phase) * 2.6f
+                c.save()
+                c.clipPath(contour)
+                c.clipRect(x0, boite.top - 12f, x1, boite.bottom + 12f)
+                c.translate(0f, onde)
+                c.scale(1f, 1f + onde * .012f, 0f, boite.top)
+                c.drawBitmap(bg, null, cadre, pinceau)
+                c.restore()
+            }
+        }
     }
 
     /** Une zone du decor, redessinee legerement decalee : c'est le vent. */
@@ -193,7 +250,8 @@ class VuePartie(ctx: Context) : View(ctx) {
     }
 
     /** La hauteur commune a tous les personnages, comme chez lui. */
-    private fun hauteurCible() = min(118f, max(92f, partie.H * .145f))
+    /** Un peu plus grands qu'avant, comme il l'a demande. */
+    private fun hauteurCible() = min(140f, max(108f, partie.H * .172f))
 
     /** L'action en cours et la pose correspondante (son « person »). */
     private fun actionEtPose(j: Partie.Joueur): Pair<String, Int> {
@@ -207,6 +265,12 @@ class VuePartie(ctx: Context) : View(ctx) {
             j.throwA > 0f -> "throw" to pose(1f - j.throwA / .55f)
             j.catchA > 0f && partie.B.held === j -> "catch" to pose(1f - j.catchA / .62f)
             j.dodge > 0f -> "dodge" to pose(1f - j.dodge / .38f)
+            // la balle en main : il marche et court normalement, et ne tient
+            // la pose de porteur que lorsqu'il s'arrete
+            partie.B.held === j && hypot(j.vx, j.vy) > 150f ->
+                "run" to (floor(partie.T * 12f).toInt().mod(8))
+            partie.B.held === j && hypot(j.vx, j.vy) > 12f ->
+                "walk" to (floor(partie.T * 8f).toInt().mod(8))
             partie.B.held === j -> "catch" to 7
             hypot(j.vx, j.vy) > 150f -> "run" to (floor(partie.T * 12f).toInt().mod(8))
             hypot(j.vx, j.vy) > 12f -> "walk" to (floor(partie.T * 8f).toInt().mod(8))
@@ -333,21 +397,46 @@ class VuePartie(ctx: Context) : View(ctx) {
             c.restore()
         }
 
-        p.style = Paint.Style.FILL; p.color = Color.WHITE
-        c.drawCircle(x0, by, r, p)
-        p.style = Paint.Style.STROKE; p.color = 0xFF111111.toInt(); p.strokeWidth = 1f
-        c.drawCircle(x0, by, r, p)
+        // ---- son ballon : blanc, avec de larges rayures noires ----
+        c.save()
+        // il tourne en roulant : le sens suit son deplacement
+        c.rotate(B.tour, x0, by)
 
-        // ses trois rayures
-        p.strokeWidth = .72f
-        val arc1 = RectF(x0 - r * .40f - r * .78f, by - r * .78f, x0 - r * .40f + r * .78f, by + r * .78f)
-        c.drawArc(arc1, Math.toDegrees(-1.18).toFloat(), Math.toDegrees(2.36).toFloat(), false, p)
-        val arc2 = RectF(x0 + r * .40f - r * .78f, by - r * .78f, x0 + r * .40f + r * .78f, by + r * .78f)
-        c.drawArc(arc2, Math.toDegrees(PI - 1.18).toFloat(), Math.toDegrees(2.36).toFloat(), false, p)
-        val courbe = Path()
-        courbe.moveTo(x0 - r * .82f, by - r * .18f)
-        courbe.quadTo(x0, by + r * .30f, x0 + r * .82f, by - r * .18f)
-        c.drawPath(courbe, p)
+        // le cuir : un blanc qui se cambre, plus lumineux en haut a gauche
+        val cuir = Paint(Paint.ANTI_ALIAS_FLAG)
+        cuir.shader = RadialGradient(x0 - r * .34f, by - r * .36f, r * 1.6f,
+            intArrayOf(0xFFFFFFFF.toInt(), 0xFFF2F1EE.toInt(), 0xFFBDBBB6.toInt()),
+            floatArrayOf(0f, .52f, 1f), Shader.TileMode.CLAMP)
+        c.drawCircle(x0, by, r, cuir)
+
+        // les rayures : trois bandes courbes, larges, qui epousent la rondeur
+        p.style = Paint.Style.STROKE
+        p.color = 0xFF17171A.toInt()
+        p.strokeCap = Paint.Cap.BUTT
+        p.strokeWidth = r * .30f
+        c.save()
+        c.clipPath(Path().apply { addCircle(x0, by, r, Path.Direction.CW) })
+        for (k in -1..1) {
+            val bande = Path()
+            val decalage = k * r * .74f
+            bande.moveTo(x0 + decalage - r * .22f, by - r * 1.2f)
+            bande.quadTo(x0 + decalage + r * .30f, by,
+                         x0 + decalage - r * .22f, by + r * 1.2f)
+            c.drawPath(bande, p)
+        }
+        c.restore()
+        p.strokeCap = Paint.Cap.ROUND
+        c.restore()
+
+        // le reflet des projecteurs, qui ne tourne pas avec le ballon
+        val reflet = Paint(Paint.ANTI_ALIAS_FLAG)
+        reflet.shader = RadialGradient(x0 - r * .36f, by - r * .40f, r * .62f,
+            intArrayOf(0x88FFFFFF.toInt(), 0x00FFFFFF), null, Shader.TileMode.CLAMP)
+        c.drawCircle(x0 - r * .28f, by - r * .32f, r * .58f, reflet)
+
+        // le bord, a peine marque
+        p.style = Paint.Style.STROKE; p.color = 0x44000000; p.strokeWidth = r * .07f
+        c.drawCircle(x0, by, r * .97f, p)
         p.style = Paint.Style.FILL
     }
 

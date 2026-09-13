@@ -113,10 +113,11 @@ object Objets {
                     chemin.lineTo(face.centerX() - h * .06f, face.top - lev)
                     chemin.lineTo(face.left - h * .10f, face.top - lev * .82f)
                 } else {
+                    // le rabat de droite se redresse : il penchait trop
                     chemin.moveTo(face.centerX(), face.top)
                     chemin.lineTo(face.right, face.top)
-                    chemin.lineTo(face.right + h * .10f, face.top - lev * .82f)
-                    chemin.lineTo(face.centerX() + h * .06f, face.top - lev)
+                    chemin.lineTo(face.right + h * .07f, face.top - lev * .94f)
+                    chemin.lineTo(face.centerX() + h * .04f, face.top - lev)
                 }
                 chemin.close()
                 p.shader = LinearGradient(0f, face.top - lev, 0f, face.top,

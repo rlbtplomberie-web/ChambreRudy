@@ -59,7 +59,7 @@ class AtelierActivity : ComponentActivity() {
         racine.addView(barreDuHaut())
         racine.addView(tailles())
         setContentView(racine)
-        com.rudy.chambre.Ambiance.adoucirLaMusique()
+        com.rudy.chambre.Ambiance.musiqueDuJeu(this, "atelier/musique_atelier.webm", 1f)
     }
 
     /** Sa trousse verte, avec les huit crayons et la gomme. */
@@ -260,6 +260,7 @@ class Papier(ctx: Context) : View(ctx) {
 
     // le trait en cours
     private var trace = false
+    private var largeurDeBase = 4f      // l'epaisseur voulue, avant la vitesse
     private var ax = 0f; private var ay = 0f
     private var bx = 0f; private var by = 0f
 
@@ -359,15 +360,20 @@ class Papier(ctx: Context) : View(ctx) {
         p.style = Paint.Style.STROKE
         p.strokeCap = Paint.Cap.ROUND
         p.strokeJoin = Paint.Join.ROUND
+        // l'unite : un millieme de la largeur de la feuille, pour que le
+        // trait ait la meme allure sur tous les ecrans
+        val unite = kotlin.math.max(1f, (calque?.width ?: 1000) / 210f)
         if (gomme) {
             p.xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
-            p.strokeWidth = 26f * epaisseur
+            p.strokeWidth = 7f * unite * epaisseur
         } else {
             p.xfermode = null
             p.color = outil.couleur
-            p.alpha = (255 * outil.alpha).toInt().coerceIn(20, 255)
-            p.strokeWidth = outil.taille * 1.6f * epaisseur
+            p.alpha = (255 * outil.alpha).toInt().coerceIn(28, 255)
+            // ses tailles vont de 2,4 a 22 : on les ramene en millimetres
+            p.strokeWidth = outil.taille * .42f * unite * epaisseur
         }
+        largeurDeBase = p.strokeWidth
     }
 
     private fun memoriser() {
@@ -408,11 +414,31 @@ class Papier(ctx: Context) : View(ctx) {
                 if (!trace) return true
                 val c = pinceauCalque ?: return true
                 val (x, y) = surLaFeuille(e.x, e.y)
+                // un vrai crayon appuie moins quand la main va vite
+                val vitesse = hypot(x - bx, y - by)
+                val large = largeurDeBase * (1f - (vitesse / 90f).coerceIn(0f, .38f))
+                p.strokeWidth = kotlin.math.max(largeurDeBase * .55f, large)
+
                 // un trait lisse : la courbe passe par le milieu des deux points
                 val chemin = Path()
                 chemin.moveTo(ax, ay)
                 chemin.quadTo(bx, by, (bx + x) / 2f, (by + y) / 2f)
                 c.drawPath(chemin, p)
+
+                // le grain du crayon : quelques points en marge du trait
+                if (outil.grain && !gomme) {
+                    val g = Paint(p)
+                    g.style = Paint.Style.FILL
+                    g.alpha = (p.alpha * .35f).toInt().coerceIn(10, 120)
+                    var k = 0
+                    while (k < 3) {
+                        val t2 = k / 3f
+                        val gx = bx + (x - bx) * t2 + (Math.random().toFloat() - .5f) * largeurDeBase * 1.4f
+                        val gy = by + (y - by) * t2 + (Math.random().toFloat() - .5f) * largeurDeBase * 1.4f
+                        c.drawCircle(gx, gy, largeurDeBase * .16f, g)
+                        k++
+                    }
+                }
                 ax = (bx + x) / 2f; ay = (by + y) / 2f
                 bx = x; by = y
                 surFrottement?.invoke(hypot(x - ax, y - ay))

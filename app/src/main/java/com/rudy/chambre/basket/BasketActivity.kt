@@ -21,6 +21,7 @@ import kotlin.math.min
 class BasketActivity : ComponentActivity() {
 
     private lateinit var vue: VueBasket
+    private lateinit var racine: FrameLayout
     private lateinit var tableau: Tableau
     private val regles = Regles()
     private var son: SonBasket? = null
@@ -42,12 +43,12 @@ class BasketActivity : ComponentActivity() {
         }
 
         tableau = Tableau(this)
-        val racine = FrameLayout(this)
+        racine = FrameLayout(this)
         racine.setBackgroundColor(Color.BLACK)
         racine.addView(vue, FrameLayout.LayoutParams(-1, -1))
         racine.addView(tableau, FrameLayout.LayoutParams(-1, -1))
         setContentView(racine)
-        com.rudy.chambre.Ambiance.adoucirLaMusique()
+        com.rudy.chambre.Ambiance.musiqueDuJeu(this, "basket/musique_basket.webm", 0.34f)
         // son affiche d'avant-match : le jeu ne demarre qu'au bouton
         com.rudy.chambre.Ambiance.affiche(this, racine, "basket/affiche.jpg") {}
     }
@@ -199,14 +200,17 @@ class BasketActivity : ComponentActivity() {
         }
     }
 
+    /** Sa fin de partie : gagne a sept paniers, avec son ecran et son bruit. */
     private fun finDePartie() {
-        AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
-            .setTitle(regles.titreFin())
-            .setMessage(regles.texteFin())
-            .setPositiveButton("Rejouer") { _, _ -> regles.rejouer() }
-            .setNegativeButton("Retour au bureau") { _, _ -> finish() }
-            .setCancelable(false)
-            .show()
+        val gagne = regles.paniers >= 7
+        son?.jouer(if (gagne) "panier" else "rate")
+        com.rudy.chambre.Ambiance.ecranDeFin(this, racine,
+            if (gagne) "basket/gagne.webp" else "basket/perdu.webp",
+            if (gagne) "GAGNÉ ! 🏀" else "PERDU",
+            if (gagne) "Tu as marqué ${regles.paniers} paniers en ${regles.essais} lancers."
+            else "Seulement ${regles.paniers} paniers sur ${regles.essais} lancers.") {
+            regles.rejouer(); dernierResultat = ""; message = ""
+        }
     }
 
     override fun onDestroy() { com.rudy.chambre.Ambiance.rendreLaMusique(); son?.liberer(); super.onDestroy() }

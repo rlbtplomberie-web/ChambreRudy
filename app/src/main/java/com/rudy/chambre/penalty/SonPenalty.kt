@@ -88,6 +88,7 @@ class SonPenalty(private val ctx: android.content.Context? = null) {
             "filet" -> choc(.22, 260.0, .30, 12.0)
             "gant" -> choc(.13, 190.0, .38, 26.0)
             "applaudissements" -> if (!applaudissementsReels()) foule(1.8, .45, true)
+            "hue" -> foule(1.3, .30, false)     // le souffle de deception
             "deception" -> foule(1.4, .28, false)
         }
     }

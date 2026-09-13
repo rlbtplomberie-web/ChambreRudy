@@ -67,7 +67,7 @@ class EchecsActivity : ComponentActivity() {
         }, FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.END)
             .apply { topMargin = 18; rightMargin = 18 })
         setContentView(racine)
-        com.rudy.chambre.Ambiance.adoucirLaMusique()
+        com.rudy.chambre.Ambiance.musiqueDuJeu(this, "echecs/musique_echecs.webm", 1f)
 
         choisirArmee()
     }

@@ -114,7 +114,9 @@ class VuePenalty(ctx: Context) : View(ctx) {
 
         c.drawColor(0xFF0B2A12.toInt())
         charger("terrain.webp")?.let {
-            c.drawBitmap(it, null, RectF(0f, 0f, width.toFloat(), height.toFloat()), pinceau)
+            val cadre = RectF(0f, 0f, width.toFloat(), height.toFloat())
+            c.drawBitmap(it, null, cadre, pinceau)
+            dessinerVent(c, it, cadre)      // les arbres et l'herbe bougent
         }
         dessinerGardien(c)
         if (balleVisible) dessinerBalle(c)
@@ -307,23 +309,112 @@ class VuePenalty(ctx: Context) : View(ctx) {
     private fun attenteAuSol() =
         if (plongeonEnCours == "ul" || plongeonEnCours == "ur") .850f else .520f
 
+    /**
+     * Un vrai ballon de football : le blanc n'est pas uniforme, les pentagones
+     * noirs sont cousus, la lumiere des projecteurs frappe en haut a gauche et
+     * une ombre s'etale au sol sous lui.
+     */
+    /**
+     * Le terrain qui vit : les arbres du fond se balancent sous le vent, et
+     * l'herbe frissonne par plaques, a des rythmes differents.
+     */
+    private fun dessinerVent(c: Canvas, fond: Bitmap, cadre: RectF) {
+        // les arbres : la bande du fond, entre 30 et 48 % de la hauteur
+        val balance = sin(tTotal * .9f) * 2.4f + sin(tTotal * 1.7f) * 1.1f
+        c.save()
+        c.clipRect(cadre.left, cadre.top + cadre.height() * .30f,
+                   cadre.right, cadre.top + cadre.height() * .48f)
+        c.translate(balance, sin(tTotal * 1.3f) * .7f)
+        c.drawBitmap(fond, null, cadre, pinceau)
+        c.restore()
+
+        // l'herbe : quatre plaques qui frissonnent chacune a son rythme
+        val plaques = arrayOf(
+            floatArrayOf(.08f, .62f, .26f, .14f, 1.6f),
+            floatArrayOf(.38f, .70f, .30f, .16f, 2.3f),
+            floatArrayOf(.66f, .64f, .28f, .13f, 1.9f),
+            floatArrayOf(.20f, .84f, .55f, .14f, 1.2f)
+        )
+        for (q in plaques) {
+            val x0 = cadre.left + cadre.width() * q[0]
+            val y0 = cadre.top + cadre.height() * q[1]
+            val l = cadre.width() * q[2]
+            val h = cadre.height() * q[3]
+            c.save()
+            c.clipRect(x0, y0, x0 + l, y0 + h)
+            c.translate(sin(tTotal * q[4]) * 1.6f, 0f)
+            pinceau.alpha = 170
+            c.drawBitmap(fond, null, cadre, pinceau)
+            pinceau.alpha = 255
+            c.restore()
+        }
+    }
+
     private fun dessinerBalle(c: Canvas) {
         val r = px(balleTaille) / 2f
         val cx = px(balleX); val cy = py(balleY)
+
+        // l'ombre au sol : elle s'aplatit et palit quand le ballon monte
+        val hauteur = ((py(75.5f) - cy) / height).coerceIn(0f, .35f)
+        p.style = Paint.Style.FILL
+        p.color = Color.argb((70 * (1f - hauteur * 2f)).toInt().coerceIn(0, 70), 0, 0, 0)
+        c.drawOval(RectF(cx - r * 1.05f, py(76.2f) - r * .28f,
+                         cx + r * 1.05f, py(76.2f) + r * .28f), p)
+
         c.save()
         c.rotate(balleTour, cx, cy)
-        p.color = Color.WHITE
-        c.drawCircle(cx, cy, r, p)
-        p.style = Paint.Style.STROKE; p.strokeWidth = r * .16f; p.color = 0xFF141414.toInt()
-        c.drawCircle(cx, cy, r * .98f, p)
-        p.style = Paint.Style.FILL; p.color = 0xFF141414.toInt()
+
+        // le cuir : un blanc qui s'assombrit vers le bas droit
+        val cuir = Paint(Paint.ANTI_ALIAS_FLAG)
+        cuir.shader = RadialGradient(cx - r * .35f, cy - r * .38f, r * 1.55f,
+            intArrayOf(0xFFFFFFFF.toInt(), 0xFFEDEDEA.toInt(), 0xFFB9B7B2.toInt()),
+            floatArrayOf(0f, .55f, 1f), Shader.TileMode.CLAMP)
+        c.drawCircle(cx, cy, r, cuir)
+
+        // les pentagones noirs : un au centre, cinq autour
+        p.color = 0xFF16161A.toInt()
+        pentagone(c, cx, cy, r * .34f, 0f)
         for (i in 0 until 5) {
-            val a = i * (2 * PI / 5).toFloat()
-            val hx = cx + kotlin.math.cos(a) * r * .55f
-            val hy = cy + sin(a) * r * .55f
-            c.drawCircle(hx, hy, r * .20f, p)
+            val a = i * (2 * PI / 5).toFloat() - (PI / 2).toFloat()
+            pentagone(c, cx + kotlin.math.cos(a) * r * .72f,
+                         cy + sin(a) * r * .72f, r * .26f, a)
         }
-        c.drawCircle(cx, cy, r * .24f, p)
+
+        // les coutures qui relient les pieces
+        p.style = Paint.Style.STROKE
+        p.strokeWidth = r * .05f
+        p.color = 0x55000000
+        for (i in 0 until 5) {
+            val a = i * (2 * PI / 5).toFloat() - (PI / 2).toFloat()
+            c.drawLine(cx + kotlin.math.cos(a) * r * .40f, cy + sin(a) * r * .40f,
+                       cx + kotlin.math.cos(a) * r * .95f, cy + sin(a) * r * .95f, p)
+        }
+        p.style = Paint.Style.FILL
         c.restore()
+
+        // le reflet des projecteurs, qui ne tourne pas avec le ballon
+        val reflet = Paint(Paint.ANTI_ALIAS_FLAG)
+        reflet.shader = RadialGradient(cx - r * .38f, cy - r * .42f, r * .60f,
+            intArrayOf(0x99FFFFFF.toInt(), 0x00FFFFFF), null, Shader.TileMode.CLAMP)
+        c.drawCircle(cx - r * .30f, cy - r * .34f, r * .55f, reflet)
+
+        // le bord, a peine marque
+        p.style = Paint.Style.STROKE; p.strokeWidth = r * .06f
+        p.color = 0x33000000
+        c.drawCircle(cx, cy, r * .97f, p)
+        p.style = Paint.Style.FILL
+    }
+
+    /** Un pentagone plein, pour les pieces du ballon. */
+    private fun pentagone(c: Canvas, cx: Float, cy: Float, r: Float, tour: Float) {
+        val f = Path()
+        for (i in 0 until 5) {
+            val a = tour + i * (2 * PI / 5).toFloat() - (PI / 2).toFloat()
+            val x = cx + kotlin.math.cos(a) * r
+            val y = cy + sin(a) * r
+            if (i == 0) f.moveTo(x, y) else f.lineTo(x, y)
+        }
+        f.close()
+        c.drawPath(f, p)
     }
 }

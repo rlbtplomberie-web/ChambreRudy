@@ -71,7 +71,7 @@ class MonopolyActivity : ComponentActivity() {
         }, FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.START)
             .apply { topMargin = 18; leftMargin = 18 })
         setContentView(racine)
-        com.rudy.chambre.Ambiance.adoucirLaMusique()
+        com.rudy.chambre.Ambiance.musiqueDuJeu(this, "monopoly/musique_monopoly.webm", 1f)
 
         choisirLaPartie()
     }

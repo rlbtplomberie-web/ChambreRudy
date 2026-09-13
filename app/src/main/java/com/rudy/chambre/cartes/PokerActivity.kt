@@ -55,7 +55,7 @@ class PokerActivity : ComponentActivity() {
                 .apply { topMargin = 18; leftMargin = 18 }
         })
         setContentView(racine)
-        com.rudy.chambre.Ambiance.adoucirLaMusique()
+        com.rudy.chambre.Ambiance.musiqueDuJeu(this, "cartes/musique_poker.webm", 1f)
     }
 
     private fun bouton(titre: String, action: () -> Unit) = Button(this).apply {
@@ -107,9 +107,9 @@ class VuePoker(ctx: Context, private val jeu: Poker) : View(ctx) {
 
         // les trois adversaires, cartes face cachee
         val noms = listOf("Kev", "Yoel", "Arthur")
-        val places = listOf(width * .16f to height * .40f,   // Yoel, a gauche
-                            width * .50f to height * .10f,   // Kev, en haut
-                            width * .84f to height * .40f)   // Arthur, a droite
+        val places = listOf(width * .16f to height * .46f,   // Yoel, sous son prenom
+                            width * .50f to height * .18f,   // Kev, sous son prenom
+                            width * .84f to height * .46f)   // Arthur, sous son prenom
         noms.indices.forEach { i ->
             val (cx, cy) = places[i]
             // les prenoms sont deja peints sur son tapis : on ne les redessine

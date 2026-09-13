@@ -57,6 +57,7 @@ class Partie(var W: Float, var H: Float) {
         var pickupOwner: Joueur? = null
         val r = 9f
         var charged = false
+        var tour = 0f            // sa rotation : il roule au lieu de glisser
     }
 
     class Impact { var t = 0f; var x = 0f; var y = 0f; var p: Joueur? = null }
@@ -172,6 +173,10 @@ class Partie(var W: Float, var H: Float) {
 
     fun ciblesDe(p: Joueur) = P.filter { it.team != p.team && !it.prison }
 
+    /** Un tir demande alors que le joueur etait encore en repos. */
+    var tirEnAttente = false
+    var chargeEnAttente = 0f
+
     /** Le lancer (« launch »). */
     fun launch(p: Joueur, t: Joueur?, charge: Float = 0f) {
         if (B.held !== p || t == null || p.cool > 0f) return
@@ -270,6 +275,17 @@ fun Partie.update(dt: Float) {
         resumePorteur?.let { r -> r.cool = 1f; B.held = r; resumePorteur = null; dire("REPRISE !") }
     }
 
+    // le tir mis en attente part des que le joueur peut de nouveau lancer
+    if (tirEnAttente) {
+        val moi = P[0]
+        if (B.held !== moi) { tirEnAttente = false; chargeEnAttente = 0f }
+        else if (moi.cool <= 0f) {
+            launch(moi, ciblesDe(moi).minByOrNull { hypot(it.x - moi.x, it.y - moi.y) },
+                   chargeEnAttente)
+            tirEnAttente = false; chargeEnAttente = 0f
+        }
+    }
+
     if (IMPACT.t > 0f) IMPACT.t = max(0f, IMPACT.t - dt)
     if (over) return
     T += dt
@@ -366,6 +382,7 @@ fun Partie.update(dt: Float) {
         B.y = porteur.y + sin(porteur.face) * 23f
         B.z = 15f
     } else {
+        B.tour += hypot(B.vx, B.vy) * dt * .55f
         B.x += B.vx * dt; B.y += B.vy * dt; B.z += B.vz * dt
         B.vz -= 390f * dt
         if (B.z < 0f) {

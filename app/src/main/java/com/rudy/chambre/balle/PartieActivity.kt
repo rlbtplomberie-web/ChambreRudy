@@ -50,8 +50,20 @@ class PartieActivity : ComponentActivity() {
                 val me = vue.partie.me()
                 if (me.dodge <= 0f && me.cool <= 0f) { me.dodge = .38f; son?.jouer("esquive", 1f) }
             }
-            surAttraper = { vue.partie.me().catchTry = .32f }
-            surPasse = { vue.partie.passBall(vue.partie.me()) }
+            surAttraper = {
+                val me = vue.partie.me()
+                if (vue.partie.B.held !== me && !me.pendingJail && me.fallA <= 0f) {
+                    // sa fenetre de rattrapage : un tiers de seconde
+                    me.catchTry = .32f
+                    son?.jouer("esquive", .7f)
+                }
+            }
+            surPasse = {
+                val partie = vue.partie
+                val me = partie.me()
+                if (partie.B.held === me) partie.passBall(me)
+                else partie.dire("TU N'AS PAS LA BALLE")
+            }
             surTirDebut = { vue.partie.charging = true; vue.partie.shotCharge = 0f }
             surTirFin = {
                 val partie = vue.partie
@@ -59,14 +71,22 @@ class PartieActivity : ComponentActivity() {
                 val cible = partie.ciblesDe(me).minByOrNull {
                     hypot(it.x - me.x, it.y - me.y)
                 }
-                partie.launch(me, cible, partie.shotCharge)
+                if (partie.B.held === me) {
+                    // s'il est encore en repos, le tir attend son tour
+                    if (me.cool > 0f) {
+                        partie.tirEnAttente = true
+                        partie.chargeEnAttente = partie.shotCharge
+                    } else {
+                        partie.launch(me, cible, partie.shotCharge)
+                    }
+                }
                 partie.charging = false; partie.shotCharge = 0f
             }
         }
         racine.addView(commandes, FrameLayout.LayoutParams(-1, -1))
         racine.addView(retour())
         setContentView(racine)
-        com.rudy.chambre.Ambiance.adoucirLaMusique()
+        com.rudy.chambre.Ambiance.musiqueDuJeu(this, "balle/musique_balle.webm", 0.34f)
 
         afficherAffiche()
     }

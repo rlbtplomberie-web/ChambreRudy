@@ -1,5 +1,11 @@
-version 92
-  corrige l'erreur de compilation (champs d'Outil : couleur et alpha)
-  minimum Android porte a 26, exige par une bibliotheque de Mupen64Plus
-  terrains animes : vent, cinq feuilles et halo au basket,
-  respiration du tireur au tir au but
+version 93
+  musiques : ses neuf pistes, une par jeu, trouvees dans MUSJEUX
+  tir au but : detourage refait, ballon realiste, arbres et herbe au vent,
+               ecrans GAGNE et PERDU avec applaudissements
+  dessin : trait a la bonne epaisseur, crayon qui vit
+  poker : cartes sous les prenoms
+  basket : ecran de fin
+  carton : rabat droit redresse
+  balle au prisonnier : tir mis en attente (ne se perd plus), porteur qui
+               marche et court, personnages agrandis, vent sur les arbres
+               et les banderoles, ballon blanc a rayures qui roule

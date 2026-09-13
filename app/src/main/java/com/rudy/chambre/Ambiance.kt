@@ -13,13 +13,110 @@ import android.widget.ImageView
  */
 object Ambiance {
 
+    private var lecteur: android.media.MediaPlayer? = null
+
     /**
-     * La musique baisse a un quart pendant le jeu et revient en sortant,
-     * comme le faisaient ses pages web.
+     * Sa musique de jeu : elle remplace celle de la radio le temps de la
+     * partie, exactement comme son « jeuMusique » en tournant en boucle.
+     * La radio se tait, puis revient a la sortie.
      */
+    fun musiqueDuJeu(activite: Activity, fichier: String, volume: Float = 1f) {
+        SonPartage.volume(0f)                   // la radio se tait
+        arreterLaMusique()
+        try {
+            val f = activite.assets.openFd(fichier)
+            lecteur = android.media.MediaPlayer().apply {
+                setDataSource(f.fileDescriptor, f.startOffset, f.length)
+                isLooping = true
+                setVolume(volume, volume)
+                prepare()
+                start()
+            }
+            f.close()
+        } catch (_: Throwable) {
+            // pas de musique propre au jeu : on garde la radio, adoucie
+            SonPartage.volume(0.25f)
+        }
+    }
+
+    private fun arreterLaMusique() {
+        try { lecteur?.stop() } catch (_: Throwable) {}
+        try { lecteur?.release() } catch (_: Throwable) {}
+        lecteur = null
+    }
+
+    /** La musique baisse pendant le jeu, faute de piste propre. */
     fun adoucirLaMusique() = SonPartage.volume(0.25f)
 
-    fun rendreLaMusique() = SonPartage.volume(1.0f)
+    /** En sortant du jeu : sa musique s'arrete, la radio revient. */
+    fun rendreLaMusique() {
+        arreterLaMusique()
+        SonPartage.volume(1.0f)
+    }
+
+    /**
+     * Son ecran de fin : l'image de victoire ou de defaite, avec le choix de
+     * recommencer ou de retourner au bureau.
+     */
+    fun ecranDeFin(activite: Activity, racine: FrameLayout, fichier: String,
+                   titre: String, detail: String,
+                   recommencer: () -> Unit) {
+        val image = try {
+            activite.assets.open(fichier).use { BitmapFactory.decodeStream(it) }
+        } catch (_: Throwable) { null }
+
+        val bloc = FrameLayout(activite)
+        bloc.setBackgroundColor(0xEE07060D.toInt())
+        if (image != null) {
+            bloc.addView(ImageView(activite).apply {
+                setImageBitmap(image)
+                scaleType = ImageView.ScaleType.FIT_CENTER
+            }, FrameLayout.LayoutParams(-1, -1))
+        }
+
+        val dens = activite.resources.displayMetrics.density
+        val colonne = android.widget.LinearLayout(activite).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+        }
+        colonne.addView(android.widget.TextView(activite).apply {
+            text = titre; textSize = 30f
+            setTextColor(0xFFFFE9A8.toInt())
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            gravity = Gravity.CENTER
+        })
+        colonne.addView(android.widget.TextView(activite).apply {
+            text = detail; textSize = 15f
+            setTextColor(0xFFE8E2D4.toInt())
+            gravity = Gravity.CENTER
+            setPadding(0, (6 * dens).toInt(), 0, (14 * dens).toInt())
+        })
+        val rangee = android.widget.LinearLayout(activite).apply {
+            orientation = android.widget.LinearLayout.HORIZONTAL
+        }
+        rangee.addView(Button(activite).apply {
+            text = "RECOMMENCER"; textSize = 14f
+            setTextColor(0xFF2A1C06.toInt())
+            setBackgroundColor(0xFFF2C14E.toInt())
+            setOnClickListener { racine.removeView(bloc); recommencer() }
+        })
+        rangee.addView(Button(activite).apply {
+            text = "← BUREAU"; textSize = 14f
+            setTextColor(0xFFFFFFFF.toInt())
+            setBackgroundColor(0x33FFFFFF)
+            setOnClickListener { activite.finish() }
+        }, android.widget.LinearLayout.LayoutParams(-2, -2).apply {
+            leftMargin = (10 * dens).toInt()
+        })
+        colonne.addView(rangee)
+
+        bloc.addView(colonne, FrameLayout.LayoutParams(-2, -2,
+            Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL).apply {
+            bottomMargin = (40 * dens).toInt()
+        })
+
+        racine.addView(bloc, FrameLayout.LayoutParams(-1, -1))
+    }
 
     /**
      * L'affiche d'avant-match : elle occupe tout l'ecran, avec un bouton pour

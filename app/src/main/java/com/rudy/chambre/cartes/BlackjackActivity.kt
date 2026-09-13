@@ -75,7 +75,7 @@ class BlackjackActivity : ComponentActivity() {
                 .apply { topMargin = 18; leftMargin = 18 }
         })
         setContentView(racine)
-        com.rudy.chambre.Ambiance.adoucirLaMusique()
+        com.rudy.chambre.Ambiance.musiqueDuJeu(this, "cartes/musique_blackjack.webm", 1f)
         majBoutons()
     }
 
