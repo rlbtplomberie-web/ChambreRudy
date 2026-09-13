@@ -23,6 +23,10 @@ android {
         // Flycast, melonDS et Citra n'existent qu'en arm64 : on s'aligne sur eux,
         // comme le faisaient tes projets Dreamcast, DS et 3DS
         ndk { abiFilters += listOf("arm64-v8a") }
+        /* Mupen64Plus apporte des milliers de classes : avec les notres, on
+           depasse la limite d'un seul fichier. On autorise donc la repartition
+           en plusieurs, ce qu'Android sait faire seul depuis la version 5. */
+        multiDexEnabled = true
         // Citra reclame la bibliotheque C++ partagee : elle doit etre dans l'APK
         externalNativeBuild {
             cmake { arguments("-DANDROID_STL=c++_shared") }
@@ -48,6 +52,10 @@ android {
         debug { isDebuggable = false }
     }
     compileOptions {
+        /* Mupen64Plus emploie des fonctions de Java recentes. Cette traduction
+           les rend utilisables sur les telephones plus anciens ; sans elle,
+           Android refuse de l'assembler avec notre application. */
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -76,6 +84,9 @@ android {
 }
 
 dependencies {
+    // la bibliotheque qui assure cette traduction
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
     /*
      * L'emulateur N64 de Rudy : Mupen64Plus, prepare par le workflow dans
      * m64base/. On regarde le dossier lui-meme, ce qui est vrai des la lecture
