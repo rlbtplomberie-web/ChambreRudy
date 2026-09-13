@@ -124,7 +124,15 @@ class SkinView(ctx: Context) : View(ctx) {
         var retourDepuis = 0L; var rx = 0f; var ry = 0f
         var secteur = ""; var secteurDepuis = 0L
     }
-    private val sticks = mapOf(Ids.CROIX to Stick(), Ids.STICK to Stick())
+    /**
+     * Un manche par directionnel. Le stick C en fait partie : sans le sien,
+     * le dessin le reclamait et l'ecran s'arretait des la premiere image.
+     */
+    private val sticks = mapOf(
+        Ids.CROIX to Stick(),
+        Ids.STICK to Stick(),
+        Ids.CSTICK to Stick()
+    )
 
     // ---------- images ----------
     private class Touche(val repos: Bitmap, val appui: List<Bitmap>, val directions: Map<String, List<Bitmap>>)
@@ -350,7 +358,7 @@ class SkinView(ctx: Context) : View(ctx) {
      * Pendant le retour au centre, la position decroit sur 90 ms.
      */
     private fun dessinerDirectionnel(c: Canvas, t: Touche, id: String, repos: RectF, large: RectF, maintenant: Long) {
-        val st = sticks[id]!!
+        val st = sticks[id] ?: return      // un directionnel sans manche : on passe
         var px = st.x; var py = st.y
         if (!st.actif && maintenant - st.retourDepuis < 90) {
             val f = 1f - (maintenant - st.retourDepuis) / 90f
@@ -612,7 +620,7 @@ class SkinView(ctx: Context) : View(ctx) {
         val t = System.currentTimeMillis()
         doigts[pid] = el
         if (el in Ids.DIRECTIONNELS) {
-            val st = sticks[el]!!
+            val st = sticks[el] ?: return
             st.actif = true; st.x0 = x; st.y0 = y; st.x = 0f; st.y = 0f
         } else {
             actifs[el] = t
@@ -632,7 +640,7 @@ class SkinView(ctx: Context) : View(ctx) {
         suivis.remove(pid)
         val el = doigts.remove(pid) ?: return
         if (el in Ids.DIRECTIONNELS) {
-            val st = sticks[el]!!
+            val st = sticks[el] ?: return
             st.rx = st.x; st.ry = st.y; st.x = 0f; st.y = 0f
             st.actif = false; st.retourDepuis = System.currentTimeMillis()
             return
@@ -645,7 +653,7 @@ class SkinView(ctx: Context) : View(ctx) {
 
     /** Position du stick d'apres le deplacement du doigt depuis l'appui, bornee a la course. */
     private fun majStick(id: String, x: Float, y: Float) {
-        val st = sticks[id]!!
+        val st = sticks[id] ?: return
         var nx: Float; var ny: Float
         val course = (dispo.courses[id] ?: 0f)
         if (course > 0f) {

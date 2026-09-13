@@ -52,8 +52,11 @@ def adapter_compilation(chemin: str) -> None:
         # ou glisse dans un bloc ecrit sur une seule ligne
         t = re.sub(mot + r'\s*=?\s*[\'"][^\'"]*[\'"]', '', t)
         t = re.sub(mot + r'\s*=?\s*\d+', '', t)
-    for mot in ('applicationVariants', 'splits', 'bundle'):
+    for mot in ('applicationVariants', 'splits', 'bundle',
+                'productFlavors', 'flavorDimensions'):
         t = retirer_bloc(t, mot)
+    # « flavorDimensions » s'ecrit parfois sur une seule ligne, sans bloc
+    t = re.sub(r'^\s*flavorDimensions\s*[^\n]*$', '', t, flags=re.M)
     t = limiter_architecture(t)
     t = aligner_version_minimale(t)
     t = accorder_traduction_java(t)
@@ -185,6 +188,18 @@ def adapter_manifeste(chemin: str) -> None:
                      'android:appComponentFactory', 'android:networkSecurityConfig'):
         t = re.sub(r'(<application\b[^>]*?)\s' + attribut + r'\s*=\s*"[^"]*"',
                    r'\1', t, flags=re.S)
+
+    # Certaines bibliotheques de Mupen64Plus reclament un Android plus recent
+    # que notre minimum, et le fusionneur refuse alors tout le manifeste. On
+    # lui demande de passer outre, en nommant les paquets concernes.
+    if 'tools:overrideLibrary' not in t:
+        passe = ('    <uses-sdk tools:overrideLibrary="paulscode.android.mupen64plusae,'
+                 'org.mupen64plusae.v3.alpha,org.libsdl.app,'
+                 'com.bda.controller,org.apache.http.legacy" />\n')
+        t = t.replace('<application', passe + '    <application', 1)
+        if 'xmlns:tools' not in t:
+            t = t.replace('<manifest', '<manifest xmlns:tools="http://schemas.android.com/tools"', 1)
+
     open(chemin, 'w', encoding='utf-8').write(t)
     print('manifeste adapte :', chemin)
 

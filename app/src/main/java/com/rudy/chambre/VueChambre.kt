@@ -224,9 +224,18 @@ class VueChambre(ctx: Context) : View(ctx) {
                 val t = sortie
                 val cx = depart.centerX() + (p.centerX() - depart.centerX()) * t
                 val arc = -p.height() * 1.4f * (t * (1 - t) * 4f)      // un saut, puis la pose
-                // l'emplacement entre la tele et le carton, pose sur le plateau
-                val l = p.width() * (0.55f + 0.45f * t)
-                val hh = l * img.height / img.width
+                /*
+                 * L'emplacement entre la tele et le carton, pose sur le
+                 * plateau : 236 sur 104 points chez lui.
+                 *
+                 * L'image doit TENIR dans cette zone, comme son « object-fit:
+                 * contain » : on prend donc la plus petite des deux echelles.
+                 * En imposant la largeur, une console un peu haute debordait
+                 * largement — c'est ce qui les rendait enormes.
+                 */
+                val echelle = kotlin.math.min(p.width() / img.width, p.height() / img.height)
+                val l = img.width * echelle * (0.55f + 0.45f * t)
+                val hh = img.height * echelle * (0.55f + 0.45f * t)
                 val bas = p.bottom + arc
                 c.drawBitmap(img, null,
                     RectF(cx - l / 2, bas - hh, cx + l / 2, bas), peinture)

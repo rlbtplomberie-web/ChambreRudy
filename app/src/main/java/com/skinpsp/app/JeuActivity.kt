@@ -63,6 +63,21 @@ class JeuActivity : PpssppActivity() {
     }
 
     override fun onCreate(bundle: Bundle?) {
+        /*
+         * Le jeu choisi dans la vitrine.
+         *
+         * La chambre passe son adresse dans un supplement appele « rom ».
+         * PPSSPP, lui, ne regarde que les donnees de l'intention : sans cette
+         * traduction il ouvrait son propre menu au lieu du jeu demande. On la
+         * fait avant son onCreate, qui lit l'intention aussitot.
+         */
+        try {
+            val demande = intent?.getStringExtra("rom")
+            if (!demande.isNullOrEmpty() && intent?.data == null) {
+                intent?.data = android.net.Uri.parse(demande)
+            }
+        } catch (_: Throwable) {}
+
         // AppCompat exige ce theme avant son propre onCreate.
         setTheme(androidx.appcompat.R.style.Theme_AppCompat_DayNight_NoActionBar)
         pleinEcranTotal()
