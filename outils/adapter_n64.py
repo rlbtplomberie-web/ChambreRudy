@@ -42,6 +42,7 @@ def adapter_compilation(chemin: str) -> None:
     for mot in ('applicationVariants', 'splits', 'bundle'):
         t = retirer_bloc(t, mot)
     t = limiter_architecture(t)
+    t = activer_traduction_java(t)
     open(chemin, 'w', encoding='utf-8').write(t)
     print('fichier de compilation adapte :', chemin)
 
@@ -71,6 +72,41 @@ def poser_espace_de_noms(gradle: str, manifeste: str) -> None:
     t = t[:j + 1] + "\n    namespace '" + paquet + "'\n" + t[j + 1:]
     open(gradle, 'w', encoding='utf-8').write(t)
     print('espace de noms pose :', paquet)
+
+
+def activer_traduction_java(t: str) -> str:
+    """
+    Activer la traduction des fonctions Java récentes, module par module.
+
+    Ce projet emploie des fonctions apparues après Android 9. Gradle exige que
+    chaque morceau déclare lui-même cette traduction, sinon il refuse de les
+    assembler — c'est l'erreur « coreLibraryDesugaringEnabled ».
+    """
+    if 'coreLibraryDesugaringEnabled' not in t:
+        i = t.find('compileOptions')
+        if i != -1:
+            j = t.find('{', i)
+            if j != -1:
+                t = t[:j + 1] + "\n        coreLibraryDesugaringEnabled true\n" + t[j + 1:]
+        else:
+            i = t.find('android')
+            if i != -1:
+                j = t.find('{', i)
+                if j != -1:
+                    t = (t[:j + 1]
+                         + "\n    compileOptions {\n        coreLibraryDesugaringEnabled true\n    }\n"
+                         + t[j + 1:])
+
+    if 'coreLibraryDesugaring ' not in t and 'coreLibraryDesugaring(' not in t:
+        i = t.find('dependencies')
+        ligne = "\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'\n"
+        if i != -1:
+            j = t.find('{', i)
+            if j != -1:
+                t = t[:j + 1] + ligne + t[j + 1:]
+        else:
+            t = t + "\ndependencies {" + ligne + "}\n"
+    return t
 
 
 def limiter_architecture(t: str) -> str:
