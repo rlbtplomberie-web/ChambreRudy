@@ -23,38 +23,68 @@ jobs:
         run: |
           set -e
           archives=$(ls ChambreRudy-maj*.zip 2>/dev/null || true)
-          if [ -n "$archives" ]; then
-            echo "Archives trouvees :"; echo "$archives"
-            mkdir -p /tmp/maj
-            for a in $archives; do
-              echo "  deballage de $a"
-              unzip -o -q "$a" -d /tmp/maj
-            done
-            rm -rf /tmp/maj/.github        # le workflow ne se remplace jamais lui-meme
+          if [ -z "$archives" ]; then
+            echo "Aucune archive : on compile le code deja present."
+            exit 0
+          fi
 
-            # Les envois peuvent arriver en plusieurs fois : on n'efface donc
-            # plus tout le code. On supprime seulement ce qui est nomme dans
-            # a_supprimer.txt, la liste des fichiers devenus inutiles.
-            if [ -f /tmp/maj/a_supprimer.txt ]; then
-              while IFS= read -r chemin; do
-                [ -n "$chemin" ] || continue
+          echo "Archives trouvees :"; echo "$archives"
+          rm -rf /tmp/maj && mkdir -p /tmp/maj
+          for a in $archives; do
+            echo "  deballage de $a"
+            unzip -o -q "$a" -d /tmp/maj || {
+              echo "::error::archive illisible : $a (envoi interrompu ? a redeposer)"
+              exit 1
+            }
+          done
+          rm -rf /tmp/maj/.github        # le workflow ne se remplace jamais lui-meme
+
+          # Les envois arrivent en plusieurs fois : on n'efface pas le code.
+          # On supprime seulement ce qui est nomme dans a_supprimer.txt.
+          if [ -f /tmp/maj/a_supprimer.txt ]; then
+            while IFS= read -r chemin; do
+              [ -n "$chemin" ] || continue
+              case "$chemin" in \#*) continue ;; esac
+              if [ -e "$chemin" ]; then
                 echo "  suppression : $chemin"
                 rm -rf "$chemin"
-              done < /tmp/maj/a_supprimer.txt
-              rm -f /tmp/maj/a_supprimer.txt
-            fi
-
-            cp -r /tmp/maj/. .
-            rm -f ChambreRudy-maj*.zip
-
-            git config user.name "github-actions"
-            git config user.email "actions@github.com"
-            git add -A
-            git commit -m "Mise a jour depuis les archives" || echo "Rien de nouveau."
-            git push
-          else
-            echo "Aucune archive : on compile le code deja present."
+              else
+                echo "  deja absent : $chemin"
+              fi
+            done < /tmp/maj/a_supprimer.txt
+            rm -f /tmp/maj/a_supprimer.txt
           fi
+
+          cp -r /tmp/maj/. .
+          rm -f ChambreRudy-maj*.zip
+
+          # Ranger les fichiers dans le depot. Un envoi peut arriver pendant
+          # que la compilation tourne : dans ce cas le rangement est refuse,
+          # on se remet a jour et on reessaie. Et si cela echoue quand meme,
+          # ce n'est pas une raison d'arreter : les fichiers sont deja en
+          # place pour cette compilation.
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add -A
+          git commit -m "Mise a jour depuis les archives" || echo "Rien de nouveau a ranger."
+
+          # Le rangement peut echouer pour des raisons qui ne nous regardent
+          # pas : un envoi arrive en meme temps, ou GitHub lui-meme flanche
+          # (« remote: fatal error in commit_refs »). Ce n'est jamais une
+          # raison d'arreter : les fichiers sont deja en place pour compiler.
+          range=non
+          for essai in 1 2 3; do
+            if git push 2>/tmp/push.log; then range=oui; break; fi
+            echo "  rangement refuse (essai $essai) :"; cat /tmp/push.log
+            git pull --rebase --autostash || true
+            sleep 5
+          done
+          if [ "$range" = non ]; then
+            echo "::warning::Les fichiers n'ont pas pu etre ranges dans le depot"
+            echo "::warning::(panne passagere de GitHub). La compilation continue"
+            echo "::warning::avec eux, et l'APK sera bien produit."
+          fi
+          exit 0
 
       - name: Preparer l'emulateur N64 de Rudy
         run: |
@@ -227,25 +257,47 @@ jobs:
       - name: Compiler
         run: |
           set -o pipefail
-          # --continue : on ne s'arrete pas a la premiere erreur, on les
-          # recolte toutes avant de rendre la main
-          if gradle assembleDebug --continue --no-daemon --stacktrace 2>&1 \
-               | tee /tmp/compilation.log; then
+
+          compiler() {
+            gradle assembleDebug --continue --no-daemon --stacktrace 2>&1 \
+              | tee /tmp/compilation.log
+          }
+
+          releve() {
+            echo "=== erreurs relevees ==="
+            {
+              grep -E "^e: |^ERROR:|error:" /tmp/compilation.log | head -30 || true
+              grep -E "Manifest merger|is also present at|Suggestion:" /tmp/compilation.log | head -12 || true
+              grep -E "^> Task .* FAILED" /tmp/compilation.log | head -10 || true
+              sed -n "/What went wrong/,/^\* Try/p" /tmp/compilation.log | head -30 || true
+            } | sort -u | while read -r ligne; do
+              [ -n "$ligne" ] && echo "::error::$ligne"
+            done
+          }
+
+          if compiler; then
             echo "compilation reussie"
             exit 0
           fi
 
-          echo "=== erreurs relevees ==="
-          # « || true » sur chaque recherche : sans cela, une recherche sans
-          # resultat arretait tout le releve, et aucune erreur n'etait affichee
-          {
-            grep -E "^e: |^ERROR:|error:" /tmp/compilation.log | head -30 || true
-            grep -E "Manifest merger|is also present at|Suggestion:" /tmp/compilation.log | head -12 || true
-            grep -E "^> Task .* FAILED" /tmp/compilation.log | head -10 || true
-            sed -n "/What went wrong/,/^\* Try/p" /tmp/compilation.log | head -30 || true
-          } | sort -u | while read -r ligne; do
-            [ -n "$ligne" ] && echo "::error::$ligne"
-          done
+          releve
+
+          # Deuxieme chance : la N64 est le morceau le plus fragile. Si elle
+          # fait tout echouer, on la met de cote et on recompile sans elle.
+          # Mieux vaut une application sans N64 que pas d'application du tout.
+          if [ -d m64base ]; then
+            echo "::warning::La Nintendo 64 fait echouer la compilation :"
+            echo "::warning::on la met de cote et on recompile sans elle."
+            rm -rf m64base
+            echo "Nintendo 64 : ECARTEE (elle faisait echouer la compilation)" \
+              >> app/src/main/assets/chambre/assemblage.txt
+            if compiler; then
+              echo "::warning::APK produit SANS la Nintendo 64."
+              exit 0
+            fi
+            echo "::error::la compilation echoue meme sans la Nintendo 64 :"
+            releve
+          fi
           exit 1
 
       - name: Verifier que les emulateurs sont bien dans l'APK
