@@ -36,11 +36,12 @@ class ChambreActivity : ComponentActivity() {
 
         son = SonChambre(this)
         SonPartage.radio = son
-        // le bouton de la radio regle vraiment le volume de la musique
-        vue.surVolume = { v -> son.majVolume(v) }
+
         vue = VueChambre(this)
         vue.surObjet = { quoi -> toucheObjet(quoi) }
         vue.surEcranTele = { r -> placerEcranTele(r) }
+        // le bouton de la radio regle vraiment le volume de la musique
+        vue.surVolume = { v -> son.majVolume(v) }
 
         etiquette = TextView(this).apply {
             setTextColor(0xFFFFEEC2.toInt())

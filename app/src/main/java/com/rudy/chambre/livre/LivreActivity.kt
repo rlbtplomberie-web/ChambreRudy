@@ -66,16 +66,17 @@ class LivreActivity : ComponentActivity() {
         }
 
         son = SonPage()
-        vue = VueLivre(this)
-        vue.surPageTournee = { son?.tourner() }
-        vue.surTitre = { t -> titre.text = t }
-        vue.surOuverture = { livre -> ouvrir(livre) }
 
         titre = TextView(this).apply {
             textSize = 15f; setTextColor(0xFFF3D6A0.toInt())
             setShadowLayer(6f, 0f, 3f, Color.BLACK)
             text = "Bibliothèque"
         }
+
+        vue = VueLivre(this)
+        vue.surPageTournee = { son?.tourner() }
+        vue.surTitre = { t -> titre.text = t }
+        vue.surOuverture = { livre -> ouvrir(livre) }
 
         fun bouton(t: String, action: () -> Unit) = Button(this).apply {
             text = t; textSize = 12f

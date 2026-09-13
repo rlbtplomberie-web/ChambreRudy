@@ -40,14 +40,15 @@ class AtelierActivity : ComponentActivity() {
 
         son = SonCrayon()
         papier = Papier(this)
-        papier.surFrottement = { vitesse -> son?.frotter(vitesse, papier.outil, papier.gomme) }
-        papier.surSilence = { son?.silence() }
-        papier.surZoom = { z -> niveau.text = "${Math.round(z * 100)} %" }
 
         niveau = TextView(this).apply {
             text = "100 %"; textSize = 12f; setTextColor(Color.WHITE)
             setOnClickListener { papier.remettreLeZoom() }
         }
+
+        papier.surFrottement = { vitesse -> son?.frotter(vitesse, papier.outil, papier.gomme) }
+        papier.surSilence = { son?.silence() }
+        papier.surZoom = { z -> niveau.text = "${Math.round(z * 100)} %" }
 
         val racine = FrameLayout(this)
         racine.setBackgroundColor(0xFF1A140E.toInt())
