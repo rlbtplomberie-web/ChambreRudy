@@ -1,1 +1,1 @@
-version 78 - version minimale alignee, traduction a la seule application
+version 79 - script verifie de bout en bout

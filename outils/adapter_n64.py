@@ -35,15 +35,19 @@ def adapter_compilation(chemin: str) -> None:
     t = open(chemin, encoding='utf-8').read()
     t = t.replace('com.android.application', 'com.android.library')
     # tous les reglages qui n'ont de sens que pour une application autonome
-    for mot in ('applicationId', 'applicationIdSuffix', 'versionNameSuffix',
-                'testApplicationId', 'versionCode', 'versionName'):
-        t = re.sub(r'^\s*' + mot + r'\s.*$', '', t, flags=re.M)
-        t = re.sub(r'^\s*' + mot + r'\s*=.*$', '', t, flags=re.M)
+    # les plus longs d'abord : « applicationIdSuffix » contient « applicationId »
+    for mot in ('applicationIdSuffix', 'versionNameSuffix', 'testApplicationId',
+                'applicationId', 'versionCode', 'versionName'):
+        # en debut de ligne
+        t = re.sub(r'^\s*' + mot + r'\s*=?\s*[^\n]*$', '', t, flags=re.M)
+        # ou glisse dans un bloc ecrit sur une seule ligne
+        t = re.sub(mot + r'\s*=?\s*[\'"][^\'"]*[\'"]', '', t)
+        t = re.sub(mot + r'\s*=?\s*\d+', '', t)
     for mot in ('applicationVariants', 'splits', 'bundle'):
         t = retirer_bloc(t, mot)
     t = limiter_architecture(t)
     t = aligner_version_minimale(t)
-    t = retirer_traduction_des_modules(t)
+    t = accorder_traduction_java(t)
     open(chemin, 'w', encoding='utf-8').write(t)
     print('fichier de compilation adapte :', chemin)
 
@@ -75,18 +79,26 @@ def poser_espace_de_noms(gradle: str, manifeste: str) -> None:
     print('espace de noms pose :', paquet)
 
 
-def retirer_traduction_des_modules(t: str) -> str:
+def accorder_traduction_java(t: str) -> str:
     """
-    Laisser la traduction Java a la seule application.
+    Mettre d'accord le réglage et la bibliothèque.
 
-    Quand un module la declare, Gradle exige que l'application la declare aussi,
-    et l'outil qui assemble le code finit par se perdre entre les dossiers de
-    chaque module. La Chambre l'active pour tout le monde : les modules n'ont
-    pas a la redemander.
+    Un module qui active la traduction Java doit aussi déclarer la bibliothèque
+    qui l'assure, sinon Gradle refuse : « coreLibraryDesugaring configuration
+    contains no dependencies ». On ne touche pas au réglage — on complète.
     """
-    t = re.sub(r'^\s*coreLibraryDesugaringEnabled\s+\w+\s*$', '', t, flags=re.M)
-    t = re.sub(r'^\s*coreLibraryDesugaring\s+[\'"][^\'"]*[\'"]\s*$', '', t, flags=re.M)
-    return t
+    if 'coreLibraryDesugaringEnabled' not in t:
+        return t
+    if 'desugar_jdk_libs' in t:
+        return t
+
+    ligne = "\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs_nio:2.1.5'\n"
+    i = t.find('dependencies')
+    if i != -1:
+        j = t.find('{', i)
+        if j != -1:
+            return t[:j + 1] + ligne + t[j + 1:]
+    return t + "\ndependencies {" + ligne + "}\n"
 
 
 def aligner_version_minimale(t: str) -> str:
@@ -115,7 +127,9 @@ def limiter_architecture(t: str) -> str:
     if "abiFilters 'arm64-v8a'" in t or 'abiFilters "arm64-v8a"' in t:
         return t
     # on remplace toute liste d'architectures existante
-    t = re.sub(r"abiFilters\s*[^\n]*", "abiFilters 'arm64-v8a'", t)
+    # on s'arrete a l'accolade : sinon on emporte la fermeture du bloc,
+    # et le fichier devient illisible pour Gradle
+    t = re.sub(r"abiFilters[^\n}]*", "abiFilters 'arm64-v8a'", t)
     if "abiFilters 'arm64-v8a'" in t:
         return t
     # Sinon on l'ajoute. Attention : ce reglage n'existe que dans defaultConfig.
