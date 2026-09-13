@@ -306,11 +306,39 @@ class ChambreActivity : ComponentActivity() {
             val f = java.io.File(filesDir, "dernier_plantage.txt")
             if (f.exists()) "\n\nDernier plantage :\n" + f.readText() else ""
         } catch (_: Throwable) { "" }
+
+        /*
+         * Le journal du dernier emulateur ouvert.
+         *
+         * Un arret dans le coeur natif ne remonte pas jusqu'a Java : aucun
+         * plantage n'est alors enregistre, et l'ecran se ferme sans rien dire.
+         * Ce journal, lui, note chaque etape franchie — on voit donc jusqu'ou
+         * l'emulateur est alle avant de s'arreter.
+         */
+        val journal = try {
+            val f = java.io.File(java.io.File(filesDir, "systeme"), "journal_appli.txt")
+            if (f.exists()) {
+                val lignes = f.readLines()
+                // seulement le dernier demarrage, les vingt dernieres lignes
+                val depuis = lignes.indexOfLast { it.startsWith("--- démarrage") }
+                val utiles = if (depuis >= 0) lignes.drop(depuis) else lignes
+                "\n\nDernier émulateur ouvert :\n" + utiles.takeLast(20).joinToString("\n")
+            } else "\n\n(aucun émulateur n'a encore laissé de trace)"
+        } catch (_: Throwable) { "" }
         menu().setTitle("Ce que contient cet APK")
-            .setMessage(texte + plantage)
+            .setMessage(texte + plantage + journal)
             .setPositiveButton("Fermer", null)
-            .setNegativeButton("Effacer le plantage") { _, _ ->
+            .setNegativeButton("Tout effacer") { _, _ ->
                 try { java.io.File(filesDir, "dernier_plantage.txt").delete() } catch (_: Throwable) {}
+                try { java.io.File(java.io.File(filesDir, "systeme"), "journal_appli.txt").delete() } catch (_: Throwable) {}
+            }
+            .setNeutralButton("Copier") { _, _ ->
+                try {
+                    val cb = getSystemService(android.content.ClipboardManager::class.java)
+                    cb.setPrimaryClip(android.content.ClipData.newPlainText(
+                        "bilan", texte + plantage + journal))
+                    dire("copié")
+                } catch (_: Throwable) {}
             }
             .show()
     }

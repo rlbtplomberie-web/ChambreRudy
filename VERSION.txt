@@ -1,5 +1,7 @@
-version 97
-  atelier : le bureau est peint (veines, nervures, lumiere du haut) dans la
-            teinte de son plateau, plus d'image decoupee
-  balle : un prisonnier peut ramasser la balle qui arrive jusqu'a lui et
-          viser un ennemi pour se liberer ; il n'est plus touchable
+version 98
+  balle : sa musique, Phoenix Wright « Pressing Pursuit ~ Cornered »
+  emulateurs : chacun note ses etapes (ouverture du coeur, ROM recue) dans
+               un journal commun, que la chambre affiche sous le bilan —
+               un arret dans le coeur natif ne laissait aucune trace
+  chambre : appui long sur la tele = bilan + plantage + journal, avec un
+               bouton Copier

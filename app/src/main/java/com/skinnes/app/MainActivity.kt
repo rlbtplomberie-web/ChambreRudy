@@ -54,6 +54,7 @@ class MainActivity : ComponentActivity() {
 
     private fun jeuDemandeParLaChambre() {
         val brut = intent?.getStringExtra("rom") ?: return
+        noter("ROM recue : " + brut.takeLast(60))
         val u = try { android.net.Uri.parse(brut) } catch (_: Throwable) { return }
         try { contentResolver.takePersistableUriPermission(
                 u, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: Throwable) {}
@@ -165,6 +166,14 @@ class MainActivity : ComponentActivity() {
         } catch (e: Exception) {
             Toast.makeText(this, "Lecture impossible", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    /** Le journal que la chambre sait relire. */
+    private fun noter(texte: String) {
+        try {
+            val d = java.io.File(filesDir, "systeme").apply { mkdirs() }
+            java.io.File(d, "journal_appli.txt").appendText(texte + "\n")
+        } catch (_: Throwable) {}
     }
 
     override fun onCreate(s: Bundle?) {

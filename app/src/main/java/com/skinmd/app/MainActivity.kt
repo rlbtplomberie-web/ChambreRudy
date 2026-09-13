@@ -92,6 +92,7 @@ class MainActivity : ComponentActivity() {
 
     private fun jeuDemandeParLaChambre() {
         val brut = intent?.getStringExtra("rom") ?: return
+        noter("ROM recue : " + brut.takeLast(60))
         val u = try { android.net.Uri.parse(brut) } catch (_: Throwable) { return }
         try { contentResolver.takePersistableUriPermission(
                 u, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: Throwable) {}
@@ -845,7 +846,9 @@ class MainActivity : ComponentActivity() {
         noter("Android " + Build.VERSION.SDK_INT)
         noter("base de triches : " + Triches.nombreJeux(this) + " jeux")
 
+        noter("avant ouverture du coeur Genesis Plus GX")
         coeur = Coeur(this)
+        noter("coeur ouvert : " + coeur.pret)
         if (!coeur.pret) noter("cœur non prêt : " + (coeur.derniereErreur ?: "?"))
 
         /* Mise a jour : l'image epouse desormais le cadre qu'on lui donne.

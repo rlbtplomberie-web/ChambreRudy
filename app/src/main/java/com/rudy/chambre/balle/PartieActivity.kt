@@ -86,7 +86,7 @@ class PartieActivity : ComponentActivity() {
         racine.addView(commandes, FrameLayout.LayoutParams(-1, -1))
         racine.addView(retour())
         setContentView(racine)
-        com.rudy.chambre.Ambiance.musiqueDuJeu(this, "balle/musique_balle.webm", 0.34f)
+        com.rudy.chambre.Ambiance.musiqueDuJeu(this, "balle/musique_balle.webm", 0.85f)
 
         afficherAffiche()
     }
