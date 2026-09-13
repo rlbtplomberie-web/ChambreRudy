@@ -110,6 +110,12 @@ jobs:
           # il devient un morceau de notre application, et non une application
           gradle_app=m64base/app/build.gradle
           [ -f "$gradle_app" ] || gradle_app=m64base/app/build.gradle.kts
+          echo "=== verification : pas deux versions d'un meme ecran ==="
+          doublons=$(find app/src/main/java -name '*.kt' -exec basename {} \; | sort | uniq -d)
+          if [ -n "$doublons" ]; then
+            echo "::warning::fichiers portant le meme nom :"; echo "$doublons"
+          fi
+
           # le fichier racine d'abord : il porte les valeurs partagees
           # (« ext { minSdkVersion = 26 } »), reprises par tous les modules
           if [ -f m64base/build.gradle ]; then
