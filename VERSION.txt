@@ -1,16 +1,8 @@
-version 107
-  Les deux erreurs de compilation, enfin identifiees sur ses captures :
-
-  1. « android.jar is located outside the root directory » venait du SUCRAGE
-     (isCoreLibraryDesugaringEnabled), defaut connu avec des modules
-     bibliotheque. Retire, avec sa bibliotheque desugar_jdk_libs. Mes reglages
-     precedents s'attaquaient au symptome.
-
-  2. « use a compatible library with a minSdk of at most 26 » : une
-     bibliotheque de Mupen64Plus reclame davantage. Minimum porte a 29, et
-     l'adaptateur aligne tous ses modules sur la meme valeur. En montant a 29,
-     les fonctions Java recentes sont d'origine : le sucrage ne manque pas.
-
-  Effet de bord : l'application demande desormais Android 10 au minimum.
-
-  A DEPOSER A LA RACINE DU DEPOT : SkinGC-corrige.zip
+version 108
+  « Dependency ':m64' requires core library desugaring to be enabled » :
+  ses modules reclamaient le sucrage, et Android exigeait alors que notre
+  application l'active — or c'est ce meme reglage qui declenchait l'erreur D8
+  sur android.jar. On le retire donc des DEUX cotes : l'adaptateur l'efface
+  dans chaque module de Mupen64Plus, fichier racine compris.
+  Depuis qu'on demande Android 29, les fonctions Java recentes sont
+  disponibles d'origine : cette traduction ne sert plus a rien.

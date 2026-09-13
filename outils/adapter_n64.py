@@ -38,6 +38,7 @@ def adapter_compilation(chemin: str) -> None:
     # valeurs partagees, sans le transformer en bibliotheque
     if 'android {' not in t and 'ext' in t:
         t = aligner_version_minimale(t)
+        t = retirer_sucrage(t)
         open(chemin, 'w', encoding='utf-8').write(t)
         print('valeurs partagees alignees :', chemin)
         return
@@ -54,6 +55,7 @@ def adapter_compilation(chemin: str) -> None:
         t = re.sub(mot + r'\s*=?\s*\d+', '', t)
     for mot in ('applicationVariants', 'splits', 'bundle'):
         t = retirer_bloc(t, mot)
+    t = retirer_sucrage(t)
     t = limiter_architecture(t)
     t = aligner_version_minimale(t)
     t = accorder_traduction_java(t)
@@ -86,6 +88,27 @@ def poser_espace_de_noms(gradle: str, manifeste: str) -> None:
     t = t[:j + 1] + "\n    namespace '" + paquet + "'\n" + t[j + 1:]
     open(gradle, 'w', encoding='utf-8').write(t)
     print('espace de noms pose :', paquet)
+
+
+def retirer_sucrage(t: str) -> str:
+    """
+    Retirer le sucrage des modules de Mupen64Plus.
+
+    Ses modules demandent « isCoreLibraryDesugaringEnabled », et Android exige
+    alors que notre application l'active aussi : « Dependency ':m64' requires
+    core library desugaring to be enabled ». Or c'est justement ce reglage qui
+    declenchait l'erreur D8 sur android.jar.
+
+    Depuis qu'on demande Android 29, les fonctions Java recentes sont
+    disponibles d'origine : cette traduction ne sert plus a rien. On la retire
+    donc partout, et la question ne se pose plus des deux cotes.
+    """
+    # le reglage, dans ses deux ecritures
+    t = re.sub(r'^\s*isCoreLibraryDesugaringEnabled\s*=\s*true\s*$', '', t, flags=re.M)
+    t = re.sub(r'^\s*coreLibraryDesugaringEnabled\s+true\s*$', '', t, flags=re.M)
+    # et la bibliotheque qui l'accompagne
+    t = re.sub(r'^\s*coreLibraryDesugaring\b[^\n]*$', '', t, flags=re.M)
+    return t
 
 
 def accorder_traduction_java(t: str) -> str:
