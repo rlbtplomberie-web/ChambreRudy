@@ -342,7 +342,10 @@ class PageActivity : ComponentActivity() {
                     // devant : la console a la sienne
                     SonPartage.consoleLanceeA = System.currentTimeMillis()
                     val i = Intent(this@PageActivity, Class.forName(fiche.activite))
-                        .putExtra("rom", uriRom)
+                    i.putExtra("rom", uriRom)
+                    // la GameCube et la Wii partagent leur ecran : il doit
+                    // savoir laquelle des deux a ete posee sur la table
+                    i.putExtra("console", console)
 
                     /*
                      * Dolphin ne regarde pas le supplement « rom ».
@@ -357,9 +360,7 @@ class PageActivity : ComponentActivity() {
                         i.putExtra("riivolution", false)
                         i.putExtra("systemMenu", false)
                     }
-                        // la GameCube et la Wii partagent leur ecran : il doit
-                        // savoir laquelle des deux a ete posee sur la table
-                        .putExtra("console", console)
+
                     startActivity(i)
                     noterJournal("ecran lance sans erreur")
                     finish()                       // la vitrine s'efface derriere le jeu

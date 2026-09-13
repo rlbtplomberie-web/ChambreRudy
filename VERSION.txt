@@ -1,6 +1,6 @@
-version 109
-  Le retrait du sucrage ne prenait pas : son fichier ecrit
-  « coreLibraryDesugaringEnabled = true » — avec un signe egal et sans « is »
-  devant — et mes motifs couvraient les autres formes, pas celle-la.
-  Le motif est elargi et EPROUVE sur son vrai app/build.gradle : plus aucune
-  ligne de sucrage n'y subsiste, et les cinq ecritures possibles sont prises.
+version 110
+  PageActivity.kt : mon bloc Dolphin s'etait insere AU MILIEU d'une chaine
+  d'appels, coupant « .putExtra("console", ...) » de son intention. D'ou
+  « 'if' must have both branches » et « Unresolved reference: putExtra ».
+  Les suppléments sont maintenant poses un par un, sans chainage.
+  Verifie : plus aucune chaine coupee dans tout le projet.
