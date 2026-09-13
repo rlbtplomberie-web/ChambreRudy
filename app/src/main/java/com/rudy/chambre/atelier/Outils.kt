@@ -18,8 +18,8 @@ class Outil(
 )
 
 val OUTILS = listOf(
-    Outil("Crayon gris", 0xFF8D9298.toInt(), 0xFF4A4A4A.toInt(), 0xFF4A4A4A.toInt(),
-          2.4f, .55f, grain = true, sonF = 2800f, sonQ = 1.1f, sonV = .30f),
+    Outil("Crayon gris", 0xFF8D9298.toInt(), 0xFF4A4A4A.toInt(), 0xFF3A3A3A.toInt(),
+          3.4f, .85f, grain = true, sonF = 2800f, sonQ = 1.1f, sonV = .30f),
     Outil("Crayon gras", 0xFF2B2B2B.toInt(), 0xFF111111.toInt(), 0xFF141414.toInt(),
           10f, .95f, sonF = 900f, sonQ = .7f, sonV = .55f),
     Outil("Rouge", 0xFFD8352F.toInt(), 0xFFA71F1A.toInt(), 0xFFD8352F.toInt(),

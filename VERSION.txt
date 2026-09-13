@@ -1,8 +1,9 @@
-version 94
-  balle : planche « passe » a la reception, jauge de charge qui monte a
-          chaque lancer
-  tir au but : cerisiers du fond qui se balancent, huit petales qui tombent
-  basket : arbres animes, trajectoire selon la jauge (rouge fonce trop court,
-          rouge clair cerceau et ressort, orange cerceau et rentre, vert net)
-  carton : « Retro » au marqueur, ruban adhesif et traces d'usure
-  atelier : sa trousse verte reproduite depuis son SVG, fond beige
+version 95
+  dessin : pinceau du trait separe de celui du decor (plus d'ecran noir),
+           trait plein et bien visible
+  balle : mains sur le ballon meme en chargeant, planche « lancer » au
+           depart de la balle, limites appliquees a tous, compteur juste
+  eclairs et flammes refaits dans l'esprit manga
+  vent des arbres accorde sur les trois terrains (0,55 % de la largeur)
+  dames : plateau et pions agrandis, pions detoures
+  tir au but : pas sur gazon et frappe de ballon en trois couches

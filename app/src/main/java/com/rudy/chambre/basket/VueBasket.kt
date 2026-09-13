@@ -252,8 +252,9 @@ class VueBasket(ctx: Context) : View(ctx) {
             val y0 = cadreY + cadreH * b[1]
             val l = cadreL * b[2]
             val h = cadreH * b[3]
-            val souffle = kotlin.math.sin(T * (1.05f + i * .23f)) * 3.4f +
-                          kotlin.math.sin(T * (2.1f + i * .15f)) * 1.4f
+            // a l'echelle de l'ecran : visible sans etre exagere
+            val souffle = kotlin.math.sin(T * (1.05f + i * .23f)) * (cadreL * .0055f) +
+                          kotlin.math.sin(T * (2.1f + i * .15f)) * (cadreL * .0022f)
             for (tranche in 0 until 3) {
                 val haut = y0 + h * tranche / 3f
                 val bas = y0 + h * (tranche + 1) / 3f

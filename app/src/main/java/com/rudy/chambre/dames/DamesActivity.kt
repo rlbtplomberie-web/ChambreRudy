@@ -142,9 +142,12 @@ class VueDames(ctx: Context, private val jeu: Dames) : View(ctx) {
      * de cette boite, pas de l'ecran.
      */
     private fun cadre() {
+        // sa boite 16/9, agrandie pour remplir l'ecran debout : le damier
+        // devient nettement plus grand, et les cases gardent leurs proportions
         var l = kotlin.math.min(width.toFloat(), height * 16f / 9f)
         var h = l * 9f / 16f
-        l *= 1.12f; h *= 1.12f                 // son scale(1.12)
+        val agrandissement = kotlin.math.min(1.62f, width / (l * .68f))
+        l *= agrandissement; h *= agrandissement
         cl = l; ch = h
         cx = (width - l) / 2f; cy = (height - h) / 2f
     }
@@ -191,7 +194,9 @@ class VueDames(ctx: Context, private val jeu: Dames) : View(ctx) {
             val (x, y) = Plateau.RANGEES[r][i]
             val im = charger(if (piece.camp == "majora") "majora.webp" else "lune.webp") ?: continue
             // ses tailles de pions : 4,35 % pour Majora, 4,48 % pour les lunes
-            val t = cl * (if (piece.camp == "majora") .0435f else .0448f)
+            // ses tailles d'origine, un peu etoffees : elles restent sous la
+            // largeur d'une case, les pions ne debordent donc pas
+            val t = cl * (if (piece.camp == "majora") .0475f else .0490f)
             val cxp = px(x); val cyp = py(y)
             val choisie = jeu.choisie?.let { it.first == r && it.second == i } == true
             if (choisie) {

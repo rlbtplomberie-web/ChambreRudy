@@ -191,8 +191,9 @@ class VuePartie(ctx: Context) : View(ctx) {
             val contour = contour(z, ox, oy, s)
             val boite = RectF()
             contour.computeBounds(boite, true)
-            val souffle = sin(partie.T * (1.0f + i * .17f)) * 3.2f +
-                          sin(partie.T * (2.3f + i * .11f)) * 1.4f
+            // a l'echelle du terrain : on voit les arbres respirer
+            val souffle = sin(partie.T * (1.0f + i * .17f)) * (partie.W * .0055f) +
+                          sin(partie.T * (2.3f + i * .11f)) * (partie.W * .0022f)
             for (tranche in 0 until 3) {
                 val haut = boite.top + boite.height() * tranche / 3f
                 val bas = boite.top + boite.height() * (tranche + 1) / 3f
@@ -265,12 +266,9 @@ class VuePartie(ctx: Context) : View(ctx) {
             j.throwA > 0f -> "throw" to pose(1f - j.throwA / .55f)
             j.catchA > 0f && partie.B.held === j -> "catch" to pose(1f - j.catchA / .62f)
             j.dodge > 0f -> "dodge" to pose(1f - j.dodge / .38f)
-            // la balle en main : il marche et court normalement, et ne tient
-            // la pose de porteur que lorsqu'il s'arrete
-            partie.B.held === j && hypot(j.vx, j.vy) > 150f ->
-                "run" to (floor(partie.T * 12f).toInt().mod(8))
-            partie.B.held === j && hypot(j.vx, j.vy) > 12f ->
-                "walk" to (floor(partie.T * 8f).toInt().mod(8))
+            // la balle en main, y compris pendant qu'il charge son tir : les
+            // mains restent dessus. La planche « lancer » ne se joue qu'au
+            // moment ou la balle part vraiment.
             partie.B.held === j -> "catch" to 7
             hypot(j.vx, j.vy) > 150f -> "run" to (floor(partie.T * 12f).toInt().mod(8))
             hypot(j.vx, j.vy) > 12f -> "walk" to (floor(partie.T * 8f).toInt().mod(8))
@@ -377,23 +375,74 @@ class VuePartie(ctx: Context) : View(ctx) {
             (partie.charging && B.held === partie.P[0] && partie.shotCharge >= 3f) ||
             (porteur != null && !porteur.h && porteur.cpuCharge >= 2.6f)
         if (enFlammes) {
-            val pulse = 1f + sin(partie.T * 20f) * .18f
+            /*
+             * Les flammes, dans l'esprit manga : un coeur blanc, une couronne
+             * jaune, des langues orange qui montent en ondulant, et quelques
+             * braises qui s'echappent derriere le ballon.
+             */
+            val T = partie.T
+            val pulse = 1f + sin(T * 20f) * .16f
             c.save(); c.translate(x0, by)
-            // le halo orange qui entoure le ballon, comme son ombre portee
-            p.setShadowLayer(16f, 0f, 0f, 0xFFFF5A00.toInt())
-            for (k in 0 until 9) {
-                val a = k * (PI * 2 / 9).toFloat() + partie.T * 3.2f
-                val rr = (r + 5f) * pulse
-                c.save(); c.rotate(Math.toDegrees(a.toDouble()).toFloat())
-                p.color = if (k % 2 == 1) 0xFFFF9A19.toInt() else 0xFFFF4D00.toInt()
-                val flamme = Path()
-                flamme.moveTo(rr - 3f, -3.4f)
-                flamme.quadTo(rr + 7f, 0f, rr - 3f, 3.4f)
-                flamme.close()
-                c.drawPath(flamme, p)
-                c.restore()
+
+            // la lueur chaude qui baigne le ballon
+            val lueur = Paint(Paint.ANTI_ALIAS_FLAG)
+            lueur.shader = RadialGradient(0f, 0f, r * 3.4f * pulse,
+                intArrayOf(0x88FF7A18.toInt(), 0x33FF3D00, Color.TRANSPARENT),
+                floatArrayOf(.25f, .55f, 1f), Shader.TileMode.CLAMP)
+            c.drawCircle(0f, 0f, r * 3.4f * pulse, lueur)
+
+            // les langues de feu : deux tours, l'un lent, l'autre rapide
+            p.style = Paint.Style.FILL
+            p.setShadowLayer(14f, 0f, 0f, 0xFFFF5A00.toInt())
+            for (tour in 0 until 2) {
+                val combien = if (tour == 0) 11 else 7
+                val vitesse = if (tour == 0) 3.2f else -4.6f
+                for (k in 0 until combien) {
+                    val a = k * (PI * 2 / combien).toFloat() + T * vitesse
+                    // chaque langue respire a son propre rythme
+                    val vie = .62f + .38f * sin(T * (9f + k * 1.7f) + tour * 2f)
+                    val longue = (r * (if (tour == 0) 1.5f else 1.05f)) * vie * pulse
+                    c.save()
+                    c.rotate(Math.toDegrees(a.toDouble()).toFloat())
+                    val flamme = Path()
+                    val base = r * .78f
+                    flamme.moveTo(base, -r * .42f)
+                    // la langue ondule : deux courbes opposees jusqu'a la pointe
+                    flamme.quadTo(base + longue * .55f, -r * .55f,
+                                  base + longue, -r * .06f * sin(T * 11f + k))
+                    flamme.quadTo(base + longue * .55f, r * .55f,
+                                  base, r * .42f)
+                    flamme.close()
+                    p.color = if (tour == 0) {
+                        if (k % 2 == 0) 0xFFFF4D00.toInt() else 0xFFFF7A18.toInt()
+                    } else 0xFFFFC33A.toInt()
+                    p.alpha = (255 * (.55f + .45f * vie)).toInt().coerceIn(0, 255)
+                    c.drawPath(flamme, p)
+                    c.restore()
+                }
             }
             p.clearShadowLayer()
+
+            // le coeur blanc, le point le plus chaud
+            val coeur = Paint(Paint.ANTI_ALIAS_FLAG)
+            coeur.shader = RadialGradient(0f, 0f, r * 1.25f,
+                intArrayOf(0xEEFFFFFF.toInt(), 0x99FFE08A.toInt(), Color.TRANSPARENT),
+                floatArrayOf(0f, .45f, 1f), Shader.TileMode.CLAMP)
+            c.drawCircle(0f, 0f, r * 1.25f, coeur)
+
+            // les braises qui s'echappent derriere
+            p.style = Paint.Style.FILL
+            for (k in 0 until 7) {
+                val phase = (T * (1.4f + k * .17f) + k * .41f) % 1f
+                val a = k * 1.9f + T * .6f
+                val d = r * (1.2f + phase * 2.6f)
+                val bx2 = cos(a) * d
+                val by2 = sin(a) * d - phase * r * 2.2f
+                p.color = if (k % 2 == 0) 0xFFFFC33A.toInt() else 0xFFFF6A12.toInt()
+                p.alpha = (230 * (1f - phase)).toInt().coerceIn(0, 255)
+                c.drawCircle(bx2, by2, kotlin.math.max(.7f, r * .16f * (1f - phase)), p)
+            }
+            p.alpha = 255
             c.restore()
         }
 
@@ -487,7 +536,9 @@ class VuePartie(ctx: Context) : View(ctx) {
     private fun tableauDeScore(c: Canvas) {
         val a = partie.P.count { it.team == 0 && !it.prison }
         val b = partie.P.count { it.team == 1 && !it.prison }
-        val libelle = "🔵 $a terrain • ${4 - a} prison     🔴 $b terrain • ${4 - b} prison"
+        val enPrisonA = partie.P.count { it.team == 0 && it.prison }
+        val enPrisonB = partie.P.count { it.team == 1 && it.prison }
+        val libelle = "🔵 $a terrain • $enPrisonA prison     🔴 $b terrain • $enPrisonB prison"
         texte.textSize = 12f
         val l = texte.measureText(libelle)
         val cx = partie.W / 2f
@@ -545,12 +596,12 @@ class VuePartie(ctx: Context) : View(ctx) {
     }
 
     /**
-     * Son eclair de charge, traduit de « drawChargeLightning ».
+     * L'aura de charge, dans l'esprit manga.
      *
-     * Les arcs commencent loin du corps — 74 points — et se resserrent jusqu'a
-     * 39 pendant les trois secondes ; ils sont de plus en plus nombreux, de
-     * plus en plus vifs, et virent du bleu au blanc dore. A trois secondes,
-     * le tir est pret : une aura battante entoure le personnage.
+     * Trois couches se superposent : une lueur qui respire autour du corps,
+     * des eclairs brises qui se resserrent au fil des trois secondes, et des
+     * etincelles qui montent. Quand le tir est pret, tout vire au blanc dore
+     * et un cercle d'energie bat autour de lui.
      */
     private fun eclairDeCharge(c: Canvas, j: Partie.Joueur) {
         var ch = 0f
@@ -561,60 +612,104 @@ class VuePartie(ctx: Context) : View(ctx) {
         if (ch <= .02f) return
 
         val T = partie.T
-        val rayon = 74f - ch * 35f                 // ils se resserrent
-        val opacite = .22f + ch * .68f
-        val combien = 2 + (ch * 7f).toInt()
-        val battement = if (ch >= 1f) (0.78f + sin(T * 24f) * .22f) else 1f
+        val cy = j.y - 47f
         val pret = ch >= .96f
+        val battement = if (ch >= 1f) (.78f + sin(T * 24f) * .22f) else 1f
+        val teinte = if (pret) 0xFFFFFBD0.toInt() else 0xFF9EE8FF.toInt()
+        val halo = if (pret) 0xFFFFF7A8.toInt() else 0xFF7FDCFF.toInt()
 
         c.save()
+
+        // ---- 1. la lueur qui enveloppe le corps ----
+        val lueur = Paint(Paint.ANTI_ALIAS_FLAG)
+        val rayonLueur = (46f + ch * 26f) * (1f + sin(T * 9f) * .04f)
+        lueur.shader = RadialGradient(j.x, cy, rayonLueur,
+            intArrayOf(Color.argb((70 * ch * battement).toInt().coerceIn(0, 255),
+                                  Color.red(halo), Color.green(halo), Color.blue(halo)),
+                       Color.TRANSPARENT),
+            floatArrayOf(.35f, 1f), Shader.TileMode.CLAMP)
+        c.drawCircle(j.x, cy, rayonLueur, lueur)
+
+        // ---- 2. les eclairs brises ----
         p.style = Paint.Style.STROKE
         p.strokeCap = Paint.Cap.ROUND
         p.strokeJoin = Paint.Join.ROUND
-        // le halo autour des arcs : bleu tant qu'on charge, dore quand c'est pret
-        p.setShadowLayer(4f + ch * 12f, 0f, 0f,
-            if (pret) 0xFFFFF7A8.toInt() else 0xFF7FDCFF.toInt())
+        p.setShadowLayer(5f + ch * 14f, 0f, 0f, halo)
 
-        val cy = j.y - 47f
+        val rayon = 74f - ch * 35f
+        val opacite = .22f + ch * .68f
+        val combien = 2 + (ch * 7f).toInt()
         for (k in 0 until combien) {
             val a = T * (1.6f + ch * 2.2f) + k * (2 * PI / combien).toFloat()
             val r1 = rayon + sin(T * 13f + k * 2.1f) * 4f
             val r2 = kotlin.math.max(23f, r1 - (11f + ch * 17f))
-            val ondule = .20f * sin(T * 7f + k)
             val sx = j.x + cos(a) * r1
             val sy = cy + sin(a) * r1 * .72f
+            val ondule = .20f * sin(T * 7f + k)
             val ex = j.x + cos(a + ondule) * r2
             val ey = cy + sin(a + ondule) * r2 * .72f
-            val mx = (sx + ex) / 2f + sin(T * 19f + k * 4.3f) * (5f + ch * 5f)
-            val my = (sy + ey) / 2f + cos(T * 17f + k * 3.1f) * (4f + ch * 5f)
 
+            // un eclair n'est pas un trait : il casse en quatre segments,
+            // chacun decale d'un cote puis de l'autre
             val arc = Path()
-            arc.moveTo(sx, sy); arc.lineTo(mx, my); arc.lineTo(ex, ey)
+            arc.moveTo(sx, sy)
+            val morceaux = 4
+            for (m in 1 until morceaux) {
+                val q = m / morceaux.toFloat()
+                val mx = sx + (ex - sx) * q
+                val my = sy + (ey - sy) * q
+                // la normale au trait, pour casser de biais
+                val nx = -(ey - sy); val ny = (ex - sx)
+                val nl = hypot(nx, ny).let { if (it == 0f) 1f else it }
+                val ecart = sin(T * (17f + k * 3f) + m * 2.7f) * (3.5f + ch * 4f) *
+                            (if (m % 2 == 0) -1f else 1f)
+                arc.lineTo(mx + nx / nl * ecart, my + ny / nl * ecart)
+            }
+            arc.lineTo(ex, ey)
 
-            p.color = if (pret) 0xFFFFFBD0.toInt() else 0xFF9EE8FF.toInt()
+            p.color = teinte
             p.alpha = (255 * opacite * battement).toInt().coerceIn(0, 255)
-            p.strokeWidth = 1.1f + ch * 1.7f
+            p.strokeWidth = 1.4f + ch * 2.2f
             c.drawPath(arc, p)
 
-            // un fil blanc plus fin par-dessus, quand la charge monte
-            if (ch > .55f) {
+            // le coeur blanc de l'eclair, plus fin
+            if (ch > .45f) {
                 p.color = Color.WHITE
-                p.alpha = (255 * opacite * .38f * battement).toInt().coerceIn(0, 255)
-                p.strokeWidth = .65f + ch * .55f
+                p.alpha = (255 * opacite * .55f * battement).toInt().coerceIn(0, 255)
+                p.strokeWidth = .6f + ch * .8f
                 c.drawPath(arc, p)
             }
         }
+        p.clearShadowLayer()
 
-        // a trois secondes : l'aura qui bat, le tir est pret
-        if (ch >= .995f) {
-            val rr = 31f + sin(T * 20f) * 3f
-            p.color = 0xFFFFFBD0.toInt()
-            p.strokeWidth = 2.2f
-            p.alpha = (255 * (.65f + .25f * sin(T * 22f))).toInt().coerceIn(0, 255)
-            c.drawOval(RectF(j.x - rr, cy - rr * 1.18f, j.x + rr, cy + rr * 1.18f), p)
+        // ---- 3. les etincelles qui montent ----
+        p.style = Paint.Style.FILL
+        val etincelles = (ch * 9f).toInt()
+        for (k in 0 until etincelles) {
+            val phase = (T * (1.1f + k * .13f) + k * .37f) % 1f
+            val ex = j.x + sin(k * 2.3f + T * .8f) * (18f + ch * 22f)
+            val ey = cy + 34f - phase * (58f + ch * 26f)
+            val taille = (1.5f + ch * 1.8f) * (1f - phase)
+            p.color = if (pret) 0xFFFFF3B0.toInt() else 0xFFBFF0FF.toInt()
+            p.alpha = (235 * (1f - phase) * battement).toInt().coerceIn(0, 255)
+            c.drawCircle(ex, ey, kotlin.math.max(.6f, taille), p)
         }
 
-        p.clearShadowLayer()
+        // ---- 4. le cercle d'energie, quand c'est pret ----
+        if (ch >= .995f) {
+            p.style = Paint.Style.STROKE
+            val rr = 31f + sin(T * 20f) * 3f
+            p.color = 0xFFFFFBD0.toInt()
+            p.strokeWidth = 2.4f
+            p.alpha = (255 * (.65f + .25f * sin(T * 22f))).toInt().coerceIn(0, 255)
+            c.drawOval(RectF(j.x - rr, cy - rr * 1.18f, j.x + rr, cy + rr * 1.18f), p)
+            // un second cercle, plus large et plus pale, qui s'ouvre
+            val r2 = rr * (1.25f + .12f * sin(T * 14f))
+            p.strokeWidth = 1.2f
+            p.alpha = (110 * (.6f + .4f * sin(T * 14f))).toInt().coerceIn(0, 255)
+            c.drawOval(RectF(j.x - r2, cy - r2 * 1.18f, j.x + r2, cy + r2 * 1.18f), p)
+        }
+
         p.alpha = 255
         p.style = Paint.Style.FILL
         c.restore()

@@ -81,10 +81,77 @@ class SonPenalty(private val ctx: android.content.Context? = null) {
 
     fun liberer() { try { lecteur?.release() } catch (_: Throwable) {}; lecteur = null }
 
+    /**
+     * Un pas sur du gazon synthetique : un bruissement de brins, un choc mat
+     * du talon, puis un frottement du pied qui glisse. Trois couches, comme
+     * un vrai appui.
+     */
+    private fun pas(force: Double = 1.0) {
+        val duree = .155
+        val n = (frequence * duree).toInt()
+        val d = ShortArray(n)
+        var x1 = 0.0; var x2 = 0.0
+        for (i in 0 until n) {
+            val t = i.toDouble() / frequence
+
+            // 1. le froissement des brins d'herbe : un souffle large qui
+            //    s'eteint vite
+            val bruit = Math.random() * 2 - 1
+            // un filtre passe-bande maison, autour de 2 kHz
+            val coupe = 0.34
+            x1 += coupe * (bruit - x1)
+            x2 += coupe * (x1 - x2)
+            val herbe = (x1 - x2) * exp(-t * 30.0) * .55
+
+            // 2. le choc sourd du talon : une frequence qui plonge
+            val hauteur = 132.0 * exp(-t * 26.0) + 58.0
+            val talon = sin(2 * Math.PI * hauteur * t) * exp(-t * 38.0) * .42
+
+            // 3. le pied qui glisse un peu apres l'appui
+            val glisse = if (t > .045) {
+                val u = t - .045
+                (Math.random() * 2 - 1) * exp(-u * 46.0) * .18
+            } else 0.0
+
+            val v = (herbe + talon + glisse) * force
+            d[i] = (v.coerceIn(-1.0, 1.0) * 26000).toInt().toShort()
+        }
+        jouer(d)
+    }
+
+    /**
+     * La frappe dans le ballon : le claquement sec du cuir, le corps creux
+     * qui resonne un instant, et le souffle du pied qui fend l'air.
+     */
+    private fun frappe() {
+        val duree = .30
+        val n = (frequence * duree).toInt()
+        val d = ShortArray(n)
+        for (i in 0 until n) {
+            val t = i.toDouble() / frequence
+
+            // 1. le claquement du cuir : tres bref, tres large
+            val claque = (Math.random() * 2 - 1) * exp(-t * 220.0) * .95
+
+            // 2. le corps du ballon : une note grave qui plonge et resonne
+            val hauteur = 165.0 * exp(-t * 20.0) + 62.0
+            val corps = (sin(2 * Math.PI * hauteur * t) * .62 +
+                         sin(4 * Math.PI * hauteur * t) * .20) * exp(-t * 15.0)
+
+            // 3. l'air deplace par le pied, juste avant l'impact
+            val souffle = if (t < .02) (Math.random() * 2 - 1) * (1 - t / .02) * .30 else 0.0
+
+            val v = claque + corps + souffle
+            d[i] = (v.coerceIn(-1.0, 1.0) * 30000).toInt().toShort()
+        }
+        jouer(d)
+    }
+
     fun jouer(quoi: String) {
         when (quoi) {
-            "pas" -> choc(.09, 150.0, .22, 34.0)
-            "frappe" -> choc(.16, 90.0, .55, 22.0)
+            "pas" -> pas()
+            "pasCourse" -> pas(1.25)          // l'appui de la course, plus franc
+            "frappe" -> frappe()
             "filet" -> choc(.22, 260.0, .30, 12.0)
             "gant" -> choc(.13, 190.0, .38, 26.0)
             "applaudissements" -> if (!applaudissementsReels()) foule(1.8, .45, true)

@@ -236,7 +236,12 @@ class Papier(ctx: Context) : View(ctx) {
     /** Le calque de dessin : il a exactement la taille de la feuille. */
     private var calque: Bitmap? = null
     private var pinceauCalque: Canvas? = null
+    /** Le pinceau du decor : feuille, bureau, scotch. */
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    /** Celui du trait, que le decor ne touche jamais. */
+    private val mine = Paint(Paint.ANTI_ALIAS_FLAG)
+
     private val copie = Paint(Paint.FILTER_BITMAP_FLAG)
 
     /** Ou commence la feuille : juste apres la trousse. */
@@ -364,25 +369,25 @@ class Papier(ctx: Context) : View(ctx) {
     }
 
     private fun reglages() {
-        p.reset()
-        p.isAntiAlias = true
-        p.style = Paint.Style.STROKE
-        p.strokeCap = Paint.Cap.ROUND
-        p.strokeJoin = Paint.Join.ROUND
-        // l'unite : un millieme de la largeur de la feuille, pour que le
-        // trait ait la meme allure sur tous les ecrans
+        mine.reset()
+        mine.isAntiAlias = true
+        mine.style = Paint.Style.STROKE
+        mine.strokeCap = Paint.Cap.ROUND
+        mine.strokeJoin = Paint.Join.ROUND
+        // l'unite : un millimetre de feuille, pour que le trait ait la meme
+        // allure sur tous les ecrans
         val unite = kotlin.math.max(1f, (calque?.width ?: 1000) / 210f)
         if (gomme) {
-            p.xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
-            p.strokeWidth = 7f * unite * epaisseur
+            mine.xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+            mine.strokeWidth = 7f * unite * epaisseur
         } else {
-            p.xfermode = null
-            p.color = outil.couleur
-            p.alpha = (255 * outil.alpha).toInt().coerceIn(28, 255)
-            // ses tailles vont de 2,4 a 22 : on les ramene en millimetres
-            p.strokeWidth = outil.taille * .42f * unite * epaisseur
+            mine.xfermode = null
+            mine.color = outil.couleur
+            // le trait doit se voir franchement : on relve les plus pales
+            mine.alpha = (255 * kotlin.math.max(.72f, outil.alpha)).toInt().coerceIn(180, 255)
+            mine.strokeWidth = outil.taille * .42f * unite * epaisseur
         }
-        largeurDeBase = p.strokeWidth
+        largeurDeBase = mine.strokeWidth
     }
 
     private fun memoriser() {
@@ -415,7 +420,7 @@ class Papier(ctx: Context) : View(ctx) {
                 ax = x; ay = y; bx = x; by = y
                 // un point pose : le depart du trait
                 val c = pinceauCalque ?: return true
-                c.drawPoint(x, y, p)
+                c.drawPoint(x, y, mine)
                 invalidate()
                 return true
             }
@@ -424,27 +429,29 @@ class Papier(ctx: Context) : View(ctx) {
                 val c = pinceauCalque ?: return true
                 val (x, y) = surLaFeuille(e.x, e.y)
                 // un vrai crayon appuie moins quand la main va vite
-                val vitesse = hypot(x - bx, y - by)
-                val large = largeurDeBase * (1f - (vitesse / 90f).coerceIn(0f, .38f))
-                p.strokeWidth = kotlin.math.max(largeurDeBase * .55f, large)
+                // le trait garde son epaisseur : une ligne droite doit etre
+                // bien noire et bien visible
+                mine.strokeWidth = largeurDeBase
 
                 // un trait lisse : la courbe passe par le milieu des deux points
                 val chemin = Path()
                 chemin.moveTo(ax, ay)
                 chemin.quadTo(bx, by, (bx + x) / 2f, (by + y) / 2f)
-                c.drawPath(chemin, p)
+                c.drawPath(chemin, mine)
 
-                // le grain du crayon : quelques points en marge du trait
+                // le grain du crayon gris : de fins points le long du trait,
+                // qui l'accompagnent au lieu de le remplacer
                 if (outil.grain && !gomme) {
-                    val g = Paint(p)
+                    val g = Paint(mine)
                     g.style = Paint.Style.FILL
-                    g.alpha = (p.alpha * .35f).toInt().coerceIn(10, 120)
+                    g.xfermode = null
+                    g.alpha = (mine.alpha * .22f).toInt().coerceIn(10, 90)
                     var k = 0
-                    while (k < 3) {
-                        val t2 = k / 3f
-                        val gx = bx + (x - bx) * t2 + (Math.random().toFloat() - .5f) * largeurDeBase * 1.4f
-                        val gy = by + (y - by) * t2 + (Math.random().toFloat() - .5f) * largeurDeBase * 1.4f
-                        c.drawCircle(gx, gy, largeurDeBase * .16f, g)
+                    while (k < 2) {
+                        val t2 = (k + 1) / 3f
+                        val gx = bx + (x - bx) * t2 + (Math.random().toFloat() - .5f) * largeurDeBase
+                        val gy = by + (y - by) * t2 + (Math.random().toFloat() - .5f) * largeurDeBase
+                        c.drawCircle(gx, gy, largeurDeBase * .12f, g)
                         k++
                     }
                 }
@@ -457,7 +464,7 @@ class Papier(ctx: Context) : View(ctx) {
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 if (trace) {
                     val c = pinceauCalque
-                    if (c != null) { c.drawPoint(bx, by, p); invalidate() }
+                    if (c != null) { c.drawPoint(bx, by, mine); invalidate() }
                 }
                 trace = false
                 surSilence?.invoke()

@@ -449,6 +449,10 @@ fun Partie.update(dt: Float) {
         }
     }
 
+    // ---- personne ne sort de sa zone ----
+    // le terrain pour les libres, la prison pour les prisonniers
+    for (p in P) bounds(p)
+
     // ---- la passe en vol rejoint les mains du coequipier ----
     B.passTarget?.let { t ->
         val hx = t.x + (if (t.team == 0) 18f else -18f); val hy = t.y - 48f

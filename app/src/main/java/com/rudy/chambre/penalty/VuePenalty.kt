@@ -163,8 +163,10 @@ class VuePenalty(ctx: Context) : View(ctx) {
         rudyX = a + (b - a) * q
         rudyY = 72f - 3.2f * sin(PI.toFloat() * avancement)
         rudyEchelle = 1f - .16f * avancement
-        if (!pasJoue && (etape == 1 || etape == 3 || etape == 5 || etape == 7)) {
-            surSon?.invoke("pas"); pasJoue = true
+        if (!pasJoue && etape >= 1) {
+            // un appui par foulee ; les derniers, en pleine course, sonnent plus fort
+            surSon?.invoke(if (etape >= 5) "pasCourse" else "pas")
+            pasJoue = true
         }
         if (q >= 1f) {
             if (etape == 8) { surSon?.invoke("frappe"); partirEnVol() }
@@ -321,8 +323,9 @@ class VuePenalty(ctx: Context) : View(ctx) {
      */
     /** Ses deux bosquets de cerisiers, releves sur son image de terrain. */
     private val bosquets = arrayOf(
-        floatArrayOf(.17f, .28f, .16f, .18f),    // a gauche
-        floatArrayOf(.73f, .26f, .22f, .20f)     // a droite
+        floatArrayOf(.10f, .26f, .26f, .22f),    // les cerisiers de gauche
+        floatArrayOf(.68f, .24f, .30f, .24f),    // ceux de droite
+        floatArrayOf(.30f, .30f, .38f, .14f)     // la haie du fond
     )
 
     /**
@@ -373,8 +376,10 @@ class VuePenalty(ctx: Context) : View(ctx) {
             val y0 = cadre.top + cadre.height() * b[1]
             val l = cadre.width() * b[2]
             val h = cadre.height() * b[3]
-            val souffle = sin(tTotal * (.95f + i * .21f)) * 3.6f +
-                          sin(tTotal * (1.9f + i * .13f)) * 1.5f
+            // un souffle qu'on voit sans qu'il soit exagere : environ un
+            // demi pour cent de la largeur, sur deux rythmes croises
+            val souffle = sin(tTotal * (.95f + i * .21f)) * (width * .0055f) +
+                          sin(tTotal * (1.9f + i * .13f)) * (width * .0022f)
             for (tranche in 0 until 3) {
                 val haut = y0 + h * tranche / 3f
                 val bas = y0 + h * (tranche + 1) / 3f
@@ -387,12 +392,13 @@ class VuePenalty(ctx: Context) : View(ctx) {
             }
         }
 
-        // l'herbe : quatre plaques qui frissonnent chacune a son rythme
+        // l'herbe : cinq plaques qui frissonnent chacune a son rythme
         val plaques = arrayOf(
-            floatArrayOf(.08f, .62f, .26f, .14f, 1.6f),
-            floatArrayOf(.38f, .70f, .30f, .16f, 2.3f),
-            floatArrayOf(.66f, .64f, .28f, .13f, 1.9f),
-            floatArrayOf(.20f, .84f, .55f, .14f, 1.2f)
+            floatArrayOf(.02f, .60f, .30f, .16f, 1.6f),
+            floatArrayOf(.34f, .68f, .32f, .18f, 2.3f),
+            floatArrayOf(.64f, .62f, .34f, .15f, 1.9f),
+            floatArrayOf(.12f, .82f, .62f, .16f, 1.2f),
+            floatArrayOf(.55f, .86f, .44f, .14f, 2.7f)
         )
         for (q in plaques) {
             val x0 = cadre.left + cadre.width() * q[0]
@@ -401,7 +407,7 @@ class VuePenalty(ctx: Context) : View(ctx) {
             val h = cadre.height() * q[3]
             c.save()
             c.clipRect(x0, y0, x0 + l, y0 + h)
-            c.translate(sin(tTotal * q[4]) * 1.6f, 0f)
+            c.translate(sin(tTotal * q[4]) * (width * .0035f), 0f)
             pinceau.alpha = 170
             c.drawBitmap(fond, null, cadre, pinceau)
             pinceau.alpha = 255
