@@ -41,6 +41,7 @@ def adapter_compilation(chemin: str) -> None:
         t = re.sub(r'^\s*' + mot + r'\s*=.*$', '', t, flags=re.M)
     for mot in ('applicationVariants', 'splits', 'bundle'):
         t = retirer_bloc(t, mot)
+    t = limiter_architecture(t)
     open(chemin, 'w', encoding='utf-8').write(t)
     print('fichier de compilation adapte :', chemin)
 
@@ -70,6 +71,33 @@ def poser_espace_de_noms(gradle: str, manifeste: str) -> None:
     t = t[:j + 1] + "\n    namespace '" + paquet + "'\n" + t[j + 1:]
     open(gradle, 'w', encoding='utf-8').write(t)
     print('espace de noms pose :', paquet)
+
+
+def limiter_architecture(t: str) -> str:
+    """
+    Ne compiler que pour arm64.
+
+    Ce projet se construit par defaut pour quatre architectures, dont deux qui
+    n'existent que sur les ordinateurs. Sur un telephone recent, seule arm64
+    sert : on divise ainsi le temps de compilation par deux, et le poids de
+    l'application d'autant.
+    """
+    if "abiFilters 'arm64-v8a'" in t or 'abiFilters "arm64-v8a"' in t:
+        return t
+    # on remplace toute liste d'architectures existante
+    t = re.sub(r"abiFilters\s*[^\n]*", "abiFilters 'arm64-v8a'", t)
+    if "abiFilters 'arm64-v8a'" in t:
+        return t
+    # sinon on l'ajoute dans defaultConfig, ou dans android faute de mieux
+    for bloc in ('defaultConfig', 'android'):
+        i = t.find(bloc)
+        if i == -1:
+            continue
+        j = t.find('{', i)
+        if j == -1:
+            continue
+        return t[:j + 1] + "\n        ndk { abiFilters 'arm64-v8a' }\n" + t[j + 1:]
+    return t
 
 
 def adapter_manifeste(chemin: str) -> None:
