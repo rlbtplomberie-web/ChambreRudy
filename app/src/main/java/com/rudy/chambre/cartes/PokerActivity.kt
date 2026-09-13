@@ -107,16 +107,15 @@ class VuePoker(ctx: Context, private val jeu: Poker) : View(ctx) {
 
         // les trois adversaires, cartes face cachee
         val noms = listOf("Kev", "Yoel", "Arthur")
-        val places = listOf(width * .16f to height * .10f,
-                            width * .50f to height * .06f,
-                            width * .84f to height * .10f)
-        noms.forEachIndexed { i, nom ->
+        val places = listOf(width * .16f to height * .40f,   // Yoel, a gauche
+                            width * .50f to height * .10f,   // Kev, en haut
+                            width * .84f to height * .40f)   // Arthur, a droite
+        noms.indices.forEach { i ->
             val (cx, cy) = places[i]
-            // son prenom d'abord, ses deux cartes juste dessous
-            texte.textSize = height * .032f; texte.color = 0xFFCFC7B7.toInt()
-            c.drawText(nom, cx, cy, texte)
+            // les prenoms sont deja peints sur son tapis : on ne les redessine
+            // pas. Les cartes se posent simplement a la place voulue.
             if (jeu.phase > 0) {
-                val haut = cy + height * .018f
+                val haut = cy - hauteur / 2f
                 charger("dos.webp")?.let { dos ->
                     c.drawBitmap(dos, null,
                         RectF(cx - largeur * .95f, haut, cx + largeur * .05f, haut + hauteur), pinceau)

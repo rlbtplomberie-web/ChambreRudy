@@ -44,6 +44,8 @@ class VueBasket(ctx: Context) : View(ctx) {
     private var pauseDribble = 0f
     private var iTir = 0
     private var volT = -1f          // temps de vol du ballon, negatif = pas de vol
+    // d'ou le ballon quitte les mains : la derniere position tenue
+    private var departVolX = -1f; private var departVolY = -1f
     private var chuteT = -1f
     private var filetT = -1f        // l'agitation du filet apres le panier
     private var dernier = 0L
@@ -103,6 +105,8 @@ class VueBasket(ctx: Context) : View(ctx) {
 
     private fun avancer(dt: Float) {
         tempsImage += dt
+        // securite : un tir qui s'eternise ne doit jamais bloquer le jeu
+        if (mode == "tir" && tempsImage > 3f) { mode = "retour"; tempsImage = 0f }
         when (mode) {
             "dribble" -> {
                 if (pauseDribble > 0f) {
@@ -125,6 +129,7 @@ class VueBasket(ctx: Context) : View(ctx) {
             }
             "retour" -> if (tempsImage >= .35f) {           // ses 350 ms
                 mode = "dribble"; iDribble = 0; imageJoueur = 0; tempsImage = 0f
+                departVolX = -1f; departVolY = -1f
             }
         }
 
@@ -156,18 +161,31 @@ class VueBasket(ctx: Context) : View(ctx) {
         val gl = cadreL * joueurLargeur / 100f
         val gh = cadreH * joueurHauteur / 100f
         val gb = py(100f - joueurBas)
-        val hauteur = gh * .94f
-        val echelle = hauteur / im.height
-        val largeur = im.width * echelle
-        val x = gx + (gl - largeur) / 2f
-        val y = gb - hauteur - gh * .01f
+        // son cadre fixe : 520 sur 760, le personnage toujours a la meme
+        // hauteur dedans — « une seule hauteur pour TOUTES les images »
+        val cadreRapport = 520f / 760f
+        var cadreHauteur = gh
+        var cadreLargeur = cadreHauteur * cadreRapport
+        if (cadreLargeur > gl) { cadreLargeur = gl; cadreHauteur = cadreLargeur / cadreRapport }
+        val fx = gx + (gl - cadreLargeur) / 2f
+        val fy = gb - cadreHauteur
+
+        // l'image garde ses proportions et occupe 94 % de la hauteur du cadre
+        val hauteur = cadreHauteur * .94f
+        val largeur = im.width * (hauteur / im.height)
+        val x = fx + (cadreLargeur - largeur) / 2f
+        val y = fy + cadreHauteur - hauteur
         c.drawBitmap(im, null, RectF(x, y, x + largeur, y + hauteur), pinceau)
 
-        // le ballon dans les mains, sur les quatre premieres images du tir
+        // le ballon dans les mains : ses coordonnees sont des pourcentages
+        // de ce cadre, sur les quatre premieres images du tir
         if (mode == "tir" && iTir < 4) {
             val q = balleEnMain[iTir]
-            val taille = gl * tailleBalleEnMain / 100f
-            ballon(c, gx + gl * q.first / 100f, y + gh * q.second / 100f, taille / 2f)
+            val taille = cadreLargeur * tailleBalleEnMain / 100f
+            ballon(c, fx + cadreLargeur * q.first / 100f,
+                      fy + cadreHauteur * q.second / 100f, taille / 2f)
+            departVolX = fx + cadreLargeur * q.first / 100f
+            departVolY = fy + cadreHauteur * q.second / 100f
         }
     }
 
@@ -228,8 +246,10 @@ class VueBasket(ctx: Context) : View(ctx) {
 
         if (volT >= 0f) {
             val q = volT / .78f
-            val x = px(departBalle.first) + (panierCX - px(departBalle.first)) * q
-            val yBase = py(departBalle.second) + (panierCY - py(departBalle.second)) * q
+            val dx = if (departVolX > 0f) departVolX else px(departBalle.first)
+            val dy = if (departVolY > 0f) departVolY else py(departBalle.second)
+            val x = dx + (panierCX - dx) * q
+            val yBase = dy + (panierCY - dy) * q
             val cloche = -25f * 4f * q * (1f - q) * cadreH / 100f    // son arc
             ballon(c, x, yBase + cloche, r)
         } else if (chuteT >= 0f) {

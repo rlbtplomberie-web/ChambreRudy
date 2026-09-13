@@ -181,7 +181,10 @@ class BasketActivity : ComponentActivity() {
             if (regles.finie) return true
 
             if (!regles.vise) {
-                if (vue.enDribble()) regles.commencerAViser()
+                regles.commencerAViser()
+            } else if (!vue.enDribble()) {
+                // un tir est deja en cours : on ne le coupe pas
+                return true
             } else {
                 val resultat = regles.tirer()
                 dernierResultat = resultat

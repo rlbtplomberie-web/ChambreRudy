@@ -1,6 +1,6 @@
-version 90 - deuxieme serie de corrections
-  eclair de charge traduit du HTML, halo des flammes, gestes allonges,
-  ombre au sol, musique conservee dans les 10 jeux, affiches d'avant-match,
-  damier recadre, atelier sur bureau avec feuille A4, blackjack sur BONNE
-  CHANCE, gardien qui retombe, tireur agrandi, panier sur le cercle,
-  panneau d'armoire en bas, cadenas entier
+version 91 - corrections sur les points signales
+  dames : boite 16/9 decoupee comme son clip-path
+  tir au but : 108 images redetourees, tireur agrandi
+  basket : ballon dans le cadre 520x760, tir debloque
+  poker : cartes entre le prenom du fond et les textes
+  atelier : moteur de dessin reecrit, crayons couches sur le bureau

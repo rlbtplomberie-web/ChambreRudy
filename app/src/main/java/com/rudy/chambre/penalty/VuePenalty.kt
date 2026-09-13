@@ -242,7 +242,7 @@ class VuePenalty(ctx: Context) : View(ctx) {
         val nom = if (rudyArret >= 0) "stop_${min(rudyArret, 5)}.webp"
                   else String.format("rudy_%02d.webp", rudyImage)
         val im = charger(nom) ?: return
-        val h = height * .40f * rudyEchelle       // le tireur, au premier plan
+        val h = height * .52f * rudyEchelle       // le tireur, au premier plan
         val l = im.width * (h / im.height)
         val cx = px(rudyX); val cy = py(rudyY)
         c.drawBitmap(im, null, RectF(cx - l / 2f, cy - h / 2f, cx + l / 2f, cy + h / 2f), pinceau)

@@ -136,20 +136,17 @@ class VueDames(ctx: Context, private val jeu: Dames) : View(ctx) {
     }
 
     /**
-     * Son damier couvre l'ecran en entier, quitte a deborder : c'est ce que
-     * fait son « background: cover ». Ses positions de cases sont des
-     * fractions de l'ecran, pas de l'image.
+     * Son plateau, exactement comme son « #stage » : une boite de proportion
+     * 16 sur 9, centree, la plus grande qui tienne a l'ecran, puis agrandie
+     * de douze pour cent. Toutes ses positions de pions sont des pourcentages
+     * de cette boite, pas de l'ecran.
      */
     private fun cadre() {
-        cx = 0f; cy = 0f
-        cl = width.toFloat(); ch = height.toFloat()
-    }
-
-    /** Le rectangle ou poser une image pour qu'elle couvre tout l'ecran. */
-    private fun recadrer(bg: Bitmap): RectF {
-        val s = kotlin.math.max(width.toFloat() / bg.width, height.toFloat() / bg.height)
-        val l = bg.width * s; val h = bg.height * s
-        return RectF((width - l) / 2f, (height - h) / 2f, (width + l) / 2f, (height + h) / 2f)
+        var l = kotlin.math.min(width.toFloat(), height * 16f / 9f)
+        var h = l * 9f / 16f
+        l *= 1.12f; h *= 1.12f                 // son scale(1.12)
+        cl = l; ch = h
+        cx = (width - l) / 2f; cy = (height - h) / 2f
     }
 
     private fun px(v: Float) = cx + cl * v / 100f
@@ -158,9 +155,21 @@ class VueDames(ctx: Context, private val jeu: Dames) : View(ctx) {
     override fun onDraw(c: Canvas) {
         c.drawColor(0xFF05030A.toInt())
         cadre()
-        // le decor, puis le damier par-dessus, tous deux recadres
-        charger("fond.webp")?.let { c.drawBitmap(it, null, recadrer(it), pinceau) }
-        charger("damier.webp")?.let { c.drawBitmap(it, null, recadrer(it), pinceau) }
+        // le decor couvre l'ecran
+        charger("fond.webp")?.let {
+            val s = kotlin.math.max(width.toFloat() / it.width, height.toFloat() / it.height)
+            val l = it.width * s; val h = it.height * s
+            c.drawBitmap(it, null, RectF((width - l) / 2f, (height - h) / 2f,
+                (width + l) / 2f, (height + h) / 2f), pinceau)
+        }
+        // le damier est etire sur la boite, puis decoupe : 18 % en haut,
+        // 16 % de chaque cote, 10 % en bas — son clip-path
+        charger("damier.webp")?.let {
+            c.save()
+            c.clipRect(cx + cl * .16f, cy + ch * .18f, cx + cl * .84f, cy + ch * .90f)
+            c.drawBitmap(it, null, RectF(cx, cy, cx + cl, cy + ch), pinceau)
+            c.restore()
+        }
 
         // les reperes des coups possibles
         for (m in jeu.coupsAffiches()) {

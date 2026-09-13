@@ -52,7 +52,7 @@ class AtelierActivity : ComponentActivity() {
 
         val racine = FrameLayout(this)
         racine.setBackgroundColor(0xFF96613A.toInt())      // son bois : --bois
-        val largeurTrousse = (resources.displayMetrics.widthPixels * .16f).toInt()
+        val largeurTrousse = (resources.displayMetrics.widthPixels * .26f).toInt()
         papier.margeGauche = largeurTrousse.toFloat()
         racine.addView(papier, FrameLayout.LayoutParams(-1, -1))
         racine.addView(trousse(), FrameLayout.LayoutParams(largeurTrousse, -1, Gravity.START))
@@ -63,58 +63,111 @@ class AtelierActivity : ComponentActivity() {
     }
 
     /** Sa trousse verte, avec les huit crayons et la gomme. */
+    /**
+     * Ses crayons, poses a plat sur le bureau, a gauche de la feuille :
+     * un corps de couleur, une pointe de bois taillee et une mine. Le feutre
+     * a un capuchon, le pinceau des poils. La gomme est en bas.
+     */
     private fun trousse(): View {
         val vue = object : View(this) {
             private val p = Paint(Paint.ANTI_ALIAS_FLAG)
+
             override fun onDraw(c: Canvas) {
                 val l = width.toFloat(); val h = height.toFloat()
-                // le corps de la trousse
-                p.color = 0xFF1F4B33.toInt()
-                c.drawRoundRect(RectF(l * .10f, h * .06f, l * .92f, h * .94f), l * .35f, l * .35f, p)
-                p.style = Paint.Style.STROKE; p.strokeWidth = 3f; p.color = 0xFF17140F.toInt()
-                c.drawRoundRect(RectF(l * .10f, h * .06f, l * .92f, h * .94f), l * .35f, l * .35f, p)
-                p.style = Paint.Style.FILL
+                val pas = h / (OUTILS.size + 1.6f)
+                val corps = pas * .42f              // l'epaisseur d'un crayon
+                val long = l * .78f
 
-                // les crayons, un par ligne, legerement inclines comme chez lui
-                val epaisseur = h * .022f          // l'epaisseur d'un crayon
                 OUTILS.forEachIndexed { i, o ->
-                    val y = h * (.10f + i * .079f)
-                    val angle = (i - (OUTILS.size - 1) / 2f) * 3f
-                    c.save(); c.rotate(angle, l * .5f, y)
-                    val choisi = !papier.gomme && papier.iOutil == i
-                    val x0 = l * (if (choisi) .30f else .22f)
-                    val larg = l * .58f
-                    p.color = o.corps
-                    c.drawRect(x0, y - epaisseur, x0 + larg * .70f, y + epaisseur, p)
-                    p.color = 0xFFE6E2D8.toInt()
-                    c.drawRect(x0 + larg * .70f, y - epaisseur, x0 + larg * .80f, y + epaisseur, p)
-                    // la pointe
-                    val pointe = Path()
-                    pointe.moveTo(x0 + larg * .80f, y - epaisseur)
-                    pointe.lineTo(x0 + larg * .80f, y + epaisseur)
-                    pointe.lineTo(x0 + larg, y)
-                    pointe.close()
-                    p.color = 0xFFECCFA6.toInt(); c.drawPath(pointe, p)
-                    val mine = Path()
-                    mine.moveTo(x0 + larg * .93f, y - epaisseur * .42f)
-                    mine.lineTo(x0 + larg * .93f, y + epaisseur * .42f)
-                    mine.lineTo(x0 + larg, y)
-                    mine.close()
-                    p.color = o.mine; c.drawPath(mine, p)
-                    c.restore()
+                    val y = pas * (i + .8f)
+                    val x0 = l * .10f
+                    val choisi = i == papier.iOutil && !papier.gomme
+                    val avance = if (choisi) l * .10f else 0f
+
+                    // son ombre sur le bureau
+                    p.color = 0x44231104
+                    c.drawRoundRect(RectF(x0 + avance + 3f, y - corps / 2f + 4f,
+                        x0 + avance + long + 3f, y + corps / 2f + 4f), corps / 2f, corps / 2f, p)
+
+                    when (o.nom) {
+                        "Pinceau" -> {
+                            // le manche
+                            p.color = 0xFF8A5A2B.toInt()
+                            c.drawRoundRect(RectF(x0 + avance, y - corps / 2f,
+                                x0 + avance + long * .62f, y + corps / 2f), corps / 2f, corps / 2f, p)
+                            // la virole
+                            p.color = 0xFFB9B3A6.toInt()
+                            c.drawRect(x0 + avance + long * .60f, y - corps * .58f,
+                                       x0 + avance + long * .74f, y + corps * .58f, p)
+                            // les poils
+                            p.color = o.trait
+                            val poils = Path()
+                            poils.moveTo(x0 + avance + long * .74f, y - corps * .55f)
+                            poils.lineTo(x0 + avance + long, y)
+                            poils.lineTo(x0 + avance + long * .74f, y + corps * .55f)
+                            poils.close()
+                            c.drawPath(poils, p)
+                        }
+                        "Feutre" -> {
+                            p.color = 0xFF2B2B2B.toInt()
+                            c.drawRoundRect(RectF(x0 + avance, y - corps * .58f,
+                                x0 + avance + long * .72f, y + corps * .58f), corps * .3f, corps * .3f, p)
+                            // le capuchon, de la couleur de l'encre
+                            p.color = o.trait
+                            c.drawRoundRect(RectF(x0 + avance + long * .70f, y - corps * .52f,
+                                x0 + avance + long, y + corps * .52f), corps * .3f, corps * .3f, p)
+                        }
+                        else -> {
+                            // le corps du crayon, peint de sa couleur
+                            p.color = o.corps
+                            c.drawRoundRect(RectF(x0 + avance, y - corps / 2f,
+                                x0 + avance + long * .74f, y + corps / 2f), corps * .22f, corps * .22f, p)
+                            // le bois taille
+                            p.color = 0xFFE3C08A.toInt()
+                            val bois = Path()
+                            bois.moveTo(x0 + avance + long * .74f, y - corps / 2f)
+                            bois.lineTo(x0 + avance + long * .94f, y)
+                            bois.lineTo(x0 + avance + long * .74f, y + corps / 2f)
+                            bois.close()
+                            c.drawPath(bois, p)
+                            // la mine
+                            p.color = o.trait
+                            val mine = Path()
+                            mine.moveTo(x0 + avance + long * .90f, y - corps * .14f)
+                            mine.lineTo(x0 + avance + long, y)
+                            mine.lineTo(x0 + avance + long * .90f, y + corps * .14f)
+                            mine.close()
+                            c.drawPath(mine, p)
+                        }
+                    }
                 }
 
-                // la gomme, en bas
-                p.color = if (papier.gomme) 0xFFFFE16E.toInt() else 0xFFD8D3C4.toInt()
-                c.drawRoundRect(RectF(l * .26f, h * .93f, l * .74f, h * .985f), 6f, 6f, p)
+                // la gomme, posee en bas
+                val gy = pas * (OUTILS.size + .9f)
+                val gl = l * .52f
+                val choisieG = papier.gomme
+                p.color = 0x44231104
+                c.drawRoundRect(RectF(l * .12f + 3f, gy - pas * .30f + 4f,
+                    l * .12f + gl + 3f, gy + pas * .30f + 4f), 6f, 6f, p)
+                p.color = if (choisieG) 0xFFFFE0E6.toInt() else 0xFFF3D9DE.toInt()
+                c.drawRoundRect(RectF(l * .12f, gy - pas * .30f,
+                    l * .12f + gl, gy + pas * .30f), 6f, 6f, p)
+                p.color = 0xFF9A7F84.toInt(); p.style = Paint.Style.STROKE; p.strokeWidth = 2f
+                c.drawRoundRect(RectF(l * .12f, gy - pas * .30f,
+                    l * .12f + gl, gy + pas * .30f), 6f, 6f, p)
+                p.style = Paint.Style.FILL
             }
 
             override fun onTouchEvent(e: MotionEvent): Boolean {
                 if (e.actionMasked != MotionEvent.ACTION_DOWN) return true
                 val h = height.toFloat()
-                if (e.y > h * .92f) { papier.gomme = true; invalidate(); return true }
-                val i = ((e.y / h - .10f) / .079f + .5f).toInt()
-                if (i in OUTILS.indices) { papier.gomme = false; papier.iOutil = i }
+                val pas = h / (OUTILS.size + 1.6f)
+                if (e.y > pas * (OUTILS.size + .55f)) {
+                    papier.gomme = true
+                } else {
+                    val i = ((e.y / pas) - .8f + .5f).toInt()
+                    if (i in OUTILS.indices) { papier.iOutil = i; papier.gomme = false }
+                }
                 invalidate()
                 return true
             }
@@ -172,216 +225,208 @@ class AtelierActivity : ComponentActivity() {
  */
 class Papier(ctx: Context) : View(ctx) {
 
+    /** Le calque de dessin : il a exactement la taille de la feuille. */
+    private var calque: Bitmap? = null
+    private var pinceauCalque: Canvas? = null
+    private val p = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val copie = Paint(Paint.FILTER_BITMAP_FLAG)
+
     /** Ou commence la feuille : juste apres la trousse. */
     var margeGauche = 0f
 
-    /** Le multiplicateur d'epaisseur : 0,6 — 1 — 1,9, comme ses trois pastilles. */
+    /** Le multiplicateur d'epaisseur : 0,6 — 1 — 1,9, ses trois pastilles. */
     var epaisseur = 1f
 
     var iOutil = 0
     var gomme = false
-    val outil get() = OUTILS[iOutil]
-    var zoom = 1f; private set
-    private var dx = 0f; private var dy = 0f
-
     var surFrottement: ((Float) -> Unit)? = null
     var surSilence: (() -> Unit)? = null
     var surZoom: ((Float) -> Unit)? = null
 
-    private var feuille: Bitmap? = null
-    private var pinceauFeuille: Canvas? = null
-    private val p = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        strokeCap = Paint.Cap.ROUND
-        strokeJoin = Paint.Join.ROUND
-        style = Paint.Style.STROKE
+    /** L'outil en main, pour la teinte du bruit de crayon. */
+    val outil get() = OUTILS[iOutil.coerceIn(0, OUTILS.size - 1)]
+
+    /** Le grossissement de la feuille, de 1 a 6 comme chez lui. */
+    var zoom = 1f
+        private set
+
+    fun zoomer(v: Float) {
+        zoom = v.coerceIn(1f, 6f)
+        surZoom?.invoke(zoom)
+        invalidate()
     }
-    private val copie = Paint(Paint.FILTER_BITMAP_FLAG)
 
-    /** Son historique : douze retours en arriere, comme chez lui. */
-    private val histoire = ArrayList<Bitmap>()
+    fun remettreLeZoom() = zoomer(1f)
 
+    // le trait en cours
     private var trace = false
     private var ax = 0f; private var ay = 0f
     private var bx = 0f; private var by = 0f
 
-    override fun onSizeChanged(l: Int, h: Int, al: Int, ah: Int) {
-        super.onSizeChanged(l, h, al, ah)
-        if (l <= 0 || h <= 0) return
-        val neuve = Bitmap.createBitmap(l, h, Bitmap.Config.ARGB_8888)
-        val c = Canvas(neuve)
-        feuille?.let { c.drawBitmap(it, 0f, 0f, null) }
-        feuille = neuve
-        pinceauFeuille = c
-    }
+    private val annulations = ArrayDeque<Bitmap>()
 
-    /** Le rectangle de la feuille : un vrai format A4, 210 sur 297. */
+    /** Le rectangle de la feuille a l'ecran : un vrai format A4, 210 sur 297. */
     fun cadreA4(): RectF {
-        val libre = RectF(margeGauche + 12f, 60f, width - 12f, height - 90f)
-        val parLargeur = libre.width() / 210f
-        val parHauteur = libre.height() / 297f
-        val k = kotlin.math.min(parLargeur, parHauteur)
+        val libre = RectF(margeGauche + 14f, 58f, width - 14f, height - 96f)
+        if (libre.width() <= 0f || libre.height() <= 0f) return RectF()
+        val k = kotlin.math.min(libre.width() / 210f, libre.height() / 297f)
         val l = 210f * k; val h = 297f * k
         return RectF(libre.centerX() - l / 2f, libre.centerY() - h / 2f,
                      libre.centerX() + l / 2f, libre.centerY() + h / 2f)
     }
 
+    override fun onSizeChanged(l: Int, h: Int, al: Int, ah: Int) {
+        super.onSizeChanged(l, h, al, ah)
+        val page = cadreA4()
+        val pl = page.width().toInt(); val ph = page.height().toInt()
+        if (pl <= 0 || ph <= 0) return
+        val neuf = Bitmap.createBitmap(pl, ph, Bitmap.Config.ARGB_8888)
+        val c = Canvas(neuf)
+        calque?.let { c.drawBitmap(it, null, RectF(0f, 0f, pl.toFloat(), ph.toFloat()), copie) }
+        calque = neuf
+        pinceauCalque = c
+    }
+
     override fun onDraw(c: Canvas) {
-        // le bureau : un bois veine, comme son fond de page
+        // le bureau : son bois, veine en diagonale
         c.drawColor(0xFF96613A.toInt())
         p.style = Paint.Style.STROKE
         p.strokeWidth = 1f
         p.color = 0x1A3C1E0A
-        var y = 0f
-        while (y < height) { c.drawLine(0f, y, width.toFloat(), y + 12f, p); y += 9f }
+        var y = -20f
+        while (y < height + 20f) { c.drawLine(0f, y, width.toFloat(), y + 14f, p); y += 9f }
+        p.color = 0x12FFE1BE
+        y = -20f
+        while (y < height + 20f) { c.drawLine(0f, y + 5f, width.toFloat(), y - 8f, p); y += 15f }
         p.style = Paint.Style.FILL
 
         val page = cadreA4()
+        if (page.isEmpty) return
+
         // l'ombre portee de la feuille sur le bureau
-        p.color = 0x66231104
-        c.drawRect(page.left + 7f, page.top + 9f, page.right + 7f, page.bottom + 9f, p)
-        // la feuille
+        p.color = 0x55231104
+        c.drawRect(page.left + 8f, page.top + 10f, page.right + 8f, page.bottom + 10f, p)
+
+        // la feuille, son papier creme
         p.color = 0xFFFDFBF3.toInt()
         c.drawRect(page, p)
+
+        // le grain du papier : de fines lignes a peine visibles
+        p.color = 0x0A17140F
+        p.style = Paint.Style.STROKE
+        var g = page.top + 4f
+        while (g < page.bottom) { c.drawLine(page.left, g, page.right, g, p); g += 6f }
+        p.style = Paint.Style.FILL
+
+        // le dessin, au grossissement choisi
+        c.save()
+        c.clipRect(page)
+        if (zoom > 1f) c.scale(zoom, zoom, page.centerX(), page.centerY())
+        calque?.let { c.drawBitmap(it, null, page, copie) }
+        c.restore()
+
+        // le contour d'encre
         p.style = Paint.Style.STROKE; p.strokeWidth = 3f; p.color = 0xFF17140F.toInt()
         c.drawRect(page, p)
         p.style = Paint.Style.FILL
 
-        val f = feuille ?: return
-        c.save()
-        c.clipRect(page)
-        c.translate(dx, dy)
-        c.scale(zoom, zoom, width / 2f, height / 2f)
-        c.drawBitmap(f, 0f, 0f, copie)
-        c.restore()
-
-        // les deux bouts de scotch, en haut de la feuille
-        p.color = 0xD9F6EECD.toInt()
+        // ses deux bouts de scotch, en haut
         for (cote in intArrayOf(-1, 1)) {
             c.save()
-            val sx = if (cote < 0) page.left + 10f else page.right - 72f
+            val sx = if (cote < 0) page.left + 12f else page.right - 74f
             c.rotate(if (cote < 0) -26f else 24f, sx + 31f, page.top)
-            c.drawRect(sx, page.top - 11f, sx + 62f, page.top + 11f, p)
+            val r = RectF(sx, page.top - 11f, sx + 62f, page.top + 11f)
+            p.color = 0xD9F6EECD.toInt(); c.drawRect(r, p)
             p.style = Paint.Style.STROKE; p.strokeWidth = 2.5f; p.color = 0xFF17140F.toInt()
-            c.drawRect(sx, page.top - 11f, sx + 62f, page.top + 11f, p)
-            p.style = Paint.Style.FILL; p.color = 0xD9F6EECD.toInt()
+            c.drawRect(r, p)
+            p.style = Paint.Style.FILL
             c.restore()
         }
     }
 
-    /** Son « reglages » : la gomme efface, le crayon depose sa couleur. */
+    /** Du doigt vers le calque : une simple soustraction, rien de plus. */
+    private fun surLaFeuille(x: Float, y: Float): Pair<Float, Float> {
+        val page = cadreA4()
+        // on defait le grossissement avant de reporter sur le calque
+        val vx = (x - page.centerX()) / zoom + page.centerX()
+        val vy = (y - page.centerY()) / zoom + page.centerY()
+        return (vx - page.left) to (vy - page.top)
+    }
+
     private fun reglages() {
+        p.reset()
+        p.isAntiAlias = true
+        p.style = Paint.Style.STROKE
+        p.strokeCap = Paint.Cap.ROUND
+        p.strokeJoin = Paint.Join.ROUND
         if (gomme) {
             p.xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
-            p.alpha = 255
             p.strokeWidth = 26f * epaisseur
         } else {
             p.xfermode = null
-            p.color = outil.couleur
-            p.alpha = (outil.alpha * 255).toInt()
+            p.color = outil.trait
+            p.alpha = (255 * outil.opacite).toInt().coerceIn(20, 255)
             p.strokeWidth = outil.taille * 1.6f * epaisseur
         }
     }
 
     private fun memoriser() {
-        val f = feuille ?: return
-        histoire.add(f.copy(Bitmap.Config.ARGB_8888, false))
-        if (histoire.size > 12) histoire.removeAt(0).recycle()
+        calque?.let {
+            annulations.addLast(it.copy(Bitmap.Config.ARGB_8888, false))
+            if (annulations.size > 12) annulations.removeFirst()
+        }
     }
 
     fun annuler() {
-        val d = histoire.removeLastOrNull() ?: return
-        feuille = d
-        pinceauFeuille = Canvas(d)
+        val avant = annulations.removeLastOrNull() ?: return
+        calque = avant
+        pinceauCalque = Canvas(avant)
         invalidate()
     }
 
     fun vider() {
         memoriser()
-        feuille?.eraseColor(Color.TRANSPARENT)
+        calque?.eraseColor(Color.TRANSPARENT)
         invalidate()
     }
-
-    fun zoomer(nz: Float) {
-        val z = max(1f, min(6f, nz))
-        dx *= z / zoom; dy *= z / zoom
-        zoom = z
-        limiter()
-        surZoom?.invoke(zoom)
-        invalidate()
-    }
-
-    fun remettreLeZoom() { dx = 0f; dy = 0f; zoomer(1f) }
-
-    private fun limiter() {
-        val maxX = (zoom - 1f) * width / 2f
-        val maxY = (zoom - 1f) * height / 2f
-        dx = dx.coerceIn(-maxX, maxX)
-        dy = dy.coerceIn(-maxY, maxY)
-    }
-
-    /** Le point du doigt, ramene dans le repere de la feuille. */
-    private fun point(x: Float, y: Float): Pair<Float, Float> {
-        val cx = width / 2f; val cy = height / 2f
-        return ((x - dx - cx) / zoom + cx) to ((y - dy - cy) / zoom + cy)
-    }
-
-    private var ecartDepart = 0f
-    private var zoomDepart = 1f
 
     override fun onTouchEvent(e: MotionEvent): Boolean {
+        val page = cadreA4()
         when (e.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                // on ne dessine que sur la feuille
-                if (!cadreA4().contains(e.x, e.y)) return true
+                if (!page.contains(e.x, e.y)) return true
                 memoriser(); reglages(); trace = true
-                val (x, y) = point(e.x, e.y)
+                val (x, y) = surLaFeuille(e.x, e.y)
                 ax = x; ay = y; bx = x; by = y
-                pinceauFeuille?.drawPoint(x, y, p)
-                surFrottement?.invoke(6f)
+                // un point pose : le depart du trait
+                val c = pinceauCalque ?: return true
+                c.drawPoint(x, y, p)
                 invalidate()
-            }
-            MotionEvent.ACTION_POINTER_DOWN -> {
-                // deux doigts : on arrete le trait et on passe au zoom
-                trace = false
-                surSilence?.invoke()
-                if (e.pointerCount >= 2) {
-                    ecartDepart = hypot(e.getX(0) - e.getX(1), e.getY(0) - e.getY(1))
-                    zoomDepart = zoom
-                }
+                return true
             }
             MotionEvent.ACTION_MOVE -> {
-                if (e.pointerCount >= 2) {
-                    val ecart = hypot(e.getX(0) - e.getX(1), e.getY(0) - e.getY(1))
-                    if (ecartDepart > 0f) zoomer(zoomDepart * ecart / ecartDepart)
-                    return true
-                }
                 if (!trace) return true
-                val (x, y) = point(e.x, e.y)
-                val vitesse = hypot(x - bx, y - by)
-                // son trace : une courbe qui passe par le point du milieu
-                val mx = (bx + x) / 2f; val my = (by + y) / 2f
+                val c = pinceauCalque ?: return true
+                val (x, y) = surLaFeuille(e.x, e.y)
+                // un trait lisse : la courbe passe par le milieu des deux points
                 val chemin = Path()
                 chemin.moveTo(ax, ay)
-                chemin.quadTo(bx, by, mx, my)
-                pinceauFeuille?.drawPath(chemin, p)
-                // le grain du crayon gris : un second trait, decale et plus pale
-                if (outil.grain && !gomme) {
-                    val garde = p.alpha
-                    p.alpha = (outil.alpha * .5f * 255).toInt()
-                    val second = Path()
-                    second.moveTo(ax + .8f, ay - .8f)
-                    second.quadTo(bx + .8f, by - .8f, mx + .8f, my - .8f)
-                    pinceauFeuille?.drawPath(second, p)
-                    p.alpha = garde
-                }
-                ax = mx; ay = my; bx = x; by = y
-                surFrottement?.invoke(vitesse)
+                chemin.quadTo(bx, by, (bx + x) / 2f, (by + y) / 2f)
+                c.drawPath(chemin, p)
+                ax = (bx + x) / 2f; ay = (by + y) / 2f
+                bx = x; by = y
+                surFrottement?.invoke(hypot(x - ax, y - ay))
                 invalidate()
+                return true
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (trace) {
+                    val c = pinceauCalque
+                    if (c != null) { c.drawPoint(bx, by, p); invalidate() }
+                }
                 trace = false
-                ecartDepart = 0f
                 surSilence?.invoke()
+                return true
             }
         }
         return true
