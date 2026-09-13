@@ -97,9 +97,9 @@ def activer_traduction_java(t: str) -> str:
                          + "\n    compileOptions {\n        coreLibraryDesugaringEnabled true\n    }\n"
                          + t[j + 1:])
 
-    if 'coreLibraryDesugaring ' not in t and 'coreLibraryDesugaring(' not in t:
+    if 'desugar_jdk_libs' not in t:
         i = t.find('dependencies')
-        ligne = "\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'\n"
+        ligne = "\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs_nio:2.1.5'\n"
         if i != -1:
             j = t.find('{', i)
             if j != -1:

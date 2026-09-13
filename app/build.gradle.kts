@@ -85,7 +85,9 @@ android {
 
 dependencies {
     // la bibliotheque qui assure cette traduction
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    // la variante « nio » : Mupen64Plus se sert des fonctions de fichiers
+    // recentes de Java, que la version ordinaire ne sait pas traduire
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs_nio:2.1.5")
 
     /*
      * L'emulateur N64 de Rudy : Mupen64Plus, prepare par le workflow dans

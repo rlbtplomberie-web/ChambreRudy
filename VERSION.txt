@@ -1,1 +1,1 @@
-version 75 - traduction Java dans l'application et dans chaque module
+version 76 - variante nio de la traduction Java
