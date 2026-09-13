@@ -336,8 +336,10 @@ object Objets {
         val h = r.height()
         val avance = h * .62f * ouverture
         val facade = RectF(r.left, r.top + avance, r.right, r.bottom + avance * .35f)
+        // la teinte du bureau, relevee sur sa photo : #602010, avec un haut
+        // un peu plus clair la ou la lumiere tombe et un bas plus sombre
         p.shader = LinearGradient(facade.left, facade.top, facade.left, facade.bottom,
-            intArrayOf(0xFFA5643C.toInt(), 0xFF8C5030.toInt(), 0xFF71401F.toInt()),
+            intArrayOf(0xFF6E2814.toInt(), 0xFF602010.toInt(), 0xFF48160C.toInt()),
             floatArrayOf(0f, .55f, 1f), Shader.TileMode.CLAMP)
         c.drawRect(facade, p)
         p.shader = null

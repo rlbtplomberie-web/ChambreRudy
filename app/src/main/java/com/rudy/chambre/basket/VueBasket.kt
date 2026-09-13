@@ -22,9 +22,11 @@ class VueBasket(ctx: Context) : View(ctx) {
     private val p = Paint(Paint.ANTI_ALIAS_FLAG)
 
     // ---- ses mesures, en pourcentages du cadre ----
-    private val joueurGauche = 29f; private val joueurBas = 7f
+    private val joueurGauche = 20f; private val joueurBas = 7f
     private val joueurLargeur = 28f; private val joueurHauteur = 78f
-    private val panierDroite = 8.7f; private val panierHaut = 30.5f
+    // le panneau du fond est a 60-65 % de la largeur et 10-20 % de la hauteur
+    // sur son image : le cercle se pose juste dessous
+    private val panierDroite = 36.5f; private val panierHaut = 19.5f
     private val panierLargeur = 8.5f; private val panierHauteur = 15f
     private val departBalle = 44f to 35f
 

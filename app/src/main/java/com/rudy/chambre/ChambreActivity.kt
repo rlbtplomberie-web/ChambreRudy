@@ -2,9 +2,15 @@ package com.rudy.chambre
 
 import android.app.AlertDialog
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.view.Gravity
+import android.view.View
 import android.view.TextureView
+import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.core.view.WindowCompat
@@ -127,6 +133,9 @@ class ChambreActivity : ComponentActivity() {
         when (quoi) {
             "carton" -> {
                 son.bruit("carton.mp3")
+                // la console met plus d'une seconde a sortir : on prepare sa
+                // video pendant ce temps, elle demarre alors a l'instant meme
+                preparerVideo(vue.consoleAVenir())
                 vue.consoleSuivante { console ->
                     son.bruit("pose.mp3")
                     dire(console.nom)
@@ -193,21 +202,41 @@ class ChambreActivity : ComponentActivity() {
     private var videoPrete: String? = null
 
     /** Prepare a l'avance la sequence de la console suivante, pour qu'elle parte net. */
+    /**
+     * Preparer une video d'avance, sur un fil a part.
+     *
+     * La preparation lit le fichier et decode ses premieres images : faite sur
+     * le fil de l'affichage, elle figeait la chambre le temps d'un battement.
+     * Elle se fait donc a cote, et la video est prete avant meme l'appui.
+     */
     private fun preparerVideo(console: Decor.ConsolePosee) {
-        if (videoPrete == console.video) return
-        try { lecteurPret?.release() } catch (_: Throwable) {}
-        lecteurPret = null; videoPrete = null
-        try {
-            val d = assets.openFd("chambre/" + console.video)
-            lecteurPret = android.media.MediaPlayer().apply {
-                setDataSource(d.fileDescriptor, d.startOffset, d.length)
-                setVolume(0.85f, 0.85f)
-                prepare()                       // tout le travail se fait ici, avant l'appui
+        if (videoPrete == console.video || videoEnPreparation == console.video) return
+        videoEnPreparation = console.video
+        Thread {
+            var pret: android.media.MediaPlayer? = null
+            try {
+                val d = assets.openFd("chambre/" + console.video)
+                pret = android.media.MediaPlayer().apply {
+                    setDataSource(d.fileDescriptor, d.startOffset, d.length)
+                    setVolume(0.85f, 0.85f)
+                    prepare()
+                }
+                d.close()
+            } catch (_: Throwable) {
+                try { pret?.release() } catch (_: Throwable) {}
+                pret = null
             }
-            d.close()
-            videoPrete = console.video
-        } catch (_: Throwable) { lecteurPret = null; videoPrete = null }
+            runOnUiThread {
+                videoEnPreparation = null
+                if (pret == null) return@runOnUiThread
+                try { lecteurPret?.release() } catch (_: Throwable) {}
+                lecteurPret = pret
+                videoPrete = console.video
+            }
+        }.apply { priority = Thread.MIN_PRIORITY }.start()
     }
+
+    private var videoEnPreparation: String? = null
 
     /** La tele s'allume et joue la sequence de demarrage de cette console. */
     private fun allumerLaTele(console: Decor.ConsolePosee) {
@@ -223,13 +252,15 @@ class ChambreActivity : ComponentActivity() {
             // si elle a ete preparee d'avance, elle part a l'instant meme
             val pret = if (videoPrete == console.video) lecteurPret else null
             lecteurPret = null; videoPrete = null
-            lecteur = (pret ?: android.media.MediaPlayer().apply {
-                val d = assets.openFd("chambre/" + console.video)
-                setDataSource(d.fileDescriptor, d.startOffset, d.length)
-                setVolume(0.85f, 0.85f)
-                prepare()
-                d.close()
-            }).apply {
+            if (pret == null) {
+                // pas encore prete : on la prepare a cote et on rappelle
+                // cette meme fonction des qu'elle l'est
+                preparerVideo(console)
+                vue.postDelayed({ if (teleAllumee) allumerLaTele(console) }, 120)
+                teleAllumee = true
+                return
+            }
+            lecteur = pret.apply {
                 setSurface(android.view.Surface(surface))
                 setOnCompletionListener {
                     teleAllumee = false
@@ -289,19 +320,96 @@ class ChambreActivity : ComponentActivity() {
             }.show()
     }
 
+    /**
+     * L'armoire de gauche, comme dans sa page : un panneau en bas au centre,
+     * a neuf pour cent du bord, violet borde d'or, avec ses trois jeux cote a
+     * cote et le bouton pour refermer.
+     */
     private fun menuJeuxDeSociete() {
-        menu()
-            .setTitle("Jeux de société")
-            .setItems(arrayOf("Échecs", "Dames", "Monopoly")) { _, i ->
-                when (i) {
-                    0 -> startActivity(Intent(this, com.rudy.chambre.echecs.EchecsActivity::class.java))
-                    1 -> startActivity(Intent(this, com.rudy.chambre.dames.DamesActivity::class.java))
-                    else -> startActivity(Intent(this,
-                        com.rudy.chambre.monopoly.MonopolyActivity::class.java))
-                }
+        panneau("À quoi veux-tu jouer ?",
+                listOf("Monopoly", "Échecs", "Dames"),
+                1,                                  // les echecs sont mis en avant
+                0xF5261A42.toInt(), 0x59FFDC96,
+                "← Refermer l'armoire") { i ->
+            when (i) {
+                0 -> startActivity(Intent(this, com.rudy.chambre.monopoly.MonopolyActivity::class.java))
+                1 -> startActivity(Intent(this, com.rudy.chambre.echecs.EchecsActivity::class.java))
+                2 -> startActivity(Intent(this, com.rudy.chambre.dames.DamesActivity::class.java))
             }
-            .setOnDismissListener { if (vue.porteG > 0.5f) fermerPortes() }
-            .show()
+        }
+    }
+
+    private var panneauOuvert: View? = null
+
+    /**
+     * Un panneau de choix, pose en bas de l'ecran comme les siens.
+     * [enAvant] designe le bouton mis en valeur, [fermer] le texte du retour.
+     */
+    private fun panneau(titre: String, choix: List<String>, enAvant: Int,
+                        fond: Int, bordure: Int, fermer: String,
+                        surChoix: (Int) -> Unit) {
+        panneauOuvert?.let { (it.parent as? FrameLayout)?.removeView(it) }
+
+        val dens = resources.displayMetrics.density
+        fun dp(v: Float) = (v * dens).toInt()
+
+        val bloc = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16f), dp(14f), dp(16f), dp(14f))
+            background = GradientDrawable().apply {
+                cornerRadius = dp(18f).toFloat()
+                colors = intArrayOf(fond, 0xF5120B24.toInt())
+                orientation = GradientDrawable.Orientation.TL_BR
+                setStroke(dp(2f), bordure)
+            }
+        }
+        bloc.addView(TextView(this).apply {
+            text = titre; textSize = 16f
+            setTextColor(0xFFFFEEC2.toInt())
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, dp(10f))
+        })
+
+        val rangee = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        choix.forEachIndexed { i, nom ->
+            rangee.addView(Button(this).apply {
+                text = nom; textSize = 13f
+                setTextColor(if (i == enAvant) 0xFF2A1C06.toInt() else Color.WHITE)
+                background = GradientDrawable().apply {
+                    cornerRadius = dp(12f).toFloat()
+                    setColor(if (i == enAvant) 0xFFE8C36A.toInt() else 0x33FFFFFF)
+                    setStroke(dp(1f), 0x66FFDC96)
+                }
+                setOnClickListener { fermerLePanneau(); surChoix(i) }
+            }, LinearLayout.LayoutParams(0, -2, 1f).apply {
+                if (i > 0) leftMargin = dp(8f)
+            })
+        }
+        bloc.addView(rangee)
+
+        bloc.addView(Button(this).apply {
+            text = fermer; textSize = 12f
+            setTextColor(0xFFCFC7B7.toInt())
+            setBackgroundColor(Color.TRANSPARENT)
+            setOnClickListener { fermerLePanneau(); if (vue.porteG > 0.5f) fermerPortes() }
+        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(6f) })
+
+        val place = FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL)
+        place.bottomMargin = (resources.displayMetrics.heightPixels * .09f).toInt()
+        (findViewById<FrameLayout>(android.R.id.content).getChildAt(0) as FrameLayout)
+            .addView(bloc, place)
+        panneauOuvert = bloc
+        bloc.alpha = 0f
+        bloc.translationY = dp(14f).toFloat()
+        bloc.animate().alpha(1f).translationY(0f).setDuration(220).start()
+    }
+
+    private fun fermerLePanneau() {
+        val p = panneauOuvert ?: return
+        panneauOuvert = null
+        p.animate().alpha(0f).translationY(20f).setDuration(180)
+            .withEndAction { (p.parent as? FrameLayout)?.removeView(p) }.start()
     }
 
     private fun menuDehors() {

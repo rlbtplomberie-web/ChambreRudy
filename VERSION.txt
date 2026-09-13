@@ -1,1 +1,4 @@
-version 88 - la chambre affiche l'erreur au lieu de se fermer
+version 89 - corrections demandees par Rudy
+  sens des ecrans, livre a deux pages, radio qui rechange de musique,
+  video de tele preparee a l'avance, tiroir a la couleur du bureau,
+  panneau de jeux comme le HTML, detourages, panier, atelier debout

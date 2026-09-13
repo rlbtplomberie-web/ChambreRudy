@@ -483,8 +483,12 @@ class VueChambre(ctx: Context) : View(ctx) {
         return kotlin.math.hypot(x - r.centerX(), y - r.centerY()) < r.width() * .55f
     }
 
-    fun commencerLeVolume(x: Float, y: Float) {
-        volumeEnCours = true
+    /** Le doigt s'est pose sur le bouton : on attend de voir s'il tourne. */
+    private var volumePret = false
+
+    fun preparerLeVolume(x: Float, y: Float) {
+        volumePret = true
+        volumeEnCours = false
         angleVolume = angleDepuisLaRadio(x, y)
     }
 
@@ -501,7 +505,7 @@ class VueChambre(ctx: Context) : View(ctx) {
         invalidate()
     }
 
-    fun lacherLeVolume() { volumeEnCours = false }
+    fun lacherLeVolume() { volumeEnCours = false; volumePret = false }
 
     private var xPrec = 0f
     private var bouge = false
@@ -513,11 +517,17 @@ class VueChambre(ctx: Context) : View(ctx) {
             MotionEvent.ACTION_DOWN -> {
                 xDepart = e.x; yDepart = e.y; xPrec = e.x; bouge = false
                 tempsDepart = System.currentTimeMillis()
-                if (surLeBoutonDeVolume(e.x, e.y)) commencerLeVolume(e.x, e.y)
+                if (surLeBoutonDeVolume(e.x, e.y)) preparerLeVolume(e.x, e.y)
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
-                if (volumeEnCours) { tournerLeVolume(e.x, e.y); bouge = true; return true }
+                if (volumePret) {
+                    // il faut avoir tourne d'un bon centimetre pour que ce soit
+                    // un reglage de volume et non un simple appui
+                    val ecart = kotlin.math.hypot(e.x - xDepart, e.y - yDepart)
+                    if (!volumeEnCours && ecart > 18f) { volumeEnCours = true; bouge = true }
+                    if (volumeEnCours) { tournerLeVolume(e.x, e.y); return true }
+                }
                 val dx = e.x - xPrec
                 xPrec = e.x
                 if (abs(e.x - xDepart) > 12f || abs(e.y - yDepart) > 12f) bouge = true
@@ -531,7 +541,10 @@ class VueChambre(ctx: Context) : View(ctx) {
                 return true
             }
             MotionEvent.ACTION_UP -> {
+                // relache sans avoir tourne : ce n'etait pas le volume,
+                // on laisse l'appui aller jusqu'a la radio
                 if (volumeEnCours) { lacherLeVolume(); return true }
+                volumePret = false
                 val duree = System.currentTimeMillis() - tempsDepart
                 if (!bouge && duree > 650 && vue == 0 && zone(Decor.TELE).contains(e.x, e.y)) {
                     surObjet?.invoke("teleLong")     // appui long sur la tele : le bilan
@@ -582,6 +595,10 @@ class VueChambre(ctx: Context) : View(ctx) {
     }
 
     /** La console suivante sort du carton et se pose sur le bureau. */
+    /** Celle qui sortira au prochain appui : on peut preparer sa video. */
+    fun consoleAVenir(): Decor.ConsolePosee =
+        Decor.CONSOLES[if (consoleIdx < 0) 0 else (consoleIdx + 1) % Decor.CONSOLES.size]
+
     fun consoleSuivante(fin: (Decor.ConsolePosee) -> Unit) {
         if (consoleIdx >= 0) {
             anime(420, { t -> sortie = 1f - t }, {

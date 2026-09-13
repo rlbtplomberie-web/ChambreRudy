@@ -50,7 +50,7 @@
         <activity
             android:name="com.rudy.chambre.atelier.AtelierActivity"
             android:exported="false"
-            android:screenOrientation="sensorLandscape"
+            android:screenOrientation="portrait"
             android:theme="@style/ThemeChambre"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density" />
 
@@ -80,7 +80,7 @@
         <activity
             android:name="com.rudy.chambre.echecs.EchecsActivity"
             android:exported="false"
-            android:screenOrientation="sensorLandscape"
+            android:screenOrientation="portrait"
             android:theme="@style/ThemeChambre"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density" />
 
@@ -88,7 +88,7 @@
         <activity
             android:name="com.rudy.chambre.dames.DamesActivity"
             android:exported="false"
-            android:screenOrientation="sensorLandscape"
+            android:screenOrientation="portrait"
             android:theme="@style/ThemeChambre"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density" />
 

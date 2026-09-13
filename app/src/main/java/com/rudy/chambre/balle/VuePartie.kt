@@ -57,12 +57,17 @@ class VuePartie(ctx: Context) : View(ctx) {
     /** Chaque personnage a sa planche et la taille de ses cases. */
     private class Planche(val fichier: String, val sw: Int, val sh: Int)
 
+    /**
+     * Chaque personnage garde sa planche, par son nom : Sophie est blonde,
+     * Mathis est le nouveau, Shanna est la fille, Theo est chauve et Carlos
+     * est le costaud. C'est ainsi qu'il les avait repartis.
+     */
     private val planches = mapOf(
-        1 to Planche("blonde_atlas.webp", 320, 370),   // Sophie
-        2 to Planche("newguy_atlas.webp", 360, 390),   // Mathis
-        3 to Planche("girl_atlas.webp", 360, 390),     // Shanna
-        4 to Planche("bald_atlas.webp", 320, 370),     // Theo
-        5 to Planche("fat_atlas.webp", 360, 390)       // Carlos
+        "Sophie" to Planche("blonde_atlas.webp", 320, 370),
+        "Mathis" to Planche("newguy_atlas.webp", 360, 390),
+        "Shanna" to Planche("girl_atlas.webp", 360, 390),
+        "Théo"   to Planche("bald_atlas.webp", 320, 370),
+        "Carlos" to Planche("fat_atlas.webp", 360, 390)
     )
 
     /** La position de la balle dans les mains, pose par pose (« CATCH_BALL_POS »). */
@@ -232,7 +237,7 @@ class VuePartie(ctx: Context) : View(ctx) {
             return
         }
 
-        val pl = planches[j.id + (if (j.team == 0) 0 else 2)] ?: planches[1]!!
+        val pl = planches[j.nom] ?: return
         val planche = charger(pl.fichier) ?: return
         // les planches ont ete allegees de moitie : les cases suivent
         val ech = planche.width / (8f * pl.sw)

@@ -29,7 +29,7 @@ class DamesActivity : ComponentActivity() {
 
     override fun onCreate(e: Bundle?) {
         super.onCreate(e)
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).apply {
             hide(WindowInsetsCompat.Type.systemBars())

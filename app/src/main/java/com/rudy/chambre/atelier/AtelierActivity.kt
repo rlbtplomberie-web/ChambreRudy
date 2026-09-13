@@ -31,7 +31,7 @@ class AtelierActivity : ComponentActivity() {
 
     override fun onCreate(e: Bundle?) {
         super.onCreate(e)
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).apply {
             hide(WindowInsetsCompat.Type.systemBars())
@@ -52,8 +52,10 @@ class AtelierActivity : ComponentActivity() {
 
         val racine = FrameLayout(this)
         racine.setBackgroundColor(0xFF1A140E.toInt())
+        val largeurTrousse = (resources.displayMetrics.widthPixels * .16f).toInt()
+        papier.margeGauche = largeurTrousse.toFloat()
         racine.addView(papier, FrameLayout.LayoutParams(-1, -1))
-        racine.addView(trousse(), FrameLayout.LayoutParams(-2, -1, Gravity.START))
+        racine.addView(trousse(), FrameLayout.LayoutParams(largeurTrousse, -1, Gravity.START))
         racine.addView(barreDuHaut())
         setContentView(racine)
     }
@@ -72,6 +74,7 @@ class AtelierActivity : ComponentActivity() {
                 p.style = Paint.Style.FILL
 
                 // les crayons, un par ligne, legerement inclines comme chez lui
+                val epaisseur = h * .022f          // l'epaisseur d'un crayon
                 OUTILS.forEachIndexed { i, o ->
                     val y = h * (.12f + i * .098f)
                     val angle = (i - (OUTILS.size - 1) / 2f) * 3f
@@ -80,19 +83,19 @@ class AtelierActivity : ComponentActivity() {
                     val x0 = l * (if (choisi) .30f else .22f)
                     val larg = l * .58f
                     p.color = o.corps
-                    c.drawRect(x0, y - l * .085f, x0 + larg * .70f, y + l * .085f, p)
+                    c.drawRect(x0, y - epaisseur, x0 + larg * .70f, y + epaisseur, p)
                     p.color = 0xFFE6E2D8.toInt()
-                    c.drawRect(x0 + larg * .70f, y - l * .085f, x0 + larg * .80f, y + l * .085f, p)
+                    c.drawRect(x0 + larg * .70f, y - epaisseur, x0 + larg * .80f, y + epaisseur, p)
                     // la pointe
                     val pointe = Path()
-                    pointe.moveTo(x0 + larg * .80f, y - l * .085f)
-                    pointe.lineTo(x0 + larg * .80f, y + l * .085f)
+                    pointe.moveTo(x0 + larg * .80f, y - epaisseur)
+                    pointe.lineTo(x0 + larg * .80f, y + epaisseur)
                     pointe.lineTo(x0 + larg, y)
                     pointe.close()
                     p.color = 0xFFECCFA6.toInt(); c.drawPath(pointe, p)
                     val mine = Path()
-                    mine.moveTo(x0 + larg * .93f, y - l * .035f)
-                    mine.lineTo(x0 + larg * .93f, y + l * .035f)
+                    mine.moveTo(x0 + larg * .93f, y - epaisseur * .42f)
+                    mine.lineTo(x0 + larg * .93f, y + epaisseur * .42f)
                     mine.lineTo(x0 + larg, y)
                     mine.close()
                     p.color = o.mine; c.drawPath(mine, p)
@@ -114,8 +117,6 @@ class AtelierActivity : ComponentActivity() {
                 return true
             }
         }
-        vue.layoutParams = FrameLayout.LayoutParams(
-            (resources.displayMetrics.widthPixels * .10f).toInt(), -1, Gravity.START)
         return vue
     }
 
@@ -148,6 +149,9 @@ class AtelierActivity : ComponentActivity() {
  * doigts — avec ses reglages d'epaisseur et de transparence.
  */
 class Papier(ctx: Context) : View(ctx) {
+
+    /** Ou commence la feuille : juste apres la trousse. */
+    var margeGauche = 0f
 
     var iOutil = 0
     var gomme = false
@@ -189,6 +193,7 @@ class Papier(ctx: Context) : View(ctx) {
         c.drawColor(0xFFF6F1E3.toInt())
         val f = feuille ?: return
         c.save()
+        c.clipRect(margeGauche, 0f, width.toFloat(), height.toFloat())
         c.translate(dx, dy)
         c.scale(zoom, zoom, width / 2f, height / 2f)
         c.drawBitmap(f, 0f, 0f, copie)
@@ -258,6 +263,8 @@ class Papier(ctx: Context) : View(ctx) {
     override fun onTouchEvent(e: MotionEvent): Boolean {
         when (e.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
+                // un doigt pose sur la trousse ne dessine pas
+                if (e.x < margeGauche) return true
                 memoriser(); reglages(); trace = true
                 val (x, y) = point(e.x, e.y)
                 ax = x; ay = y; bx = x; by = y

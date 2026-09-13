@@ -106,21 +106,23 @@ class VuePoker(ctx: Context, private val jeu: Poker) : View(ctx) {
 
         // les trois adversaires, cartes face cachee
         val noms = listOf("Kev", "Yoel", "Arthur")
-        val places = listOf(width * .16f to height * .24f,
-                            width * .50f to height * .16f,
-                            width * .84f to height * .24f)
+        val places = listOf(width * .16f to height * .10f,
+                            width * .50f to height * .06f,
+                            width * .84f to height * .10f)
         noms.forEachIndexed { i, nom ->
             val (cx, cy) = places[i]
+            // son prenom d'abord, ses deux cartes juste dessous
+            texte.textSize = height * .032f; texte.color = 0xFFCFC7B7.toInt()
+            c.drawText(nom, cx, cy, texte)
             if (jeu.phase > 0) {
+                val haut = cy + height * .018f
                 charger("dos.webp")?.let { dos ->
                     c.drawBitmap(dos, null,
-                        RectF(cx - largeur * .95f, cy - hauteur / 2f, cx + largeur * .05f, cy + hauteur / 2f), pinceau)
+                        RectF(cx - largeur * .95f, haut, cx + largeur * .05f, haut + hauteur), pinceau)
                     c.drawBitmap(dos, null,
-                        RectF(cx - largeur * .05f, cy - hauteur / 2f, cx + largeur * .95f, cy + hauteur / 2f), pinceau)
+                        RectF(cx - largeur * .05f, haut, cx + largeur * .95f, haut + hauteur), pinceau)
                 }
             }
-            texte.textSize = height * .032f; texte.color = 0xFFCFC7B7.toInt()
-            c.drawText(nom, cx, cy + hauteur * .72f, texte)
         }
 
         // le tapis : cinq emplacements au centre

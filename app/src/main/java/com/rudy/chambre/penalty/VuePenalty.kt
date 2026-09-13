@@ -255,6 +255,19 @@ class VuePenalty(ctx: Context) : View(ctx) {
             val e = if (brut < .5f) 4f * brut * brut * brut
                     else 1f - (-2f * brut + 2f).pow(3f) / 2f
             gardienImage = min(pl.images - 1, (brut * pl.images).toInt())
+            // une fois son plongeon fini et son temps au sol ecoule,
+            // il se remet debout au milieu du but
+            if (brut >= 1f && tPlongeon > duree + attenteAuSol()) {
+                gardienX = 50f; gardienY = 46.8f; gardienImage = 0
+                val im0 = charger(String.format("gardien_%s_00.webp", plongeonEnCours))
+                if (im0 != null) {
+                    val h0 = height * .26f
+                    val l0 = im0.width * (h0 / im0.height)
+                    c.drawBitmap(im0, null, RectF(px(50f) - l0 / 2f, py(46.8f) - h0 / 2f,
+                        px(50f) + l0 / 2f, py(46.8f) + h0 / 2f), pinceau)
+                }
+                return
+            }
             gardienX = 50f + pl.x * e
             gardienY = if (plongeonEnCours == "ul" || plongeonEnCours == "ur")
                 46.8f + pl.peak * sin(PI.toFloat() * min(1f, e)) + pl.endY * e.pow(3f)
@@ -271,6 +284,13 @@ class VuePenalty(ctx: Context) : View(ctx) {
 
     /** Il part 430 millisecondes apres le coup d'envoi de la course. */
     private var tPlongeon = -.430f
+
+    /**
+     * Le temps qu'il reste au sol avant de se relever : 850 millisecondes
+     * apres un plongeon en hauteur, 520 apres un plongeon bas — ses valeurs.
+     */
+    private fun attenteAuSol() =
+        if (plongeonEnCours == "ul" || plongeonEnCours == "ur") .850f else .520f
 
     private fun dessinerBalle(c: Canvas) {
         val r = px(balleTaille) / 2f

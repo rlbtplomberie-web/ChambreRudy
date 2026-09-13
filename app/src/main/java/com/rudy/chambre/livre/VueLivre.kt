@@ -50,7 +50,7 @@ class VueLivre(ctx: Context) : View(ctx) {
     fun enLecture() = lecture != null
 
     fun lire(livre: Livre, chemins: List<String>) {
-        lecture = livre; pages = chemins; page = 0; invalidate()
+        lecture = livre; pages = chemins; page = 0; tourne = 0f; invalidate()
     }
 
     fun fermer() { lecture = null; pages = emptyList(); invalidate() }
@@ -137,42 +137,73 @@ class VueLivre(ctx: Context) : View(ctx) {
 
     // ================= la lecture =================
 
+    /**
+     * Le livre ouvert : toujours deux pages, comme un vrai livre qu'on tient
+     * a deux mains. La page qui tourne se souleve, se plie et decouvre celle
+     * d'en dessous.
+     */
     private fun dessinerLecture(c: Canvas) {
         c.drawColor(0xFF120D08.toInt())
-        val deboutSeul = height > width          // telephone debout : une seule page
 
-        val cadre = if (deboutSeul)
-            RectF(width * .04f, height * .06f, width * .96f, height * .94f)
-        else RectF(width * .06f, height * .08f, width * .94f, height * .92f)
+        val cadre = RectF(width * .05f, height * .07f, width * .95f, height * .93f)
+        val milieu = cadre.centerX()
+        val demi = cadre.width() / 2f
 
-        // le livre : un fond creme, et l'epaisseur des feuilles
+        // la tranche : les feuilles empilees, de chaque cote
         p.color = 0xFFE9DFC9.toInt()
-        c.drawRoundRect(RectF(cadre.left - 6f, cadre.top - 6f, cadre.right + 6f, cadre.bottom + 6f), 10f, 10f, p)
+        c.drawRoundRect(RectF(cadre.left - 8f, cadre.top - 5f,
+            cadre.right + 8f, cadre.bottom + 5f), 12f, 12f, p)
         p.color = 0xFFF7F2E8.toInt()
         c.drawRect(cadre, p)
 
-        if (deboutSeul) {
-            pageDessinee(c, page, cadre)
+        // les deux pages du dessous : la gauche et la droite d'arrivee
+        val gauche = RectF(cadre.left, cadre.top, milieu, cadre.bottom)
+        val droite = RectF(milieu, cadre.top, cadre.right, cadre.bottom)
+        if (tourne > 0f && sensTourne > 0) {
+            // on avance : a gauche la page qu'on quitte, a droite celle qui arrive
+            pageDessinee(c, page - 2, gauche)
+            pageDessinee(c, page + 1, droite)
+        } else if (tourne > 0f) {
+            pageDessinee(c, page, gauche)
+            pageDessinee(c, page + 3, droite)
         } else {
-            val milieu = cadre.centerX()
-            pageDessinee(c, page, RectF(cadre.left, cadre.top, milieu, cadre.bottom))
-            pageDessinee(c, page + 1, RectF(milieu, cadre.top, cadre.right, cadre.bottom))
-            // la reliure
-            p.color = 0x66000000
-            c.drawRect(milieu - 7f, cadre.top, milieu + 7f, cadre.bottom, p)
+            pageDessinee(c, page, gauche)
+            pageDessinee(c, page + 1, droite)
         }
 
-        // la page qui se souleve pendant qu'on tourne
+        // la feuille en train de tourner, vue en perspective
         if (tourne > 0f) {
-            val avance = if (sensTourne > 0) tourne else 1f - tourne
-            p.color = Color.argb((120 * (1f - abs(.5f - avance) * 2f)).toInt(), 0, 0, 0)
-            val x = cadre.left + cadre.width() * avance
-            c.drawRect(x - cadre.width() * .06f, cadre.top, x, cadre.bottom, p)
+            val q = tourne
+            // elle part a plat, se dresse, puis retombe de l'autre cote
+            val largeurVisible = demi * abs(kotlin.math.cos(q * Math.PI).toFloat())
+            val versLaGauche = q < .5f
+            val avant = if (sensTourne > 0) (if (versLaGauche) page - 1 else page)
+                        else (if (versLaGauche) page + 2 else page + 1)
+            val bord = if (sensTourne > 0) {
+                if (versLaGauche) RectF(milieu - largeurVisible, cadre.top, milieu, cadre.bottom)
+                else RectF(milieu, cadre.top, milieu + largeurVisible, cadre.bottom)
+            } else {
+                if (versLaGauche) RectF(milieu, cadre.top, milieu + largeurVisible, cadre.bottom)
+                else RectF(milieu - largeurVisible, cadre.top, milieu, cadre.bottom)
+            }
+            p.color = 0xFFFBF7EE.toInt()
+            c.drawRect(bord, p)
+            pageDessinee(c, avant, bord)
+            // l'ombre que la feuille jette sur la page d'en dessous
+            val ombre = (110 * (1f - abs(.5f - q) * 2f)).toInt()
+            p.color = Color.argb(ombre, 0, 0, 0)
+            if (versLaGauche) c.drawRect(bord.left - demi * .12f, cadre.top, bord.left, cadre.bottom, p)
+            else c.drawRect(bord.right, cadre.top, bord.right + demi * .12f, cadre.bottom, p)
         }
 
-        texte.color = 0xFFCFC7B7.toInt(); texte.textSize = height * .028f
-        val total = pages.size
-        c.drawText("${page + 1} / $total", width / 2f, height * .985f, texte)
+        // la reliure, au centre
+        p.shader = LinearGradient(milieu - 14f, 0f, milieu + 14f, 0f,
+            intArrayOf(0x00000000, 0x77000000, 0x00000000), null, Shader.TileMode.CLAMP)
+        c.drawRect(milieu - 14f, cadre.top, milieu + 14f, cadre.bottom, p)
+        p.shader = null
+
+        texte.color = 0xFFCFC7B7.toInt(); texte.textSize = height * .026f
+        c.drawText("${page + 1}-${page + 2} / ${pages.size}", width / 2f, height * .985f, texte)
     }
 
     private fun pageDessinee(c: Canvas, n: Int, cadre: RectF) {
@@ -205,9 +236,9 @@ class VueLivre(ctx: Context) : View(ctx) {
                     }
                 } else {
                     // en lecture : on tourne les pages
-                    val pas = if (height > width) 1 else 2
-                    if (dx < -width * .06f || e.x > width * .65f) tournerVers(page + pas)
-                    else if (dx > width * .06f || e.x < width * .35f) tournerVers(page - pas)
+                    // un vrai livre tourne deux pages a la fois
+                    if (dx < -width * .06f || e.x > width * .65f) tournerVers(page + 2)
+                    else if (dx > width * .06f || e.x < width * .35f) tournerVers(page - 2)
                 }
             }
         }
@@ -215,10 +246,11 @@ class VueLivre(ctx: Context) : View(ctx) {
     }
 
     private fun tournerVers(n: Int) {
+        if (tourne > 0f) return                       // une page tourne deja
         val cible = n.coerceIn(0, (pages.size - 1).coerceAtLeast(0))
         if (cible == page) return
         sensTourne = if (cible > page) 1 else -1
-        page = cible
+        val arrivee = cible
         surPageTournee?.invoke()
         // la petite animation de la feuille qui se souleve
         tourne = .001f
@@ -226,9 +258,10 @@ class VueLivre(ctx: Context) : View(ctx) {
         post(object : Runnable {
             override fun run() {
                 val t = (System.nanoTime() - depart) / 1_000_000_000f
-                tourne = (t / .28f).coerceAtMost(1f)
+                tourne = (t / .55f).coerceAtMost(1f)   // le temps de voir la feuille passer
                 invalidate()
-                if (tourne < 1f) postDelayed(this, 16) else tourne = 0f
+                if (tourne < 1f) postDelayed(this, 16)
+                else { tourne = 0f; page = arrivee; invalidate() }
             }
         })
     }

@@ -12,9 +12,25 @@ import kotlin.random.Random
  * Ses bruitages de tir au but : les pas sur l'herbe, la frappe, le filet, le
  * gant du gardien, et la foule.
  */
-class SonPenalty {
+class SonPenalty(private val ctx: android.content.Context? = null) {
 
     private val frequence = 22050
+    private var lecteur: android.media.MediaPlayer? = null
+
+    /** Son vrai enregistrement d'applaudissements, celui de sa page. */
+    private fun applaudissementsReels(): Boolean {
+        val c = ctx ?: return false
+        return try {
+            lecteur?.release()
+            val f = c.assets.openFd("penalty/applaudissements.mp3")
+            lecteur = android.media.MediaPlayer().apply {
+                setDataSource(f.fileDescriptor, f.startOffset, f.length)
+                prepare(); start()
+            }
+            f.close()
+            true
+        } catch (_: Throwable) { false }
+    }
 
     private fun jouer(donnees: ShortArray) {
         try {
@@ -63,13 +79,15 @@ class SonPenalty {
         jouer(d)
     }
 
+    fun liberer() { try { lecteur?.release() } catch (_: Throwable) {}; lecteur = null }
+
     fun jouer(quoi: String) {
         when (quoi) {
             "pas" -> choc(.09, 150.0, .22, 34.0)
             "frappe" -> choc(.16, 90.0, .55, 22.0)
             "filet" -> choc(.22, 260.0, .30, 12.0)
             "gant" -> choc(.13, 190.0, .38, 26.0)
-            "applaudissements" -> foule(1.8, .45, true)
+            "applaudissements" -> if (!applaudissementsReels()) foule(1.8, .45, true)
             "deception" -> foule(1.4, .28, false)
         }
     }

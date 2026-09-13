@@ -39,7 +39,7 @@ class PenaltyActivity : ComponentActivity() {
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
 
-        son = SonPenalty()
+        son = SonPenalty(this)
         vue = VuePenalty(this)
         vue.surSon = { quoi -> son?.jouer(quoi) }
         vue.surFinDeFrappe = { arrete -> finDeFrappe(arrete) }
@@ -157,6 +157,8 @@ class PenaltyActivity : ComponentActivity() {
             }, 1050)
         }
     }
+
+    override fun onDestroy() { son?.liberer(); super.onDestroy() }
 
     private fun dire(t: String, ms: Long) {
         message.text = t
