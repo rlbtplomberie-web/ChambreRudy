@@ -96,6 +96,11 @@ dependencies {
      */
     if (File(rootDir, "m64base/app").isDirectory) implementation(project(":m64"))
 
+    // Dolphin, pour la GameCube et la Wii : meme principe, il est la ou il
+    // n'est pas selon que son dossier a ete prepare avant la compilation
+    if (File(rootDir, "dolphinbase/Source/Android/app").isDirectory)
+        implementation(project(":dolphinapp"))
+
     // reclamee par la facade de PPSSPP : PpssppActivity en herite
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.core:core-ktx:1.13.1")

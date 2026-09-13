@@ -578,7 +578,10 @@ class MainActivity : ComponentActivity() {
      */
     private fun installerReglages(): String {
         val racine = coeur.dossierSysteme
-        val temoin = File(racine, ".sysdata_installe")
+        // le nom du temoin change avec le contenu installe : sur un telephone
+        // ou l'ancienne version a deja tourne, les reglages manquants seront
+        // bien poses
+        val temoin = File(racine, ".sysdata_installe_v2")
         if (temoin.exists()) return "données système déjà en place"
         return try {
             var n = 0
@@ -595,6 +598,9 @@ class MainActivity : ComponentActivity() {
             }
             copier("3ds/sysdata", File(racine, "sysdata"))
             copier("3ds/nand", File(racine, "nand"))
+            // les reglages de Citra jeu par jeu : sans eux, certains titres
+            // restent sur un ecran opaque
+            copier("3ds/config", File(racine, "config"))
             temoin.writeText("ok")
             noter("données système installées : " + n + " fichiers")
             "données système installées (" + n + ")"

@@ -35,26 +35,36 @@ object Consoles {
                 "skinmd",    "dossier_jeux",  listOf(".md", ".gen", ".smd", ".bin", ".68k", ".sgd", ".zip"), coeur = "libgenesisplusgx.so"),
         Console("n64",  "Nintendo 64",      "paulscode.android.mupen64plusae.SplashActivity",
                 "skin_n64",  "dossier_roms",  listOf(".n64", ".z64", ".v64", ".zip"),
-                coeur = "libmupen64plus.so"),
+                // pas de moteur unique a verifier : Mupen64Plus apporte toute
+                // une serie de bibliotheques, aucune ne portant ce nom
+                coeur = null),
         Console("ps1",  "PlayStation",      "com.skinps1.app.MainActivity",
                 "skin_ps1",  "dossier_roms",  listOf(".cue", ".bin", ".chd", ".pbp", ".iso", ".m3u"), coeur = "libpcsx.so"),
         Console("dc",   "Dreamcast",        "com.skindc.app.MainActivity",
                 "skin_dc",   "dossier_roms",  listOf(".gdi", ".cdi", ".chd", ".cue"), coeur = "libflycast.so"),
         Console("ds",   "Nintendo DS",      "com.skinds.app.MainActivity",
                 "skin_ds",   "dossier_roms",  listOf(".nds", ".zip"), coeur = "libmelonds.so"),
-        Console("gc",   "GameCube",         "com.skingc.app.MainActivity",
+        /*
+         * La GameCube et la Wii ouvrent Dolphin lui-meme.
+         *
+         * Son projet ne pose pas un habillage sur un moteur : c'est Dolphin,
+         * avec ses pads greffes dedans par son patch/apply.py. Son ecran de
+         * jeu est donc celui de Dolphin, et non celui que j'avais ecrit.
+         */
+        Console("gc",   "GameCube",         "org.dolphinemu.dolphinemu.activities.EmulationActivity",
                 "skin_gc",   "dossier_roms",  listOf(".iso", ".gcm", ".gcz", ".rvz", ".ciso",
                                                      ".dol", ".elf", ".zip"),
-                coeur = "libdolphin.so"),
+                // Dolphin apporte ses propres bibliotheques, pas un fichier unique
+                coeur = null),
         /*
          * La Wii ouvre le meme ecran que la GameCube — Dolphin fait les deux —
          * mais elle garde son propre dossier de jeux et ses propres formats,
          * pour ne pas melanger les deux bibliotheques.
          */
-        Console("wii",  "Wii",              "com.skingc.app.MainActivity",
+        Console("wii",  "Wii",              "org.dolphinemu.dolphinemu.activities.EmulationActivity",
                 "skin_wii",  "dossier_roms",  listOf(".iso", ".wbfs", ".wad", ".rvz", ".ciso",
                                                      ".gcz", ".dol", ".elf", ".zip"),
-                coeur = "libdolphin.so"),
+                coeur = null),
         Console("psp",  "PSP",              "com.skinpsp.app.JeuActivity",
                 "skin_psp",  "dossier_roms",  listOf(".iso", ".cso", ".pbp", ".chd", ".elf"),
                 coeur = "libppsspp_jni.so"),

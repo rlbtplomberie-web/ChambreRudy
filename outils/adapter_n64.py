@@ -52,11 +52,8 @@ def adapter_compilation(chemin: str) -> None:
         # ou glisse dans un bloc ecrit sur une seule ligne
         t = re.sub(mot + r'\s*=?\s*[\'"][^\'"]*[\'"]', '', t)
         t = re.sub(mot + r'\s*=?\s*\d+', '', t)
-    for mot in ('applicationVariants', 'splits', 'bundle',
-                'productFlavors', 'flavorDimensions'):
+    for mot in ('applicationVariants', 'splits', 'bundle'):
         t = retirer_bloc(t, mot)
-    # « flavorDimensions » s'ecrit parfois sur une seule ligne, sans bloc
-    t = re.sub(r'^\s*flavorDimensions\s*[^\n]*$', '', t, flags=re.M)
     t = limiter_architecture(t)
     t = aligner_version_minimale(t)
     t = accorder_traduction_java(t)

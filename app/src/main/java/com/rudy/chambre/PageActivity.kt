@@ -343,6 +343,20 @@ class PageActivity : ComponentActivity() {
                     SonPartage.consoleLanceeA = System.currentTimeMillis()
                     val i = Intent(this@PageActivity, Class.forName(fiche.activite))
                         .putExtra("rom", uriRom)
+
+                    /*
+                     * Dolphin ne regarde pas le supplement « rom ».
+                     *
+                     * Son ecran de jeu attend la liste des chemins sous
+                     * « SelectedGames » et le titre sous « SelectedTitle ».
+                     * Sans cette traduction il s'ouvrirait sans jeu.
+                     */
+                    if (fiche.activite.startsWith("org.dolphinemu")) {
+                        i.putExtra("SelectedGames", arrayOf(uriRom))
+                        i.putExtra("SelectedTitle", fiche.nom)
+                        i.putExtra("riivolution", false)
+                        i.putExtra("systemMenu", false)
+                    }
                         // la GameCube et la Wii partagent leur ecran : il doit
                         // savoir laquelle des deux a ete posee sur la table
                         .putExtra("console", console)
