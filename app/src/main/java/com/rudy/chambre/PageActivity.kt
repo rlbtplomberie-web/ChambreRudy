@@ -31,6 +31,45 @@ import org.json.JSONObject
  * redessines soixante fois par seconde. Ils restent des pages, et gardent le
  * pont vers le telephone : choisir un dossier de ROMs, lancer un jeu.
  */
+/**
+ * Le rangement pret a poser dans une page : les memes gestes que celui des
+ * artefacts, mais servi par le telephone.
+ */
+private const val RANGEMENT = """
+(function(){
+  if (typeof Android === "undefined" || !Android.memoireEcrire) return;
+  if (window.storage && window.storage.__pose) return;
+  window.storage = {
+    __pose: true,
+    get: function(cle){
+      return new Promise(function(ok, non){
+        try{
+          var v = Android.memoireLire(cle);
+          if (v === null || v === "") { non(new Error("rien sous " + cle)); return; }
+          ok({ key: cle, value: v, shared: false });
+        }catch(e){ non(e); }
+      });
+    },
+    set: function(cle, valeur){
+      return new Promise(function(ok, non){
+        try{
+          var fait = Android.memoireEcrire(cle, String(valeur));
+          if (!fait) { non(new Error("ecriture refusee")); return; }
+          ok({ key: cle, value: valeur, shared: false });
+        }catch(e){ non(e); }
+      });
+    },
+    delete: function(cle){
+      return new Promise(function(ok){
+        try{ ok({ key: cle, deleted: Android.memoireEffacer(cle), shared: false }); }
+        catch(e){ ok({ key: cle, deleted: false, shared: false }); }
+      });
+    },
+    list: function(){ return Promise.resolve({ keys: [], shared: false }); }
+  };
+})();
+"""
+
 class PageActivity : ComponentActivity() {
 
     private lateinit var vue: WebView
@@ -110,6 +149,19 @@ class PageActivity : ComponentActivity() {
             webViewClient = object : WebViewClient() {
                 override fun shouldInterceptRequest(v: WebView, r: WebResourceRequest): WebResourceResponse? =
                     serveur.shouldInterceptRequest(r.url)
+
+                /**
+                 * Des que la page est la, on lui donne son rangement.
+                 *
+                 * Les vitrines rangent leurs affaires dans « window.storage ».
+                 * Ce rangement n'existe pas dans un navigateur embarque : on
+                 * le fabrique ici, pose sur les fichiers du telephone, et tout
+                 * se retrouve d'une ouverture a l'autre.
+                 */
+                override fun onPageFinished(v: WebView?, url: String?) {
+                    super.onPageFinished(v, url)
+                    v?.evaluateJavascript(RANGEMENT, null)
+                }
             }
             /*
              * Une page qui demande un fichier — « Ajouter un livre », une
@@ -192,11 +244,53 @@ class PageActivity : ComponentActivity() {
             return a.toString()
         }
 
+        /**
+         * La memoire des vitrines.
+         *
+         * Elles enregistrent dans « window.storage », qui n'existe pas dans
+         * un navigateur embarque : rien n'etait donc conserve, et il fallait
+         * tout refaire a chaque ouverture. On leur donne ici un vrai rangement,
+         * un fichier par vitrine — sans limite de taille, contrairement a la
+         * memoire du navigateur, ce qui compte avec des jaquettes.
+         */
+        @JavascriptInterface
+        fun memoireLire(cle: String): String {
+            return try {
+                val f = java.io.File(dossierMemoire(), nomDeFichier(cle))
+                if (f.exists()) f.readText() else ""
+            } catch (_: Throwable) { "" }
+        }
+
+        @JavascriptInterface
+        fun memoireEcrire(cle: String, valeur: String): Boolean {
+            return try {
+                java.io.File(dossierMemoire(), nomDeFichier(cle)).writeText(valeur)
+                true
+            } catch (_: Throwable) { false }
+        }
+
+        @JavascriptInterface
+        fun memoireEffacer(cle: String): Boolean {
+            return try {
+                java.io.File(dossierMemoire(), nomDeFichier(cle)).delete()
+            } catch (_: Throwable) { false }
+        }
+
+        private fun dossierMemoire() =
+            java.io.File(filesDir, "vitrines").apply { mkdirs() }
+
+        private fun nomDeFichier(cle: String) =
+            cle.replace(Regex("[^A-Za-z0-9_.-]"), "_") + ".json"
+
         @JavascriptInterface
         fun lancer(console: String, uriRom: String) {
             runOnUiThread {
                 try {
                     val fiche = Consoles.parId(console) ?: return@runOnUiThread
+                    marquerLeJournal(fiche.nom, uriRom)
+                    // la chambre ne doit pas relancer sa musique en repassant
+                    // devant : la console a la sienne
+                    SonPartage.consoleLanceeA = System.currentTimeMillis()
                     val i = Intent(this@PageActivity, Class.forName(fiche.activite))
                         .putExtra("rom", uriRom)
                     startActivity(i)
@@ -205,6 +299,25 @@ class PageActivity : ComponentActivity() {
                     expliquerEchec(console, e)
                 }
             }
+        }
+
+        /**
+         * Ecrire dans le journal quelle console vient de partir.
+         *
+         * L'emulateur, lui, peut mourir dans son coeur natif sans rien
+         * laisser. Cette marque-ci est ecrite AVANT le depart : elle est donc
+         * toujours la, et la chambre sait ensuite a quelle console rattacher
+         * ce qui suit.
+         */
+        private fun marquerLeJournal(nomConsole: String, rom: String) {
+            try {
+                val d = java.io.File(filesDir, "systeme").apply { mkdirs() }
+                val heure = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.FRANCE)
+                    .format(java.util.Date())
+                java.io.File(d, "journal_appli.txt").appendText(
+                    "\n=== CONSOLE " + nomConsole + " lancée à " + heure + "\n" +
+                    "jeu : " + rom.takeLast(70) + "\n")
+            } catch (_: Throwable) {}
         }
 
         /**

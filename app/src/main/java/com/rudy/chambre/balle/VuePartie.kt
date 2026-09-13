@@ -48,11 +48,25 @@ class VuePartie(ctx: Context) : View(ctx) {
      */
     private val finesse: Float get() = resources.displayMetrics.density
 
-    /** Les cases des planches : une ligne par action, comme chez lui. */
+    /** L'ordre habituel des lignes : une par action. */
     private val lignes = mapOf(
         "walk" to 0, "run" to 1, "throw" to 2, "dodge" to 3, "catch" to 4,
         "fall" to 5, "rise" to 6, "hit" to 7, "pass" to 8
     )
+
+    /**
+     * La planche de Mathis est decalee d'un cran : sa marche se trouve en
+     * derniere ligne, et toutes les autres remontent d'une place. Verifie en
+     * mesurant les silhouettes case par case et en les comparant a celles des
+     * autres planches.
+     */
+    private val lignesMathis = mapOf(
+        "run" to 0, "throw" to 1, "dodge" to 2, "catch" to 3, "fall" to 4,
+        "rise" to 5, "hit" to 6, "pass" to 7, "walk" to 8
+    )
+
+    /** L'ordre des lignes propre a ce personnage. */
+    private fun lignesDe(nom: String) = if (nom == "Mathis") lignesMathis else lignes
 
     /** Chaque personnage a sa planche et la taille de ses cases. */
     private class Planche(val fichier: String, val sw: Int, val sh: Int)
@@ -348,7 +362,7 @@ class VuePartie(ctx: Context) : View(ctx) {
         // les planches ont ete allegees de moitie : les cases suivent
         val ech = planche.width / (8f * pl.sw)
         val sw = (pl.sw * ech); val sh = (pl.sh * ech)
-        val ligne = lignes[action] ?: 0
+        val ligne = lignesDe(j.nom)[action] ?: 0
         val src = Rect((pose * sw).toInt(), (ligne * sh).toInt(),
                        ((pose + 1) * sw).toInt(), ((ligne + 1) * sh).toInt())
         val echelle = cible / pl.sh

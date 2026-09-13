@@ -308,24 +308,40 @@ class ChambreActivity : ComponentActivity() {
         } catch (_: Throwable) { "" }
 
         /*
-         * Le journal du dernier emulateur ouvert.
+         * Ce qu'a fait la console posee sur la table.
          *
          * Un arret dans le coeur natif ne remonte pas jusqu'a Java : aucun
          * plantage n'est alors enregistre, et l'ecran se ferme sans rien dire.
-         * Ce journal, lui, note chaque etape franchie — on voit donc jusqu'ou
-         * l'emulateur est alle avant de s'arreter.
+         * Le journal, lui, garde la trace de chaque etape franchie. On y
+         * cherche la derniere fois que CETTE console est partie, et on montre
+         * tout ce qui a suivi : c'est son compte rendu a elle.
          */
+        val posee = vue.consolePosee()
         val journal = try {
             val f = java.io.File(java.io.File(filesDir, "systeme"), "journal_appli.txt")
-            if (f.exists()) {
+            if (!f.exists()) "\n\n(aucune console n'a encore laissé de trace)"
+            else {
                 val lignes = f.readLines()
-                // seulement le dernier demarrage, les vingt dernieres lignes
-                val depuis = lignes.indexOfLast { it.startsWith("--- démarrage") }
-                val utiles = if (depuis >= 0) lignes.drop(depuis) else lignes
-                "\n\nDernier émulateur ouvert :\n" + utiles.takeLast(20).joinToString("\n")
-            } else "\n\n(aucun émulateur n'a encore laissé de trace)"
+                if (posee == null) {
+                    "\n\nSors une console du carton pour voir son compte rendu."
+                } else {
+                    val marque = "=== CONSOLE " + posee.nom + " "
+                    val depart = lignes.indexOfLast { it.startsWith(marque) }
+                    if (depart < 0) {
+                        "\n\n" + posee.nom + " : aucun lancement enregistré."
+                    } else {
+                        val suite = lignes.drop(depart)
+                            .filter { it.isNotBlank() }
+                            .takeLast(22)
+                        "\n\nCompte rendu de " + posee.nom + " :\n" + suite.joinToString("\n") +
+                        "\n\n(si ça s'arrête après « avant ouverture du cœur », c'est le" +
+                        " moteur qui refuse ; après « ROM reçue », c'est le jeu.)"
+                    }
+                }
+            }
         } catch (_: Throwable) { "" }
-        menu().setTitle("Ce que contient cet APK")
+
+        menu().setTitle(if (posee != null) posee.nom + " — compte rendu" else "Ce que contient cet APK")
             .setMessage(texte + plantage + journal)
             .setPositiveButton("Fermer", null)
             .setNegativeButton("Tout effacer") { _, _ ->
@@ -510,7 +526,9 @@ class ChambreActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        son.enPause(false)
+        // si une console vient de partir, la chambre ne fait que passer :
+        // sa musique reste muette, celle du jeu prend le relais
+        if (!SonPartage.consoleVientDePartir()) son.enPause(false)
     }
 
     override fun onPause() {

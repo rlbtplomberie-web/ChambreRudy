@@ -1,7 +1,8 @@
-version 98
-  balle : sa musique, Phoenix Wright « Pressing Pursuit ~ Cornered »
-  emulateurs : chacun note ses etapes (ouverture du coeur, ROM recue) dans
-               un journal commun, que la chambre affiche sous le bilan —
-               un arret dans le coeur natif ne laissait aucune trace
-  chambre : appui long sur la tele = bilan + plantage + journal, avec un
-               bouton Copier
+version 99
+  balle : la planche de Mathis a son propre ordre de lignes (sa marche est
+          en derniere ligne) — il ne reste plus couche quand il est debout
+  tele : appui long = compte rendu de la console posee sur la table
+  musique : la chambre ne relance plus sa musique en repassant devant
+          pendant qu'une console demarre
+  vitrines : elles gardent enfin leurs jaquettes et leurs titres, dans un
+          fichier par vitrine (window.storage n'existait pas ici)
