@@ -1,1 +1,1 @@
-version 77 - manifestes de Mupen64Plus neutralises
+version 78 - version minimale alignee, traduction a la seule application

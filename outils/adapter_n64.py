@@ -42,7 +42,8 @@ def adapter_compilation(chemin: str) -> None:
     for mot in ('applicationVariants', 'splits', 'bundle'):
         t = retirer_bloc(t, mot)
     t = limiter_architecture(t)
-    t = activer_traduction_java(t)
+    t = aligner_version_minimale(t)
+    t = retirer_traduction_des_modules(t)
     open(chemin, 'w', encoding='utf-8').write(t)
     print('fichier de compilation adapte :', chemin)
 
@@ -74,38 +75,31 @@ def poser_espace_de_noms(gradle: str, manifeste: str) -> None:
     print('espace de noms pose :', paquet)
 
 
-def activer_traduction_java(t: str) -> str:
+def retirer_traduction_des_modules(t: str) -> str:
     """
-    Activer la traduction des fonctions Java récentes, module par module.
+    Laisser la traduction Java a la seule application.
 
-    Ce projet emploie des fonctions apparues après Android 9. Gradle exige que
-    chaque morceau déclare lui-même cette traduction, sinon il refuse de les
-    assembler — c'est l'erreur « coreLibraryDesugaringEnabled ».
+    Quand un module la declare, Gradle exige que l'application la declare aussi,
+    et l'outil qui assemble le code finit par se perdre entre les dossiers de
+    chaque module. La Chambre l'active pour tout le monde : les modules n'ont
+    pas a la redemander.
     """
-    if 'coreLibraryDesugaringEnabled' not in t:
-        i = t.find('compileOptions')
-        if i != -1:
-            j = t.find('{', i)
-            if j != -1:
-                t = t[:j + 1] + "\n        coreLibraryDesugaringEnabled true\n" + t[j + 1:]
-        else:
-            i = t.find('android')
-            if i != -1:
-                j = t.find('{', i)
-                if j != -1:
-                    t = (t[:j + 1]
-                         + "\n    compileOptions {\n        coreLibraryDesugaringEnabled true\n    }\n"
-                         + t[j + 1:])
+    t = re.sub(r'^\s*coreLibraryDesugaringEnabled\s+\w+\s*$', '', t, flags=re.M)
+    t = re.sub(r'^\s*coreLibraryDesugaring\s+[\'"][^\'"]*[\'"]\s*$', '', t, flags=re.M)
+    return t
 
-    if 'desugar_jdk_libs' not in t:
-        i = t.find('dependencies')
-        ligne = "\n    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs_nio:2.1.5'\n"
-        if i != -1:
-            j = t.find('{', i)
-            if j != -1:
-                t = t[:j + 1] + ligne + t[j + 1:]
-        else:
-            t = t + "\ndependencies {" + ligne + "}\n"
+
+def aligner_version_minimale(t: str) -> str:
+    """
+    Aligner la version minimale d'Android sur celle de la Chambre.
+
+    Ces modules reclament une version plus recente que la notre, et Gradle
+    refuse alors de les assembler : « use a compatible library with a minSdk of
+    at most 24 ». On ramene donc chacun a 24, comme notre application.
+    """
+    t = re.sub(r'minSdkVersion\s+\d+', 'minSdkVersion 24', t)
+    t = re.sub(r'minSdk\s+\d+', 'minSdk 24', t)
+    t = re.sub(r'minSdk\s*=\s*\d+', 'minSdk = 24', t)
     return t
 
 
