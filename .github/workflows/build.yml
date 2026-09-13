@@ -221,23 +221,23 @@ jobs:
       - name: Compiler
         run: |
           set -o pipefail
-          # on garde une copie du journal pour en extraire les erreurs
-          if gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee /tmp/compilation.log; then
+          # --continue : on ne s'arrete pas a la premiere erreur, on les
+          # recolte toutes avant de rendre la main
+          if gradle assembleDebug --continue --no-daemon --stacktrace 2>&1 \
+               | tee /tmp/compilation.log; then
             echo "compilation reussie"
             exit 0
           fi
 
           echo "=== erreurs relevees ==="
-          # les erreurs Kotlin et Java, puis la raison donnee par Gradle
-          grep -E "^e: |^ERROR:|error:" /tmp/compilation.log | head -25 | while read -r ligne; do
-            echo "::error::$ligne"
-          done
-          # le detail des conflits de manifeste, s'il y en a
-          grep -E "Manifest merger|is also present at|Suggestion:" /tmp/compilation.log \
-            | head -12 | while read -r ligne; do
-            echo "::error::$ligne"
-          done
-          sed -n "/What went wrong/,/^\* Try/p" /tmp/compilation.log | head -20 | while read -r ligne; do
+          # « || true » sur chaque recherche : sans cela, une recherche sans
+          # resultat arretait tout le releve, et aucune erreur n'etait affichee
+          {
+            grep -E "^e: |^ERROR:|error:" /tmp/compilation.log | head -30 || true
+            grep -E "Manifest merger|is also present at|Suggestion:" /tmp/compilation.log | head -12 || true
+            grep -E "^> Task .* FAILED" /tmp/compilation.log | head -10 || true
+            sed -n "/What went wrong/,/^\* Try/p" /tmp/compilation.log | head -30 || true
+          } | sort -u | while read -r ligne; do
             [ -n "$ligne" ] && echo "::error::$ligne"
           done
           exit 1
