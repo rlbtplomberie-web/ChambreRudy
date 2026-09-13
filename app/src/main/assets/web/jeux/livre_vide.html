@@ -7,12 +7,20 @@
 #lib{position:fixed;inset:0;perspective:1400px;background:radial-gradient(ellipse at 50% 15%,#9a653c55,transparent 45%),repeating-linear-gradient(90deg,#ffffff08 0 2px,transparent 2px 14px),linear-gradient(#42210f,#6a3c20 12%,#4c2814 88%,#211006)}
 #lib:before,#lib:after{content:"";position:absolute;left:0;right:0;height:7%;background:linear-gradient(#8b5631,#35190c);box-shadow:0 12px 24px #000b}
 #lib:before{top:5%}#lib:after{bottom:5%;box-shadow:0 -12px 24px #000b}
-#shelf{position:absolute;inset:12% 0 12%;display:flex;align-items:center;justify-content:center;touch-action:none}
-#book{position:relative;width:min(55vw,290px);aspect-ratio:.69;transform-style:preserve-3d;transition:transform .25s;cursor:pointer}
+#shelf{position:absolute;inset:12% 0 12%;display:flex;align-items:center;justify-content:center;
+  touch-action:none;perspective:1400px}
+/* le rayon : cinq emplacements, celui du milieu de face, les autres de profil */
+#rayon{position:relative;width:100%;height:100%;transform-style:preserve-3d}
+.livre3d{position:absolute;left:50%;top:50%;width:min(48vw,250px);aspect-ratio:.69;
+  transform-style:preserve-3d;cursor:pointer;
+  transition:transform .42s cubic-bezier(.22,.8,.3,1), opacity .42s ease;
+  will-change:transform,opacity}
+#book{position:relative}
 .cover{position:absolute;inset:0;background:center/cover no-repeat;border-radius:5px 12px 12px 5px;box-shadow:0 30px 50px #000c,inset -14px 0 18px #0005;border:1px solid #ffffff30}
 .cover:before{content:"";position:absolute;left:-12px;top:3px;bottom:3px;width:15px;background:linear-gradient(90deg,#1c0b04,#87471f,#2a1107);transform:rotateY(-60deg);transform-origin:right}
 .pageside{position:absolute;right:-12px;top:8px;bottom:8px;width:16px;background:repeating-linear-gradient(#fff9e8 0 2px,#c7bba6 2px 3px);transform:rotateY(70deg);transform-origin:left}
-.name{position:absolute;top:calc(100% + 18px);left:50%;transform:translateX(-50%);white-space:nowrap;font-weight:800;color:#f3d6a0;text-shadow:0 3px 5px #000}
+.name{position:absolute;bottom:6%;left:0;right:0;text-align:center;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;font-weight:800;color:#f3d6a0;text-shadow:0 3px 5px #000}
 .hint{position:absolute;bottom:2%;left:5%;right:5%;text-align:center;color:#f0d8ad;font-size:14px}
 #reader{display:none;position:fixed;inset:0;z-index:10;touch-action:none;
 background:
@@ -69,7 +77,16 @@ background:linear-gradient(90deg,#d7c6a9,#f3ead9);border-radius:12px 2px 2px 12p
  #opened{width:min(80vw,920px);height:min(76vh,650px)}
 }
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script></head><body>
-<div id="lib"><button id="addOneBtn" style="position:absolute;z-index:20;top:16px;right:190px;border:1px solid #ffffff55;background:#111c;color:#fff;border-radius:999px;padding:11px 15px;font-weight:800">＋ Un livre</button><button id="addPdfBtn" style="position:absolute;z-index:20;top:16px;right:16px;border:1px solid #ffffff55;background:#111c;color:#fff;border-radius:999px;padding:11px 15px;font-weight:800">📁 Dossier des livres</button><input id="addPdfInput" type="file" accept="application/pdf" style="display:none"><div id="shelf"><div id="book"><div class="pageside"></div><div class="cover"></div><div class="name">Dragon Ball — Tome 1</div></div></div><div class="hint">Glisse le livre à gauche/droite • touche-le pour l’ouvrir</div></div>
+<div id="lib"><button id="addOneBtn" style="position:absolute;z-index:20;top:16px;right:190px;border:1px solid #ffffff55;background:#111c;color:#fff;border-radius:999px;padding:11px 15px;font-weight:800">＋ Un livre</button><button id="addPdfBtn" style="position:absolute;z-index:20;top:16px;right:16px;border:1px solid #ffffff55;background:#111c;color:#fff;border-radius:999px;padding:11px 15px;font-weight:800">📁 Dossier des livres</button><input id="addPdfInput" type="file" accept="application/pdf" style="display:none"><div id="shelf">
+  <div id="rayon">
+    <div class="livre3d" data-place="-2"><div class="pageside"></div><div class="cover"></div></div>
+    <div class="livre3d" data-place="-1"><div class="pageside"></div><div class="cover"></div></div>
+    <div class="livre3d" data-place="0" id="book"><div class="pageside"></div><div class="cover"></div></div>
+    <div class="livre3d" data-place="1"><div class="pageside"></div><div class="cover"></div></div>
+    <div class="livre3d" data-place="2"><div class="pageside"></div><div class="cover"></div></div>
+  </div>
+  <div class="name">Aucun livre</div>
+</div><div class="hint">Glisse le livre à gauche/droite • touche-le pour l’ouvrir</div></div>
 <div id="reader"><div class="bar"><button id="close">← Armoire</button><button id="prev">‹</button><button id="next">›</button><button id="mode">Sens manga</button><span class="stat" id="stat"></span></div>
 <div id="stage"><div id="opened"><div id="frontCover"></div><div class="pg left"><img id="L"></div><div class="pg right"><img id="R"></div><div class="spine"></div><div id="flip"><div class="face"><img id="F"></div><div class="face b"><img id="B"></div></div></div></div></div>
 <script>
@@ -129,7 +146,17 @@ function openBook(){
  const r=$("#reader"); r.className="show opening"; render();
  setTimeout(()=>{r.className="show opened"},900);
 }
-$("#book").onclick=openBook;
+$("#book").onclick = async () => {
+  const livre = libraryBooks[currentBook];
+  if(!livre) return;
+  const nm = document.querySelector(".name");
+  if(!livre.pages){
+    if(nm) nm.textContent = livre.title + " — ouverture…";
+    await ouvrirLivre(currentBook);
+  } else refreshCurrentBook();
+  if(PAGES.length) openBook();
+  else if(nm) nm.textContent = livre.title + " — illisible";
+};
 $("#close").onclick=()=>{const r=$("#reader");r.className="";} ;
 async function flip(next){if(busy)return;let np=next?p+2:p-2;if(np<0||np>=PAGES.length)return;busy=true;let el=$("#flip");el.className="";
 let front=next?(manga?p:p+1):(manga?p+1:p);let back=next?(manga?p+2:p+3):(manga?p-2:p-1);setImg("#F",front);setImg("#B",back);void el.offsetWidth;el.className=next?"go":"backgo";
@@ -138,8 +165,8 @@ $("#next").onclick=()=>flip(true);$("#prev").onclick=()=>flip(false);$("#mode").
 $("#stage").onpointerdown=e=>{sx=e.clientX;sy=e.clientY;$("#stage").setPointerCapture(e.pointerId)}
 $("#stage").onpointerup=e=>{let dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy))flip(dx<0);else if(e.clientX<innerWidth*.22)flip(false);else if(e.clientX>innerWidth*.78)flip(true)}
 $("#shelf").onpointerdown=e=>{sx=e.clientX;$("#shelf").setPointerCapture(e.pointerId)}
-$("#shelf").onpointermove=e=>{if(!$("#shelf").hasPointerCapture(e.pointerId))return;drag=Math.max(-150,Math.min(150,(e.clientX-sx)*.7));$("#book").style.transform=`translateX(${drag}px) rotateY(${drag/18}deg)`}
-$("#shelf").onpointerup=e=>{drag=0;$("#book").style.transform=""}
+$("#shelf").onpointermove=e=>{ /* le defilement est gere par le rayon */ }
+$("#shelf").onpointerup=e=>{ drag=0; }
 
 preloadAround(0);
 
@@ -161,9 +188,9 @@ async function chargerBibliotheque(){
     libraryBooks = [];
     return;
   }
-  libraryBooks = liste.map(l => ({ title:l.titre, id:l.id, pages:null }));
+  libraryBooks = liste.map(l => ({ title:l.titre, id:l.id, pages:null, couverture:null }));
   currentBook = 0;
-  await ouvrirLivre(0);
+  placerRayon();
 }
 
 /* Les pages sont dessinees par le telephone, une fois pour toutes. */
@@ -178,6 +205,7 @@ async function ouvrirLivre(i){
   currentBook = i;
   if(livre.pages.length){
     refreshCurrentBook();
+    placerRayon();
     // le telephone continue de preparer les pages suivantes : on les recupere
     let essais = 0;
     const suivre = setInterval(() => {
@@ -257,17 +285,55 @@ $("#addPdfInput").onchange=async e=>{
   }
 };
 
+/* ====== l'etagere en volume ====== */
+const emplacements = [...document.querySelectorAll(".livre3d")];
+
+function placerRayon(){
+  for(const el of emplacements){
+    const d = +el.dataset.place;                       // -2 a 2 par rapport au livre courant
+    const i = currentBook + d;
+    const livre = libraryBooks[i];
+    const cov = el.querySelector(".cover");
+    if(!livre){ el.style.opacity = 0; el.style.pointerEvents = "none"; continue; }
+    el.style.opacity = d === 0 ? 1 : (Math.abs(d) === 1 ? .72 : .34);
+    el.style.pointerEvents = d === 0 ? "auto" : "none";
+    el.style.zIndex = 10 - Math.abs(d);
+    /* de face au centre, tourne et recule sur les cotes */
+    const x = d * 42, ry = d * -38, tz = -Math.abs(d) * 160, ech = d === 0 ? 1 : .82;
+    el.style.transform =
+      `translate(-50%,-50%) translateX(${x}%) translateZ(${tz}px) rotateY(${ry}deg) scale(${ech})`;
+    if(livre.couverture) cov.style.backgroundImage = `url("${livre.couverture}")`;
+    else { cov.style.background = "linear-gradient(160deg,#2a2030,#151018)"; demanderCouverture(i); }
+  }
+  const nm = document.querySelector(".name");
+  if(nm) nm.textContent = libraryBooks[currentBook] ? libraryBooks[currentBook].title : "Aucun livre";
+}
+
+/* La couverture se demande au telephone, une seule page a dessiner. */
+function demanderCouverture(i){
+  const A = android(); const livre = libraryBooks[i];
+  if(!A || !livre || livre.enCours) return;
+  livre.enCours = true;
+  setTimeout(() => {
+    try{
+      const u = A.couverture(livre.id);
+      if(u){ livre.couverture = u; placerRayon(); }
+    }catch(e){}
+  }, 40 * Math.abs(i - currentBook));
+}
+
 // Dans l'armoire : glissement horizontal pour changer de livre.
 let libSwipeX=0;
 $("#shelf").addEventListener("pointerdown",e=>{libSwipeX=e.clientX});
 $("#shelf").addEventListener("pointerup",e=>{
   const dx=e.clientX-libSwipeX;
   if(Math.abs(dx)>65 && libraryBooks.length>1){
-    const suivant=(currentBook+(dx<0?1:-1)+libraryBooks.length)%libraryBooks.length;
-    ouvrirLivre(suivant);
+    currentBook = (currentBook + (dx<0?1:-1) + libraryBooks.length) % libraryBooks.length;
+    placerRayon();                                   // on fait defiler, sans ouvrir
     refreshCurrentBook();
   }
 });
 
 </script><script>setTimeout(chargerBibliotheque, 120);</script>
+<script>setTimeout(placerRayon, 200);</script>
 </body></html>

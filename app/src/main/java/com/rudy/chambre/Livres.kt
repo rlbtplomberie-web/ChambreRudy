@@ -94,7 +94,7 @@ object Livres {
             (0 until l.length()).map { l.getJSONObject(it) }.firstOrNull { it.getString("id") == id }
         } ?: return sortie
 
-        dessiner(ctx, id, Uri.parse(livre.getString("uri")))
+        dessiner(ctx, id, Uri.parse(livre.getString("uri")), premieres = 4)
         cible.listFiles { f -> f.name.endsWith(".jpg") }?.sortedBy { it.name }?.forEach {
             sortie.put("https://appassets.androidplatform.net/livres/$id/${it.name}")
         }
@@ -142,6 +142,21 @@ object Livres {
             Thread { dessiner(ctx, id, uri, 0) }
                 .apply { priority = Thread.MIN_PRIORITY }.start()
         }
+    }
+
+    /** La seule couverture, pour l'etagere : une page a dessiner, pas deux cents. */
+    fun couverture(ctx: Context, id: String): String {
+        val cible = File(File(ctx.filesDir, "livres"), id)
+        val premiere = File(cible, "p0000.jpg")
+        if (!premiere.exists()) {
+            val livre = lister(ctx).let { l ->
+                (0 until l.length()).map { l.getJSONObject(it) }
+                    .firstOrNull { it.getString("id") == id }
+            } ?: return ""
+            dessiner(ctx, id, Uri.parse(livre.getString("uri")), premieres = 1)
+        }
+        return if (premiere.exists())
+            "https://appassets.androidplatform.net/livres/$id/p0000.jpg" else ""
     }
 
     /** Les pages deja pretes d'un livre, pour rafraichir pendant la lecture. */
