@@ -75,6 +75,7 @@ class BlackjackActivity : ComponentActivity() {
                 .apply { topMargin = 18; leftMargin = 18 }
         })
         setContentView(racine)
+        com.rudy.chambre.Ambiance.adoucirLaMusique()
         majBoutons()
     }
 
@@ -128,7 +129,7 @@ class BlackjackActivity : ComponentActivity() {
         vue.postDelayed({ pas() }, 380)
     }
 
-    override fun onDestroy() { son?.liberer(); super.onDestroy() }
+    override fun onDestroy() { com.rudy.chambre.Ambiance.rendreLaMusique(); son?.liberer(); super.onDestroy() }
 }
 
 /** Le tapis, les mains, les scores et l'etat de chacun. */
@@ -179,16 +180,21 @@ class VueBlackjack(ctx: Context, private val jeu: Blackjack) : View(ctx) {
         c.drawText("CROUPIER $scoreCroupier", width / 2f, height * .07f, texte)
 
         // les quatre places, en bas
+        // ses quatre places : les deux du milieu devant le tapis, les deux
+        // extremes posees au centre des cases BONNE CHANCE
+        val places = floatArrayOf(.19f, .40f, .60f, .81f)
+        val hauteurs = floatArrayOf(.62f, .70f, .70f, .62f)
         for (i in 0 until 4) {
-            val cx = width * (.14f + i * .24f)
-            main(c, jeu.joueurs[i].cartes, cx, height * .66f, hauteurCarte * .86f)
+            val cx = width * places[i]
+            main(c, jeu.joueurs[i].cartes, cx, height * hauteurs[i], hauteurCarte * .86f)
             texte.textSize = height * .030f
             texte.color = if (jeu.enCours && jeu.tour == i) 0xFFFFE16E.toInt() else 0xFFCFC7B7.toInt()
             val nom = if (i == 0) "TOI" else "JOUEUR ${i + 1}"
             val score = if (jeu.joueurs[i].cartes.isNotEmpty()) " (${jeu.valeur(jeu.joueurs[i])})" else ""
-            c.drawText(nom + score, cx, height * .855f, texte)
+            val sousLesCartes = height * (hauteurs[i] + .13f)
+            c.drawText(nom + score, cx, sousLesCartes, texte)
             texte.textSize = height * .026f; texte.color = 0xFFFFD35A.toInt()
-            c.drawText(jeu.joueurs[i].etat, cx, height * .895f, texte)
+            c.drawText(jeu.joueurs[i].etat, cx, sousLesCartes + height * .035f, texte)
         }
 
         texte.textSize = height * .032f; texte.color = Color.WHITE

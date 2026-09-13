@@ -78,7 +78,8 @@ class VuePartie(ctx: Context) : View(ctx) {
     )
 
     init {
-        setLayerType(LAYER_TYPE_HARDWARE, null)
+        // le halo des eclairs et des flammes demande la peinture logicielle
+        setLayerType(LAYER_TYPE_SOFTWARE, null)
         Thread {
             charger("terrain.webp")?.let { terrain = it; post { invalidate() } }
             for (pl in planches.values) charger(pl.fichier)
@@ -201,10 +202,10 @@ class VuePartie(ctx: Context) : View(ctx) {
             j.fallA > 0f -> "fall" to pose(1f - j.fallA / .82f)
             j.riseA > 0f -> "rise" to pose(1f - j.riseA / .82f)
             j.hitA > 0f -> "hit" to pose(1f - j.hitA / .35f)
-            j.pickupA > 0f -> "catch" to pose(1f - j.pickupA / .48f)
-            j.passA > 0f -> "pass" to pose(1f - j.passA / .42f)
-            j.throwA > 0f -> "throw" to pose(1f - j.throwA / .38f)
-            j.catchA > 0f && partie.B.held === j -> "catch" to pose(1f - j.catchA / .50f)
+            j.pickupA > 0f -> "catch" to pose(1f - j.pickupA / .62f)
+            j.passA > 0f -> "pass" to pose(1f - j.passA / .55f)
+            j.throwA > 0f -> "throw" to pose(1f - j.throwA / .55f)
+            j.catchA > 0f && partie.B.held === j -> "catch" to pose(1f - j.catchA / .62f)
             j.dodge > 0f -> "dodge" to pose(1f - j.dodge / .38f)
             partie.B.held === j -> "catch" to 7
             hypot(j.vx, j.vy) > 150f -> "run" to (floor(partie.T * 12f).toInt().mod(8))
@@ -221,11 +222,12 @@ class VuePartie(ctx: Context) : View(ctx) {
         val (action, pose) = actionEtPose(j)
         val cible = hauteurCible()
         // le saut du ramassage, comme dans son code
-        val saut = if (j.pickupA > 0f) sin((1f - j.pickupA / .48f) * PI).toFloat() * 12f else 0f
+        val saut = if (j.pickupA > 0f) sin((1f - j.pickupA / .62f) * PI).toFloat() * 12f else 0f
 
         if (j.h) {
             val im = charger("hero_${action}_$pose.webp") ?: return
             val reference = (charger("hero_walk_0.webp")?.height ?: im.height).toFloat()
+            // le geste se voit mieux si le personnage ne change pas de taille
             val echelle = cible / reference
             val dh = im.height * echelle; val dw = im.width * echelle
             val dy = j.y - dh
@@ -258,6 +260,10 @@ class VuePartie(ctx: Context) : View(ctx) {
                               dw: Float, dh: Float, dy: Float) {
         c.save()
         if (cos(j.face) < 0f) c.scale(-1f, 1f, j.x, 0f)
+        // l'ombre au sol, qui ancre le personnage sur le terrain
+        p.color = 0x55000000
+        c.drawOval(RectF(j.x - dw * .28f, j.y - dh * .045f,
+                         j.x + dw * .28f, j.y + dh * .045f), p)
         c.drawBitmap(im, null, RectF(j.x - dw / 2f, dy, j.x + dw / 2f, dy + dh), pinceau)
         c.restore()
     }
@@ -309,6 +315,8 @@ class VuePartie(ctx: Context) : View(ctx) {
         if (enFlammes) {
             val pulse = 1f + sin(partie.T * 20f) * .18f
             c.save(); c.translate(x0, by)
+            // le halo orange qui entoure le ballon, comme son ombre portee
+            p.setShadowLayer(16f, 0f, 0f, 0xFFFF5A00.toInt())
             for (k in 0 until 9) {
                 val a = k * (PI * 2 / 9).toFloat() + partie.T * 3.2f
                 val rr = (r + 5f) * pulse
@@ -321,6 +329,7 @@ class VuePartie(ctx: Context) : View(ctx) {
                 c.drawPath(flamme, p)
                 c.restore()
             }
+            p.clearShadowLayer()
             c.restore()
         }
 
@@ -446,28 +455,80 @@ class VuePartie(ctx: Context) : View(ctx) {
         p.alpha = 255; p.style = Paint.Style.FILL
     }
 
-    /** L'eclair qui parcourt un joueur en train de charger son tir. */
+    /**
+     * Son eclair de charge, traduit de « drawChargeLightning ».
+     *
+     * Les arcs commencent loin du corps — 74 points — et se resserrent jusqu'a
+     * 39 pendant les trois secondes ; ils sont de plus en plus nombreux, de
+     * plus en plus vifs, et virent du bleu au blanc dore. A trois secondes,
+     * le tir est pret : une aura battante entoure le personnage.
+     */
     private fun eclairDeCharge(c: Canvas, j: Partie.Joueur) {
-        val charge = if (j.h) (if (partie.charging && partie.B.held === j) partie.shotCharge else 0f)
-                     else j.cpuCharge
-        if (charge <= 0f || j.energy < 100f) return
-        val force = min(1f, charge / 3f)
-        val h = hauteurCible()
+        var ch = 0f
+        if (j.h && partie.charging && partie.B.held === j && j.energy >= 100f)
+            ch = min(1f, partie.shotCharge / 3f)
+        else if (!j.h && partie.B.held === j && j.energy >= 100f)
+            ch = min(1f, j.cpuCharge / 3f)
+        if (ch <= .02f) return
+
+        val T = partie.T
+        val rayon = 74f - ch * 35f                 // ils se resserrent
+        val opacite = .22f + ch * .68f
+        val combien = 2 + (ch * 7f).toInt()
+        val battement = if (ch >= 1f) (0.78f + sin(T * 24f) * .22f) else 1f
+        val pret = ch >= .96f
+
+        c.save()
         p.style = Paint.Style.STROKE
-        p.strokeWidth = 1.6f + force * 1.8f
-        p.color = if (charge >= 3f) 0xFFFFF36A.toInt() else 0xFF9ED8FF.toInt()
-        val hasard = java.util.Random((partie.T * 60f).toInt().toLong() + j.id * 31L)
-        for (brin in 0 until 3) {
-            val chemin = Path()
-            var y0 = j.y - h
-            chemin.moveTo(j.x + (hasard.nextFloat() - .5f) * 14f, y0)
-            while (y0 < j.y) {
-                y0 += h / 6f
-                chemin.lineTo(j.x + (hasard.nextFloat() - .5f) * 20f * force, y0)
+        p.strokeCap = Paint.Cap.ROUND
+        p.strokeJoin = Paint.Join.ROUND
+        // le halo autour des arcs : bleu tant qu'on charge, dore quand c'est pret
+        p.setShadowLayer(4f + ch * 12f, 0f, 0f,
+            if (pret) 0xFFFFF7A8.toInt() else 0xFF7FDCFF.toInt())
+
+        val cy = j.y - 47f
+        for (k in 0 until combien) {
+            val a = T * (1.6f + ch * 2.2f) + k * (2 * PI / combien).toFloat()
+            val r1 = rayon + sin(T * 13f + k * 2.1f) * 4f
+            val r2 = kotlin.math.max(23f, r1 - (11f + ch * 17f))
+            val ondule = .20f * sin(T * 7f + k)
+            val sx = j.x + cos(a) * r1
+            val sy = cy + sin(a) * r1 * .72f
+            val ex = j.x + cos(a + ondule) * r2
+            val ey = cy + sin(a + ondule) * r2 * .72f
+            val mx = (sx + ex) / 2f + sin(T * 19f + k * 4.3f) * (5f + ch * 5f)
+            val my = (sy + ey) / 2f + cos(T * 17f + k * 3.1f) * (4f + ch * 5f)
+
+            val arc = Path()
+            arc.moveTo(sx, sy); arc.lineTo(mx, my); arc.lineTo(ex, ey)
+
+            p.color = if (pret) 0xFFFFFBD0.toInt() else 0xFF9EE8FF.toInt()
+            p.alpha = (255 * opacite * battement).toInt().coerceIn(0, 255)
+            p.strokeWidth = 1.1f + ch * 1.7f
+            c.drawPath(arc, p)
+
+            // un fil blanc plus fin par-dessus, quand la charge monte
+            if (ch > .55f) {
+                p.color = Color.WHITE
+                p.alpha = (255 * opacite * .38f * battement).toInt().coerceIn(0, 255)
+                p.strokeWidth = .65f + ch * .55f
+                c.drawPath(arc, p)
             }
-            c.drawPath(chemin, p)
         }
+
+        // a trois secondes : l'aura qui bat, le tir est pret
+        if (ch >= .995f) {
+            val rr = 31f + sin(T * 20f) * 3f
+            p.color = 0xFFFFFBD0.toInt()
+            p.strokeWidth = 2.2f
+            p.alpha = (255 * (.65f + .25f * sin(T * 22f))).toInt().coerceIn(0, 255)
+            c.drawOval(RectF(j.x - rr, cy - rr * 1.18f, j.x + rr, cy + rr * 1.18f), p)
+        }
+
+        p.clearShadowLayer()
+        p.alpha = 255
         p.style = Paint.Style.FILL
+        c.restore()
     }
 
     /** Son petit mot, en haut de l'ecran. */

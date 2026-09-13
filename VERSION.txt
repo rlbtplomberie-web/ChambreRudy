@@ -1,4 +1,6 @@
-version 89 - corrections demandees par Rudy
-  sens des ecrans, livre a deux pages, radio qui rechange de musique,
-  video de tele preparee a l'avance, tiroir a la couleur du bureau,
-  panneau de jeux comme le HTML, detourages, panier, atelier debout
+version 90 - deuxieme serie de corrections
+  eclair de charge traduit du HTML, halo des flammes, gestes allonges,
+  ombre au sol, musique conservee dans les 10 jeux, affiches d'avant-match,
+  damier recadre, atelier sur bureau avec feuille A4, blackjack sur BONNE
+  CHANCE, gardien qui retombe, tireur agrandi, panier sur le cercle,
+  panneau d'armoire en bas, cadenas entier

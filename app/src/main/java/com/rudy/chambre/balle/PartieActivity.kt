@@ -66,6 +66,7 @@ class PartieActivity : ComponentActivity() {
         racine.addView(commandes, FrameLayout.LayoutParams(-1, -1))
         racine.addView(retour())
         setContentView(racine)
+        com.rudy.chambre.Ambiance.adoucirLaMusique()
 
         afficherAffiche()
     }
@@ -113,5 +114,10 @@ class PartieActivity : ComponentActivity() {
                 .setCancelable(false)
                 .show()
         }
+    }
+
+    override fun onDestroy() {
+        com.rudy.chambre.Ambiance.rendreLaMusique()
+        super.onDestroy()
     }
 }

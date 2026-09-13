@@ -55,6 +55,7 @@ class PokerActivity : ComponentActivity() {
                 .apply { topMargin = 18; leftMargin = 18 }
         })
         setContentView(racine)
+        com.rudy.chambre.Ambiance.adoucirLaMusique()
     }
 
     private fun bouton(titre: String, action: () -> Unit) = Button(this).apply {
@@ -63,7 +64,7 @@ class PokerActivity : ComponentActivity() {
         setOnClickListener { action() }
     }
 
-    override fun onDestroy() { son?.liberer(); super.onDestroy() }
+    override fun onDestroy() { com.rudy.chambre.Ambiance.rendreLaMusique(); son?.liberer(); super.onDestroy() }
 }
 
 /** Sa table : Kev, Yoel et Arthur autour, Rudy en bas, le tapis au centre. */

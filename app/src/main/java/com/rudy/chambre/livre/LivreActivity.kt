@@ -98,6 +98,7 @@ class LivreActivity : ComponentActivity() {
         racine.addView(titre, FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL)
             .apply { bottomMargin = 26 })
         setContentView(racine)
+        com.rudy.chambre.Ambiance.adoucirLaMusique()
 
         chargerLaBibliotheque()
     }
@@ -136,5 +137,5 @@ class LivreActivity : ComponentActivity() {
         if (vue.enLecture()) vue.fermer() else super.onBackPressed()
     }
 
-    override fun onDestroy() { son?.liberer(); super.onDestroy() }
+    override fun onDestroy() { com.rudy.chambre.Ambiance.rendreLaMusique(); son?.liberer(); super.onDestroy() }
 }

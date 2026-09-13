@@ -177,7 +177,7 @@ class Partie(var W: Float, var H: Float) {
         if (B.held !== p || t == null || p.cool > 0f) return
         val dx = t.x - p.x; val dy = t.y - p.y
         val l = hypot(dx, dy).let { if (it == 0f) 1f else it }
-        p.face = atan2(dy, dx); p.throwA = .38f
+        p.face = atan2(dy, dx); p.throwA = .55f
         p.cpuCharge = 0f
         B.held = null; B.lastTeam = p.team; B.thrower = p; B.deadBall = false; B.pickupOwner = null
         val canCharged = p.energy >= 100f && charge >= 3f
@@ -188,7 +188,7 @@ class Partie(var W: Float, var H: Float) {
         val power = if (B.charged) 820f else 650f
         B.vx = dx / l * power; B.vy = dy / l * power
         B.vz = if (B.charged) 155f else 130f
-        p.cool = .7f
+        p.cool = .75f                 // le geste va jusqu'au bout
     }
 
     /** La passe (« passBall »). */
@@ -202,12 +202,12 @@ class Partie(var W: Float, var H: Float) {
         val sx = p.x + (if (p.team == 0) 18f else -18f); val sy = p.y - 48f
         val dx = hx - sx; val dy = hy - sy
         val l = hypot(dx, dy).let { if (it == 0f) 1f else it }
-        p.face = atan2(dy, dx); p.passA = .42f
+        p.face = atan2(dy, dx); p.passA = .55f
         B.held = null; B.lastTeam = p.team; B.thrower = null
         B.passTarget = t; B.charged = false; B.deadBall = true; B.pickupOwner = null
         B.x = sx; B.y = sy; B.z = 20f
         B.vx = dx / l * 390f; B.vy = dy / l * 390f; B.vz = 35f
-        p.cool = .35f
+        p.cool = .58f                 // la passe aussi
     }
 
     /** Un seul coequipier court apres la balle (« cpuMayChaseBall »). */
@@ -437,7 +437,7 @@ fun Partie.update(dt: Float) {
             B.x = hx; B.y = hy; B.z = 20f; B.held = t; B.passTarget = null
             B.charged = false; B.deadBall = true; B.lastTeam = null; B.thrower = null
             B.vx = 0f; B.vy = 0f; B.vz = 0f
-            t.catchA = .50f; t.cool = .22f
+            t.catchA = .62f; t.cool = .22f
             son("attrape")
         }
     }
@@ -456,7 +456,7 @@ fun Partie.update(dt: Float) {
                     B.held = p; B.passTarget = null; B.charged = false; B.deadBall = true
                     B.lastTeam = null; B.thrower = null
                     B.vx = 0f; B.vy = 0f; B.vz = 0f
-                    p.catchA = .50f; p.catchTry = 0f; p.cool = .18f
+                    p.catchA = .62f; p.catchTry = 0f; p.cool = .18f
                     dire("RATTRAPÉ !")
                 } else {
                     val tr = B.thrower
@@ -484,7 +484,7 @@ fun Partie.update(dt: Float) {
                 B.deadBall = true; B.lastTeam = null; B.thrower = null; B.passTarget = null
                 B.vx = 0f; B.vy = 0f; B.vz = 0f
                 B.held = p
-                if (auSol) { p.pickupA = .48f; p.catchA = 0f } else p.catchA = .50f
+                if (auSol) { p.pickupA = .62f; p.catchA = 0f } else p.catchA = .62f
                 p.cool = .18f
                 B.pickupOwner = null
                 break

@@ -67,6 +67,7 @@ class EchecsActivity : ComponentActivity() {
         }, FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.END)
             .apply { topMargin = 18; rightMargin = 18 })
         setContentView(racine)
+        com.rudy.chambre.Ambiance.adoucirLaMusique()
 
         choisirArmee()
     }
@@ -113,7 +114,7 @@ class EchecsActivity : ComponentActivity() {
             .show()
     }
 
-    override fun onDestroy() { son?.liberer(); super.onDestroy() }
+    override fun onDestroy() { com.rudy.chambre.Ambiance.rendreLaMusique(); son?.liberer(); super.onDestroy() }
 }
 
 /**

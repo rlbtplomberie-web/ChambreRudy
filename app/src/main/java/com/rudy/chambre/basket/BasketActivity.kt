@@ -47,6 +47,9 @@ class BasketActivity : ComponentActivity() {
         racine.addView(vue, FrameLayout.LayoutParams(-1, -1))
         racine.addView(tableau, FrameLayout.LayoutParams(-1, -1))
         setContentView(racine)
+        com.rudy.chambre.Ambiance.adoucirLaMusique()
+        // son affiche d'avant-match : le jeu ne demarre qu'au bouton
+        com.rudy.chambre.Ambiance.affiche(this, racine, "basket/affiche.jpg") {}
     }
 
     private var dernierResultat = ""
@@ -203,5 +206,5 @@ class BasketActivity : ComponentActivity() {
             .show()
     }
 
-    override fun onDestroy() { son?.liberer(); super.onDestroy() }
+    override fun onDestroy() { com.rudy.chambre.Ambiance.rendreLaMusique(); son?.liberer(); super.onDestroy() }
 }

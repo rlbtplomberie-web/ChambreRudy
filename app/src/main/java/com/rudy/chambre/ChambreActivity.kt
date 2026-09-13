@@ -355,7 +355,7 @@ class ChambreActivity : ComponentActivity() {
 
         val bloc = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(16f), dp(14f), dp(16f), dp(14f))
+            setPadding(dp(12f), dp(10f), dp(12f), dp(10f))
             background = GradientDrawable().apply {
                 cornerRadius = dp(18f).toFloat()
                 colors = intArrayOf(fond, 0xF5120B24.toInt())
@@ -364,7 +364,7 @@ class ChambreActivity : ComponentActivity() {
             }
         }
         bloc.addView(TextView(this).apply {
-            text = titre; textSize = 16f
+            text = titre; textSize = 14f
             setTextColor(0xFFFFEEC2.toInt())
             setTypeface(null, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER
@@ -374,7 +374,7 @@ class ChambreActivity : ComponentActivity() {
         val rangee = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         choix.forEachIndexed { i, nom ->
             rangee.addView(Button(this).apply {
-                text = nom; textSize = 13f
+                text = nom; textSize = 11f
                 setTextColor(if (i == enAvant) 0xFF2A1C06.toInt() else Color.WHITE)
                 background = GradientDrawable().apply {
                     cornerRadius = dp(12f).toFloat()
@@ -396,7 +396,8 @@ class ChambreActivity : ComponentActivity() {
         }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(6f) })
 
         val place = FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL)
-        place.bottomMargin = (resources.displayMetrics.heightPixels * .09f).toInt()
+        place.bottomMargin = (resources.displayMetrics.heightPixels * .03f).toInt()
+        place.width = (resources.displayMetrics.widthPixels * .74f).toInt()
         (findViewById<FrameLayout>(android.R.id.content).getChildAt(0) as FrameLayout)
             .addView(bloc, place)
         panneauOuvert = bloc

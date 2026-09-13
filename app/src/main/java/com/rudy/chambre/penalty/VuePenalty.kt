@@ -97,7 +97,8 @@ class VuePenalty(ctx: Context) : View(ctx) {
     fun auRepos() = phase == "attente"
 
     fun remettre() {
-        phase = "attente"; rudyX = 20f; rudyY = 72f; rudyEchelle = 1f
+        phase = "attente"; tPlongeon = -.430f
+        rudyX = 20f; rudyY = 72f; rudyEchelle = 1f
         rudyImage = 0; rudyArret = -1
         gardienX = 50f; gardienY = 46.8f; gardienImage = 0
         balleX = 47f; balleY = 75.5f; balleTaille = 3.8f; balleVisible = true
@@ -127,9 +128,12 @@ class VuePenalty(ctx: Context) : View(ctx) {
      * 430 millisecondes, le ballon part a la huitieme image de course.
      */
     private fun avancer(dt: Float) {
-        if (phase == "attente" || phase == "fini") return
+        if (phase == "attente") return
+        // le temps du gardien continue de courir meme apres la frappe :
+        // sinon il restait fige en plein saut au lieu de retomber
+        tPlongeon += dt
+        if (phase == "fini") return
         t += dt
-        tPlongeon += dt                  // il part a -0,430 : le gardien attend
 
         when (phase) {
             "course" -> course(dt)
@@ -238,7 +242,7 @@ class VuePenalty(ctx: Context) : View(ctx) {
         val nom = if (rudyArret >= 0) "stop_${min(rudyArret, 5)}.webp"
                   else String.format("rudy_%02d.webp", rudyImage)
         val im = charger(nom) ?: return
-        val h = height * .30f * rudyEchelle
+        val h = height * .40f * rudyEchelle       // le tireur, au premier plan
         val l = im.width * (h / im.height)
         val cx = px(rudyX); val cy = py(rudyY)
         c.drawBitmap(im, null, RectF(cx - l / 2f, cy - h / 2f, cx + l / 2f, cy + h / 2f), pinceau)
@@ -261,7 +265,7 @@ class VuePenalty(ctx: Context) : View(ctx) {
                 gardienX = 50f; gardienY = 46.8f; gardienImage = 0
                 val im0 = charger(String.format("gardien_%s_00.webp", plongeonEnCours))
                 if (im0 != null) {
-                    val h0 = height * .26f
+                    val h0 = height * .22f
                     val l0 = im0.width * (h0 / im0.height)
                     c.drawBitmap(im0, null, RectF(px(50f) - l0 / 2f, py(46.8f) - h0 / 2f,
                         px(50f) + l0 / 2f, py(46.8f) + h0 / 2f), pinceau)
@@ -276,7 +280,7 @@ class VuePenalty(ctx: Context) : View(ctx) {
         }
         val im = charger(String.format("gardien_%s_%02d.webp", plongeonEnCours, gardienImage))
             ?: return
-        val h = height * .26f
+        val h = height * .22f                    // le gardien, au fond, plus petit
         val l = im.width * (h / im.height)
         val cx = px(gardienX); val cy = py(gardienY)
         c.drawBitmap(im, null, RectF(cx - l / 2f, cy - h / 2f, cx + l / 2f, cy + h / 2f), pinceau)

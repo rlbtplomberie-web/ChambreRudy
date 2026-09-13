@@ -148,7 +148,18 @@ class VueChambre(ctx: Context) : View(ctx) {
         when (vue) {
             0 -> dessinerBureau(c)
             1 -> {
-                Objets.serrure(c, zone(Decor.SERRURE))
+                // le cadenas reste entier a l'ecran : s'il depasse d'un bord,
+                // on le rentre, sans jamais toucher a sa taille
+                val s = zone(Decor.SERRURE)
+                val marge = s.width() * .35f
+                var dx = 0f; var dy = 0f
+                if (s.left < marge) dx = marge - s.left
+                if (s.right > width - marge) dx = width - marge - s.right
+                if (s.top < marge) dy = marge - s.top
+                if (s.bottom > height - marge) dy = height - marge - s.bottom
+                s.offset(dx, dy)
+                Objets.serrure(c, s)
+                serrureVisible = s
                 Objets.pastilleLivre(c, zone(Decor.LIVRE), battement())
                 invalidate()                       // la pastille bat doucement
             }
@@ -457,6 +468,9 @@ class VueChambre(ctx: Context) : View(ctx) {
 
     // ================= le doigt =================
 
+    /** Ou le cadenas est reellement dessine, une fois rentre dans le cadre. */
+    private var serrureVisible: RectF? = null
+
     private var xDepart = 0f
     private var yDepart = 0f
     /**
@@ -577,7 +591,12 @@ class VueChambre(ctx: Context) : View(ctx) {
             }
             if (zone(Decor.TELE).contains(x, y))    { surObjet?.invoke("tele"); return }
         } else if (vue == 1) {
-            if (zone(Decor.SERRURE).contains(x, y)) { surObjet?.invoke("serrure"); return }
+            // on touche le cadenas la ou il est dessine
+            val s = serrureVisible ?: zone(Decor.SERRURE)
+            if (RectF(s.left - s.width() * .4f, s.top - s.height() * .4f,
+                      s.right + s.width() * .4f, s.bottom + s.height() * .4f).contains(x, y)) {
+                surObjet?.invoke("serrure"); return
+            }
             if (zone(Decor.LIVRE).contains(x, y))   { surObjet?.invoke("livre"); return }
         }
     }

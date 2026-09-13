@@ -33,8 +33,18 @@ val OUTILS = listOf(
     Outil("Bleu", 0xFF2F6FD0.toInt(), 0xFF1C4A95.toInt(), 0xFF2F6FD0.toInt(),
           5f, .9f, sonF = 1600f, sonQ = .9f, sonV = .40f),
     Outil("Violet", 0xFF7B4FD6.toInt(), 0xFF54329B.toInt(), 0xFF7B4FD6.toInt(),
-          5f, .9f, sonF = 1500f, sonQ = .9f, sonV = .40f)
+          5f, .9f, sonF = 1500f, sonQ = .9f, sonV = .40f),
+    Outil("Feutre", 0xFF1B1B1B.toInt(), 0xFF101010.toInt(), 0xFF121212.toInt(),
+          14f, 1f, sonF = 700f, sonQ = .6f, sonV = .48f),
+    Outil("Pinceau", 0xFF7A4A25.toInt(), 0xFF3B2410.toInt(), 0xFF2B2B2B.toInt(),
+          22f, .62f, sonF = 520f, sonQ = .5f, sonV = .42f)
 )
+
+/** Un feutre et un pinceau, pour dessiner autrement que le crayon. */
+val FEUTRE = Outil("Feutre", 0xFF1B1B1B.toInt(), 0xFF101010.toInt(), 0xFF121212.toInt(),
+                   14f, 1f, sonF = 700f, sonQ = .6f, sonV = .48f)
+val PINCEAU = Outil("Pinceau", 0xFF7A4A25.toInt(), 0xFF3B2410.toInt(), 0xFF2B2B2B.toInt(),
+                    22f, .62f, sonF = 520f, sonQ = .5f, sonV = .42f)
 
 /** Le timbre de la gomme, plus grave et plus sourd. */
 val SON_GOMME = Triple(480f, .6f, .65f)

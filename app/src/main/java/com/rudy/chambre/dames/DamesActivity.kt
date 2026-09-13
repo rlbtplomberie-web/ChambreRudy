@@ -68,6 +68,7 @@ class DamesActivity : ComponentActivity() {
         racine.addView(recommencer, FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.END)
             .apply { topMargin = 18; rightMargin = 18 })
         setContentView(racine)
+        com.rudy.chambre.Ambiance.adoucirLaMusique()
     }
 
     /** Apres le coup du joueur : Majora reflechit, puis joue, en enchainant ses prises. */
@@ -99,7 +100,7 @@ class DamesActivity : ComponentActivity() {
         vue.invalidate()
     }
 
-    override fun onDestroy() { son?.liberer(); super.onDestroy() }
+    override fun onDestroy() { com.rudy.chambre.Ambiance.rendreLaMusique(); son?.liberer(); super.onDestroy() }
 }
 
 /**
@@ -134,11 +135,21 @@ class VueDames(ctx: Context, private val jeu: Dames) : View(ctx) {
         } catch (_: Throwable) { null }
     }
 
+    /**
+     * Son damier couvre l'ecran en entier, quitte a deborder : c'est ce que
+     * fait son « background: cover ». Ses positions de cases sont des
+     * fractions de l'ecran, pas de l'image.
+     */
     private fun cadre() {
-        val bg = charger("damier.webp") ?: return
-        val s = min(width.toFloat() / bg.width, height.toFloat() / bg.height)
-        cl = bg.width * s; ch = bg.height * s
-        cx = (width - cl) / 2f; cy = (height - ch) / 2f
+        cx = 0f; cy = 0f
+        cl = width.toFloat(); ch = height.toFloat()
+    }
+
+    /** Le rectangle ou poser une image pour qu'elle couvre tout l'ecran. */
+    private fun recadrer(bg: Bitmap): RectF {
+        val s = kotlin.math.max(width.toFloat() / bg.width, height.toFloat() / bg.height)
+        val l = bg.width * s; val h = bg.height * s
+        return RectF((width - l) / 2f, (height - h) / 2f, (width + l) / 2f, (height + h) / 2f)
     }
 
     private fun px(v: Float) = cx + cl * v / 100f
@@ -146,13 +157,10 @@ class VueDames(ctx: Context, private val jeu: Dames) : View(ctx) {
 
     override fun onDraw(c: Canvas) {
         c.drawColor(0xFF05030A.toInt())
-        charger("fond.webp")?.let {
-            c.drawBitmap(it, null, RectF(0f, 0f, width.toFloat(), height.toFloat()), pinceau)
-        }
         cadre()
-        charger("damier.webp")?.let {
-            c.drawBitmap(it, null, RectF(cx, cy, cx + cl, cy + ch), pinceau)
-        }
+        // le decor, puis le damier par-dessus, tous deux recadres
+        charger("fond.webp")?.let { c.drawBitmap(it, null, recadrer(it), pinceau) }
+        charger("damier.webp")?.let { c.drawBitmap(it, null, recadrer(it), pinceau) }
 
         // les reperes des coups possibles
         for (m in jeu.coupsAffiches()) {

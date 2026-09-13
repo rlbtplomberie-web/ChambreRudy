@@ -71,6 +71,7 @@ class MonopolyActivity : ComponentActivity() {
         }, FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.START)
             .apply { topMargin = 18; leftMargin = 18 })
         setContentView(racine)
+        com.rudy.chambre.Ambiance.adoucirLaMusique()
 
         choisirLaPartie()
     }
@@ -369,5 +370,5 @@ class MonopolyActivity : ComponentActivity() {
             .setPositiveButton("Fermer", null).show()
     }
 
-    override fun onDestroy() { son?.liberer(); super.onDestroy() }
+    override fun onDestroy() { com.rudy.chambre.Ambiance.rendreLaMusique(); son?.liberer(); super.onDestroy() }
 }

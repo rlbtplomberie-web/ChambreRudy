@@ -24,9 +24,10 @@ class VueBasket(ctx: Context) : View(ctx) {
     // ---- ses mesures, en pourcentages du cadre ----
     private val joueurGauche = 20f; private val joueurBas = 7f
     private val joueurLargeur = 28f; private val joueurHauteur = 78f
-    // le panneau du fond est a 60-65 % de la largeur et 10-20 % de la hauteur
-    // sur son image : le cercle se pose juste dessous
-    private val panierDroite = 36.5f; private val panierHaut = 19.5f
+    // l'anneau orange du panier du fond, releve sur son image de terrain :
+    // centre a 78,5 % de la largeur et 27 % de la hauteur. Notre panier se
+    // pose exactement dessus, sur le cercle rouge.
+    private val panierDroite = 17.2f; private val panierHaut = 25.5f
     private val panierLargeur = 8.5f; private val panierHauteur = 15f
     private val departBalle = 44f to 35f
 

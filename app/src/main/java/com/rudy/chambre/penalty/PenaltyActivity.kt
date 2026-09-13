@@ -57,6 +57,9 @@ class PenaltyActivity : ComponentActivity() {
         }
         racine.addView(message, FrameLayout.LayoutParams(-2, -2, Gravity.CENTER))
         setContentView(racine)
+        com.rudy.chambre.Ambiance.adoucirLaMusique()
+        // son affiche d'avant-match : le jeu ne demarre qu'au bouton
+        com.rudy.chambre.Ambiance.affiche(this, racine, "penalty/affiche.jpg") {}
     }
 
     private fun tableauDeBord(): LinearLayout {
@@ -158,7 +161,7 @@ class PenaltyActivity : ComponentActivity() {
         }
     }
 
-    override fun onDestroy() { son?.liberer(); super.onDestroy() }
+    override fun onDestroy() { com.rudy.chambre.Ambiance.rendreLaMusique(); son?.liberer(); super.onDestroy() }
 
     private fun dire(t: String, ms: Long) {
         message.text = t

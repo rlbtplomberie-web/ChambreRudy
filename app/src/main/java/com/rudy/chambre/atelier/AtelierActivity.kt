@@ -51,13 +51,15 @@ class AtelierActivity : ComponentActivity() {
         papier.surZoom = { z -> niveau.text = "${Math.round(z * 100)} %" }
 
         val racine = FrameLayout(this)
-        racine.setBackgroundColor(0xFF1A140E.toInt())
+        racine.setBackgroundColor(0xFF96613A.toInt())      // son bois : --bois
         val largeurTrousse = (resources.displayMetrics.widthPixels * .16f).toInt()
         papier.margeGauche = largeurTrousse.toFloat()
         racine.addView(papier, FrameLayout.LayoutParams(-1, -1))
         racine.addView(trousse(), FrameLayout.LayoutParams(largeurTrousse, -1, Gravity.START))
         racine.addView(barreDuHaut())
+        racine.addView(tailles())
         setContentView(racine)
+        com.rudy.chambre.Ambiance.adoucirLaMusique()
     }
 
     /** Sa trousse verte, avec les huit crayons et la gomme. */
@@ -76,7 +78,7 @@ class AtelierActivity : ComponentActivity() {
                 // les crayons, un par ligne, legerement inclines comme chez lui
                 val epaisseur = h * .022f          // l'epaisseur d'un crayon
                 OUTILS.forEachIndexed { i, o ->
-                    val y = h * (.12f + i * .098f)
+                    val y = h * (.10f + i * .079f)
                     val angle = (i - (OUTILS.size - 1) / 2f) * 3f
                     c.save(); c.rotate(angle, l * .5f, y)
                     val choisi = !papier.gomme && papier.iOutil == i
@@ -104,14 +106,14 @@ class AtelierActivity : ComponentActivity() {
 
                 // la gomme, en bas
                 p.color = if (papier.gomme) 0xFFFFE16E.toInt() else 0xFFD8D3C4.toInt()
-                c.drawRoundRect(RectF(l * .26f, h * .90f, l * .74f, h * .975f), 6f, 6f, p)
+                c.drawRoundRect(RectF(l * .26f, h * .93f, l * .74f, h * .985f), 6f, 6f, p)
             }
 
             override fun onTouchEvent(e: MotionEvent): Boolean {
                 if (e.actionMasked != MotionEvent.ACTION_DOWN) return true
                 val h = height.toFloat()
-                if (e.y > h * .89f) { papier.gomme = true; invalidate(); return true }
-                val i = ((e.y / h - .12f) / .098f + .5f).toInt()
+                if (e.y > h * .92f) { papier.gomme = true; invalidate(); return true }
+                val i = ((e.y / h - .10f) / .079f + .5f).toInt()
                 if (i in OUTILS.indices) { papier.gomme = false; papier.iOutil = i }
                 invalidate()
                 return true
@@ -121,6 +123,26 @@ class AtelierActivity : ComponentActivity() {
     }
 
     /** Ses boutons : annuler, vider, garder, zoom, son. */
+    /** Ses trois epaisseurs de trait : 0,6 — 1 — 1,9. */
+    private fun tailles(): LinearLayout {
+        val dens = resources.displayMetrics.density
+        fun pastille(taille: Float, points: Float) = Button(this).apply {
+            text = "●"
+            textSize = points
+            setTextColor(0xFF17140F.toInt())
+            setBackgroundColor(0xFFFDFBF3.toInt())
+            setOnClickListener { papier.epaisseur = taille }
+        }
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            addView(pastille(0.6f, 8f))
+            addView(pastille(1f, 13f))
+            addView(pastille(1.9f, 19f))
+            layoutParams = FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL)
+                .apply { bottomMargin = (14 * dens).toInt() }
+        }
+    }
+
     private fun barreDuHaut(): LinearLayout {
         fun bouton(titre: String, action: () -> Unit) = Button(this).apply {
             text = titre; textSize = 11f
@@ -141,7 +163,7 @@ class AtelierActivity : ComponentActivity() {
         }
     }
 
-    override fun onDestroy() { son?.liberer(); super.onDestroy() }
+    override fun onDestroy() { com.rudy.chambre.Ambiance.rendreLaMusique(); son?.liberer(); super.onDestroy() }
 }
 
 /**
@@ -152,6 +174,9 @@ class Papier(ctx: Context) : View(ctx) {
 
     /** Ou commence la feuille : juste apres la trousse. */
     var margeGauche = 0f
+
+    /** Le multiplicateur d'epaisseur : 0,6 — 1 — 1,9, comme ses trois pastilles. */
+    var epaisseur = 1f
 
     var iOutil = 0
     var gomme = false
@@ -189,15 +214,58 @@ class Papier(ctx: Context) : View(ctx) {
         pinceauFeuille = c
     }
 
+    /** Le rectangle de la feuille : un vrai format A4, 210 sur 297. */
+    fun cadreA4(): RectF {
+        val libre = RectF(margeGauche + 12f, 60f, width - 12f, height - 90f)
+        val parLargeur = libre.width() / 210f
+        val parHauteur = libre.height() / 297f
+        val k = kotlin.math.min(parLargeur, parHauteur)
+        val l = 210f * k; val h = 297f * k
+        return RectF(libre.centerX() - l / 2f, libre.centerY() - h / 2f,
+                     libre.centerX() + l / 2f, libre.centerY() + h / 2f)
+    }
+
     override fun onDraw(c: Canvas) {
-        c.drawColor(0xFFF6F1E3.toInt())
+        // le bureau : un bois veine, comme son fond de page
+        c.drawColor(0xFF96613A.toInt())
+        p.style = Paint.Style.STROKE
+        p.strokeWidth = 1f
+        p.color = 0x1A3C1E0A
+        var y = 0f
+        while (y < height) { c.drawLine(0f, y, width.toFloat(), y + 12f, p); y += 9f }
+        p.style = Paint.Style.FILL
+
+        val page = cadreA4()
+        // l'ombre portee de la feuille sur le bureau
+        p.color = 0x66231104
+        c.drawRect(page.left + 7f, page.top + 9f, page.right + 7f, page.bottom + 9f, p)
+        // la feuille
+        p.color = 0xFFFDFBF3.toInt()
+        c.drawRect(page, p)
+        p.style = Paint.Style.STROKE; p.strokeWidth = 3f; p.color = 0xFF17140F.toInt()
+        c.drawRect(page, p)
+        p.style = Paint.Style.FILL
+
         val f = feuille ?: return
         c.save()
-        c.clipRect(margeGauche, 0f, width.toFloat(), height.toFloat())
+        c.clipRect(page)
         c.translate(dx, dy)
         c.scale(zoom, zoom, width / 2f, height / 2f)
         c.drawBitmap(f, 0f, 0f, copie)
         c.restore()
+
+        // les deux bouts de scotch, en haut de la feuille
+        p.color = 0xD9F6EECD.toInt()
+        for (cote in intArrayOf(-1, 1)) {
+            c.save()
+            val sx = if (cote < 0) page.left + 10f else page.right - 72f
+            c.rotate(if (cote < 0) -26f else 24f, sx + 31f, page.top)
+            c.drawRect(sx, page.top - 11f, sx + 62f, page.top + 11f, p)
+            p.style = Paint.Style.STROKE; p.strokeWidth = 2.5f; p.color = 0xFF17140F.toInt()
+            c.drawRect(sx, page.top - 11f, sx + 62f, page.top + 11f, p)
+            p.style = Paint.Style.FILL; p.color = 0xD9F6EECD.toInt()
+            c.restore()
+        }
     }
 
     /** Son « reglages » : la gomme efface, le crayon depose sa couleur. */
@@ -205,12 +273,12 @@ class Papier(ctx: Context) : View(ctx) {
         if (gomme) {
             p.xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
             p.alpha = 255
-            p.strokeWidth = 26f
+            p.strokeWidth = 26f * epaisseur
         } else {
             p.xfermode = null
             p.color = outil.couleur
             p.alpha = (outil.alpha * 255).toInt()
-            p.strokeWidth = outil.taille * 1.6f
+            p.strokeWidth = outil.taille * 1.6f * epaisseur
         }
     }
 
@@ -263,8 +331,8 @@ class Papier(ctx: Context) : View(ctx) {
     override fun onTouchEvent(e: MotionEvent): Boolean {
         when (e.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                // un doigt pose sur la trousse ne dessine pas
-                if (e.x < margeGauche) return true
+                // on ne dessine que sur la feuille
+                if (!cadreA4().contains(e.x, e.y)) return true
                 memoriser(); reglages(); trace = true
                 val (x, y) = point(e.x, e.y)
                 ax = x; ay = y; bx = x; by = y
