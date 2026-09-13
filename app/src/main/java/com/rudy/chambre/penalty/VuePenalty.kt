@@ -132,10 +132,12 @@ class VuePenalty(ctx: Context) : View(ctx) {
      * 430 millisecondes, le ballon part a la huitieme image de course.
      */
     private fun avancer(dt: Float) {
+        // le vent ne s'arrete jamais : cette horloge tourne meme quand on
+        // ne joue pas, sinon les arbres restaient figes entre deux tirs
+        tTotal += dt
         if (phase == "attente") return
         // le temps du gardien continue de courir meme apres la frappe :
         // sinon il restait fige en plein saut au lieu de retomber
-        tTotal += dt
         tPlongeon += dt
         if (phase == "fini") return
         t += dt
@@ -322,10 +324,13 @@ class VuePenalty(ctx: Context) : View(ctx) {
      * l'herbe frissonne par plaques, a des rythmes differents.
      */
     /** Ses deux bosquets de cerisiers, releves sur son image de terrain. */
+    /**
+     * Seuls les feuillages bougent. Les lumieres de la ville, les collines et
+     * le grillage restent immobiles : ce sont les arbres qu'on veut voir vivre.
+     */
     private val bosquets = arrayOf(
-        floatArrayOf(.10f, .26f, .26f, .22f),    // les cerisiers de gauche
-        floatArrayOf(.68f, .24f, .30f, .24f),    // ceux de droite
-        floatArrayOf(.30f, .30f, .38f, .14f)     // la haie du fond
+        floatArrayOf(.015f, .30f, .17f, .17f),   // les cerisiers de gauche
+        floatArrayOf(.78f, .28f, .21f, .19f)     // ceux de droite
     )
 
     /**
@@ -393,12 +398,11 @@ class VuePenalty(ctx: Context) : View(ctx) {
         }
 
         // l'herbe : cinq plaques qui frissonnent chacune a son rythme
+        // l'herbe : trois plaques seulement, et un frisson tres discret
         val plaques = arrayOf(
-            floatArrayOf(.02f, .60f, .30f, .16f, 1.6f),
-            floatArrayOf(.34f, .68f, .32f, .18f, 2.3f),
-            floatArrayOf(.64f, .62f, .34f, .15f, 1.9f),
-            floatArrayOf(.12f, .82f, .62f, .16f, 1.2f),
-            floatArrayOf(.55f, .86f, .44f, .14f, 2.7f)
+            floatArrayOf(.04f, .64f, .34f, .14f, 1.5f),
+            floatArrayOf(.40f, .70f, .34f, .15f, 2.1f),
+            floatArrayOf(.66f, .66f, .32f, .13f, 1.8f)
         )
         for (q in plaques) {
             val x0 = cadre.left + cadre.width() * q[0]
@@ -407,8 +411,8 @@ class VuePenalty(ctx: Context) : View(ctx) {
             val h = cadre.height() * q[3]
             c.save()
             c.clipRect(x0, y0, x0 + l, y0 + h)
-            c.translate(sin(tTotal * q[4]) * (width * .0035f), 0f)
-            pinceau.alpha = 170
+            c.translate(sin(tTotal * q[4]) * (width * .0012f), 0f)
+            pinceau.alpha = 120
             c.drawBitmap(fond, null, cadre, pinceau)
             pinceau.alpha = 255
             c.restore()

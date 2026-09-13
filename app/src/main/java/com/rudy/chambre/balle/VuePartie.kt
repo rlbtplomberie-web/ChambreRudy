@@ -255,28 +255,53 @@ class VuePartie(ctx: Context) : View(ctx) {
     private fun hauteurCible() = min(140f, max(108f, partie.H * .172f))
 
     /** L'action en cours et la pose correspondante (son « person »). */
+    /** Ce joueur est-il en train de charger son tir ? */
+    private fun enCharge(j: Partie.Joueur): Boolean =
+        if (j.h) partie.charging && partie.B.held === j && j.energy >= 100f
+        else partie.B.held === j && j.energy >= 100f && j.cpuCharge > 0f
+
     private fun actionEtPose(j: Partie.Joueur): Pair<String, Int> {
         fun pose(avancement: Float) = min(7, floor(avancement * 8f).toInt().coerceAtLeast(0))
         return when {
             j.fallA > 0f -> "fall" to pose(1f - j.fallA / .82f)
             j.riseA > 0f -> "rise" to pose(1f - j.riseA / .82f)
             j.hitA > 0f -> "hit" to pose(1f - j.hitA / .35f)
+            // il recoit une passe : rattrapage a l'envers, 7 puis 6, 5, 4, 3
+            j.receptA > 0f -> {
+                val avance = (1f - j.receptA / .50f).coerceIn(0f, 1f)
+                val rang = (6 - (avance * 5f).toInt()).coerceIn(2, 6)
+                "catch" to rang
+            }
+            // il donne la passe : sa planche « passe », en entier, a l'endroit
             j.passA > 0f -> "pass" to pose(1f - j.passA / .55f)
             j.pickupA > 0f -> "catch" to pose(1f - j.pickupA / .62f)
-            j.throwA > 0f -> "throw" to pose(1f - j.throwA / .55f)
+            // le bras part de l'image 4 — la ou il est arme — et deroule
+            // jusqu'a la 8 : c'est la suite du geste de charge
+            j.throwA > 0f -> {
+                val avance = (1f - j.throwA / .55f).coerceIn(0f, 1f)
+                "throw" to (3 + (avance * 4.99f).toInt()).coerceIn(3, 7)
+            }
             j.catchA > 0f && partie.B.held === j -> "catch" to pose(1f - j.catchA / .62f)
             j.dodge > 0f -> "dodge" to pose(1f - j.dodge / .38f)
-            // la balle en main, y compris pendant qu'il charge son tir : les
-            // mains restent dessus. La planche « lancer » ne se joue qu'au
-            // moment ou la balle part vraiment.
-            partie.B.held === j -> "catch" to 7
+            // Il charge son tir : sa planche « lancer », image 4, le bras
+            // arme derriere lui. La pose reste figee tant qu'il appuie.
+            partie.B.held === j && enCharge(j) -> "throw" to 3
+
+            // La balle en main sans charger : sa planche « rattrapage de
+            // balle », image 5, les deux mains refermees dessus.
+            partie.B.held === j -> "catch" to 4
             hypot(j.vx, j.vy) > 150f -> "run" to (floor(partie.T * 12f).toInt().mod(8))
             hypot(j.vx, j.vy) > 12f -> "walk" to (floor(partie.T * 8f).toInt().mod(8))
             else -> "walk" to 0
         }
     }
 
-    // ce que le dessin retient pour placer la balle dans les mains
+    // ce que le dessin retient pour placer la balle dans les mains,
+    // pour chaque personnage et non plus pour le seul Rudy
+    private class Mesures { var dw = 0f; var dh = 0f; var dy = 0f; var pose = -1; var face = 1f }
+    private val mesures = HashMap<String, Mesures>()
+    private fun mesuresDe(j: Partie.Joueur) = mesures.getOrPut(j.nom) { Mesures() }
+
     private var heroDW = 0f; private var heroDH = 0f; private var heroDY = 0f
     private var heroPose = -1
 
@@ -284,7 +309,19 @@ class VuePartie(ctx: Context) : View(ctx) {
         val (action, pose) = actionEtPose(j)
         val cible = hauteurCible()
         // le saut du ramassage, comme dans son code
-        val saut = if (j.pickupA > 0f) sin((1f - j.pickupA / .62f) * PI).toFloat() * 12f else 0f
+        var saut = if (j.pickupA > 0f) sin((1f - j.pickupA / .62f) * PI).toFloat() * 12f else 0f
+
+        // Les pas du porteur : il garde la balle contre lui, mais son corps
+        // monte et redescend a chaque foulee. Deux appuis par pas, comme
+        // une vraie marche ; plus vif quand il court.
+        if (partie.B.held === j) {
+            val vitesse = hypot(j.vx, j.vy)
+            if (vitesse > 12f) {
+                val cadence = if (vitesse > 150f) 12f else 8f
+                val amplitude = if (vitesse > 150f) 3.4f else 2.1f
+                saut -= kotlin.math.abs(sin(partie.T * cadence * PI.toFloat() / 2f)) * amplitude
+            }
+        }
 
         if (j.h) {
             val im = charger("hero_${action}_$pose.webp") ?: return
@@ -295,6 +332,11 @@ class VuePartie(ctx: Context) : View(ctx) {
             val dy = j.y - dh
             heroDW = dw; heroDH = dh; heroDY = dy
             heroPose = if (action == "catch") pose else -1
+            mesuresDe(j).also { m ->
+                m.dw = dw; m.dh = dh; m.dy = dy
+                m.pose = if (action == "catch") pose else -1
+                m.face = if (cos(j.face) < 0f) -1f else 1f
+            }
             dessinerImage(c, im, j, dw, dh, dy + saut)
             texte.color = Color.WHITE; texte.textSize = 10f
             c.drawText("TOI" + (if (j.prison) " • PRISON" else ""), j.x, dy - 4f, texte)
@@ -312,6 +354,11 @@ class VuePartie(ctx: Context) : View(ctx) {
         val echelle = cible / pl.sh
         val dh = pl.sh * echelle; val dw = pl.sw * echelle
         val dy = j.y - dh
+        mesuresDe(j).also { m ->
+            m.dw = dw; m.dh = dh; m.dy = dy
+            m.pose = if (action == "catch") pose else -1
+            m.face = if (cos(j.face) < 0f) -1f else 1f
+        }
         dessinerCase(c, planche, src, j, dw, dh, dy + saut)
         texte.color = if (j.prison) 0xFFFFB3A0.toInt() else 0xFFF2E6C8.toInt()
         texte.textSize = 10f
@@ -348,18 +395,24 @@ class VuePartie(ctx: Context) : View(ctx) {
         var ombreX = B.x; var ombreY = B.y + 5f
 
         val porteur = B.held
-        if (porteur != null && porteur.h && heroDH > 0f) {
-            if (porteur.catchA > 0f && heroPose >= 0) {
-                if (heroPose < 2) bx = null           // les deux premieres poses sont sans balle
-                else {
-                    val q = posBalle[heroPose]
-                    bx = porteur.x + (q.first - 50f) / 25f * heroDW
-                    by = (heroDY + heroDH * .5f) + (q.second - 50f) / 25f * heroDH
-                }
-            } else {
-                val q = posBalle[7]
-                bx = porteur.x + (q.first - 50f) / 25f * heroDW
-                by = (heroDY + heroDH * .5f) + (q.second - 50f) / 25f * heroDH
+        val m = if (porteur != null) mesures[porteur.nom] else null
+        if (porteur != null && m != null && m.dh > 0f) {
+            /*
+             * La balle se pose dans les mains, pour tout le monde.
+             *
+             * Ses reperes sont donnes en pourcentages du corps ; quand le
+             * personnage regarde a gauche, l'ecart lateral se retourne avec
+             * lui, sinon la balle passerait derriere son dos.
+             */
+            val q = if (m.pose in 0..7 && porteur.catchA > 0f) {
+                if (m.pose < 2) null else posBalle[m.pose]
+            } else posBalle[7]
+
+            if (q == null) bx = null
+            else {
+                val ecart = (q.first - 50f) / 25f * m.dw * m.face
+                bx = porteur.x + ecart
+                by = (m.dy + m.dh * .5f) + (q.second - 50f) / 25f * m.dh
             }
             ombreX = porteur.x; ombreY = porteur.y + 5f
         }

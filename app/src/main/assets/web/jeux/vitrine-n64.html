@@ -229,22 +229,107 @@ function lancerLeJeu(){
   catch(e){ ouvrirMenu("Lancement impossible : " + e.message); }
 }
 
-/* ====== jaquettes trouvees toutes seules ======
-   Les fichiers de jeux portent les noms officiels No-Intro, ceux-la memes
-   qu'emploie la base de jaquettes de libretro. On demande donc, pour chaque
-   boitier, l'image qui porte son nom. Rien n'est telecharge d'avance : seuls
-   les jeux presents ici sont demandes, et une fois obtenus ils sont gardes. */
+/* Les depots de jaquettes de cette console, chez libretro. */
 const DEPOTS_JAQUETTES = "Nintendo_-_Nintendo_64".split("|").filter(Boolean);
 
-function nomPourDepot(titre){
-  /* la base remplace ces caracteres par un souligne */
-  return titre.replace(/[&*\/:`<>?\\|]/g, "_");
+/* ====== la recherche de jaquettes ======
+   On ne demande plus une image par jeu au hasard : on recupere d'abord la
+   LISTE des jaquettes du depot, en une seule fois, puis on rapproche chaque
+   jeu de son fichier. C'est bien plus rapide, et surtout on en trouve
+   beaucoup plus : les noms de ROM ne correspondent presque jamais mot pour
+   mot aux noms officiels. */
+
+/** Reduit un titre a l'essentiel, pour pouvoir comparer deux ecritures. */
+function cleTitre(t){
+  return String(t || "")
+    .toLowerCase()
+    .replace(/\.[a-z0-9]{2,4}$/, "")               // l'extension du fichier
+    .replace(/\([^)]*\)/g, " ")                    // (USA), (Rev A)...
+    .replace(/\[[^\]]*\]/g, " ")                   // [!], [b1]...
+    .replace(/&/g, " and ")
+    .replace(/[''`]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b(the|a|an|le|la|les|of|und|der)\b/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+/** L'index du depot : chaque cle mene au nom exact du fichier. */
+let indexJaquettes = null;
+
+async function chargerIndexJaquettes(avance){
+  if(indexJaquettes) return indexJaquettes;
+  indexJaquettes = new Map();
+  for(const depot of DEPOTS_JAQUETTES){
+    if(avance) avance("Liste des jaquettes de " + depot.replace(/_/g, " ") + "…");
+    let noms = [];
+    // 1. l'arbre complet du depot, en une seule demande
+    try{
+      const rep = await fetch("https://api.github.com/repos/libretro-thumbnails/" +
+                              depot + "/git/trees/master?recursive=1");
+      if(rep.ok){
+        const arbre = await rep.json();
+        noms = (arbre.tree || [])
+          .filter(e => e.path && e.path.indexOf("Named_Boxarts/") === 0 && /\.png$/i.test(e.path))
+          .map(e => e.path.slice("Named_Boxarts/".length));
+      }
+    }catch(e){}
+    // 2. si l'arbre a echoue, la liste du dossier
+    if(!noms.length){
+      try{
+        const rep = await fetch("https://api.github.com/repos/libretro-thumbnails/" +
+                                depot + "/contents/Named_Boxarts");
+        if(rep.ok){
+          const liste = await rep.json();
+          if(Array.isArray(liste)) noms = liste.map(e => e.name).filter(n => /\.png$/i.test(n));
+        }
+      }catch(e){}
+    }
+    for(const n of noms){
+      const cle = cleTitre(n);
+      if(cle && !indexJaquettes.has(cle)) indexJaquettes.set(cle, { depot, fichier: n });
+    }
+  }
+  return indexJaquettes;
+}
+
+/** Le meilleur fichier pour ce titre : exact, puis au plus proche. */
+function trouverDansIndex(titre){
+  if(!indexJaquettes || !indexJaquettes.size) return null;
+  const cle = cleTitre(titre);
+  if(!cle) return null;
+  const exact = indexJaquettes.get(cle);
+  if(exact) return exact;
+  // le titre du jeu contient-il celui d'une jaquette, ou l'inverse ?
+  let meilleur = null, meilleurLong = 0;
+  for(const [k, v] of indexJaquettes){
+    if(k.length < 4) continue;
+    if(cle.indexOf(k) === 0 || k.indexOf(cle) === 0){
+      const commun = Math.min(k.length, cle.length);
+      if(commun > meilleurLong){ meilleur = v; meilleurLong = commun; }
+    }
+  }
+  // on n'accepte que si la partie commune est vraiment significative
+  if(meilleur && meilleurLong >= Math.max(6, cle.length * 0.6)) return meilleur;
+  return null;
 }
 
 async function imageEnLigne(titre){
+  const trouve = trouverDansIndex(titre);
+  const essais = [];
+  if(trouve){
+    essais.push("https://raw.githubusercontent.com/libretro-thumbnails/" +
+                trouve.depot + "/master/Named_Boxarts/" +
+                encodeURIComponent(trouve.fichier));
+  }
+  // au cas ou l'index n'aurait pas pu etre charge : l'ancienne methode
   for(const depot of DEPOTS_JAQUETTES){
-    const url = "https://raw.githubusercontent.com/libretro-thumbnails/" + depot +
-                "/master/Named_Boxarts/" + encodeURIComponent(nomPourDepot(titre)) + ".png";
+    const propre = String(titre || "").replace(/\.[a-z0-9]{2,4}$/i, "")
+                                      .replace(/[&*\/:`<>?\\|]/g, "_");
+    essais.push("https://raw.githubusercontent.com/libretro-thumbnails/" +
+                depot + "/master/Named_Boxarts/" + encodeURIComponent(propre) + ".png");
+  }
+  for(const url of essais){
     try{
       const rep = await fetch(url);
       if(!rep.ok) continue;
@@ -260,21 +345,41 @@ async function imageEnLigne(titre){
 
 async function jaquettesEnLigne(){
   if(!jeux.length){ ouvrirMenu("Choisis d'abord le dossier des ROMs."); return; }
-  let trouvees = 0, manquantes = [];
-  for(let i = 0; i < jeux.length; i++){
-    const j = jeux[i];
-    if(j.image){ continue; }                      // deja habillee
-    ouvrirMenu("Recherche " + (i+1) + " / " + jeux.length + " — " + j.titre);
-    const img = await imageEnLigne(j.titre);
-    if(img){ j.image = img; trouvees++; construire(); placer(); }
-    else manquantes.push(j.titre);
+
+  await chargerIndexJaquettes(m => ouvrirMenu(m));
+
+  const aFaire = [];
+  for(let i = 0; i < jeux.length; i++) if(!jeux[i].image) aFaire.push(i);
+  if(!aFaire.length){ ouvrirMenu("Toutes les boites ont deja leur jaquette."); return; }
+
+  let trouvees = 0, finies = 0;
+  const manquantes = [];
+
+  /* six recherches en meme temps : le telephone attend moins, et le depot
+     supporte tres bien cette cadence. */
+  const EN_PARALLELE = 6;
+  let curseur = 0;
+
+  async function ouvrier(){
+    while(curseur < aFaire.length){
+      const i = aFaire[curseur++];
+      const j = jeux[i];
+      const img = await imageEnLigne(j.titre);
+      if(img){ j.image = img; trouvees++; }
+      else manquantes.push(j.titre);
+      finies++;
+      ouvrirMenu("Recherche " + finies + " / " + aFaire.length + " — " + trouvees + " trouvée(s)");
+      if(trouvees && finies % 3 === 0){ construire(); placer(); }
+    }
   }
+
+  await Promise.all(Array.from({ length: Math.min(EN_PARALLELE, aFaire.length) }, ouvrier));
+
   try{ await sauver(); }catch(e){}
   construire(); placer();
   ouvrirMenu(trouvees + " jaquette(s) trouvée(s)" +
-             (manquantes.length ? " · " + manquantes.length + " introuvable(s) : "
-                                  + manquantes.slice(0,3).join(", ")
-                                  + (manquantes.length > 3 ? "…" : "") : ""));
+    (manquantes.length ? " · " + manquantes.length + " introuvable(s) : " +
+      manquantes.slice(0,3).join(", ") + (manquantes.length > 3 ? "…" : "") : ""));
 }
 
 const rangee = document.getElementById("rangee");
@@ -612,6 +717,18 @@ voile.addEventListener("click", e =>{ if(e.target === voile) voile.classList.rem
 
 ajuster();
 relire().then(construire);
+</script>
+
+<script>
+/* La musique de la chambre continue pendant le jeu, simplement adoucie. */
+(function(){
+  function volume(v){
+    try{ if(typeof Android !== "undefined" && Android.volumeRadio) Android.volumeRadio(v); }catch(e){}
+  }
+  volume(0.25);
+  window.addEventListener("pagehide", () => volume(1.0));
+  window.addEventListener("beforeunload", () => volume(1.0));
+})();
 </script>
 </body>
 </html>

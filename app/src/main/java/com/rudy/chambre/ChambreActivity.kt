@@ -137,12 +137,22 @@ class ChambreActivity : ComponentActivity() {
                 // video pendant ce temps, elle demarre alors a l'instant meme
                 preparerVideo(vue.consoleAVenir())
                 vue.consoleSuivante { console ->
+                    if (console == null) {
+                        // la 3DS vient de rentrer : le carton est vide, la
+                        // tele s'eteint. Un nouvel appui fera ressortir la NES.
+                        eteindreLaTele()
+                        dire("tout est rangé dans le carton")
+                        vue.postDelayed({ preparerVideo(Decor.CONSOLES[0]) }, 400)
+                        return@consoleSuivante
+                    }
                     son.bruit("pose.mp3")
                     dire(console.nom)
                     allumerLaTele(console)
                     // et on prepare deja celle d'apres
-                    val suivante = Decor.CONSOLES[(Decor.CONSOLES.indexOf(console) + 1) % Decor.CONSOLES.size]
-                    vue.postDelayed({ preparerVideo(suivante) }, 900)
+                    val i = Decor.CONSOLES.indexOf(console) + 1
+                    if (i < Decor.CONSOLES.size) {
+                        vue.postDelayed({ preparerVideo(Decor.CONSOLES[i]) }, 900)
+                    }
                 }
             }
             "radio" -> {
@@ -239,6 +249,16 @@ class ChambreActivity : ComponentActivity() {
     private var videoEnPreparation: String? = null
 
     /** La tele s'allume et joue la sequence de demarrage de cette console. */
+    /** La tele s'eteint : la video s'arrete et l'ecran s'efface en douceur. */
+    private fun eteindreLaTele() {
+        teleAllumee = false
+        try { lecteur?.stop() } catch (_: Throwable) {}
+        try { lecteur?.release() } catch (_: Throwable) {}
+        lecteur = null
+        ecranTele.animate().alpha(0f).setDuration(500).start()
+        son.enPause(false)          // la radio reprend
+    }
+
     private fun allumerLaTele(console: Decor.ConsolePosee) {
         teleAllumee = true
         ecranTele.alpha = 1f

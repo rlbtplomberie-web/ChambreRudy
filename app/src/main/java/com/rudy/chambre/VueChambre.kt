@@ -618,11 +618,29 @@ class VueChambre(ctx: Context) : View(ctx) {
     fun consoleAVenir(): Decor.ConsolePosee =
         Decor.CONSOLES[if (consoleIdx < 0) 0 else (consoleIdx + 1) % Decor.CONSOLES.size]
 
-    fun consoleSuivante(fin: (Decor.ConsolePosee) -> Unit) {
+    /**
+     * Le carton, comme dans sa page.
+     *
+     * Un appui sort la console suivante : la NES, puis la Game Boy, et ainsi
+     * de suite jusqu'a la 3DS. Apres la derniere, tout se range et le carton
+     * reste vide — il faut alors un nouvel appui pour que la NES ressorte.
+     * [fin] recoit la console posee, ou rien quand tout vient d'etre range.
+     */
+    fun consoleSuivante(fin: (Decor.ConsolePosee?) -> Unit) {
         if (consoleIdx >= 0) {
+            // celle qui etait dehors rentre d'abord
             anime(420, { t -> sortie = 1f - t }, {
-                consoleIdx = (consoleIdx + 1) % Decor.CONSOLES.size
-                anime(700, { t -> sortie = t }, { fin(Decor.CONSOLES[consoleIdx]) })
+                val suivant = consoleIdx + 1
+                if (suivant >= Decor.CONSOLES.size) {
+                    // c'etait la derniere : tout est range
+                    consoleIdx = -1
+                    sortie = 0f
+                    invalidate()
+                    fin(null)
+                } else {
+                    consoleIdx = suivant
+                    anime(700, { t -> sortie = t }, { fin(Decor.CONSOLES[consoleIdx]) })
+                }
             })
         } else {
             consoleIdx = 0

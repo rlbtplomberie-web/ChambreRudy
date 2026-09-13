@@ -51,7 +51,7 @@ class AtelierActivity : ComponentActivity() {
         papier.surZoom = { z -> niveau.text = "${Math.round(z * 100)} %" }
 
         val racine = FrameLayout(this)
-        racine.setBackgroundColor(0xFFF3E7D2.toInt())      // son fond de page, beige
+        racine.setBackgroundColor(0xFF702714.toInt())      // le bois de son bureau
         val largeurTrousse = (resources.displayMetrics.widthPixels * .22f).toInt()
         papier.margeGauche = largeurTrousse.toFloat()
         racine.addView(papier, FrameLayout.LayoutParams(-1, -1))
@@ -233,6 +233,11 @@ class AtelierActivity : ComponentActivity() {
  */
 class Papier(ctx: Context) : View(ctx) {
 
+    /** Le plateau du bureau, decoupe dans l'image de sa chambre. */
+    private val plateau: Bitmap? = try {
+        ctx.assets.open("atelier/bureau.webp").use { BitmapFactory.decodeStream(it) }
+    } catch (_: Throwable) { null }
+
     /** Le calque de dessin : il a exactement la taille de la feuille. */
     private var calque: Bitmap? = null
     private var pinceauCalque: Canvas? = null
@@ -302,18 +307,34 @@ class Papier(ctx: Context) : View(ctx) {
     }
 
     override fun onDraw(c: Canvas) {
-        // son fond de page : un beige avec deux trames tres legeres,
-        // l'une penchee de 2 degres, l'autre de 1,5 dans l'autre sens
-        c.drawColor(0xFFF3E7D2.toInt())
-        p.style = Paint.Style.STROKE
-        p.strokeWidth = 1f
-        p.color = 0x1A3C1E0A
-        var y = -30f
-        while (y < height + 30f) { c.drawLine(0f, y, width.toFloat(), y + width * .035f, p); y += 7f }
-        p.color = 0x1AFFE1BE
-        y = -30f
-        while (y < height + 30f) { c.drawLine(0f, y, width.toFloat(), y - width * .026f, p); y += 13f }
-        p.style = Paint.Style.FILL
+        /*
+         * Le bureau : le vrai bois de sa chambre, celui qu'on voit sous les
+         * consoles. Un morceau du plateau a ete decoupe dans son image, et
+         * on le repete sur toute la hauteur en alternant le sens, pour que
+         * les veines ne se repetent pas visiblement.
+         */
+        c.drawColor(0xFF702714.toInt())          // sa teinte de plateau
+        val bois = plateau
+        if (bois != null) {
+            val bande = width * bois.height.toFloat() / bois.width
+            var y = 0f
+            var rang = 0
+            while (y < height) {
+                c.save()
+                c.translate(0f, y)
+                if (rang % 2 == 1) { c.scale(-1f, 1f, width / 2f, 0f) }
+                c.drawBitmap(bois, null, RectF(0f, 0f, width.toFloat(), bande), copie)
+                c.restore()
+                y += bande
+                rang++
+            }
+        }
+        // l'ombre douce des bords, comme un plateau eclaire par le haut
+        val voile = Paint(Paint.ANTI_ALIAS_FLAG)
+        voile.shader = LinearGradient(0f, 0f, 0f, height.toFloat(),
+            intArrayOf(0x22000000, 0x00000000, 0x33000000),
+            floatArrayOf(0f, .42f, 1f), Shader.TileMode.CLAMP)
+        c.drawRect(0f, 0f, width.toFloat(), height.toFloat(), voile)
 
         val page = cadreA4()
         if (page.isEmpty) return

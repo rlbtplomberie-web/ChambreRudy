@@ -1,9 +1,10 @@
-version 95
-  dessin : pinceau du trait separe de celui du decor (plus d'ecran noir),
-           trait plein et bien visible
-  balle : mains sur le ballon meme en chargeant, planche « lancer » au
-           depart de la balle, limites appliquees a tous, compteur juste
-  eclairs et flammes refaits dans l'esprit manga
-  vent des arbres accorde sur les trois terrains (0,55 % de la largeur)
-  dames : plateau et pions agrandis, pions detoures
-  tir au but : pas sur gazon et frappe de ballon en trois couches
+version 96
+  balle : le porteur ne ramasse plus la balle en boucle (c'etait la cause du
+          tremblement et du tir impossible), planches selon ses consignes
+          — rattrapage 5 en main, reception 7 a 3, lancer 4 fige pendant la
+          charge puis 4 a 8 — pour les six personnages, balle dans les mains
+          de chacun
+  tir au but : decor anime en permanence, arbres seuls, herbe discrete
+  atelier : feuille posee sur le vrai bois de son bureau
+  chambre : apres la 3DS tout se range, un nouvel appui fait ressortir la NES
+  vitrines : recherche de jaquettes par index du depot, six en parallele

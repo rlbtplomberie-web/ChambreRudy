@@ -32,6 +32,9 @@ class Partie(var W: Float, var H: Float) {
         var catchA = 0f
         var catchTry = 0f
         var passA = 0f
+
+        /** La reception d'une passe : sa planche de rattrapage, a l'envers. */
+        var receptA = 0f
         var pickupA = 0f
         var fallA = 0f
         var riseA = 0f
@@ -247,7 +250,7 @@ fun Partie.update(dt: Float) {
             etapeSonDecompte = step
             if (step < 3) son("bip") else son("go")
         }
-        for (p in P) { p.vx = 0f; p.vy = 0f; p.throwA = 0f; p.dodge = 0f; p.catchA = 0f; p.pickupA = 0f }
+        for (p in P) { p.vx = 0f; p.vy = 0f; p.throwA = 0f; p.dodge = 0f; p.catchA = 0f; p.pickupA = 0f; p.receptA = 0f }
         B.held?.let { h -> B.x = h.x + cos(h.face) * 23f; B.y = h.y + sin(h.face) * 23f; B.z = 15f }
         return
     }
@@ -312,6 +315,7 @@ fun Partie.update(dt: Float) {
         p.cool = max(0f, p.cool - dt)
         p.throwA = max(0f, p.throwA - dt)
         p.passA = max(0f, p.passA - dt)
+        p.receptA = max(0f, p.receptA - dt)
         p.pickupA = max(0f, p.pickupA - dt)
         if (p.hitA > 0f) {
             p.hitA = max(0f, p.hitA - dt)
@@ -462,8 +466,9 @@ fun Partie.update(dt: Float) {
             B.x = hx; B.y = hy; B.z = 20f; B.held = t; B.passTarget = null
             B.charged = false; B.deadBall = true; B.lastTeam = null; B.thrower = null
             B.vx = 0f; B.vy = 0f; B.vz = 0f
-            // il recoit la passe : c'est la planche « passe » qui joue
-            t.passA = .55f; t.catchA = 0f; t.cool = .22f
+            // il recoit la passe : sa planche de rattrapage jouee a l'envers,
+            // des images 7 vers 3, jusqu'a refermer les mains sur la balle
+            t.receptA = .50f; t.passA = 0f; t.catchA = 0f; t.cool = .22f
             son("attrape")
         }
     }
@@ -471,6 +476,7 @@ fun Partie.update(dt: Float) {
     // ---- touche, rattrape, ou ramasse ----
     for (p in P) {
         if (p.pendingJail || p.fallA > 0f || p.hitA > 0f || p.prison) continue
+        if (B.held === p) continue        // il l'a deja en main
         val d = hypot(B.x - p.x, B.y - p.y)
         val s = hypot(B.vx, B.vy)
         // Elle ne touche que pendant le vol d'un vrai lancer : des qu'elle a
