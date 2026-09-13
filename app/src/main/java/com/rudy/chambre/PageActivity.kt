@@ -246,6 +246,12 @@ class PageActivity : ComponentActivity() {
         @JavascriptInterface
         fun pagesPretes(id: String): String = Livres.pagesPretes(this@PageActivity, id).toString()
 
+        /** Le jeu adoucit la musique de la chambre, sans la couper. */
+        @JavascriptInterface
+        fun volumeRadio(v: Float) {
+            runOnUiThread { SonPartage.volume(v.coerceIn(0f, 1f)) }
+        }
+
         /** Le jeu demande a revenir au bureau. */
         @JavascriptInterface
         fun retourChambre() { runOnUiThread { finish() } }

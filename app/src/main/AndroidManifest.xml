@@ -40,7 +40,7 @@
 
         <!-- La balle au prisonnier, en natif -->
         <activity
-            android:name="com.rudy.chambre.balle.BalleActivity"
+            android:name="com.rudy.chambre.balle.PartieActivity"
             android:exported="false"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/ThemeChambre"

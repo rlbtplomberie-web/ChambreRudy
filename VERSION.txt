@@ -1,1 +1,1 @@
-version 80 - version minimale partout, D8 corrige
+version 82 - balle au prisonnier traduite du jeu de Rudy

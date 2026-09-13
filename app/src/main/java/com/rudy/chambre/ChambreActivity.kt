@@ -35,6 +35,7 @@ class ChambreActivity : ComponentActivity() {
         }
 
         son = SonChambre(this)
+        SonPartage.radio = son
         vue = VueChambre(this)
         vue.surObjet = { quoi -> toucheObjet(quoi) }
         vue.surEcranTele = { r -> placerEcranTele(r) }
@@ -267,8 +268,8 @@ class ChambreActivity : ComponentActivity() {
             .setTitle("Voulez-vous sortir ?")
             .setItems(arrayOf("Tir au but", "Faire des paniers", "Balle au prisonnier")) { _, i ->
                 when (i) {
-                    // celui-la est desormais en natif
-                    2 -> startActivity(Intent(this, com.rudy.chambre.balle.BalleActivity::class.java))
+                    // la balle au prisonnier est desormais en natif
+                    2 -> startActivity(Intent(this, com.rudy.chambre.balle.PartieActivity::class.java))
                     else -> page(
                         if (i == 0) "jeux/penalty_leger.html" else "jeux/basket_leger.html",
                         if (i == 0) "Tir au but" else "Basket", paysage = true)
@@ -316,7 +317,20 @@ class ChambreActivity : ComponentActivity() {
 
     override fun onPause() {
         super.onPause()
-        son.enPause(true)
+        // On ouvre un jeu ou une vitrine : la chambre passe derriere, mais
+        // elle reste a l'ecran de l'application. La radio continue donc de
+        // jouer, comme quand on change de piece.
+        if (isFinishing) son.enPause(true)
+    }
+
+    /**
+     * L'application passe vraiment en arriere-plan (bouton accueil, autre
+     * application) : la, on met la radio en pause.
+     */
+    override fun onStop() {
+        super.onStop()
+        val enAvant = (application as? Chambre)?.enAvantPlan ?: false
+        if (!enAvant) son.enPause(true)
     }
 
     override fun onDestroy() {

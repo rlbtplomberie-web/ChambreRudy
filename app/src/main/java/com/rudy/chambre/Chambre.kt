@@ -13,8 +13,29 @@ import java.io.File
  */
 class Chambre : Application() {
 
+    /** Nombre d'ecrans de l'application actuellement visibles. */
+    private var ecransVisibles = 0
+
+    /** Vrai tant qu'au moins un ecran de l'application est a l'ecran. */
+    val enAvantPlan: Boolean get() = ecransVisibles > 0
+
     override fun onCreate() {
         super.onCreate()
+
+        // On suit les ecrans qui s'ouvrent et se ferment : la radio doit
+        // continuer quand on passe de la chambre a un jeu, et ne s'arreter
+        // que si l'application entiere passe en arriere-plan.
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityStarted(a: android.app.Activity) { ecransVisibles++ }
+            override fun onActivityStopped(a: android.app.Activity) {
+                ecransVisibles = (ecransVisibles - 1).coerceAtLeast(0)
+            }
+            override fun onActivityCreated(a: android.app.Activity, b: android.os.Bundle?) {}
+            override fun onActivityResumed(a: android.app.Activity) {}
+            override fun onActivityPaused(a: android.app.Activity) {}
+            override fun onActivitySaveInstanceState(a: android.app.Activity, b: android.os.Bundle) {}
+            override fun onActivityDestroyed(a: android.app.Activity) {}
+        })
         val precedent = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { fil, e ->
             try {
