@@ -265,9 +265,11 @@ class ChambreActivity : ComponentActivity() {
     private fun menuDehors() {
         menu()
             .setTitle("Voulez-vous sortir ?")
-            .setItems(arrayOf("Tir au but", "Faire des paniers")) { _, i ->
-                page(if (i == 0) "jeux/penalty_leger.html" else "jeux/basket_leger.html",
-                     if (i == 0) "Tir au but" else "Basket", paysage = true)
+            .setItems(arrayOf("Tir au but", "Faire des paniers", "Balle au prisonnier")) { _, i ->
+                val jeux = listOf("jeux/penalty_leger.html", "jeux/basket_leger.html",
+                                  "jeux/balle_prisonnier.html")
+                val noms = listOf("Tir au but", "Basket", "Balle au prisonnier")
+                page(jeux[i], noms[i], paysage = true)
             }
             .setNegativeButton("Rester", null)
             .show()

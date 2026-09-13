@@ -246,6 +246,10 @@ class PageActivity : ComponentActivity() {
         @JavascriptInterface
         fun pagesPretes(id: String): String = Livres.pagesPretes(this@PageActivity, id).toString()
 
+        /** Le jeu demande a revenir au bureau. */
+        @JavascriptInterface
+        fun retourChambre() { runOnUiThread { finish() } }
+
         @JavascriptInterface
         fun ouvrirConsole(console: String) {
             runOnUiThread {
