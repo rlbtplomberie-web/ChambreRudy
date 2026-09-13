@@ -1,9 +1,9 @@
-version 103
-  gradle.properties : retour au reglage recommande par Android. Celui que
-      j'avais mis, « enableDexingArtifactTransform », a ete supprime en
-      version 8.3 du greffon : il faisait echouer toute la compilation.
-  GameCube et Wii : le stick C n'avait pas de manche (SkinView.kt:353)
-  PSP : le jeu est transmis a PPSSPP dans les donnees de l'intention
-  consoles du carton : l'image tient dans sa zone 236 x 104
-  Nintendo 64 : depot fzurita/mupen64plus-ae, revision f3c381b, variante
-      « pro » versee dans les sources principales
+version 104
+  Wii : ses six manettes installees (Wiimote seule, Nunchuk, Pro — chacune
+        debout et couchee), trouvees dans SkinGC-corrige.zip au fond de son
+        projet. Le bouton MANETTE fait tourner entre les trois.
+        Touches nouvelles reconnues : un, deux, select, C, ZL, ZR, stick2.
+  GameCube : A, B, X, Y n'etaient jamais cherches sous le doigt ; le stick C
+        n'avait pas de manche et renvoyait toujours zero.
+  Nintendo 64 : depot fzurita/mupen64plus-ae revision f3c381b, variante pro
+        versee dans les sources ; reglage de compilation recommande par Android.

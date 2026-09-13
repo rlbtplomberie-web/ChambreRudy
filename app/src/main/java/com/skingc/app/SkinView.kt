@@ -131,7 +131,8 @@ class SkinView(ctx: Context) : View(ctx) {
     private val sticks = mapOf(
         Ids.CROIX to Stick(),
         Ids.STICK to Stick(),
-        Ids.CSTICK to Stick()
+        Ids.CSTICK to Stick(),
+        Ids.STICK2 to Stick()          // le second stick de la manette Pro
     )
 
     // ---------- images ----------
@@ -143,6 +144,23 @@ class SkinView(ctx: Context) : View(ctx) {
     /** La seconde presentation horizontale, celle a grand ecran. */
     private var fondL2: Bitmap? = null
     private val touchesL2 = HashMap<String, Touche>()
+
+    /*
+     * La Wii a trois manettes : la Wiimote seule, la Wiimote avec le Nunchuk,
+     * et la manette Pro. Chacune a sa disposition debout et couchee. Les deux
+     * jeux ci-dessous portent la deuxieme et la troisieme ; la premiere se
+     * range dans fondP/fondL, comme pour la GameCube.
+     */
+    private var fondP2: Bitmap? = null
+    private val touchesP2 = HashMap<String, Touche>()
+    private var fondP3: Bitmap? = null
+    private val touchesP3 = HashMap<String, Touche>()
+    private var fondL3: Bitmap? = null
+    private val touchesL3 = HashMap<String, Touche>()
+
+    /** 0 Wiimote seule, 1 avec Nunchuk, 2 manette Pro. */
+    var manetteWii = 0
+        private set
 
     /**
      * Seconde presentation horizontale.
@@ -190,36 +208,96 @@ class SkinView(ctx: Context) : View(ctx) {
 
     init {
         dispo = Dispositions.parDefaut(ctx, false)
-        chargerSkin("portrait", touchesP).also { fondP = it }
-        chargerSkin("paysage", touchesL).also { fondL = it }
-        chargerSkin("paysage2", touchesL2).also { fondL2 = it }
+        chargerLesHabillages()
         varianteLarge = Dispositions.variante(ctx) == 1
         isFocusable = true
     }
+
+    /**
+     * Charge les habillages de la console en cours.
+     *
+     * La GameCube en a trois : debout, couche, et sa seconde presentation
+     * couchee. La Wii en a six : trois manettes, chacune debout et couchee.
+     */
+    private fun chargerLesHabillages() {
+        touchesP.clear(); touchesL.clear(); touchesL2.clear()
+        touchesP2.clear(); touchesP3.clear(); touchesL3.clear()
+        fondP2 = null; fondP3 = null; fondL3 = null
+        if (racineSkin() == "wii") {
+            chargerSkin("portrait", touchesP).also { fondP = it }
+            chargerSkin("paysage", touchesL).also { fondL = it }
+            chargerSkin("nunchuk_portrait", touchesP2).also { fondP2 = it }
+            chargerSkin("nunchuk_paysage", touchesL2).also { fondL2 = it }
+            chargerSkin("pro_portrait", touchesP3).also { fondP3 = it }
+            chargerSkin("pro_paysage", touchesL3).also { fondL3 = it }
+        } else {
+            chargerSkin("portrait", touchesP).also { fondP = it }
+            chargerSkin("paysage", touchesL).also { fondL = it }
+            chargerSkin("paysage2", touchesL2).also { fondL2 = it }
+        }
+    }
+
+    /** Le fond de l'habillage en cours. */
+    private fun fondCourant(): Bitmap? =
+        if (racineSkin() == "wii") {
+            if (!enPaysage) when (manetteWii) { 1 -> fondP2; 2 -> fondP3; else -> fondP }
+            else when (manetteWii) { 1 -> fondL2; 2 -> fondL3; else -> fondL }
+        } else {
+            if (!enPaysage) fondP else if (varianteLarge) fondL2 else fondL
+        }
+
+    /** Les touches de l'habillage en cours. */
+    private fun touchesCourantes(): HashMap<String, Touche> =
+        if (racineSkin() == "wii") {
+            if (!enPaysage) when (manetteWii) { 1 -> touchesP2; 2 -> touchesP3; else -> touchesP }
+            else when (manetteWii) { 1 -> touchesL2; 2 -> touchesL3; else -> touchesL }
+        } else {
+            if (!enPaysage) touchesP else if (varianteLarge) touchesL2 else touchesL
+        }
 
     private fun charge(chemin: String): Bitmap =
         context.assets.open(chemin).use { BitmapFactory.decodeStream(it) }
 
     /** Lit positions.json et charge toutes les images d'un skin. */
+    /**
+     * La console a habiller : « gc » par defaut, « wii » quand la chambre
+     * demande la Wii ET que ses images sont dans l'application.
+     */
+    var famille: String = "gc"
+        set(v) {
+            if (field == v) return
+            field = v
+            chargerLesHabillages()
+            fondPret?.recycle(); fondPret = null
+            requestLayout(); invalidate()
+        }
+
+    /** Le dossier reellement disponible pour cette console. */
+    private fun racineSkin(): String = try {
+        if (famille != "gc" && context.assets.list("$famille/skin")?.isNotEmpty() == true)
+            famille else "gc"
+    } catch (_: Throwable) { "gc" }
+
     private fun chargerSkin(dossier: String, cible: HashMap<String, Touche>): Bitmap {
-        val texte = context.assets.open("gc/skin/$dossier/positions.json").bufferedReader().use { it.readText() }
+        val racine = racineSkin()
+        val texte = context.assets.open("$racine/skin/$dossier/positions.json").bufferedReader().use { it.readText() }
         val els = org.json.JSONObject(texte).getJSONArray("elements")
         for (i in 0 until els.length()) {
             val e = els.getJSONObject(i)
             val id = e.getString("id")
             val im = e.getJSONObject("images")
-            val repos = charge("gc/skin/$dossier/" + im.getString("repos"))
+            val repos = charge("$racine/skin/$dossier/" + im.getString("repos"))
             val appui = ArrayList<Bitmap>()
             val dirs = HashMap<String, List<Bitmap>>()
             im.keys().forEach { k ->
                 if (k == "repos") return@forEach
                 val liste = im.getJSONArray(k)
-                val bms = (0 until liste.length()).map { charge("gc/skin/$dossier/" + liste.getString(it)) }
+                val bms = (0 until liste.length()).map { charge("$racine/skin/$dossier/" + liste.getString(it)) }
                 if (k == "appui") appui.addAll(bms) else dirs[k] = bms
             }
             cible[id] = Touche(repos, appui, dirs)
         }
-        return charge("gc/skin/$dossier/fond.png")
+        return charge("$racine/skin/$dossier/fond.png")
     }
 
     // ================= rafraichissement =================
@@ -238,7 +316,7 @@ class SkinView(ctx: Context) : View(ctx) {
             override fun doFrame(ns: Long) {
                 if (!isAttachedToWindow) { boucleLancee = false; return }
                 Choreographer.getInstance().postFrameCallback(this)
-                val st = sticks[Ids.STICK]!!
+                val st = sticks[Ids.STICK] ?: return
                 val c = stickC()
                 surCommandes?.invoke(boutons, st.x, st.y, c.first, c.second,
                                      actifs.containsKey(Ids.FF))
@@ -281,8 +359,7 @@ class SkinView(ctx: Context) : View(ctx) {
         decY = (h - dispo.sh * ech) / 2f
         fondPret?.recycle()
         fondPret = null
-        val source = (if (!enPaysage) fondP
-                      else if (varianteLarge) fondL2 else fondL) ?: return
+        val source = fondCourant() ?: return
         if (w <= 0 || h <= 0) return
         try {
             val prete = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
@@ -310,8 +387,8 @@ class SkinView(ctx: Context) : View(ctx) {
     // ================= dessin =================
 
     override fun onDraw(c: Canvas) {
-        val fond = (if (!enPaysage) fondP else if (varianteLarge) fondL2 else fondL) ?: return
-        val touches = if (!enPaysage) touchesP else if (varianteLarge) touchesL2 else touchesL
+        val fond = fondCourant() ?: return
+        val touches = touchesCourantes()
         tmp.set(decX, decY, decX + dispo.sw * ech, decY + dispo.sh * ech)
         c.drawBitmap(fond, null, tmp, peinture)
 
@@ -431,10 +508,12 @@ class SkinView(ctx: Context) : View(ctx) {
     var cadence = 0.0
 
     fun diagnostic(): String {
-        val st = sticks[Ids.STICK]!!
-        val cr = sticks[Ids.CROIX]!!
+        // cette fonction renvoie un texte : pas de raccourci possible ici
+        val st = sticks[Ids.STICK]
+        val cr = sticks[Ids.CROIX]
         return "%.1f i/s  boutons %04X  doigts %d  stick %.2f,%.2f  croix %.2f,%.2f".format(
-            cadence, boutons, doigts.size, st.x, st.y, cr.x, cr.y)
+            cadence, boutons, doigts.size,
+            st?.x ?: 0f, st?.y ?: 0f, cr?.x ?: 0f, cr?.y ?: 0f)
     }
 
     // ================= catalogue dans l'ecran =================
@@ -529,8 +608,19 @@ class SkinView(ctx: Context) : View(ctx) {
     // ================= tactile =================
 
     private val doigts = HashMap<Int, String>()
-    private val ordreCapture = Ids.FONCTIONS + listOf(Ids.FF, Ids.L, Ids.R, Ids.Z,
-        Ids.CROIX, Ids.STICK)
+    /**
+     * Les touches cherchees sous le doigt, dans l'ordre.
+     *
+     * A, B, X, Y et Start en etaient absents : ils ne s'enfoncaient pas et
+     * n'envoyaient rien au jeu. Le stick C manquait aussi.
+     */
+    private val ordreCapture = Ids.FONCTIONS + listOf(
+        Ids.FF, Ids.A, Ids.B, Ids.X, Ids.Y, Ids.START, Ids.SELECT,
+        Ids.L, Ids.R, Ids.Z,
+        // celles de la Wii : « 1 » et « 2 », le C du Nunchuk, les gachettes
+        // du fond de la manette Pro
+        Ids.UN, Ids.DEUX, Ids.C, Ids.ZL, Ids.ZR,
+        Ids.CROIX, Ids.STICK, Ids.CSTICK, Ids.STICK2)
 
     /** Les sticks captent un peu au-dela de leur capuchon : le doigt glisse. */
     private fun elementSousLarge(x: Float, y: Float): String? {
@@ -630,7 +720,15 @@ class SkinView(ctx: Context) : View(ctx) {
                 Ids.JEUX -> surJeux?.invoke()
                 Ids.CHEAT -> surCheat?.invoke()
                 // La manette bascule d'une presentation horizontale a l'autre
-                Ids.MANETTE -> { varianteLarge = !varianteLarge; surManette?.invoke() }
+                Ids.MANETTE -> {
+                    // Wii : seule, puis Nunchuk, puis Pro. GameCube : ses deux
+                    // presentations couchees, comme avant.
+                    if (racineSkin() == "wii") {
+                        manetteWii = (manetteWii + 1) % 3
+                        fondPret?.recycle(); fondPret = null
+                    } else varianteLarge = !varianteLarge
+                    surManette?.invoke()
+                }
             }
         }
         performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
@@ -673,14 +771,37 @@ class SkinView(ctx: Context) : View(ctx) {
         st.x = nx; st.y = ny
     }
 
+    /*
+     * La correspondance vers le coeur.
+     *
+     * Dolphin lit une manette standard. Pour la Wii, on garde le geste le plus
+     * naturel : « 1 » et « 2 » tombent sur X et Y, le C du Nunchuk sur L, son
+     * Z sur la gachette Z, et les gachettes du fond de la Pro sur L et R.
+     */
     private val TABLE = mapOf(
         Ids.A to Pad.A, Ids.B to Pad.B, Ids.X to Pad.X, Ids.Y to Pad.Y,
-        Ids.START to Pad.START,
-        Ids.L to Pad.L, Ids.R to Pad.R, Ids.Z to Pad.Z)
+        Ids.START to Pad.START, Ids.SELECT to Pad.SELECT,
+        Ids.L to Pad.L, Ids.R to Pad.R, Ids.Z to Pad.Z,
+        Ids.UN to Pad.X, Ids.DEUX to Pad.Y,
+        Ids.C to Pad.L, Ids.ZL to Pad.L, Ids.ZR to Pad.R)
 
-    /** Position du second stick, deduite des boutons C enfonces. */
+    /**
+     * Position du stick C.
+     *
+     * Elle etait toujours nulle : deux variables mises a zero, puis renvoyees
+     * telles quelles. On lit maintenant son manche, comme les deux autres.
+     */
     fun stickC(): Pair<Float, Float> {
-        var x = 0f; var y = 0f
+        // sur la manette Pro, c'est le second stick qui tient ce role
+        val cle = if (racineSkin() == "wii" && manetteWii == 2) Ids.STICK2 else Ids.CSTICK
+        val st = sticks[cle] ?: return Pair(0f, 0f)
+        var x = st.x; var y = st.y
+        if (!st.actif) {
+            val depuis = System.currentTimeMillis() - st.retourDepuis
+            if (depuis < 90) { val f = 1f - depuis / 90f; x = st.rx * f; y = st.ry * f }
+            else { x = 0f; y = 0f }
+        }
+        if (hypot(x, y) < zoneMorte) return Pair(0f, 0f)
         val n = hypot(x, y)
         return if (n > 1f) Pair(x / n, y / n) else Pair(x, y)
     }
@@ -689,7 +810,7 @@ class SkinView(ctx: Context) : View(ctx) {
         var b = 0
         for ((id, bit) in TABLE) if (actifs.containsKey(id)) b = b or bit
         // la croix bascule : sa position devient quatre directions
-        val cr = sticks[Ids.CROIX]!!
+        val cr = sticks[Ids.CROIX] ?: return
         if (cr.actif || System.currentTimeMillis() - cr.retourDepuis < 60) {
             if (cr.y < -zoneMorte) b = b or Pad.HAUT
             if (cr.y > zoneMorte) b = b or Pad.BAS

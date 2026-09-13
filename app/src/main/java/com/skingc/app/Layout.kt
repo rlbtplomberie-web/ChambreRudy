@@ -25,10 +25,22 @@ object Ids {
     const val MENU = "menu"; const val JEUX = "jeux"; const val CHEAT = "cheat"; const val QUIT = "quit"
     /** Bascule entre les deux presentations horizontales. */
     const val MANETTE = "manette"
+
+    /*
+     * Les touches de la Wii, que la GameCube n'a pas.
+     *
+     * La Wiimote porte « 1 » et « 2 » et un bouton moins ; le Nunchuk ajoute
+     * C et Z ; la manette Pro a ses deux gachettes du fond et un second stick.
+     */
+    const val UN = "un"; const val DEUX = "deux"
+    const val SELECT = "select"
+    const val C = "C"
+    const val ZL = "ZL"; const val ZR = "ZR"
+    const val STICK2 = "stick2"
     /** Touches qui commandent l'application, pas la console. */
     val FONCTIONS = listOf(MENU, JEUX, CHEAT, QUIT, MANETTE)
     /** Pieces directionnelles : elles basculent au lieu de s'enfoncer. */
-    val DIRECTIONNELS = listOf(CROIX, STICK, CSTICK)
+    val DIRECTIONNELS = listOf(CROIX, STICK, CSTICK, STICK2)
 }
 
 /**

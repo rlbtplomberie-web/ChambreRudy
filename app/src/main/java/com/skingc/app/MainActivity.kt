@@ -772,6 +772,15 @@ class MainActivity : ComponentActivity() {
 
         gl = VueGL(this, coeur)
         vue = SkinView(this)
+        /*
+         * La chambre dit quelle console elle a posee sur la table : la
+         * GameCube ou la Wii. Les deux ouvrent cet ecran, puisque Dolphin
+         * fait les deux, mais chacune merite son habillage. Tant que les
+         * images de la Wii ne sont pas dans l'application, celui de la
+         * GameCube sert pour les deux.
+         */
+        vue.famille = intent?.getStringExtra("console")?.takeIf { it.isNotBlank() } ?: "gc"
+        noter("habillage demande : " + vue.famille)
 
         val racine = FrameLayout(this)
         // Pas de fond ici : une surface OpenGL est posee derriere la fenetre,

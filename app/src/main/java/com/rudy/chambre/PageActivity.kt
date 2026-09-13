@@ -343,6 +343,9 @@ class PageActivity : ComponentActivity() {
                     SonPartage.consoleLanceeA = System.currentTimeMillis()
                     val i = Intent(this@PageActivity, Class.forName(fiche.activite))
                         .putExtra("rom", uriRom)
+                        // la GameCube et la Wii partagent leur ecran : il doit
+                        // savoir laquelle des deux a ete posee sur la table
+                        .putExtra("console", console)
                     startActivity(i)
                     noterJournal("ecran lance sans erreur")
                     finish()                       // la vitrine s'efface derriere le jeu
