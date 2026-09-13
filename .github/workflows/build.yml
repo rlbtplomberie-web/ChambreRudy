@@ -80,6 +80,12 @@ jobs:
           # il devient un morceau de notre application, et non une application
           gradle_app=m64base/app/build.gradle
           [ -f "$gradle_app" ] || gradle_app=m64base/app/build.gradle.kts
+          # le fichier racine d'abord : il porte les valeurs partagees
+          # (« ext { minSdkVersion = 26 } »), reprises par tous les modules
+          if [ -f m64base/build.gradle ]; then
+            python3 outils/adapter_n64.py m64base/build.gradle
+          fi
+
           for module in m64base/*/; do
             g="$module/build.gradle"
             [ -f "$g" ] || g="$module/build.gradle.kts"
