@@ -1,8 +1,6 @@
-version 108
-  « Dependency ':m64' requires core library desugaring to be enabled » :
-  ses modules reclamaient le sucrage, et Android exigeait alors que notre
-  application l'active — or c'est ce meme reglage qui declenchait l'erreur D8
-  sur android.jar. On le retire donc des DEUX cotes : l'adaptateur l'efface
-  dans chaque module de Mupen64Plus, fichier racine compris.
-  Depuis qu'on demande Android 29, les fonctions Java recentes sont
-  disponibles d'origine : cette traduction ne sert plus a rien.
+version 109
+  Le retrait du sucrage ne prenait pas : son fichier ecrit
+  « coreLibraryDesugaringEnabled = true » — avec un signe egal et sans « is »
+  devant — et mes motifs couvraient les autres formes, pas celle-la.
+  Le motif est elargi et EPROUVE sur son vrai app/build.gradle : plus aucune
+  ligne de sucrage n'y subsiste, et les cinq ecritures possibles sont prises.

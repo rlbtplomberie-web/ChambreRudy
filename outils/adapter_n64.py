@@ -103,11 +103,13 @@ def retirer_sucrage(t: str) -> str:
     disponibles d'origine : cette traduction ne sert plus a rien. On la retire
     donc partout, et la question ne se pose plus des deux cotes.
     """
-    # le reglage, dans ses deux ecritures
-    t = re.sub(r'^\s*isCoreLibraryDesugaringEnabled\s*=\s*true\s*$', '', t, flags=re.M)
-    t = re.sub(r'^\s*coreLibraryDesugaringEnabled\s+true\s*$', '', t, flags=re.M)
-    # et la bibliotheque qui l'accompagne
-    t = re.sub(r'^\s*coreLibraryDesugaring\b[^\n]*$', '', t, flags=re.M)
+    # Le reglage, quelle que soit son ecriture : avec ou sans « is » devant,
+    # avec ou sans signe egal. Son propre fichier emploie la quatrieme forme,
+    # « coreLibraryDesugaringEnabled = true », que mes premiers motifs
+    # laissaient passer.
+    t = re.sub(r'^[^\n]*[Cc]oreLibraryDesugaringEnabled[^\n]*$', '', t, flags=re.M)
+    # et les bibliotheques qui l'accompagnent, une par ligne
+    t = re.sub(r'^[^\n]*\bcoreLibraryDesugaring\s*[\'"(][^\n]*$', '', t, flags=re.M)
     return t
 
 
