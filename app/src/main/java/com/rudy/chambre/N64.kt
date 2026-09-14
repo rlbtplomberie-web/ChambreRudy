@@ -22,6 +22,14 @@ import java.util.zip.ZipInputStream
  */
 object N64 {
 
+    /** Une ligne dans le journal que la tele sait relire. */
+    private fun noter(ctx: Context, texte: String) {
+        try {
+            val d = File(ctx.filesDir, "systeme").apply { mkdirs() }
+            File(d, "journal_appli.txt").appendText(texte + "\n")
+        } catch (_: Throwable) {}
+    }
+
     fun intentionDeJeu(ctx: Context, uri: String): Intent? {
         val fichier = poserSurLeDisque(ctx, uri) ?: return null
         val octets = try { fichier.readBytes() } catch (_: Throwable) { return null }
@@ -30,6 +38,39 @@ object N64 {
         val rom = remettreDansLOrdre(octets) ?: return null
         if (!rom.contentEquals(octets)) {
             try { fichier.writeBytes(rom) } catch (_: Throwable) { return null }
+        }
+
+        /*
+         * Les valeurs de la cartouche, calculees par SON code.
+         *
+         * Mes deux premiers essais les recalculaient a ma facon. Il suffit
+         * qu'une seule differe de ce que son catalogue aurait produit pour
+         * que le moteur refuse la cartouche — et c'est ce qui arrivait.
+         *
+         * On appelle donc sa propre classe de lecture d'en-tete : les valeurs
+         * sont alors identiques par construction. Si elle a change de nom
+         * dans une autre revision, on retombe sur mon calcul.
+         */
+        var sonCrc: String? = null
+        var sonNom: String? = null
+        var sonPays: Byte? = null
+        for (chemin in listOf(
+            "paulscode.android.mupen64plusae.util.RomHeader",
+            "paulscode.android.mupen64plusae.persistent.RomHeader")) {
+            try {
+                val classe = Class.forName(chemin)
+                val entete = classe.getConstructor(File::class.java).newInstance(fichier)
+                fun champ(vararg noms: String): Any? {
+                    for (n in noms) {
+                        try { return classe.getField(n).get(entete) } catch (_: Throwable) {}
+                    }
+                    return null
+                }
+                sonCrc = champ("crc") as? String
+                sonNom = champ("name", "internalName") as? String
+                sonPays = champ("countryCode") as? Byte
+                break
+            } catch (_: Throwable) {}
         }
 
         val ecran = try {
@@ -46,12 +87,15 @@ object N64 {
         val cleChemin = cle("ROM_PATH") ?: return null
         val cleEmpreinte = cle("ROM_MD5") ?: return null
 
+        noter(ctx, "N64 : " + fichier.name +
+              (if (sonCrc != null) " — valeurs lues par son code" else " — valeurs calculees"))
+
         val i = Intent(ctx, ecran)
         i.putExtra(cleChemin, fichier.absolutePath)
         i.putExtra(cleEmpreinte, empreinte(rom))
-        cle("ROM_CRC")?.let { i.putExtra(it, sommeDeControle(rom)) }
-        cle("ROM_HEADER_NAME")?.let { i.putExtra(it, nomInterne(rom)) }
-        cle("ROM_COUNTRY_CODE")?.let { i.putExtra(it, rom[0x3E]) }
+        cle("ROM_CRC")?.let { i.putExtra(it, sonCrc ?: sommeDeControle(rom)) }
+        cle("ROM_HEADER_NAME")?.let { i.putExtra(it, sonNom ?: nomInterne(rom)) }
+        cle("ROM_COUNTRY_CODE")?.let { i.putExtra(it, sonPays ?: rom[0x3E]) }
         cle("ROM_GOOD_NAME")?.let { i.putExtra(it, fichier.nameWithoutExtension) }
         cle("ROM_DISPLAY_NAME")?.let { i.putExtra(it, fichier.nameWithoutExtension) }
         cle("ROM_ART_PATH")?.let { i.putExtra(it, "") }

@@ -1,15 +1,25 @@
-version 130
+version 131
 
-  Nintendo 64 — « erreur lors de l'ouverture du fichier ROM »
-    Je passais au moteur un chemin tel quel : « Banjo-Kazooie (Europe)
-    (En,Fr,De).z64 ». Le coeur ouvre les fichiers en C, et les parentheses et
-    les virgules ne lui plaisent pas. Le nom est desormais simplifie —
-    lettres, chiffres, point et tiret — avant d'etre pose sur le disque.
+  Nintendo 64 — le jeu se lance depuis la vitrine
+    Mes deux premiers essais recalculaient a ma facon ce que son ecran de jeu
+    reclame : empreinte, somme de controle, nom interne, pays. Il suffit
+    qu'une seule valeur differe de ce que son catalogue aurait produit pour
+    que le moteur refuse la cartouche — et c'est ce qui arrivait.
+    On appelle desormais SA propre classe de lecture d'en-tete, celle que son
+    catalogue emploie : les valeurs sont identiques par construction. Si elle
+    porte un autre nom dans une autre revision, on retombe sur mon calcul.
+    Le nom du fichier est aussi simplifie : le coeur ouvre les fichiers en C,
+    et les parentheses et virgules de « Banjo-Kazooie (Europe) (En,Fr,De) »
+    ne lui plaisaient pas.
+    Le journal dit d'ou viennent les valeurs employees.
 
-  GameCube et Wii — pourquoi Dolphin ne demarre jamais
-    Ce n'est pas le code : GitHub choisit le workflow AVANT de lire les
-    archives. La compilation qui suit un depot tourne donc encore avec
-    l'ancien build.yml ; le nouveau n'est range qu'ensuite, et ne prend effet
-    qu'a la compilation SUIVANTE.
-    Il faut relancer une compilation sans rien deposer : Actions, puis
-    « Run workflow ». C'est la seule facon que mes etapes Dolphin tournent.
+  Compilation — elle repart
+    Mon outil qui neutralisait la demande d'autorisation de SplashActivity
+    abimait la syntaxe du fichier et faisait tout echouer. Il ne sert plus
+    depuis qu'on ouvre directement le catalogue : il est supprime.
+
+  GameCube et Wii
+    L'etape Dolphin est prete et tracee. Elle n'a jamais tourne parce que
+    GitHub interdit a une compilation de modifier son propre workflow : il
+    faut deposer build.yml A LA MAIN dans .github/workflows. Une fois fait,
+    le bilan dira ou Dolphin en est, etape par etape.
