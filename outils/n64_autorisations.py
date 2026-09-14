@@ -25,32 +25,43 @@ import sys
 from pathlib import Path
 
 
-def alleger(chemin: Path) -> bool:
-    """Vide la liste des autorisations reclamees. Renvoie vrai si modifie."""
+def alleger(chemin: Path) -> int:
+    """
+    Remplacer les autorisations impossibles par une autorisation acquise.
+
+    Plutot que de vider des listes — dont la forme change d'une revision a
+    l'autre — on remplace chaque mention des autorisations de stockage par
+    « INTERNET ». C'est une autorisation ordinaire, qu'Android accorde
+    d'office : la verification de l'emulateur la trouve donc satisfaite et le
+    laisse demarrer, sans qu'on ait touche a la structure de son code.
+
+    Renvoie le nombre de remplacements.
+    """
     t = chemin.read_text(encoding='utf-8', errors='ignore')
     avant = t
 
-    # 1. la liste, dans ses ecritures habituelles :
-    #    String[] PERMISSIONS = { ... };   ou   new String[]{ ... }
-    def vider(m):
-        return m.group(1) + '{ }' + m.group(3)
+    impossibles = (
+        'WRITE_EXTERNAL_STORAGE',
+        'READ_EXTERNAL_STORAGE',
+        'MANAGE_EXTERNAL_STORAGE',
+        'READ_MEDIA_IMAGES',
+        'READ_MEDIA_VIDEO',
+        'READ_MEDIA_AUDIO',
+    )
+    n = 0
+    for nom in impossibles:
+        # la forme par constante : Manifest.permission.WRITE_EXTERNAL_STORAGE
+        motif = r'(Manifest\.permission\.)' + nom + r'\b'
+        t, k = re.subn(motif, r'\1INTERNET', t)
+        n += k
+        # la forme par texte : "android.permission.WRITE_EXTERNAL_STORAGE"
+        motif = r'(["\'])android\.permission\.' + nom + r'(["\'])'
+        t, k = re.subn(motif, r'\1android.permission.INTERNET\2', t)
+        n += k
 
-    t = re.sub(
-        r'(\bString\s*\[\s*\]\s+\w*PERMISSIONS?\w*\s*=\s*)(\{[^;]*?\})(\s*;)',
-        vider, t, flags=re.S | re.I)
-    t = re.sub(
-        r'(\bnew\s+String\s*\[\s*\]\s*)(\{[^;]*?Manifest\.permission[^;]*?\})(\s*[;,\)])',
-        vider, t, flags=re.S)
-
-    # 2. certaines revisions dressent la liste dans une variable locale
-    t = re.sub(
-        r'(\bList<String>\s+\w*[Pp]ermissions?\w*\s*=\s*)new\s+ArrayList<>\s*\([^)]*\)(\s*;)',
-        r'\1new java.util.ArrayList<>()\2', t)
-
-    if t == avant:
-        return False
-    chemin.write_text(t, encoding='utf-8')
-    return True
+    if t != avant:
+        chemin.write_text(t, encoding='utf-8')
+    return n
 
 
 def main() -> None:
@@ -59,23 +70,32 @@ def main() -> None:
         sys.exit(1)
     racine = Path(sys.argv[1])
 
-    cibles = list(racine.glob('**/SplashActivity.java')) + \
-             list(racine.glob('**/SplashActivity.kt'))
+    # tout fichier qui reclame une autorisation de stockage, ou qu'il soit :
+    # l'ecran d'accueil, mais aussi ce qu'il appelle
+    cibles = []
+    for f in list(racine.glob('**/*.java')) + list(racine.glob('**/*.kt')):
+        try:
+            t = f.read_text(encoding='utf-8', errors='ignore')
+        except OSError:
+            continue
+        if 'EXTERNAL_STORAGE' in t or 'READ_MEDIA_' in t:
+            cibles.append(f)
     if not cibles:
-        print('::warning::aucun SplashActivity trouve : la demande '
-              'd autorisations n a pas pu etre allegee')
+        print('::warning::aucun fichier ne reclame d autorisation de stockage')
         return
+    print(f'{len(cibles)} fichier(s) reclament une autorisation de stockage')
 
+    total = 0
     for f in cibles:
-        t = f.read_text(encoding='utf-8', errors='ignore')
-        combien = len(re.findall(r'Manifest\.permission\.\w+', t))
-        print(f'{f} : {combien} autorisation(s) reclamee(s)')
-        if alleger(f):
-            reste = len(re.findall(r'Manifest\.permission\.\w+',
-                                   f.read_text(encoding='utf-8', errors='ignore')))
-            print(f'   liste videe, il en reste {reste}')
-        else:
-            print('   ::warning::liste non reconnue, rien n a ete change')
+        n = alleger(f)
+        total += n
+        print(f'{f.relative_to(racine)} : {n} autorisation(s) remplacee(s)')
+    if total == 0:
+        print('::warning::aucune autorisation de stockage trouvee dans ces '
+              'fichiers : le barrage vient peut-etre d ailleurs')
+    else:
+        print(f'au total, {total} autorisation(s) impossible(s) remplacee(s) '
+              f'par INTERNET, qu Android accorde d office')
 
 
 if __name__ == '__main__':

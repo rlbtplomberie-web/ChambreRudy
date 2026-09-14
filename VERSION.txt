@@ -1,20 +1,24 @@
-version 115 — uniquement la Nintendo 64
+version 117 — uniquement la Nintendo 64
 
-  « This app cannot proceed without these permissions »
+  Le barrage des autorisations, pris autrement.
 
-  Son ecran d'accueil reclame l'acces aux fichiers avant de demarrer. Depuis
-  Android 11, l'autorisation d'ECRITURE externe n'existe plus : le systeme la
-  refuse d'office. Sa verification ne peut donc jamais aboutir sur un
-  telephone recent — ce n'est pas un refus de sa part, c'est un barrage
-  infranchissable.
+  Ma premiere tentative vidait les listes d'autorisations ; leur ecriture
+  change d'une revision a l'autre et elle n'a rien trouve. Le message revenait
+  donc a l'identique.
 
-  Le workflow vide desormais la liste de ce qu'il reclame, juste apres avoir
-  pose l'overlay de Rudy. Sa verification trouve alors qu'il ne manque rien.
-  Rien n'est perdu : la Chambre lui passe le jeu par son chemin, et il ecrit
-  ses sauvegardes dans son propre dossier, qui ne demande aucune autorisation.
+  Cette fois on ne touche plus a la structure de son code : chaque mention
+  d'une autorisation de stockage — WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_
+  STORAGE, MANAGE_EXTERNAL_STORAGE, READ_MEDIA_* — est remplacee par
+  INTERNET, qu'Android accorde d'office. Sa verification la trouve satisfaite
+  et le laisse demarrer.
 
-  L'outil dit dans le journal de compilation combien d'autorisations il a
-  trouvees et combien il en reste : si le code a change de forme, cela se voit
-  au lieu de passer inapercu.
+  L'outil cherche dans TOUS ses fichiers, pas seulement l'ecran d'accueil, et
+  prend les deux ecritures : la constante « Manifest.permission.X » et le
+  texte « android.permission.X ». Eprouve sur les six formes, en Java et en
+  Kotlin.
+
+  Le journal de compilation dit combien de remplacements ont eu lieu, fichier
+  par fichier. S'il en annonce zero, le barrage vient d'ailleurs et on le
+  saura aussitot.
 
   Rien d'autre n'est touche.

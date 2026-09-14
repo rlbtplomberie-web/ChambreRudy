@@ -316,6 +316,30 @@ class ChambreActivity : ComponentActivity() {
          * cherche la derniere fois que CETTE console est partie, et on montre
          * tout ce qui a suivi : c'est son compte rendu a elle.
          */
+        /*
+         * Ce qu'Android a note pour notre propre application.
+         *
+         * Mupen64Plus tourne dans le meme processus que la Chambre : ses
+         * erreurs sont donc dans le journal d'Android, sous notre numero. Une
+         * application a le droit de lire le sien. C'est le seul moyen de voir
+         * pourquoi un ecran se referme sans rien dire — ni plantage Java, ni
+         * message a l'ecran.
+         */
+        val androidJournal = try {
+            val p = Runtime.getRuntime().exec(
+                arrayOf("logcat", "-d", "-t", "400", "--pid=" + android.os.Process.myPid()))
+            val lignes = p.inputStream.bufferedReader().readLines()
+            val utiles = lignes.filter { l ->
+                l.contains(" E ") || l.contains(" W ") ||
+                l.contains("mupen", true) || l.contains("paulscode", true) ||
+                l.contains("dolphin", true) || l.contains("citra", true) ||
+                l.contains("AndroidRuntime") || l.contains("Permission")
+            }
+            if (utiles.isEmpty()) ""
+            else "\n\nCe qu'Android a note :\n" +
+                 utiles.takeLast(16).joinToString("\n") { it.take(150) }
+        } catch (_: Throwable) { "" }
+
         val posee = vue.consolePosee()
         val journal = try {
             val f = java.io.File(java.io.File(filesDir, "systeme"), "journal_appli.txt")
@@ -346,7 +370,7 @@ class ChambreActivity : ComponentActivity() {
         } catch (_: Throwable) { "" }
 
         menu().setTitle(if (posee != null) posee.nom + " — compte rendu" else "Ce que contient cet APK")
-            .setMessage(texte + plantage + journal)
+            .setMessage(texte + plantage + journal + androidJournal)
             .setPositiveButton("Fermer", null)
             .setNegativeButton("Tout effacer") { _, _ ->
                 try { java.io.File(filesDir, "dernier_plantage.txt").delete() } catch (_: Throwable) {}
@@ -356,7 +380,7 @@ class ChambreActivity : ComponentActivity() {
                 try {
                     val cb = getSystemService(android.content.ClipboardManager::class.java)
                     cb.setPrimaryClip(android.content.ClipData.newPlainText(
-                        "bilan", texte + plantage + journal))
+                        "bilan", texte + plantage + journal + androidJournal))
                     dire("copié")
                 } catch (_: Throwable) {}
             }

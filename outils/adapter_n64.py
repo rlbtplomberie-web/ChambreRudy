@@ -231,6 +231,16 @@ def adapter_manifeste(chemin: str) -> None:
         t = re.sub(r'(<application\b[^>]*?)\s' + attribut + r'\s*=\s*"[^"]*"',
                    r'\1', t, flags=re.S)
 
+    # Ses ecrans se rangeaient dans leur propre pile.
+    #
+    # « singleTask » et « singleInstance » demandent a Android d'ouvrir une
+    # pile a part. Pour une application autonome c'est naturel. Ici, l'ecran
+    # partait dans une autre pile que la Chambre : il s'ouvrait hors de vue et
+    # l'on restait sur la vitrine, sans le moindre message. On les ramene donc
+    # au comportement ordinaire.
+    t = re.sub(r'android:launchMode\s*=\s*"(singleTask|singleInstance)"',
+               'android:launchMode="standard"', t)
+
     # Certaines bibliotheques de Mupen64Plus reclament un Android plus recent
     # que notre minimum, et le fusionneur refuse alors tout le manifeste. On
     # lui demande de passer outre, en nommant les paquets concernes.
