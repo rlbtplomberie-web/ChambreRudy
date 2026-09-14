@@ -1,18 +1,19 @@
-version 119 — uniquement la Nintendo 64
+version 120 — uniquement la Nintendo 64
 
-  Son ecran tourne sans planter — le journal d'Android le montre — mais sa
-  verification passe par une autre ecriture que celles deja prises.
+  Je demandais a Rudy le journal de GitHub, il m'envoyait celui de la tele :
+  ma faute. Le compte rendu de l'outil part desormais DANS LE BILAN, celui
+  qu'il lit par l'appui long sur la tele.
 
-  Trois ajouts :
-    - la comparaison a « refusee » : checkSelfPermission(...) ==
-      PERMISSION_DENIED devient false, et != devient true ;
-    - la DEMANDE elle-meme est retiree. C'est elle qui declenchait tout :
-      Android refuse l'ecriture externe d'office, son rappel voyait un refus
-      et affichait le message. Sans demande, plus de refus, plus de message ;
-    - le workflow dit desormais dans quel fichier et a quelle ligne se trouve
-      le texte « cannot proceed », pour qu'on sache ou regarder si le barrage
-      tient encore.
+  Il y verra trois lignes du genre :
+      12 fichier(s) reclament une autorisation de stockage
+         message trouve : res/values/strings.xml:214
+         SplashActivity.java : 6 remplacement(s)
+      N64 autorisations : 18 remplacement(s)
 
-  Eprouve sur la forme complete : boucle de verification, demande, et rappel.
+  Et si l'outil ne trouve rien :
+      N64 autorisations : AUCUNE trouvee — le barrage vient d ailleurs
+
+  Ces quelques lignes suffiront a savoir ou est le barrage, sans avoir a
+  chercher dans GitHub.
 
   Rien d'autre n'est touche.

@@ -24,6 +24,14 @@ import re
 import sys
 from pathlib import Path
 
+_rapport = []
+
+
+def dire(texte: str) -> None:
+    """Ecrire a l'ecran de la compilation ET dans le bilan de l'application."""
+    print(texte)
+    _rapport.append(texte)
+
 
 def alleger(chemin: Path) -> int:
     """
@@ -114,7 +122,7 @@ def main() -> None:
     if not cibles:
         print('::warning::aucun fichier ne reclame d autorisation de stockage')
         return
-    print(f'{len(cibles)} fichier(s) reclament une autorisation de stockage')
+    dire(f'{len(cibles)} fichier(s) reclament une autorisation de stockage')
 
     # D'ou vient exactement le message ? On le dit dans le journal de
     # compilation : si le barrage tient encore, on saura ou regarder sans
@@ -128,20 +136,24 @@ def main() -> None:
         if 'cannot proceed' in contenu.lower():
             for num, ligne in enumerate(contenu.splitlines(), 1):
                 if 'cannot proceed' in ligne.lower():
-                    print(f'   message trouve : {f.relative_to(racine)}:{num}'
-                          f'  {ligne.strip()[:110]}')
+                    dire(f'   message trouve : {f.relative_to(racine)}:{num}')
 
     total = 0
     for f in cibles:
         n = alleger(f)
         total += n
-        print(f'{f.relative_to(racine)} : {n} autorisation(s) remplacee(s)')
+        if n: dire(f'   {f.name} : {n} remplacement(s)')
     if total == 0:
-        print('::warning::aucune autorisation de stockage trouvee dans ces '
-              'fichiers : le barrage vient peut-etre d ailleurs')
+        dire('N64 autorisations : AUCUNE trouvee — le barrage vient d ailleurs')
     else:
-        print(f'au total, {total} autorisation(s) impossible(s) remplacee(s) '
-              f'par INTERNET, qu Android accorde d office')
+        dire(f'N64 autorisations : {total} remplacement(s)')
+
+    # le bilan que la tele affiche
+    try:
+        with open('rapport_n64.txt', 'w', encoding='utf-8') as f:
+            f.write('\n'.join(_rapport) + '\n')
+    except OSError:
+        pass
 
 
 if __name__ == '__main__':
