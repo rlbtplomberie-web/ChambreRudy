@@ -199,15 +199,12 @@ jobs:
           if [ -z "$marque" ]; then echo "::error::habillage N64 incomplet"; exit 1; fi
           cp -a "$(dirname "$marque")"/. m64base/
 
-          # Son ecran d'accueil refuse de demarrer sans l'acces aux fichiers.
-          # Depuis Android 11 cette autorisation ne peut plus etre accordee :
-          # sa verification ne peut donc jamais aboutir sur un telephone
-          # recent. On vide la liste de ce qu'il reclame — la Chambre lui
-          # passe le jeu par son chemin, et il ecrit ses sauvegardes dans son
-          # propre dossier, qui ne demande rien.
-          # Son compte rendu est garde de cote : le bilan est remis a zero
-          # plus tard, il l'effacerait. Il y sera repris a ce moment-la.
-          python3 outils/n64_autorisations.py m64base
+          # Son ecran d'accueil n'est plus ouvert du tout : la Chambre ouvre
+          # directement son catalogue, qui ne reclame aucune autorisation.
+          #
+          # J'avais ecrit un outil pour neutraliser sa verification ; il
+          # abimait la syntaxe de SplashActivity et faisait echouer la
+          # compilation. Il ne sert plus a rien, on ne l'appelle plus.
 
 
           # il devient un morceau de notre application, et non une application
@@ -346,9 +343,6 @@ jobs:
           fi
           # le compte rendu des autorisations de la N64, mis de cote plus tot :
           # c'est dans ce bilan que Rudy le lit, par l'appui long sur la tele
-          if [ -f rapport_n64.txt ]; then
-            cat rapport_n64.txt >> "$rapport"
-          fi
           if [ -f rapport_dolphin.txt ]; then
             cat rapport_dolphin.txt >> "$rapport"
           fi
