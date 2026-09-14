@@ -341,6 +341,24 @@ class PageActivity : ComponentActivity() {
                     // la chambre ne doit pas relancer sa musique en repassant
                     // devant : la console a la sienne
                     SonPartage.consoleLanceeA = System.currentTimeMillis()
+                    /*
+                     * La Nintendo 64 entre directement dans la partie.
+                     *
+                     * Son ecran de jeu reclame l'empreinte et l'en-tete de la
+                     * cartouche : on les calcule nous-memes. Si le fichier ne
+                     * se laisse pas lire, on retombe sur son catalogue.
+                     */
+                    if (console == "n64") {
+                        val direct = N64.intentionDeJeu(this@PageActivity, uriRom)
+                        if (direct != null) {
+                            noterJournal("N64 : entree directe dans la partie")
+                            startActivity(direct)
+                            finish()
+                            return@runOnUiThread
+                        }
+                        noterJournal("N64 : cartouche illisible, on ouvre le catalogue")
+                    }
+
                     val i = Intent(this@PageActivity, Class.forName(fiche.activite))
                     i.putExtra("rom", uriRom)
                     // la GameCube et la Wii partagent leur ecran : il doit

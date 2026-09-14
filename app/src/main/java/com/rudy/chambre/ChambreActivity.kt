@@ -116,6 +116,53 @@ class ChambreActivity : ComponentActivity() {
         vue.postDelayed({ preparerVideo(Decor.CONSOLES[0]) }, 1200)
     }
 
+    /**
+     * Le choix d'une video, avec la telecommande.
+     *
+     * On ouvre le selecteur du telephone ; ce qu'il rend est joue sur l'ecran
+     * de la tele, a la place des sequences de consoles.
+     */
+    private val choisirUneVideo =
+        registerForActivityResult(
+            androidx.activity.result.contract.ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri == null) return@registerForActivityResult
+            try {
+                contentResolver.takePersistableUriPermission(
+                    uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            } catch (_: Throwable) {}
+            jouerSurLaTele(uri)
+        }
+
+    /** Joue une video du telephone sur l'ecran de la tele. */
+    private fun jouerSurLaTele(uri: android.net.Uri) {
+        teleAllumee = true
+        ecranTele.alpha = 1f
+        placerEcranTele(vue.rectangleTele())
+        val surface = ecranTele.surfaceTexture ?: return
+        try { lecteur?.release() } catch (_: Throwable) {}
+        lecteur = null
+        try {
+            lecteur = android.media.MediaPlayer().apply {
+                setDataSource(this@ChambreActivity, uri)
+                setSurface(android.view.Surface(surface))
+                setVolume(0.9f, 0.9f)
+                setOnCompletionListener {
+                    teleAllumee = false
+                    ecranTele.animate().alpha(0f).setDuration(600).start()
+                    son.enPause(false)
+                }
+                prepare()
+                start()
+            }
+            son.enPause(true)        // la radio se tait pendant la video
+            dire("lecture sur la télé")
+        } catch (_: Throwable) {
+            teleAllumee = false
+            ecranTele.alpha = 0f
+            dire("cette vidéo ne peut pas être lue")
+        }
+    }
+
     /** Un menu sombre, lisible par-dessus le decor. */
     private fun menu(): AlertDialog.Builder =
         AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
@@ -165,6 +212,32 @@ class ChambreActivity : ComponentActivity() {
                 son.bruit("tiroir.mp3")
                 val ouvrir = vue.tiroir < 0.5f
                 vue.ouvrirTiroir(ouvrir) { if (ouvrir) proposerTiroir() }
+            }
+            // le second tiroir, en bas a droite : meme bruit, meme geste
+            "tiroir2" -> {
+                son.bruit("tiroir.mp3")
+                val ouvrir = vue.tiroir2 < 0.5f
+                vue.ouvrirTiroir2(ouvrir)
+            }
+            /*
+             * La telecommande.
+             *
+             * Elle ne sert que si le bureau est libre : tant qu'une console
+             * est posee, la tele lui appartient.
+             */
+            // la loupe : rien pour l'instant, Rudy dira ce qu'elle fait
+            "loupe" -> dire("une loupe")
+            "telecommande" -> {
+                if (vue.consolePosee() != null) {
+                    dire("veuillez d'abord ranger la console")
+                } else {
+                    son.bruit("pose.mp3")
+                    try {
+                        choisirUneVideo.launch(arrayOf("video/*"))
+                    } catch (_: Throwable) {
+                        dire("aucune application pour choisir une vidéo")
+                    }
+                }
             }
             "porteG" -> {
                 val ouvrir = vue.porteG < 0.5f
@@ -556,7 +629,10 @@ class ChambreActivity : ComponentActivity() {
         super.onResume()
         // si une console vient de partir, la chambre ne fait que passer :
         // sa musique reste muette, celle du jeu prend le relais
-        if (!SonPartage.consoleVientDePartir()) son.enPause(false)
+        if (!SonPartage.consoleVientDePartir()) {
+            SonPartage.volume(1f)          // rendu apres le passage d'un emulateur
+            son.enPause(false)
+        }
     }
 
     override fun onPause() {

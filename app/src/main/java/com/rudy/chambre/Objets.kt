@@ -376,4 +376,135 @@ object Objets {
                               facade.centerX() + r.width() * .16f, facade.centerY() + h * .06f),
                         h * .06f, h * .06f, p)
     }
+
+    /**
+     * La telecommande de la tele, couchee dans le tiroir de droite.
+     *
+     * Un boitier noir mat, legerement en biais, avec sa croix directionnelle,
+     * son gros bouton rouge en haut et deux rangees de touches. Elle glisse
+     * avec le tiroir, comme le cahier de l'autre cote.
+     */
+    fun telecommande(c: Canvas, tiroir: RectF, avance: Float, ouverture: Float) {
+        val l = tiroir.width() * .17f
+        val h = l * 3.4f
+        val cx = tiroir.left + tiroir.width() * .30f
+        val cy = tiroir.top + avance - h * .18f * ouverture + tiroir.height() * .18f
+
+        c.save()
+        c.rotate(-11f, cx, cy)
+        val r = RectF(cx - l / 2, cy - h / 2, cx + l / 2, cy + h / 2)
+
+        // son ombre sur le fond du tiroir
+        p.style = Paint.Style.FILL
+        p.color = 0x55000000
+        c.drawRoundRect(RectF(r.left + l * .07f, r.top + l * .09f,
+                              r.right + l * .07f, r.bottom + l * .09f),
+                        l * .30f, l * .30f, p)
+
+        // le boitier, plus clair sur le haut : la lumiere vient de la fenetre
+        val corps = Paint(Paint.ANTI_ALIAS_FLAG)
+        corps.shader = LinearGradient(r.left, r.top, r.right, r.bottom,
+            intArrayOf(0xFF3A3A3E.toInt(), 0xFF1C1C1F.toInt()),
+            null, Shader.TileMode.CLAMP)
+        c.drawRoundRect(r, l * .30f, l * .30f, corps)
+
+        // le liserait clair du bord superieur
+        p.style = Paint.Style.STROKE
+        p.strokeWidth = l * .035f
+        p.color = 0x33FFFFFF
+        c.drawRoundRect(RectF(r.left + l * .05f, r.top + l * .05f,
+                              r.right - l * .05f, r.bottom - l * .05f),
+                        l * .26f, l * .26f, p)
+        p.style = Paint.Style.FILL
+
+        // le bouton rouge, tout en haut
+        p.color = 0xFFC0392B.toInt()
+        c.drawCircle(r.centerX(), r.top + h * .09f, l * .13f, p)
+
+        // la croix directionnelle
+        val cxx = r.centerX(); val cyy = r.top + h * .30f
+        val br = l * .30f; val ep = l * .12f
+        p.color = 0xFF55555A.toInt()
+        c.drawRoundRect(RectF(cxx - br, cyy - ep / 2, cxx + br, cyy + ep / 2),
+                        ep * .4f, ep * .4f, p)
+        c.drawRoundRect(RectF(cxx - ep / 2, cyy - br, cxx + ep / 2, cyy + br),
+                        ep * .4f, ep * .4f, p)
+        p.color = 0xFF6E6E74.toInt()
+        c.drawCircle(cxx, cyy, ep * .52f, p)
+
+        // deux rangees de touches, en bas
+        p.color = 0xFF4A4A4F.toInt()
+        var rang = 0
+        while (rang < 4) {
+            val y = r.top + h * (.48f + rang * .11f)
+            c.drawRoundRect(RectF(cxx - l * .28f, y, cxx - l * .04f, y + h * .055f),
+                            l * .05f, l * .05f, p)
+            c.drawRoundRect(RectF(cxx + l * .04f, y, cxx + l * .28f, y + h * .055f),
+                            l * .05f, l * .05f, p)
+            rang++
+        }
+        c.restore()
+    }
+
+    /**
+     * La loupe, posee en travers a cote de la telecommande.
+     *
+     * Un manche de bois, une virole doree, et un verre a peine teinte qui
+     * laisse voir le fond du tiroir a travers, avec un reflet en croissant.
+     */
+    fun loupe(c: Canvas, tiroir: RectF, avance: Float, ouverture: Float) {
+        val d = tiroir.width() * .22f            // diametre du verre
+        val cx = tiroir.left + tiroir.width() * .66f
+        val cy = tiroir.top + avance + tiroir.height() * .30f - d * .12f * ouverture
+
+        c.save()
+        c.rotate(24f, cx, cy)
+
+        // le manche de bois, sous le verre
+        val ml = d * 1.25f; val me = d * .26f
+        val manche = RectF(cx + d * .42f, cy - me / 2, cx + d * .42f + ml, cy + me / 2)
+        p.style = Paint.Style.FILL
+        p.color = 0x55000000
+        c.drawRoundRect(RectF(manche.left, manche.top + me * .28f,
+                              manche.right, manche.bottom + me * .28f),
+                        me * .5f, me * .5f, p)
+        val bois = Paint(Paint.ANTI_ALIAS_FLAG)
+        bois.shader = LinearGradient(manche.left, manche.top, manche.left, manche.bottom,
+            intArrayOf(0xFF9A6636.toInt(), 0xFF5E3A18.toInt()),
+            null, Shader.TileMode.CLAMP)
+        c.drawRoundRect(manche, me * .5f, me * .5f, bois)
+
+        // la virole doree, entre le manche et le verre
+        p.color = 0xFFC9A227.toInt()
+        c.drawRoundRect(RectF(cx + d * .34f, cy - me * .62f,
+                              cx + d * .52f, cy + me * .62f),
+                        me * .2f, me * .2f, p)
+
+        // l'ombre du verre sur le fond
+        p.color = 0x44000000
+        c.drawCircle(cx + d * .06f, cy + d * .08f, d * .52f, p)
+
+        // le cercle de metal
+        p.style = Paint.Style.STROKE
+        p.strokeWidth = d * .10f
+        p.color = 0xFF8C8C92.toInt()
+        c.drawCircle(cx, cy, d * .50f, p)
+
+        // le verre : a peine teinte, plus clair au centre
+        p.style = Paint.Style.FILL
+        val verre = Paint(Paint.ANTI_ALIAS_FLAG)
+        verre.shader = RadialGradient(cx - d * .14f, cy - d * .16f, d * .55f,
+            intArrayOf(0x33FFFFFF, 0x18AFC8D8, 0x22000000),
+            floatArrayOf(0f, .55f, 1f), Shader.TileMode.CLAMP)
+        c.drawCircle(cx, cy, d * .45f, verre)
+
+        // le reflet en croissant, en haut a gauche
+        p.style = Paint.Style.STROKE
+        p.strokeWidth = d * .07f
+        p.color = 0x66FFFFFF
+        c.drawArc(RectF(cx - d * .36f, cy - d * .36f, cx + d * .36f, cy + d * .36f),
+                  165f, 85f, false, p)
+        p.style = Paint.Style.FILL
+        c.restore()
+    }
 }

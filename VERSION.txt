@@ -1,17 +1,27 @@
-version 122 — uniquement la Nintendo 64
+version 124
 
-  On n'ouvre plus son ecran d'accueil.
+  Nintendo 64
+    - on entre directement dans la partie : la Chambre calcule elle-meme
+      l'empreinte, la somme de controle, le nom interne et le pays de la
+      cartouche, sort le jeu de son archive et remet les octets a l'endroit.
+      Les noms exacts des renseignements sont lus dans SON code, donc ils
+      restent justes meme si sa revision change. Si une cartouche resiste, on
+      retombe sur son catalogue.
+    - un bouton « ← BUREAU » en bas a droite, pose PAR-DESSUS son ecran :
+      son code n'est pas touche. Il vaudra aussi pour Dolphin.
 
-  SplashActivity reclame l'acces aux fichiers avant toute chose. Depuis
-  Android 11 cette autorisation ne peut plus etre accordee : sa verification
-  ne peut jamais aboutir, et c'est elle, et elle seule, qui affichait « This
-  app cannot proceed without these permissions ».
-
-  La Chambre ouvre desormais son CATALOGUE — GalleryActivity — qui ne demande
-  rien. Les donnees dont il a besoin sont deja installees : sa classe
-  d'application est reveillee au demarrage, le journal de Rudy le confirme
-  (« application reveillee : AppMupen64Plus »).
-
-  Le journal precise maintenant quel ecran a ete ouvert, pour lever tout doute.
-
-  Rien d'autre n'est touche.
+  Chambre
+    - le cadenas reste accroche a la baie vitree quand on bouge la camera :
+      c'etait mon rattrapage de bord qui le faisait glisser. Il retrouve sa
+      position d'origine, sous la poignee droite.
+    - un second tiroir en bas a DROITE du bureau, symetrique du premier :
+      meme taille, meme hauteur, meme bruit, meme glissement. Le plateau va
+      de 56 a 1592 sur l'image ; le premier commence a 18 points du bord
+      gauche, celui-ci finit a 18 points du bord droit.
+    - dedans : une telecommande et une loupe. Les cartes restent avec le
+      cahier, dans le tiroir de gauche.
+    - la telecommande ouvre le selecteur de videos du telephone, et la video
+      choisie se joue sur l'ecran de la tele. Si une console est posee sur le
+      bureau : « veuillez d'abord ranger la console ».
+    - la radio S'ARRETE vraiment des qu'un emulateur est a l'ecran — les
+      treize, sans toucher a aucun — et reprend au retour dans la chambre.

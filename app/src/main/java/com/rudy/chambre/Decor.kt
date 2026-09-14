@@ -50,6 +50,14 @@ object Decor {
     val CARTON  = Zone(1120f / 1672f, 456f / 941f, 196f / 1672f, 146f / 941f)
     val POSE    = Zone(872f / 1672f, 512f / 941f, 236f / 1672f, 104f / 941f)
     val TIROIR  = Zone(74f / 1672f, 712f / 941f, 268f / 1672f, 114f / 941f)
+    /*
+     * Le second tiroir, en bas a droite du bureau.
+     *
+     * Le plateau va de 56 a 1592 sur l'image. Le premier tiroir commence a 18
+     * points du bord gauche ; celui-ci se termine a 18 points du bord droit,
+     * a la meme hauteur et de la meme taille.
+     */
+    val TIROIR2 = Zone(1306f / 1672f, 712f / 941f, 268f / 1672f, 114f / 941f)
     val MEUBLE  = Zone(850f / 1672f, 26f / 941f, 510f / 1672f, 438f / 941f)
 
     // ----- les objets de la baie vitree -----

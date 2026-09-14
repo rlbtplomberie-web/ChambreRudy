@@ -46,6 +46,8 @@ class VueChambre(ctx: Context) : View(ctx) {
 
     // --- tiroir ---
     var tiroir = 0f; private set
+    /** Le second tiroir, en bas a droite : il s'ouvre comme le premier. */
+    var tiroir2 = 0f; private set
     var radioAllumee = false
 
     private val murs = arrayOf("salon.jpg", "salon2.jpg", "chambre3.jpg")
@@ -148,16 +150,15 @@ class VueChambre(ctx: Context) : View(ctx) {
         when (vue) {
             0 -> dessinerBureau(c)
             1 -> {
-                // le cadenas reste entier a l'ecran : s'il depasse d'un bord,
-                // on le rentre, sans jamais toucher a sa taille
+                /*
+                 * Le cadenas est accroche a la baie vitree.
+                 *
+                 * Je le rentrais dans l'ecran quand il depassait d'un bord :
+                 * il glissait alors par rapport au decor des qu'on bougeait
+                 * la camera. Il reste desormais a sa place sur la vitre, et
+                 * suit le decor comme le reste.
+                 */
                 val s = zone(Decor.SERRURE)
-                val marge = s.width() * .35f
-                var dx = 0f; var dy = 0f
-                if (s.left < marge) dx = marge - s.left
-                if (s.right > width - marge) dx = width - marge - s.right
-                if (s.top < marge) dy = marge - s.top
-                if (s.bottom > height - marge) dy = height - marge - s.bottom
-                s.offset(dx, dy)
                 Objets.serrure(c, s)
                 serrureVisible = s
                 Objets.pastilleLivre(c, zone(Decor.LIVRE), battement())
@@ -182,8 +183,9 @@ class VueChambre(ctx: Context) : View(ctx) {
         // le meuble et ses deux battants, toujours visibles
         dessinerPortes(c)
 
-        // le tiroir : cavite et facade
+        // les deux tiroirs : cavite et facade
         Objets.tiroir(c, zone(Decor.TIROIR), tiroir)
+        Objets.tiroir(c, zone(Decor.TIROIR2), tiroir2)
 
         // la radio
         Objets.radio(c, zone(Decor.RADIO), radioAllumee)
@@ -191,6 +193,16 @@ class VueChambre(ctx: Context) : View(ctx) {
         // le carton du bureau : celui de la photo, redessine pour pouvoir bouger
         Objets.cartonPhoto(c, zone(Decor.CARTON),
                            Decor.BOITE_PROFONDEUR * largeurMur * .5f, 0f)
+
+        // le second tiroir coulisse, avec ce qu'il contient
+        if (tiroir2 > 0f) {
+            val t2 = zone(Decor.TIROIR2)
+            val avance = t2.height() * 0.55f * tiroir2
+            c.drawRect(t2.left, t2.top + avance, t2.right, t2.bottom + avance, ombre)
+            // ce qu'il a demande dedans : la telecommande et la loupe
+            Objets.telecommande(c, t2, avance, tiroir2)
+            Objets.loupe(c, t2, avance, tiroir2)
+        }
 
         // le tiroir coulisse
         if (tiroir > 0f) {
@@ -594,6 +606,25 @@ class VueChambre(ctx: Context) : View(ctx) {
             if (zone(Decor.CARTON).contains(x, y))  { surObjet?.invoke("carton"); return }
             if (zone(Decor.RADIO).contains(x, y))   { surObjet?.invoke("radio"); return }
             if (zone(Decor.TIROIR).contains(x, y))  { surObjet?.invoke("tiroir"); return }
+            if (zone(Decor.TIROIR2).contains(x, y)) {
+                /*
+                 * Tiroir ouvert : on touche ce qu'il contient.
+                 *
+                 * La telecommande occupe le tiers gauche du tiroir, la loupe
+                 * le reste. Ferme, l'appui ouvre ou referme le tiroir.
+                 */
+                if (tiroir2 > .5f) {
+                    val t2 = zone(Decor.TIROIR2)
+                    val avance = t2.height() * 0.55f * tiroir2
+                    val dedans = RectF(t2.left, t2.top + avance, t2.right, t2.bottom + avance)
+                    if (dedans.contains(x, y)) {
+                        val moitie = dedans.left + dedans.width() * .48f
+                        surObjet?.invoke(if (x < moitie) "telecommande" else "loupe")
+                        return
+                    }
+                }
+                surObjet?.invoke("tiroir2"); return
+            }
             if (zone(Decor.MEUBLE).contains(x, y))  {
                 val m = zone(Decor.MEUBLE)
                 surObjet?.invoke(if (x < m.centerX()) "porteG" else "porteD"); return
@@ -660,6 +691,12 @@ class VueChambre(ctx: Context) : View(ctx) {
     fun ouvrirTiroir(ouvert: Boolean, fin: (() -> Unit)? = null) {
         val depart = tiroir
         anime(520, { t -> tiroir = depart + ((if (ouvert) 1f else 0f) - depart) * t }, fin)
+    }
+
+    /** Le second tiroir, en bas a droite : meme glissement, meme duree. */
+    fun ouvrirTiroir2(ouvert: Boolean, fin: (() -> Unit)? = null) {
+        val depart = tiroir2
+        anime(520, { t -> tiroir2 = depart + ((if (ouvert) 1f else 0f) - depart) * t }, fin)
     }
 
     fun bougerPorte(gauche: Boolean, ouverte: Boolean, fin: (() -> Unit)? = null) {

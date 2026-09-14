@@ -1,5 +1,6 @@
 package com.rudy.chambre
 
+import android.app.Activity
 import android.app.Application
 import java.io.File
 
@@ -33,6 +34,76 @@ class Chambre : Application() {
             )
             return (relevees + connues).distinct()
         }
+
+    /**
+     * Un bouton « bureau » en bas a droite des ecrans d'emulateur.
+     *
+     * Ces ecrans viennent de projets entiers — Mupen64Plus, Dolphin — et l'on
+     * ne touche pas a leur code. On pose donc le bouton par-dessus, au moment
+     * ou l'ecran s'affiche : Android nous previent de chaque ouverture, et il
+     * suffit d'ajouter une vue a son contenu.
+     */
+    private fun poserLeBoutonDeRetour() {
+        registerActivityLifecycleCallbacks(object :
+            android.app.Application.ActivityLifecycleCallbacks {
+
+            override fun onActivityResumed(a: Activity) {
+                val nom = a.javaClass.name
+
+                /*
+                 * La radio se tait des qu'un emulateur est a l'ecran.
+                 *
+                 * Tous les emulateurs sont concernes, pas seulement ceux venus
+                 * d'ailleurs : leur son leur appartient, et la musique de la
+                 * chambre n'a rien a faire par-dessus. On l'arrete vraiment,
+                 * on ne la met pas en veilleuse.
+                 */
+                if (nom.startsWith("paulscode.") || nom.startsWith("org.dolphinemu.") ||
+                    nom.startsWith("com.skin") || nom.startsWith("com.gbgbc.")) {
+                    try {
+                        SonPartage.radio?.enPause(true)
+                        SonPartage.volume(0f)
+                        SonPartage.consoleLanceeA = System.currentTimeMillis()
+                    } catch (_: Throwable) {}
+                }
+
+                // le bouton de retour : seulement chez les emulateurs venus
+                // d'ailleurs, les autres ont deja le leur
+                if (!nom.startsWith("paulscode.") && !nom.startsWith("org.dolphinemu.")) return
+                if (a.window.decorView.findViewWithTag<android.view.View>("bureau") != null) return
+
+                try {
+                    val dens = a.resources.displayMetrics.density
+                    val bouton = android.widget.TextView(a).apply {
+                        tag = "bureau"
+                        text = "← BUREAU"
+                        textSize = 11f
+                        setTextColor(0xFFFFFFFF.toInt())
+                        setBackgroundColor(0x99000000.toInt())
+                        setPadding((10 * dens).toInt(), (5 * dens).toInt(),
+                                   (10 * dens).toInt(), (5 * dens).toInt())
+                        alpha = .55f
+                        setOnClickListener { a.finish() }
+                    }
+                    val p = android.widget.FrameLayout.LayoutParams(-2, -2,
+                        android.view.Gravity.BOTTOM or android.view.Gravity.END)
+                    p.bottomMargin = (8 * dens).toInt()
+                    p.rightMargin = (8 * dens).toInt()
+
+                    val racine = a.window.decorView
+                        .findViewById<android.view.ViewGroup>(android.R.id.content)
+                    racine.addView(bouton, p)
+                } catch (_: Throwable) {}
+            }
+
+            override fun onActivityCreated(a: Activity, b: android.os.Bundle?) {}
+            override fun onActivityStarted(a: Activity) {}
+            override fun onActivityPaused(a: Activity) {}
+            override fun onActivityStopped(a: Activity) {}
+            override fun onActivitySaveInstanceState(a: Activity, b: android.os.Bundle) {}
+            override fun onActivityDestroyed(a: Activity) {}
+        })
+    }
 
     private fun reveillerLesEmulateurs() {
         for (nom in applicationsEmulateurs) {
@@ -88,6 +159,7 @@ class Chambre : Application() {
          * on la cree, on lui donne le contexte, puis on l'ouvre.
          */
         reveillerLesEmulateurs()
+        poserLeBoutonDeRetour()
 
         // On suit les ecrans qui s'ouvrent et se ferment : la radio doit
         // continuer quand on passe de la chambre a un jeu, et ne s'arreter
