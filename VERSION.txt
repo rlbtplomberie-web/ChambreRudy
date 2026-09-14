@@ -1,16 +1,15 @@
-version 129
+version 130
 
-  Vitrines — les jaquettes sont enfin gardees
-    Elles n'etaient pas perdues : elles n'etaient jamais RELUES. Mon rangement
-    etait pose quand la page finissait de charger, alors qu'elle cherche ses
-    affaires des son ouverture. Elle repartait donc sur des boitiers vides —
-    et c'est eux qu'elle reenregistrait ensuite. Des que le rangement est en
-    place, on lui demande de relire.
+  Nintendo 64 — « erreur lors de l'ouverture du fichier ROM »
+    Je passais au moteur un chemin tel quel : « Banjo-Kazooie (Europe)
+    (En,Fr,De).z64 ». Le coeur ouvre les fichiers en C, et les parentheses et
+    les virgules ne lui plaisent pas. Le nom est desormais simplifie —
+    lettres, chiffres, point et tiret — avant d'etre pose sur le disque.
 
-  Vitrines — la jaquette tient entiere dans le boitier
-    Elle etait affichee en remplissage : elle couvrait la boite quitte a
-    rogner, et le haut et le bas disparaissaient selon le format choisi. Elle
-    tient desormais entiere, centree, sur un fond sombre. Les treize vitrines.
-
-  Nintendo 64 — l'entree directe est remise (voir version 128)
-  GameCube et Wii — chaque etape de Dolphin laisse une trace dans le bilan
+  GameCube et Wii — pourquoi Dolphin ne demarre jamais
+    Ce n'est pas le code : GitHub choisit le workflow AVANT de lire les
+    archives. La compilation qui suit un depot tourne donc encore avec
+    l'ancien build.yml ; le nouveau n'est range qu'ensuite, et ne prend effet
+    qu'a la compilation SUIVANTE.
+    Il faut relancer une compilation sans rien deposer : Actions, puis
+    « Run workflow ». C'est la seule facon que mes etapes Dolphin tournent.

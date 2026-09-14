@@ -75,7 +75,18 @@ object N64 {
                 .fromSingleUri(ctx, Uri.parse(uri))
             val nom = doc?.name ?: "jeu.z64"
             val estArchive = nom.endsWith(".zip", true)
-            val cible = File(dossier, if (estArchive) nom.dropLast(4) + ".z64" else nom)
+            /*
+             * Un nom simple, sans accents ni ponctuation.
+             *
+             * « Banjo-Kazooie (Europe) (En,Fr,De).z64 » passait tel quel au
+             * moteur, qui ouvrait le fichier par son chemin en C : les
+             * parentheses et les virgules ne lui plaisaient pas. On garde donc
+             * les lettres, les chiffres, le point et le tiret.
+             */
+            val brut = if (estArchive) nom.dropLast(4) + ".z64" else nom
+            val propre = brut.replace(Regex("[^A-Za-z0-9._-]"), "_")
+                             .replace(Regex("_+"), "_")
+            val cible = File(dossier, propre)
             if (cible.isFile && cible.length() > 1024) return cible
 
             ctx.contentResolver.openInputStream(Uri.parse(uri))?.use { flux ->
