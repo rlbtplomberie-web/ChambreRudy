@@ -154,7 +154,15 @@ jobs:
           cd dolphinbase/Source/Android
           if ./gradlew :app:assembleDebug --no-daemon --stacktrace 2>&1 | tail -400 > /tmp/dolphin.log; then
             cd "$GITHUB_WORKSPACE"
-            aar=$(find dolphinbase/Source/Android/app/build/outputs/aar -name "*.aar" | head -1)
+            # on cherche partout : le module ne s'appelle pas forcement
+            # « app », et la bibliotheque ne tombe pas toujours au meme endroit
+            aar=$(find dolphinbase/Source/Android -name "*.aar" -size +1M | head -1)
+            if [ -z "$aar" ]; then
+              echo "Dolphin : aucun .aar — voici ce qu'il a produit :" >> rapport_dolphin.txt
+              find dolphinbase/Source/Android -path "*/build/outputs/*" \
+                \( -name "*.aar" -o -name "*.apk" \) | head -4 \
+                | sed "s|.*/||" >> rapport_dolphin.txt
+            fi
             if [ -n "$aar" ]; then
               mkdir -p app/libs
               cp "$aar" app/libs/dolphin.aar
