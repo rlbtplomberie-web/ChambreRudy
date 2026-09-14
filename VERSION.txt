@@ -1,26 +1,16 @@
-version 127
+version 129
 
-  3DS — le jeu se lance depuis la vitrine
-    Son ecran ne lisait pas le jeu que la Chambre lui passe : il ouvrait son
-    catalogue et il fallait choisir deux fois. Il appelle desormais SA propre
-    fonction « chargerDepuis » avec l'adresse recue. Rien d'autre de son
-    projet n'est touche. Sans jeu passe, il ouvre son catalogue comme avant.
+  Vitrines — les jaquettes sont enfin gardees
+    Elles n'etaient pas perdues : elles n'etaient jamais RELUES. Mon rangement
+    etait pose quand la page finissait de charger, alors qu'elle cherche ses
+    affaires des son ouverture. Elle repartait donc sur des boitiers vides —
+    et c'est eux qu'elle reenregistrait ensuite. Des que le rangement est en
+    place, on lui demande de relire.
 
-  Tiroir de droite — la telecommande et la loupe remontent
-    Elles etaient trop basses et genaient la fermeture. La zone qui les
-    attrape passe de 55 a 42 pour cent de la hauteur : la facade est largement
-    degagee.
+  Vitrines — la jaquette tient entiere dans le boitier
+    Elle etait affichee en remplissage : elle couvrait la boite quitte a
+    rogner, et le haut et le bas disparaissaient selon le format choisi. Elle
+    tient desormais entiere, centree, sur un fond sombre. Les treize vitrines.
 
-  GameCube et Wii — savoir enfin ou Dolphin s'arrete
-    Il n'a jamais ete assemble, et la compilation le saute sans rien dire.
-    Chaque etape laisse desormais une trace, reprise dans le bilan que Rudy
-    lit par l'appui long sur la tele :
-        Dolphin : archive trouvee
-        Dolphin : depot clone
-        Dolphin : ses pads installes
-        Dolphin : bibliotheque produite (xx Mo)
-    ou, en cas d'echec, la raison exacte — son apply.py qui ne s'applique pas,
-    ou les quatre premieres erreurs de compilation.
-
-  Si Dolphin se met vraiment a compiler, la compilation durera une a deux
-  heures au lieu de quinze minutes : il compile son moteur C++ entier.
+  Nintendo 64 — l'entree directe est remise (voir version 128)
+  GameCube et Wii — chaque etape de Dolphin laisse une trace dans le bilan

@@ -68,6 +68,20 @@ private const val RANGEMENT = """
     list: function(){ return Promise.resolve({ keys: [], shared: false }); }
   };
 
+  /* ---- relire ce qui avait ete garde ----
+     La page cherche ses affaires des son ouverture, avant que ce rangement
+     existe : elle ne trouvait donc jamais rien, et les jaquettes semblaient
+     perdues a chaque fois. On lui demande de relire maintenant. */
+  try{
+    if (typeof relire === "function") {
+      relire().then(function(){
+        try{ if (typeof construire === "function") construire(); }catch(e){}
+        try{ if (typeof placer === "function") placer(); }catch(e){}
+        try{ if (typeof ajuster === "function") ajuster(); }catch(e){}
+      });
+    }
+  }catch(e){}
+
   /* ---- le journal : tout ce que la vitrine dit ou tente y tombe ---- */
   if (Android.noterJournal) {
     Android.noterJournal("=== VITRINE ouverte : " + document.title);
@@ -342,7 +356,27 @@ class PageActivity : ComponentActivity() {
                     // devant : la console a la sienne
                     SonPartage.consoleLanceeA = System.currentTimeMillis()
                     /*
-                     * La Nintendo 64 ouvre son catalogue.
+                     * La Nintendo 64 entre directement dans la partie.
+                     *
+                     * Le premier essai avait echoue : les donnees du moteur
+                     * n'etaient pas encore installees. Elles le sont depuis
+                     * que son catalogue a tourne une fois. Si quoi que ce soit
+                     * resiste, on retombe sur le catalogue — et le journal
+                     * dit ce qui a manque.
+                     */
+                    if (console == "n64") {
+                        val direct = N64.intentionDeJeu(this@PageActivity, uriRom)
+                        if (direct != null) {
+                            noterJournal("N64 : entree directe dans la partie")
+                            startActivity(direct)
+                            finish()
+                            return@runOnUiThread
+                        }
+                        noterJournal("N64 : entree directe impossible, on ouvre le catalogue")
+                    }
+
+                    /*
+                     * A defaut, son catalogue.
                      *
                      * J'avais tente d'entrer directement dans la partie, en
                      * calculant l'empreinte et l'en-tete de la cartouche : le
