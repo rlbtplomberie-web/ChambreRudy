@@ -149,20 +149,35 @@ jobs:
           # sorte qu'il produise un .aar au lieu d'un APK. Cette bibliotheque
           # porte tout : ses classes, ses ressources, ses assets et ses
           # bibliotheques natives. La Chambre n'aura plus qu'a l'embarquer.
-          python3 outils/dolphin_en_bibliotheque.py dolphinbase/Source/Android
+          # ---- ESSAI : on compile SON projet tel quel ----
+          #
+          # On ne transforme plus son module en bibliotheque. Le but est de
+          # savoir si son apply.py et Dolphin 2606 s'entendent : si un APK
+          # sort d'ici, le seul defaut est ma transformation, et l'on saura
+          # ou chercher au lieu de deviner.
+          #
+          # python3 outils/dolphin_en_bibliotheque.py dolphinbase/Source/Android
 
           cd dolphinbase/Source/Android
           if ./gradlew :app:assembleDebug --no-daemon --stacktrace 2>&1 | tail -400 > /tmp/dolphin.log; then
             cd "$GITHUB_WORKSPACE"
             # on cherche partout : le module ne s'appelle pas forcement
             # « app », et la bibliotheque ne tombe pas toujours au meme endroit
-            aar=$(find dolphinbase/Source/Android -name "*.aar" -size +1M | head -1)
-            if [ -z "$aar" ]; then
-              echo "Dolphin : aucun .aar — voici ce qu'il a produit :" >> rapport_dolphin.txt
-              find dolphinbase/Source/Android -path "*/build/outputs/*" \
-                \( -name "*.aar" -o -name "*.apk" \) | head -4 \
-                | sed "s|.*/||" >> rapport_dolphin.txt
+            # ce qu'il a reellement produit, quel qu'en soit le genre
+            produit=$(find dolphinbase/Source/Android -path "*/build/outputs/*" \
+              \( -name "*.aar" -o -name "*.apk" \) -size +1M | head -3)
+            if [ -n "$produit" ]; then
+              echo "Dolphin : il a produit —" >> rapport_dolphin.txt
+              echo "$produit" | while read -r f; do
+                echo "   $(basename "$f") $(( $(stat -c%s "$f") / 1048576 )) Mo" >> rapport_dolphin.txt
+              done
+            else
+              echo "Dolphin : RIEN produit — ni bibliotheque ni application" >> rapport_dolphin.txt
+              echo "Dolphin : ses taches de sortie —" >> rapport_dolphin.txt
+              grep -E "^> Task :app:(assemble|package|bundle)" /tmp/dolphin.log \
+                | tail -4 >> rapport_dolphin.txt || true
             fi
+            aar=$(find dolphinbase/Source/Android -name "*.aar" -size +1M | head -1)
             if [ -n "$aar" ]; then
               mkdir -p app/libs
               cp "$aar" app/libs/dolphin.aar
