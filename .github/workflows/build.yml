@@ -149,14 +149,22 @@ jobs:
           # sorte qu'il produise un .aar au lieu d'un APK. Cette bibliotheque
           # porte tout : ses classes, ses ressources, ses assets et ses
           # bibliotheques natives. La Chambre n'aura plus qu'a l'embarquer.
-          # ---- ESSAI : on compile SON projet tel quel ----
+          # L'essai a parle : compile tel quel, son projet produit un APK de
+          # 33 Mo. Son apply.py et Dolphin 2606 s'entendent donc parfaitement,
+          # et le seul defaut etait ma transformation en bibliotheque.
           #
-          # On ne transforme plus son module en bibliotheque. Le but est de
-          # savoir si son apply.py et Dolphin 2606 s'entendent : si un APK
-          # sort d'ici, le seul defaut est ma transformation, et l'on saura
-          # ou chercher au lieu de deviner.
-          #
-          # python3 outils/dolphin_en_bibliotheque.py dolphinbase/Source/Android
+          # On la remet, et l'on dit ce qu'elle a change : si elle ne mord pas
+          # sur son fichier, cela se verra au lieu d'echouer en silence.
+          python3 outils/dolphin_en_bibliotheque.py dolphinbase/Source/Android \
+            | tee -a "$GITHUB_WORKSPACE/rapport_dolphin.txt"
+          if grep -q "com.android.library" dolphinbase/Source/Android/app/build.gradle.kts \
+               2>/dev/null; then
+            echo "Dolphin : son module est devenu bibliotheque" \
+              >> "$GITHUB_WORKSPACE/rapport_dolphin.txt"
+          else
+            echo "Dolphin : ATTENTION son module est reste application" \
+              >> "$GITHUB_WORKSPACE/rapport_dolphin.txt"
+          fi
 
           cd dolphinbase/Source/Android
           if ./gradlew :app:assembleDebug --no-daemon --stacktrace 2>&1 | tail -400 > /tmp/dolphin.log; then
