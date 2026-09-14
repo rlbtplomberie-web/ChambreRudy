@@ -59,6 +59,27 @@ def alleger(chemin: Path) -> int:
         t, k = re.subn(motif, r'\1android.permission.INTERNET\2', t)
         n += k
 
+    # La verification elle-meme.
+    #
+    # Remplacer les noms ne suffit pas toujours : certaines revisions
+    # verifient autrement, ou reclament l'autorisation dans une bibliotheque
+    # qu'on ne voit pas. On fait donc dire « oui » a la comparaison : partout
+    # ou le code demande « cette autorisation est-elle accordee ? », la
+    # reponse est desormais oui, et le chemin d'echec n'est plus emprunte.
+    comparaisons = [
+        # le prefixe eventuel — ContextCompat., ActivityCompat., this. — doit
+        # partir avec le reste, sinon il resterait « ContextCompat.false »
+        (r'[\w.]*\b[Cc]heck(?:Self)?Permission\s*\([^;{}]*?\)\s*!=\s*[\w.]*PERMISSION_GRANTED',
+         'false'),
+        (r'[\w.]*\b[Cc]heck(?:Self)?Permission\s*\([^;{}]*?\)\s*==\s*[\w.]*PERMISSION_GRANTED',
+         'true'),
+        (r'!\s*[\w.]*\bisExternalStorageManager\s*\(\s*\)', 'false'),
+        (r'[\w.]*\bisExternalStorageManager\s*\(\s*\)', 'true'),
+    ]
+    for motif, reponse in comparaisons:
+        t, k = re.subn(motif, reponse, t)
+        n += k
+
     if t != avant:
         chemin.write_text(t, encoding='utf-8')
     return n
@@ -78,7 +99,9 @@ def main() -> None:
             t = f.read_text(encoding='utf-8', errors='ignore')
         except OSError:
             continue
-        if 'EXTERNAL_STORAGE' in t or 'READ_MEDIA_' in t:
+        if ('EXTERNAL_STORAGE' in t or 'READ_MEDIA_' in t
+                or 'PERMISSION_GRANTED' in t
+                or 'isExternalStorageManager' in t):
             cibles.append(f)
     if not cibles:
         print('::warning::aucun fichier ne reclame d autorisation de stockage')

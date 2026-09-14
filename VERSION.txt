@@ -1,24 +1,21 @@
-version 117 — uniquement la Nintendo 64
+version 118 — uniquement la Nintendo 64
 
-  Le barrage des autorisations, pris autrement.
+  L'ecran s'ouvre maintenant (c'etait le « singleTask » de son catalogue),
+  mais sa verification des autorisations barre encore la route.
 
-  Ma premiere tentative vidait les listes d'autorisations ; leur ecriture
-  change d'une revision a l'autre et elle n'a rien trouve. Le message revenait
-  donc a l'identique.
+  Remplacer les noms d'autorisations ne suffisait pas : sa verification passe
+  ailleurs, ou par une bibliotheque qu'on ne voit pas. On fait donc dire
+  « oui » a la question elle-meme :
 
-  Cette fois on ne touche plus a la structure de son code : chaque mention
-  d'une autorisation de stockage — WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_
-  STORAGE, MANAGE_EXTERNAL_STORAGE, READ_MEDIA_* — est remplacee par
-  INTERNET, qu'Android accorde d'office. Sa verification la trouve satisfaite
-  et le laisse demarrer.
+    checkSelfPermission(...) != PERMISSION_GRANTED   devient   false
+    checkSelfPermission(...) == PERMISSION_GRANTED   devient   true
+    isExternalStorageManager()                       devient   true
 
-  L'outil cherche dans TOUS ses fichiers, pas seulement l'ecran d'accueil, et
-  prend les deux ecritures : la constante « Manifest.permission.X » et le
-  texte « android.permission.X ». Eprouve sur les six formes, en Java et en
-  Kotlin.
+  Le chemin d'echec n'est donc plus emprunte, et le message ne peut plus
+  s'afficher. Les prefixes — ContextCompat., ActivityCompat. — partent avec
+  le reste : eprouve sur quatre ecritures, aucun reste casse.
 
-  Le journal de compilation dit combien de remplacements ont eu lieu, fichier
-  par fichier. S'il en annonce zero, le barrage vient d'ailleurs et on le
-  saura aussitot.
+  Rien de perdu : la Chambre lui passe le jeu par son chemin, et il ecrit ses
+  sauvegardes dans son propre dossier, qui ne demande aucune autorisation.
 
   Rien d'autre n'est touche.
