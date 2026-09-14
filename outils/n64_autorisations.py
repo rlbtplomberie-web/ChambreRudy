@@ -73,8 +73,16 @@ def alleger(chemin: Path) -> int:
          'false'),
         (r'[\w.]*\b[Cc]heck(?:Self)?Permission\s*\([^;{}]*?\)\s*==\s*[\w.]*PERMISSION_GRANTED',
          'true'),
+        # la comparaison a « refusee », l'autre facon d'ecrire la meme chose
+        (r'[\w.]*\b[Cc]heck(?:Self)?Permission\s*\([^;{}]*?\)\s*==\s*[\w.]*PERMISSION_DENIED',
+         'false'),
+        (r'[\w.]*\b[Cc]heck(?:Self)?Permission\s*\([^;{}]*?\)\s*!=\s*[\w.]*PERMISSION_DENIED',
+         'true'),
         (r'!\s*[\w.]*\bisExternalStorageManager\s*\(\s*\)', 'false'),
         (r'[\w.]*\bisExternalStorageManager\s*\(\s*\)', 'true'),
+        # et la demande elle-meme : si elle part, Android refuse l'ecriture
+        # externe d'office et son rappel affiche le message. On la retire.
+        (r'[\w.]*\brequestPermissions\s*\([^;]*?\)\s*;', '/* demande retiree */;'),
     ]
     for motif, reponse in comparaisons:
         t, k = re.subn(motif, reponse, t)
@@ -107,6 +115,21 @@ def main() -> None:
         print('::warning::aucun fichier ne reclame d autorisation de stockage')
         return
     print(f'{len(cibles)} fichier(s) reclament une autorisation de stockage')
+
+    # D'ou vient exactement le message ? On le dit dans le journal de
+    # compilation : si le barrage tient encore, on saura ou regarder sans
+    # avoir a refaire un tour pour rien.
+    for f in list(racine.glob('**/*.xml')) + list(racine.glob('**/*.java')) + \
+             list(racine.glob('**/*.kt')):
+        try:
+            contenu = f.read_text(encoding='utf-8', errors='ignore')
+        except OSError:
+            continue
+        if 'cannot proceed' in contenu.lower():
+            for num, ligne in enumerate(contenu.splitlines(), 1):
+                if 'cannot proceed' in ligne.lower():
+                    print(f'   message trouve : {f.relative_to(racine)}:{num}'
+                          f'  {ligne.strip()[:110]}')
 
     total = 0
     for f in cibles:

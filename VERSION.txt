@@ -1,21 +1,18 @@
-version 118 — uniquement la Nintendo 64
+version 119 — uniquement la Nintendo 64
 
-  L'ecran s'ouvre maintenant (c'etait le « singleTask » de son catalogue),
-  mais sa verification des autorisations barre encore la route.
+  Son ecran tourne sans planter — le journal d'Android le montre — mais sa
+  verification passe par une autre ecriture que celles deja prises.
 
-  Remplacer les noms d'autorisations ne suffisait pas : sa verification passe
-  ailleurs, ou par une bibliotheque qu'on ne voit pas. On fait donc dire
-  « oui » a la question elle-meme :
+  Trois ajouts :
+    - la comparaison a « refusee » : checkSelfPermission(...) ==
+      PERMISSION_DENIED devient false, et != devient true ;
+    - la DEMANDE elle-meme est retiree. C'est elle qui declenchait tout :
+      Android refuse l'ecriture externe d'office, son rappel voyait un refus
+      et affichait le message. Sans demande, plus de refus, plus de message ;
+    - le workflow dit desormais dans quel fichier et a quelle ligne se trouve
+      le texte « cannot proceed », pour qu'on sache ou regarder si le barrage
+      tient encore.
 
-    checkSelfPermission(...) != PERMISSION_GRANTED   devient   false
-    checkSelfPermission(...) == PERMISSION_GRANTED   devient   true
-    isExternalStorageManager()                       devient   true
-
-  Le chemin d'echec n'est donc plus emprunte, et le message ne peut plus
-  s'afficher. Les prefixes — ContextCompat., ActivityCompat. — partent avec
-  le reste : eprouve sur quatre ecritures, aucun reste casse.
-
-  Rien de perdu : la Chambre lui passe le jeu par son chemin, et il ecrit ses
-  sauvegardes dans son propre dossier, qui ne demande aucune autorisation.
+  Eprouve sur la forme complete : boucle de verification, demande, et rappel.
 
   Rien d'autre n'est touche.
