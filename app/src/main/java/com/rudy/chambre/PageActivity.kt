@@ -366,7 +366,7 @@ class PageActivity : ComponentActivity() {
                     }
 
                     startActivity(i)
-                    noterJournal("ecran lance sans erreur")
+                    noterJournal("ecran lance sans erreur : " + fiche.activite)
                     finish()                       // la vitrine s'efface derriere le jeu
                 } catch (e: Throwable) {
                     noterJournal("ECHEC du lancement : " + e.toString().take(140))

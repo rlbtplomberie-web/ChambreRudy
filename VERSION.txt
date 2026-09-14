@@ -1,19 +1,17 @@
-version 120 — uniquement la Nintendo 64
+version 122 — uniquement la Nintendo 64
 
-  Je demandais a Rudy le journal de GitHub, il m'envoyait celui de la tele :
-  ma faute. Le compte rendu de l'outil part desormais DANS LE BILAN, celui
-  qu'il lit par l'appui long sur la tele.
+  On n'ouvre plus son ecran d'accueil.
 
-  Il y verra trois lignes du genre :
-      12 fichier(s) reclament une autorisation de stockage
-         message trouve : res/values/strings.xml:214
-         SplashActivity.java : 6 remplacement(s)
-      N64 autorisations : 18 remplacement(s)
+  SplashActivity reclame l'acces aux fichiers avant toute chose. Depuis
+  Android 11 cette autorisation ne peut plus etre accordee : sa verification
+  ne peut jamais aboutir, et c'est elle, et elle seule, qui affichait « This
+  app cannot proceed without these permissions ».
 
-  Et si l'outil ne trouve rien :
-      N64 autorisations : AUCUNE trouvee — le barrage vient d ailleurs
+  La Chambre ouvre desormais son CATALOGUE — GalleryActivity — qui ne demande
+  rien. Les donnees dont il a besoin sont deja installees : sa classe
+  d'application est reveillee au demarrage, le journal de Rudy le confirme
+  (« application reveillee : AppMupen64Plus »).
 
-  Ces quelques lignes suffiront a savoir ou est le barrage, sans avoir a
-  chercher dans GitHub.
+  Le journal precise maintenant quel ecran a ete ouvert, pour lever tout doute.
 
   Rien d'autre n'est touche.

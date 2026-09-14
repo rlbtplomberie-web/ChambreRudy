@@ -33,7 +33,19 @@ object Consoles {
                 "skingba",   "dossier_jeux",  listOf(".gba", ".zip"), coeur = "libmgba.so"),
         Console("md",   "Mega Drive",       "com.skinmd.app.MainActivity",
                 "skinmd",    "dossier_jeux",  listOf(".md", ".gen", ".smd", ".bin", ".68k", ".sgd", ".zip"), coeur = "libgenesisplusgx.so"),
-        Console("n64",  "Nintendo 64",      "paulscode.android.mupen64plusae.SplashActivity",
+        /*
+         * La Nintendo 64 ouvre son CATALOGUE, pas son ecran d'accueil.
+         *
+         * SplashActivity reclame l'acces aux fichiers avant toute chose, et
+         * depuis Android 11 cette autorisation ne peut plus etre accordee :
+         * sa verification ne peut jamais aboutir. C'est elle, et elle seule,
+         * qui affichait « This app cannot proceed without these permissions ».
+         *
+         * Son catalogue, lui, ne demande rien. Il sait deja ou sont les jeux —
+         * la Chambre lui a fait installer ses donnees au reveil de son
+         * application — et c'est de la qu'on lance une partie.
+         */
+        Console("n64",  "Nintendo 64",      "paulscode.android.mupen64plusae.GalleryActivity",
                 "skin_n64",  "dossier_roms",  listOf(".n64", ".z64", ".v64", ".zip"),
                 // pas de moteur unique a verifier : Mupen64Plus apporte toute
                 // une serie de bibliotheques, aucune ne portant ce nom
