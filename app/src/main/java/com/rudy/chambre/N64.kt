@@ -25,6 +25,10 @@ object N64 {
      * Renvoie null si le fichier ne peut pas etre lu ou n'est pas une ROM.
      */
     fun intentionDeJeu(ctx: Context, uri: String): Intent? {
+        // son ecran d'accueil installait les donnees du moteur ; on le saute,
+        // il faut donc s'en charger nous-memes
+        installerLesDonnees(ctx)
+
         val fichier = poserSurLeDisque(ctx, uri) ?: return null
         val octets = try { fichier.readBytes() } catch (_: Throwable) { return null }
         if (octets.size < 0x40) return null
@@ -62,6 +66,88 @@ object N64 {
         cle("EXIT_GAME")?.let { i.putExtra(it, false) }
         cle("FORCE_EXIT_GAME")?.let { i.putExtra(it, false) }
         return i
+    }
+
+    /**
+     * Installer les donnees du moteur.
+     *
+     * C'est le travail que faisait son ecran d'accueil : sans ces fichiers —
+     * la liste des jeux connus, les reglages par defaut, les nuanciers — le
+     * coeur refuse de charger la cartouche.
+     *
+     * On les cherche par leur contenu plutot que par leur nom : le dossier
+     * qui contient « mupen64plus.ini » est le bon, quelle que soit la
+     * revision. Et on demande a son propre code ou les poser.
+     */
+    private fun installerLesDonnees(ctx: Context) {
+        val temoin = File(ctx.filesDir, ".donnees_n64_v1")
+        if (temoin.exists()) return
+
+        val source = trouverLesDonnees(ctx)
+        val cible = ouLesPoser(ctx)
+        if (source == null) {
+            noter(ctx, "N64 : donnees du moteur INTROUVABLES dans l'application")
+            return
+        }
+        try {
+            copier(ctx, source, cible)
+            temoin.writeText("ok")
+            noter(ctx, "N64 : donnees posees — " + source + " vers " + cible.absolutePath)
+        } catch (e: Throwable) {
+            noter(ctx, "N64 : donnees non posees — " + e.toString().take(90))
+        }
+    }
+
+    /** Une ligne dans le journal que la tele sait relire. */
+    private fun noter(ctx: Context, texte: String) {
+        try {
+            val d = File(ctx.filesDir, "systeme").apply { mkdirs() }
+            File(d, "journal_appli.txt").appendText(texte + "\n")
+        } catch (_: Throwable) {}
+    }
+
+    /** Le dossier de nos ressources qui contient « mupen64plus.ini ». */
+    private fun trouverLesDonnees(ctx: Context): String? {
+        fun contient(dossier: String): Boolean =
+            try { ctx.assets.list(dossier)?.any { it == "mupen64plus.ini" } == true }
+            catch (_: Throwable) { false }
+
+        return try {
+            val racine = ctx.assets.list("") ?: return null
+            racine.firstOrNull { contient(it) }
+                ?: racine.firstNotNullOfOrNull { d ->
+                    ctx.assets.list(d)?.firstOrNull { contient("$d/$it") }?.let { "$d/$it" }
+                }
+        } catch (_: Throwable) { null }
+    }
+
+    /** Ou son code attend ces fichiers : on le lui demande. */
+    private fun ouLesPoser(ctx: Context): File {
+        try {
+            val classe = Class.forName("paulscode.android.mupen64plusae.persistent.AppData")
+            val appData = classe.getConstructor(Context::class.java).newInstance(ctx)
+            for (champ in classe.fields) {
+                if (champ.type != String::class.java) continue
+                val nom = champ.name.lowercase()
+                if ("data" in nom && "dir" in nom) {
+                    val chemin = champ.get(appData) as? String
+                    if (!chemin.isNullOrEmpty()) return File(chemin)
+                }
+            }
+        } catch (_: Throwable) {}
+        // a defaut, l'endroit qu'il emploie habituellement
+        return File(ctx.filesDir, "data")
+    }
+
+    private fun copier(ctx: Context, source: String, vers: File) {
+        val entrees = ctx.assets.list(source) ?: return
+        if (entrees.isEmpty()) {
+            vers.parentFile?.mkdirs()
+            ctx.assets.open(source).use { f -> vers.outputStream().use { f.copyTo(it) } }
+            return
+        }
+        vers.mkdirs()
+        for (e in entrees) copier(ctx, "$source/$e", File(vers, e))
     }
 
     /**

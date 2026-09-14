@@ -616,7 +616,15 @@ class VueChambre(ctx: Context) : View(ctx) {
                 if (tiroir2 > .5f) {
                     val t2 = zone(Decor.TIROIR2)
                     val avance = t2.height() * 0.55f * tiroir2
-                    val dedans = RectF(t2.left, t2.top + avance, t2.right, t2.bottom + avance)
+                    /*
+                     * Seul le HAUT du tiroir donne son contenu.
+                     *
+                     * Je prenais tout le tiroir, si bien qu'on ne pouvait plus
+                     * le refermer : chaque appui attrapait un objet. La facade
+                     * — le bas — reste donc libre, et c'est elle qui ferme.
+                     */
+                    val dedans = RectF(t2.left, t2.top + avance,
+                                       t2.right, t2.top + avance + t2.height() * .55f)
                     if (dedans.contains(x, y)) {
                         val moitie = dedans.left + dedans.width() * .48f
                         surObjet?.invoke(if (x < moitie) "telecommande" else "loupe")
