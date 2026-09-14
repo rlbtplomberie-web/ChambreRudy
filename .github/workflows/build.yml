@@ -14,6 +14,9 @@ permissions:
 jobs:
   apk:
     runs-on: ubuntu-latest
+    # Dolphin compile son moteur C++ en entier : c'est long, et le delai par
+    # defaut ne suffirait pas.
+    timeout-minutes: 180
 
     steps:
       - name: Recuperer le code
@@ -86,6 +89,90 @@ jobs:
           fi
           exit 0
 
+      - name: Installer le NDK que Dolphin reclame
+        run: |
+          if [ -f SkinGC-corrige.zip ]; then
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+              "ndk;29.0.14206865" "cmake;3.22.1" >/dev/null
+            echo "NDK 29.0.14206865 et CMake 3.22.1 installes"
+          fi
+
+      - name: Preparer l'emulateur GameCube et Wii de Rudy
+        run: |
+          set -e
+          : > rapport_dolphin.txt
+          if [ ! -f SkinGC-corrige.zip ]; then
+            echo "Dolphin : SkinGC-corrige.zip ABSENT a la racine" >> rapport_dolphin.txt
+            echo "pas de SkinGC-corrige.zip : la GameCube et la Wii ne seront pas dans cet APK."
+            exit 0
+          fi
+          echo "Dolphin : archive trouvee" >> rapport_dolphin.txt
+
+          rm -f applications_emulateurs.txt
+          echo "habillage GameCube trouve : on prepare Dolphin 2606"
+          rm -rf /tmp/skingc dolphinbase
+          mkdir -p /tmp/skingc
+          unzip -q SkinGC-corrige.zip -d /tmp/skingc
+          if [ ! -f /tmp/skingc/patch/apply.py ]; then
+            echo "Dolphin : patch/apply.py manque dans l archive" >> rapport_dolphin.txt
+            echo "::error::archive SkinGC incorrecte : patch/apply.py manque"; exit 1
+          fi
+
+          # Ses gestes, dans son ordre, mot pour mot.
+          git clone --branch 2606 --depth 1 --recurse-submodules --shallow-submodules \
+            --quiet https://github.com/dolphin-emu/dolphin.git dolphinbase
+          find dolphinbase/Externals -path '*/examples/*/gradle/wrapper/gradle-wrapper.jar' -delete
+          find dolphinbase/Externals -path '*/android-project/gradle/wrapper/gradle-wrapper.jar' -delete
+          test -f dolphinbase/Source/Android/gradle/wrapper/gradle-wrapper.jar
+
+          cp -r /tmp/skingc/skin /tmp/skingc/icons /tmp/skingc/patch dolphinbase/
+          echo "Dolphin : depot clone" >> rapport_dolphin.txt
+          if ! ( cd dolphinbase && python3 patch/apply.py ) 2> /tmp/apply.err; then
+            echo "Dolphin : son apply.py a echoue —" >> rapport_dolphin.txt
+            tail -3 /tmp/apply.err | cut -c1-120 >> rapport_dolphin.txt
+            echo "::warning::son patch/apply.py ne s'applique pas sur Dolphin 2606."
+            rm -rf dolphinbase; exit 0
+          fi
+          echo "Dolphin : ses pads installes" >> rapport_dolphin.txt
+          echo "pads SkinGC installes dans Dolphin"
+
+      - name: Compiler Dolphin a part, avec SON Gradle
+        run: |
+          set -e
+          [ -d dolphinbase/Source/Android ] || exit 0
+
+          # Dolphin garde SA configuration : sa version d'Android Gradle, son
+          # catalogue de versions, ses greffons. On ne melange rien avec celle
+          # de la Chambre — c'est exactement ce que fait son propre workflow.
+          #
+          # Seule difference : son module « app » devient une bibliotheque, de
+          # sorte qu'il produise un .aar au lieu d'un APK. Cette bibliotheque
+          # porte tout : ses classes, ses ressources, ses assets et ses
+          # bibliotheques natives. La Chambre n'aura plus qu'a l'embarquer.
+          python3 outils/dolphin_en_bibliotheque.py dolphinbase/Source/Android
+
+          cd dolphinbase/Source/Android
+          if ./gradlew :app:assembleDebug --no-daemon --stacktrace 2>&1 | tail -400 > /tmp/dolphin.log; then
+            cd "$GITHUB_WORKSPACE"
+            aar=$(find dolphinbase/Source/Android/app/build/outputs/aar -name "*.aar" | head -1)
+            if [ -n "$aar" ]; then
+              mkdir -p app/libs
+              cp "$aar" app/libs/dolphin.aar
+              echo "Dolphin compile : $(du -h app/libs/dolphin.aar | cut -f1)"
+              echo "Dolphin : bibliotheque produite ($(du -h app/libs/dolphin.aar | cut -f1))" \
+                >> rapport_dolphin.txt
+            else
+              echo "Dolphin : compile mais aucune bibliotheque produite" >> rapport_dolphin.txt
+              echo "::warning::Dolphin compile mais aucun .aar produit."
+            fi
+          else
+            echo "Dolphin : la compilation a echoue —" >> rapport_dolphin.txt
+            grep -E "^e: |error:|What went wrong|FAILED" /tmp/dolphin.log \
+              | head -4 | cut -c1-120 >> rapport_dolphin.txt || true
+            echo "::warning::Dolphin n'a pas compile : la GameCube et la Wii"
+            echo "::warning::ne seront pas dans cet APK, le reste est intact."
+          fi
+
       - name: Preparer l'emulateur N64 de Rudy
         run: |
           set -e
@@ -94,10 +181,15 @@ jobs:
             exit 0
           fi
 
-          echo "habillage N64 trouve : on prepare Mupen64Plus"
+          # Ce que decrit son README : Mupen64Plus-AE d'origine, a la
+          # revision de l'APK N64-Pad-V8 qui fonctionnait. Son build.gradle le
+          # confirme — identifiant org.mupen64plusae.v3.alpha, aucune variante.
+          echo "habillage N64 trouve : on prepare Mupen64Plus-AE"
           rm -rf m64base
           git clone --filter=blob:none --quiet \
             https://github.com/mupen64plus-ae/mupen64plus-ae.git m64base
+          # La revision de son README : « la meme que l'APK N64-Pad-V8
+          # fonctionnel ». Son correctif a ete ecrit pour celle-la.
           git -C m64base checkout --quiet 33bf7021549d7873e976884370fbd1a8e7333bc7
           git -C m64base submodule update --init --recursive --depth 1 --quiet || true
 
@@ -106,6 +198,17 @@ jobs:
           marque=$(find paquet-n64 -type f -name SKIN64_EMULE_V7 -print -quit)
           if [ -z "$marque" ]; then echo "::error::habillage N64 incomplet"; exit 1; fi
           cp -a "$(dirname "$marque")"/. m64base/
+
+          # Son ecran d'accueil refuse de demarrer sans l'acces aux fichiers.
+          # Depuis Android 11 cette autorisation ne peut plus etre accordee :
+          # sa verification ne peut donc jamais aboutir sur un telephone
+          # recent. On vide la liste de ce qu'il reclame — la Chambre lui
+          # passe le jeu par son chemin, et il ecrit ses sauvegardes dans son
+          # propre dossier, qui ne demande rien.
+          # Son compte rendu est garde de cote : le bilan est remis a zero
+          # plus tard, il l'effacerait. Il y sera repris a ce moment-la.
+          python3 outils/n64_autorisations.py m64base
+
 
           # il devient un morceau de notre application, et non une application
           gradle_app=m64base/app/build.gradle
@@ -230,10 +333,24 @@ jobs:
           else
             echo "Nintendo 64 : ABSENT (depose 64-eMule-Skin64-V7.zip)" >> "$rapport"
           fi
-          if [ -d dolphin/Source/Android ]; then
+          if [ -d dolphinbase/Source/Android ]; then
             echo "GameCube / Wii : Dolphin assemble" >> "$rapport"
           else
             echo "GameCube / Wii : Dolphin pas encore integre" >> "$rapport"
+          fi
+          if [ -s applications_emulateurs.txt ]; then
+            sort -u applications_emulateurs.txt \
+              > app/src/main/assets/chambre/applications_emulateurs.txt
+            echo "applications d'emulateurs a reveiller :"
+            cat app/src/main/assets/chambre/applications_emulateurs.txt
+          fi
+          # le compte rendu des autorisations de la N64, mis de cote plus tot :
+          # c'est dans ce bilan que Rudy le lit, par l'appui long sur la tele
+          if [ -f rapport_n64.txt ]; then
+            cat rapport_n64.txt >> "$rapport"
+          fi
+          if [ -f rapport_dolphin.txt ]; then
+            cat rapport_dolphin.txt >> "$rapport"
           fi
           echo "compile le $(date -u '+%d/%m %H:%M') UTC" >> "$rapport"
 
@@ -243,7 +360,7 @@ jobs:
           else
             echo "::warning::Nintendo 64 ABSENTE : depose 64-eMule-Skin64-V7.zip a la racine du depot"
           fi
-          if [ -d dolphin/Source/Android ]; then
+          if [ -d dolphinbase/Source/Android ]; then
             echo "  GameCube / Wii : Dolphin present"
           else
             echo "::warning::GameCube / Wii : Dolphin pas encore integre"
@@ -295,8 +412,18 @@ jobs:
             echo "::warning::La Nintendo 64 fait echouer la compilation :"
             echo "::warning::on la met de cote et on recompile sans elle."
             rm -rf m64base
+            sed -i "/Nintendo 64 : Mupen64Plus assemble/d" \
+              app/src/main/assets/chambre/assemblage.txt 2>/dev/null || true
             echo "Nintendo 64 : ECARTEE (elle faisait echouer la compilation)" \
               >> app/src/main/assets/chambre/assemblage.txt
+            # La vraie raison, gardee dans l'APK : sans elle, impossible de
+            # comprendre depuis le telephone pourquoi elle a ete mise de cote.
+            {
+              echo "--- pourquoi la N64 a ete ecartee ---"
+              grep -E "^e: |^ERROR:|error:|Manifest merger|is also present at|Suggestion:|Caused by:" \
+                /tmp/compilation.log | grep -v "^$" | head -8 | cut -c1-190
+              sed -n "/What went wrong/,/^\* Try/p" /tmp/compilation.log | head -6 | cut -c1-190
+            } >> app/src/main/assets/chambre/assemblage.txt 2>/dev/null || true
             if compiler; then
               echo "::warning::APK produit SANS la Nintendo 64."
               exit 0
