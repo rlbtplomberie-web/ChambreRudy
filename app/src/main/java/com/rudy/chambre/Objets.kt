@@ -388,7 +388,8 @@ object Objets {
         val l = tiroir.width() * .17f
         val h = l * 3.4f
         val cx = tiroir.left + tiroir.width() * .30f
-        val cy = tiroir.top + avance - h * .18f * ouverture + tiroir.height() * .18f
+        // plus haut dans le tiroir : la facade reste degagee pour le refermer
+        val cy = tiroir.top + avance - h * .18f * ouverture + tiroir.height() * .02f
 
         c.save()
         c.rotate(-11f, cx, cy)
@@ -455,7 +456,7 @@ object Objets {
     fun loupe(c: Canvas, tiroir: RectF, avance: Float, ouverture: Float) {
         val d = tiroir.width() * .22f            // diametre du verre
         val cx = tiroir.left + tiroir.width() * .66f
-        val cy = tiroir.top + avance + tiroir.height() * .30f - d * .12f * ouverture
+        val cy = tiroir.top + avance + tiroir.height() * .12f - d * .12f * ouverture
 
         c.save()
         c.rotate(24f, cx, cy)

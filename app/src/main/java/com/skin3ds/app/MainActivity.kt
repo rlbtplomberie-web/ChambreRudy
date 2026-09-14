@@ -323,6 +323,23 @@ class MainActivity : ComponentActivity() {
         barre.visibility = View.GONE
         setContentView(racine)
 
+        /*
+         * Le jeu choisi dans la vitrine de la Chambre.
+         *
+         * Elle passe son adresse dans un supplement appele « rom ». Sa
+         * fonction de chargement fait le reste : elle sort le jeu de son
+         * archive si besoin, le prepare et le lance. Sans cela, l'emulateur
+         * s'ouvrait sur son propre catalogue et il fallait choisir deux fois.
+         */
+        try {
+            val demande = intent?.getStringExtra("rom")
+            if (!demande.isNullOrEmpty()) {
+                val u = Uri.parse(demande)
+                val nom = DocumentFile.fromSingleUri(this, u)?.name ?: "jeu.3ds"
+                racine.postDelayed({ chargerDepuis(u, nom) }, 400)
+            }
+        } catch (_: Throwable) {}
+
         vue.surCommandes = { b, gx, gy, dx, dy, avance ->
             rendu.boutons = b; rendu.sx = gx; rendu.sy = gy
             rendu.sdx = dx; rendu.sdy = dy; rendu.avanceRapide = avance

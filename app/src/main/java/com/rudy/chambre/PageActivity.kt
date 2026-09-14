@@ -342,22 +342,15 @@ class PageActivity : ComponentActivity() {
                     // devant : la console a la sienne
                     SonPartage.consoleLanceeA = System.currentTimeMillis()
                     /*
-                     * La Nintendo 64 entre directement dans la partie.
+                     * La Nintendo 64 ouvre son catalogue.
                      *
-                     * Son ecran de jeu reclame l'empreinte et l'en-tete de la
-                     * cartouche : on les calcule nous-memes. Si le fichier ne
-                     * se laisse pas lire, on retombe sur son catalogue.
+                     * J'avais tente d'entrer directement dans la partie, en
+                     * calculant l'empreinte et l'en-tete de la cartouche : le
+                     * moteur refusait de la charger. Son ecran de jeu attend
+                     * plus que ces renseignements — tout ce que son catalogue
+                     * prepare avant lui. On revient donc a ce qui marchait :
+                     * son catalogue s'ouvre, et le jeu se lance de la.
                      */
-                    if (console == "n64") {
-                        val direct = N64.intentionDeJeu(this@PageActivity, uriRom)
-                        if (direct != null) {
-                            noterJournal("N64 : entree directe dans la partie")
-                            startActivity(direct)
-                            finish()
-                            return@runOnUiThread
-                        }
-                        noterJournal("N64 : cartouche illisible, on ouvre le catalogue")
-                    }
 
                     val i = Intent(this@PageActivity, Class.forName(fiche.activite))
                     i.putExtra("rom", uriRom)

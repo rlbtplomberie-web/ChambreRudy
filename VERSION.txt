@@ -1,18 +1,26 @@
-version 125
+version 127
 
-  Nintendo 64 — « la ROM n'a pas pu charger »
-    Son ecran d'accueil ne faisait pas que demander des autorisations : il
-    installait aussi les donnees du moteur — la liste des jeux connus, les
-    reglages par defaut, les nuanciers. En le sautant, ces fichiers
-    n'arrivaient jamais, et le coeur refusait la cartouche.
-    La Chambre les installe desormais elle-meme, une seule fois :
-      - elle cherche le dossier par son CONTENU (celui qui porte
-        « mupen64plus.ini »), pas par son nom, donc cela tient d'une
-        revision a l'autre ;
-      - elle demande a SON code ou les poser, en lisant AppData.
-    Le journal dit ce qui a ete trouve et pose, ou pourquoi cela a rate.
+  3DS — le jeu se lance depuis la vitrine
+    Son ecran ne lisait pas le jeu que la Chambre lui passe : il ouvrait son
+    catalogue et il fallait choisir deux fois. Il appelle desormais SA propre
+    fonction « chargerDepuis » avec l'adresse recue. Rien d'autre de son
+    projet n'est touche. Sans jeu passe, il ouvre son catalogue comme avant.
 
-  Tiroir de droite — on ne pouvait plus le refermer
-    Je rendais tout le tiroir sensible a son contenu : chaque appui attrapait
-    un objet. Seul le HAUT donne desormais la telecommande ou la loupe ; la
-    facade reste libre, et c'est elle qui referme.
+  Tiroir de droite — la telecommande et la loupe remontent
+    Elles etaient trop basses et genaient la fermeture. La zone qui les
+    attrape passe de 55 a 42 pour cent de la hauteur : la facade est largement
+    degagee.
+
+  GameCube et Wii — savoir enfin ou Dolphin s'arrete
+    Il n'a jamais ete assemble, et la compilation le saute sans rien dire.
+    Chaque etape laisse desormais une trace, reprise dans le bilan que Rudy
+    lit par l'appui long sur la tele :
+        Dolphin : archive trouvee
+        Dolphin : depot clone
+        Dolphin : ses pads installes
+        Dolphin : bibliotheque produite (xx Mo)
+    ou, en cas d'echec, la raison exacte — son apply.py qui ne s'applique pas,
+    ou les quatre premieres erreurs de compilation.
+
+  Si Dolphin se met vraiment a compiler, la compilation durera une a deux
+  heures au lieu de quinze minutes : il compile son moteur C++ entier.
