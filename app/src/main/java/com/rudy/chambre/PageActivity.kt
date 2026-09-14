@@ -359,6 +359,10 @@ class PageActivity : ComponentActivity() {
                         i.putExtra("SelectedTitle", fiche.nom)
                         i.putExtra("riivolution", false)
                         i.putExtra("systemMenu", false)
+                        // la plateforme : 0 pour la GameCube, 1 pour la Wii.
+                        // Dolphin la deduit du fichier, mais l'indiquer evite
+                        // qu'il hesite sur les formats communs aux deux.
+                        i.putExtra("platform", if (console == "wii") 1 else 0)
                     }
 
                     startActivity(i)

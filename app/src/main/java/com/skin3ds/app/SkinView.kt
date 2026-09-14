@@ -7,264 +7,191 @@ import android.view.MotionEvent
 import android.view.View
 import com.skin3ds.app.core.Pad
 import kotlin.math.abs
-import kotlin.math.atan2
-import kotlin.math.hypot
 import kotlin.math.max
-import kotlin.math.roundToInt
+import kotlin.math.min
 
 /**
- * Dessine le skin et fait tourner la console.
+ * Dessine la console et lit les appuis.
  *
- * Les touches jouent des images pre-calculees (repos, mi-course, fond de
- * course). Les deux sticks sont differents : leur capuchon glisse sous le
- * doigt dans sa cuvette, et huit images inclinees donnent la bascule ; leur
- * position, de -1 a 1 sur chaque axe, est transmise en continu a la couche
- * OpenGL, qui la remet au coeur.
+ * L'habillage est fait d'un fond — la coque, touches retirees — et d'un sprite
+ * par touche. Au repos, fond plus sprites redonne exactement l'image
+ * d'origine ; a l'appui, seul le sprite de la touche change.
  */
 class SkinView(ctx: Context) : View(ctx) {
 
-    // ---------- reglages ----------
-    /** Zone morte des sticks, en fraction de la course. */
-    var zoneMorte = 0.08f
+    // ---------- ce que la vue expose ----------
 
-    /** Duree d'une etape d'enfoncement, en ms. */
-    var etapeMs = 34L
-    /** Duree minimale d'affichage d'un appui bref. */
-    var appuiMiniMs = 110L
-    // --------------------------------
-
-    /** Etat des commandes, lu par la couche OpenGL a chaque image. */
+    /** Etat des commandes, lu a chaque image. */
     var surCommandes: ((Int, Float, Float, Float, Float, Boolean) -> Unit)? = null
-    /** Le rectangle de l'ecran, en pixels de la vue, pose a chaque mesure. */
-    var surCadreHaut: ((Float, Float, Float, Float) -> Unit)? = null
-    var surCadreBas: ((Float, Float, Float, Float) -> Unit)? = null
-    /** Touche sur l'ecran du bas : x et y de 0 a 1, ou null au relachement. */
-    var surTactile: ((Float, Float) -> Unit)? = null
+    /** Rectangle de l'ecran, en pixels de la vue. */
+    /** Rectangle de chaque ecran dans la vue : haut puis bas. */
+    /** Un doigt glisse sur l'ecran du bas : position en fractions. */
+    var surStylet: ((Float, Float) -> Unit)? = null
+    var surMenu: (() -> Unit)? = null
+    var surJeux: (() -> Unit)? = null
+    var surChange: (() -> Unit)? = null
+    var surTouche: (() -> Unit)? = null
+    /** Un jeu a ete choisi dans la liste affichee sur l'ecran. */
+    var surChoixJeu: ((Int) -> Unit)? = null
+    var surErreur: ((String) -> Unit)? = null
+
     /**
-     * true quand la couche OpenGL dessine elle-meme l'image, sous le skin.
-     * Le rectangle de l'ecran doit alors rester transparent.
+     * Liste des jeux, dessinee DANS l'ecran de la console.
+     *
+     * Une fenetre par-dessus la console casse l'illusion : on affiche donc le
+     * catalogue sur la dalle elle-meme, comme le ferait la console.
      */
-    var trouEcran = false
-        set(v) { field = v; fondPret?.recycle(); fondPret = null; invalidate() }
+    var listeJeux: List<String> = emptyList()
+        set(v) { field = v; rangListe = 0; invalidate() }
+    var listeVisible = false
+        set(v) { field = v; invalidate() }
+    private var rangListe = 0
+    private var listeDefile = 0f
 
     /** true tant qu'aucun jeu ne tourne : on affiche alors un message. */
     var ecranVide = true
         set(v) { field = v; invalidate() }
 
+    /** Adoucit l'image quand elle est agrandie a l'ecran. */
     var lissage = true
         set(v) { field = v; peintureJeu.isFilterBitmap = v; invalidate() }
 
-    private val peintureJeu = Paint().apply { isFilterBitmap = true }
-    private val cadreJeu = Bitmap.createBitmap(1024, 1280, Bitmap.Config.ARGB_8888)
-    private val srcJeu = Rect(0, 0, 1, 1)
-    private var jeuPret = false
+    /** Cadence mesuree, affichee dans le diagnostic. */
+    var cadence = 0.0
+    /** Ligne d'etat affichee sur l'ecran du haut, pour comprendre d'un coup d'oeil. */
+    var diagnostic = ""
 
-    /**
-     * Depose l'image relue par la couche OpenGL. Appele depuis le fil du
-     * rendu : on ne fait que recopier, l'affichage suit a la prochaine image.
-     */
-    fun poserImage(pixels: IntArray, l: Int, h: Int) {
-        // Bornes verifiees explicitement : setPixels lit l * h entiers et
-        // depasser le tableau ferait tomber l'application sans message.
-        if (l <= 0 || h <= 0) return
-        if (l > cadreJeu.width || h > cadreJeu.height) return
-        if (l.toLong() * h > pixels.size) return
-        synchronized(cadreJeu) {
-            try {
-                cadreJeu.setPixels(pixels, 0, l, 0, 0, l, h)
-                srcJeu.set(0, 0, l, h)
-                jeuPret = true
-            } catch (e: Exception) {
-                surErreur?.invoke("dépôt de l'image impossible : " + e.message)
-            }
-        }
-        postInvalidateOnAnimation()
-    }
-
-    /** Pour signaler un incident au journal depuis cette vue. */
-    var surErreur: ((String) -> Unit)? = null
-    var surTouche: (() -> Unit)? = null
-    var surMenu: (() -> Unit)? = null
-    var surQuit: (() -> Unit)? = null
-    var surJeux: (() -> Unit)? = null
-    /** Bouton CHANGE : fait defiler les presentations horizontales. */
-    var surChange: (() -> Unit)? = null
-    var surChoixJeu: ((Int) -> Unit)? = null
     var modeEdition = false
         set(v) { field = v; invalidate() }
 
-    var boutons = 0
-        private set
+    // ---------- images de l'habillage ----------
 
-    // ---------- etat des touches ----------
-    private val actifs = HashMap<String, Long>()
-    private val relaches = HashMap<String, Long>()
-
-    /** Etat d'un stick : position courante (-1..1), point de depart du doigt, retour. */
-    private class Stick {
-        var x = 0f; var y = 0f
-        var x0 = 0f; var y0 = 0f           // position ecran du doigt a l'appui
-        var actif = false
-        var retourDepuis = 0L; var rx = 0f; var ry = 0f
-        var secteur = ""; var secteurDepuis = 0L
-    }
-    private val sticks = mapOf(Ids.CROIX to Stick(),
-                               Ids.STICK_G to Stick(), Ids.STICK_D to Stick())
-
-    // ---------- images ----------
     private class Touche(val repos: Bitmap, val appui: List<Bitmap>,
                         val directions: Map<String, List<Bitmap>>) {
-        /** Rend la memoire de toutes ses images. */
         fun liberer() {
             if (!repos.isRecycled) repos.recycle()
             for (b in appui) if (!b.isRecycled) b.recycle()
             for (l in directions.values) for (b in l) if (!b.isRecycled) b.recycle()
         }
     }
+
     /**
-     * Un fond et un jeu de touches par habillage : le vertical, plus les
-     * quatre presentations horizontales que le bouton CHANGE fait defiler.
+     * Un seul habillage en memoire a la fois.
+     *
+     * Les deux reunis pesent une vingtaine de megaoctets une fois leurs images
+     * decompressees ; les charger ensemble n'apporte rien puisqu'un seul est
+     * visible.
      */
-    private val fonds = HashMap<String, Bitmap>()
-    private val touchesPar = HashMap<String, HashMap<String, Touche>>()
-    /** Rang de la presentation horizontale courante, de 0 a 3. */
-    var rangPaysage = 0
+    private var dossierCharge: String? = null
+    private var fond: Bitmap? = null
+    private val touches = HashMap<String, Touche>()
+
+    private var dispo: Disposition = Dispositions.parDefaut(ctx, Dispositions.PORTRAIT)
+    /** Rang de la presentation horizontale : le bouton CHANGE le fait tourner. */
+    var rangPaysage = Dispositions.rang(ctx)
         set(v) {
-            field = ((v % 4) + 4) % 4
+            field = ((v % Dispositions.PAYSAGES.size) + Dispositions.PAYSAGES.size) %
+                    Dispositions.PAYSAGES.size
+            Dispositions.poserRang(context, field)
             if (!enPaysage) return
-            // On recharge la disposition ici meme. Passer par requestLayout ne
-            // servait a rien : la taille de la vue ne changeant pas, la mesure
-            // n'etait jamais refaite, et les ecrans restaient a leur ancienne
-            // place pendant que le dessin de la coque, lui, changeait.
-            val h = Dispositions.habillage(true, field)
-            dispo = Dispositions.charger(context, h)
-            dispoChargee = true
-            surErreur?.invoke("présentation « " + h.libelle + " » : " +
-                (if (dispo.items.containsKey(Ids.ECRAN_HAUT)) "écran haut " else "") +
-                (if (dispo.items.containsKey(Ids.ECRAN_BAS)) "écran bas" else ""))
+            // On recharge sur place : requestLayout ne redeclenche rien si la
+            // taille de la vue ne change pas.
+            dispo = Dispositions.charger(context, Dispositions.habillage(true, field))
             fondPret?.recycle(); fondPret = null
-            habillageCharge(h.dossier)
             if (width > 0 && height > 0) recalculer(width, height)
             invalidate()
         }
-
-    private var dispo: Disposition
-    private var enPaysage = false
     private var dispoChargee = false
-
-
-    private val peinture = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-    private val noir = Paint().apply { color = Color.BLACK }
-    private val traitEdition = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE; strokeWidth = 3f; color = 0xFFC82128.toInt()
-        pathEffect = DashPathEffect(floatArrayOf(12f, 9f), 0f)
-    }
-    private val poignee = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFFC82128.toInt() }
-    private val poigneeBord = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE; strokeWidth = 3f; color = Color.WHITE
-    }
+    private var enPaysage = false
 
     private var ech = 1f
     private var decX = 0f
     private var decY = 0f
+
     private val tmp = RectF()
     private val tmp2 = RectF()
-
-    init {
-        dispo = Dispositions.parDefaut(ctx, Dispositions.PORTRAIT)
-        isFocusable = true
+    private val peinture = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
+    private val peintureJeu = Paint().apply { isFilterBitmap = true }
+    private val noir = Paint().apply { color = Color.BLACK }
+    private val texteVide = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF6E6E78.toInt()
+        textAlign = Paint.Align.CENTER
+        typeface = Typeface.MONOSPACE
+    }
+    private val traitEdition = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 3f
     }
 
-    /**
-     * Charge un habillage a la demande, et libere les autres.
-     *
-     * Les cinq habillages reunis pesent cent huit megaoctets une fois leurs
-     * images decompressees en memoire — plus que ce qu'un telephone accorde a
-     * une application. Les charger tous au demarrage la faisait tomber avant
-     * meme qu'elle s'affiche. On ne garde donc que celui qu'on montre.
-     */
-    private fun habillageCharge(dossier: String): Bitmap? {
-        fonds[dossier]?.let { return it }
-        // on libere les autres avant de charger, pour ne jamais en avoir deux
-        for ((cle, bmp) in fonds) {
-            if (cle == dossier) continue
-            touchesPar[cle]?.values?.forEach { t -> t.liberer() }
-            touchesPar.remove(cle)
-            if (!bmp.isRecycled) bmp.recycle()
-        }
-        fonds.clear()
-        return try {
-            val t = HashMap<String, Touche>()
-            val f = chargerSkin(dossier, t)
-            fonds[dossier] = f
-            touchesPar[dossier] = t
-            f
-        } catch (e: OutOfMemoryError) {
-            surErreur?.invoke("mémoire insuffisante pour l'habillage " + dossier)
-            null
-        }
-    }
+    /** Assez grand pour l'image reduite que le pont nous remet. */
+    private val cadreJeu = Bitmap.createBitmap(1024, 640, Bitmap.Config.ARGB_8888)
+    private val srcJeu = Rect(0, 0, 1, 1)
+    private var jeuPret = false
+
+    private var fondPret: Bitmap? = null
+    private var boucleLancee = false
+
+    init { isFocusable = true }
+
+    // ---------- chargement ----------
 
     private fun charge(chemin: String): Bitmap =
         context.assets.open(chemin).use { BitmapFactory.decodeStream(it) }
 
-    /** Lit positions.json et charge toutes les images d'un skin. */
-    private fun chargerSkin(dossier: String, cible: HashMap<String, Touche>): Bitmap {
-        val texte = context.assets.open("3ds/skin/$dossier/positions.json").bufferedReader().use { it.readText() }
-        val els = org.json.JSONObject(texte).getJSONArray("elements")
-        for (i in 0 until els.length()) {
-            val e = els.getJSONObject(i)
-            val id = e.getString("id")
-            val im = e.getJSONObject("images")
-            val repos = charge("3ds/skin/$dossier/" + im.getString("repos"))
-            val appui = ArrayList<Bitmap>()
-            val dirs = HashMap<String, List<Bitmap>>()
-            im.keys().forEach { k ->
-                if (k == "repos") return@forEach
-                val liste = im.getJSONArray(k)
-                val bms = (0 until liste.length()).map { charge("3ds/skin/$dossier/" + liste.getString(it)) }
-                if (k == "appui") appui.addAll(bms) else dirs[k] = bms
+    private fun chargerHabillage(dossier: String): Bitmap? {
+        if (dossier == dossierCharge) return fond
+        touches.values.forEach { it.liberer() }
+        touches.clear()
+        fond?.let { if (!it.isRecycled) it.recycle() }
+        fond = null
+        dossierCharge = null
+        return try {
+            val texte = context.assets.open("skin/$dossier/positions.json")
+                .bufferedReader().use { it.readText() }
+            val o = org.json.JSONObject(texte)
+            val els = o.getJSONArray("elements")
+            for (i in 0 until els.length()) {
+                val e = els.getJSONObject(i)
+                val id = e.getString("id")
+                val im = e.getJSONObject("images")
+                val repos = charge("skin/$dossier/" + im.getString("repos"))
+                val appui = ArrayList<Bitmap>()
+                if (im.has("appui")) {
+                    val a = im.getJSONArray("appui")
+                    for (k in 0 until a.length()) appui.add(charge("skin/$dossier/" + a.getString(k)))
+                }
+                // Le stick porte huit directions : sans elles, il ne bougeait
+                // pas a l'ecran alors que la demonstration le montrait pencher.
+                val dirs = HashMap<String, List<Bitmap>>()
+                for (sens in listOf("h", "b", "g", "d", "hg", "hd", "bg", "bd")) {
+                    if (!im.has(sens)) continue
+                    val a = im.getJSONArray(sens)
+                    val l = ArrayList<Bitmap>()
+                    for (k in 0 until a.length()) l.add(charge("skin/$dossier/" + a.getString(k)))
+                    dirs[sens] = l
+                }
+                touches[id] = Touche(repos, appui, dirs)
             }
-            cible[id] = Touche(repos, appui, dirs)
+            val f = charge("skin/$dossier/fond.png")
+            fond = f
+            dossierCharge = dossier
+            f
+        } catch (e: Throwable) {
+            surErreur?.invoke("habillage $dossier illisible : " + e)
+            null
         }
-        return charge("3ds/skin/$dossier/fond.png")
     }
 
-    // ================= rafraichissement =================
-    // L'emulation tourne sur le fil OpenGL, pas ici : cette vue ne fait plus
-    // que dessiner le skin et transmettre l'etat des commandes.
+    // ---------- mesure ----------
 
-    private var boucleLancee = false
-
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
+    override fun onSizeChanged(w: Int, h: Int, ow: Int, oh: Int) {
+        super.onSizeChanged(w, h, ow, oh)
+        recalculer(w, h)
         if (!boucleLancee) { boucleLancee = true; boucle() }
     }
 
-    private fun boucle() {
-        Choreographer.getInstance().postFrameCallback(object : Choreographer.FrameCallback {
-            override fun doFrame(ns: Long) {
-                if (!isAttachedToWindow) { boucleLancee = false; return }
-                Choreographer.getInstance().postFrameCallback(this)
-                val sg = sticks[Ids.STICK_G]!!
-                val sd = sticks[Ids.STICK_D]!!
-                surCommandes?.invoke(boutons, sg.x, sg.y, sd.x, sd.y,
-                                     actifs.containsKey(Ids.FF))
-                if (animationEnCours()) invalidate()
-            }
-        })
-    }
-
-    private fun animationEnCours(): Boolean {
-        val t = System.currentTimeMillis()
-        if (actifs.isNotEmpty()) return true
-        if (sticks.values.any { it.actif || t - it.retourDepuis < 90 }) return true
-        return relaches.values.any { t - it < appuiMiniMs + etapeMs }
-    }
-
-    // ================= geometrie =================
-
-    override fun onSizeChanged(w: Int, h: Int, ow: Int, oh: Int) {
+    private fun recalculer(w: Int, h: Int) {
+        if (w <= 0 || h <= 0) return
         val paysage = w >= h
         if (!dispoChargee || paysage != enPaysage) {
             enPaysage = paysage
@@ -272,50 +199,21 @@ class SkinView(ctx: Context) : View(ctx) {
             dispoChargee = true
             fondPret?.recycle(); fondPret = null
         }
-        recalculer(w, h)
-    }
-
-    /**
-     * Fond deja mis a l'echelle de la vue.
-     *
-     * Redimensionner une image de deux millions de pixels a chaque rafraichis-
-     * sement coutait cher pour rien : le fond ne bouge jamais. On le prepare
-     * une fois par changement de taille.
-     */
-    private var fondPret: Bitmap? = null
-
-    private fun recalculer(w: Int, h: Int) {
-        ech = max(w / dispo.sw, h / dispo.sh)
+        // La console remplit l'ecran : on prend le plus grand des deux
+        // rapports, quitte a ce que les bords depassent un peu. Le plus petit
+        // laissait des bandes noires de chaque cote.
+        ech = max(w.toFloat() / dispo.sw, h.toFloat() / dispo.sh)
         decX = (w - dispo.sw * ech) / 2f
         decY = (h - dispo.sh * ech) / 2f
-        fondPret?.recycle()
-        fondPret = null
-        val source = habillageCharge(Dispositions.habillage(enPaysage, rangPaysage).dossier) ?: return
-        if (w <= 0 || h <= 0) return
-        try {
-            val prete = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-            val c = Canvas(prete)
-            tmp.set(decX, decY, decX + dispo.sw * ech, decY + dispo.sh * ech)
-            val ecrans = listOfNotNull(dispo.items[Ids.ECRAN_HAUT], dispo.items[Ids.ECRAN_BAS])
-            if (trouEcran && ecrans.isNotEmpty()) {
-                // on epargne le rectangle de l'ecran : la couche OpenGL est
-                // dessous, et un fond opaque la masquerait
-                c.save()
-                for (e in ecrans) { versEcran(e, tmp2); c.clipOutRect(tmp2) }
-                c.drawBitmap(source, null, tmp, peinture)
-                c.restore()
-            } else {
-                c.drawBitmap(source, null, tmp, peinture)
-            }
-            fondPret = prete
-        } catch (_: OutOfMemoryError) { fondPret = null }
+        fondPret?.recycle(); fondPret = null
     }
 
     private fun versEcran(r: Rect4, out: RectF) {
-        out.set(decX + r.x * ech, decY + r.y * ech, decX + (r.x + r.w) * ech, decY + (r.y + r.h) * ech)
+        out.set(decX + r.x * ech, decY + r.y * ech,
+                decX + (r.x + r.w) * ech, decY + (r.y + r.h) * ech)
     }
 
-    // ================= dessin =================
+    // ---------- dessin ----------
 
     private var dessinEnEchec = false
 
@@ -332,282 +230,373 @@ class SkinView(ctx: Context) : View(ctx) {
     }
 
     private fun dessiner(c: Canvas) {
-        val cle = Dispositions.habillage(enPaysage, rangPaysage).dossier
-        val fond = habillageCharge(cle) ?: return
-        val touches = touchesPar[cle] ?: HashMap()
-        tmp.set(decX, decY, decX + dispo.sw * ech, decY + dispo.sh * ech)
-        c.drawBitmap(fond, null, tmp, peinture)
+        val dossier = Dispositions.habillage(enPaysage, rangPaysage).dossier
+        val source = chargerHabillage(dossier) ?: return
 
-        // La console a deux ecrans, et certains habillages n'en montrent qu'un.
-        dispo.items[Ids.ECRAN_HAUT]?.let { r -> dessinerJeu(c, r, true) }
-        dispo.items[Ids.ECRAN_BAS]?.let { r -> dessinerJeu(c, r, false) }
+        // le fond, mis a l'echelle une fois pour toutes
+        var pret = fondPret
+        if (pret == null || pret.width != width || pret.height != height) {
+            pret?.recycle()
+            try {
+                val n = Bitmap.createBitmap(max(1, width), max(1, height), Bitmap.Config.ARGB_8888)
+                val cc = Canvas(n)
+                tmp.set(decX, decY, decX + dispo.sw * ech, decY + dispo.sh * ech)
+                cc.drawBitmap(source, null, tmp, peinture)
+                fondPret = n
+                pret = n
+            } catch (_: OutOfMemoryError) { fondPret = null }
+        }
+        val haut = dispo.items[Ids.ECRAN_HAUT]
+        val bas = dispo.items[Ids.ECRAN_BAS]
+        c.drawColor(Color.BLACK)
+        if (pret != null) c.drawBitmap(pret, 0f, 0f, null)
+        else {
+            tmp.set(decX, decY, decX + dispo.sw * ech, decY + dispo.sh * ech)
+            c.drawBitmap(source, null, tmp, peinture)
+        }
 
-        val maintenant = System.currentTimeMillis()
-        for ((id, t) in touches) {
+        haut?.let { dessinerJeu(c, it, true) }
+        bas?.let { dessinerJeu(c, it, false) }
+
+        val t = System.currentTimeMillis()
+        for ((id, touche) in touches) {
             val r = dispo.items[id] ?: continue
-            versEcran(r, tmp)
-            val marge = (dispo.marges[id] ?: 0) * ech
-            tmp2.set(tmp.left - marge, tmp.top - marge, tmp.right + marge, tmp.bottom + marge)
-
-            if (id in Ids.DIRECTIONNELS) {
-                dessinerDirectionnel(c, t, id, tmp, tmp2, maintenant)
-                continue
+            val img = if (id in Ids.DIRECTIONNELS) imageStick(touche, id) else {
+                val etat = etatAppui(id, t)
+                if (etat == 0 || touche.appui.isEmpty()) touche.repos
+                else touche.appui[min(etat - 1, touche.appui.size - 1)]
             }
-
-            val etape = etapeAppui(id, maintenant)
-            if (etape < 0 || t.appui.isEmpty()) c.drawBitmap(t.repos, null, tmp, peinture)
-            else c.drawBitmap(t.appui[etape.coerceAtMost(t.appui.size - 1)], null, tmp2, peinture)
+            val marge = dispo.marges[id] ?: 0
+            if (img === touche.repos) {
+                versEcran(r, tmp)
+            } else {
+                tmp.set(decX + (r.x - marge) * ech, decY + (r.y - marge) * ech,
+                        decX + (r.x + r.w + marge) * ech, decY + (r.y + r.h + marge) * ech)
+            }
+            c.drawBitmap(img, null, tmp, peinture)
         }
 
-        if (liste != null)
-            (dispo.items[Ids.ECRAN_BAS] ?: dispo.items[Ids.ECRAN_HAUT])?.let { dessinerListe(c, it) }
-        if (modeEdition) dessinerEdition(c)
-        if (afficherDiagnostic) dessinerDiagnostic(c)
-    }
-
-    /** -1 au repos, 0 mi-course, 1 fond de course. */
-    private fun etapeAppui(id: String, t: Long): Int {
-        actifs[id]?.let { debut -> return if (t - debut < etapeMs) 0 else 1 }
-        relaches[id]?.let { fin ->
-            val d = t - fin
-            if (d < appuiMiniMs) return 1
-            if (d < appuiMiniMs + etapeMs) return 0
+        if (modeEdition) {
+            for ((id, r) in dispo.items) {
+                versEcran(r, tmp)
+                traitEdition.color = if (id == Ids.ECRAN_HAUT || id == Ids.ECRAN_BAS) 0xFF3AA0FF.toInt() else 0xFFC82128.toInt()
+                c.drawRect(tmp, traitEdition)
+            }
         }
-        return -1
     }
 
-    private val SECTEURS = arrayOf("d", "bd", "b", "bg", "g", "hg", "h", "hd")
+    /** Image d'une piece directionnelle : huit directions, deux niveaux. */
+    private fun imageStick(t: Touche, id: String): Bitmap {
+        val a = axes[id] ?: return t.repos
+        val stickX = a.x; val stickY = a.y
+        val n = kotlin.math.hypot(stickX.toDouble(), stickY.toDouble()).toFloat()
+        if (n < 0.06f || t.directions.isEmpty()) return t.repos
+        // Seuils bas : la piece penche des le debut du mouvement, comme dans
+        // la demonstration. Des seuils hauts la rendaient inerte.
+        val sens = StringBuilder()
+        // Seuils bas : les diagonales s'obtiennent des qu'on quitte l'axe.
+        if (stickY < -0.24f) sens.append("h") else if (stickY > 0.24f) sens.append("b")
+        if (stickX < -0.24f) sens.append("g") else if (stickX > 0.24f) sens.append("d")
+        val cle = if (sens.isEmpty()) (if (kotlin.math.abs(stickX) > kotlin.math.abs(stickY))
+                                       (if (stickX < 0) "g" else "d")
+                                       else (if (stickY < 0) "h" else "b"))
+                  else sens.toString()
+        val l = t.directions[cle] ?: return t.repos
+        if (l.isEmpty()) return t.repos
+        return l[if (n > 0.34f) l.size - 1 else 0]
+    }
 
     /**
-     * Le capuchon glisse de sa position (-1..1) x course, et l'image choisie
-     * est celle du secteur de 45 degres vers lequel il penche, a deux niveaux.
-     * Pendant le retour au centre, la position decroit sur 90 ms.
+     * Trace un ecran de la console.
+     *
+     * Citra empile les deux ecrans dans une seule image : celui du haut,
+     * 400 sur 240, occupe toute la largeur ; celui du bas, 320 sur 240, est
+     * centre juste en dessous. On coupe donc la bonne portion.
      */
-    private fun dessinerDirectionnel(c: Canvas, t: Touche, id: String, repos: RectF, large: RectF, maintenant: Long) {
-        val st = sticks[id]!!
-        var px = st.x; var py = st.y
-        if (!st.actif && maintenant - st.retourDepuis < 90) {
-            val f = 1f - (maintenant - st.retourDepuis) / 90f
-            px = st.rx * f; py = st.ry * f
-        } else if (!st.actif) { px = 0f; py = 0f }
-        val course = (dispo.courses[id] ?: 0f) * ech
-        val dx = px * course; val dy = py * course
-        val norme = hypot(px, py)
-        if (norme < 0.10f) {
-            repos.offset(dx, dy); c.drawBitmap(t.repos, null, repos, peinture); return
-        }
-        val sect = SECTEURS[((atan2(py, px) / (Math.PI / 4)).roundToInt() and 7)]
-        val frames = t.directions[sect] ?: run { repos.offset(dx, dy); c.drawBitmap(t.repos, null, repos, peinture); return }
-        val i = if (norme < 0.55f) 0 else frames.size - 1
-        large.offset(dx, dy)
-        c.drawBitmap(frames[i], null, large, peinture)
-    }
-
-    private val texteVide = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFF8A8A8A.toInt(); textAlign = Paint.Align.CENTER
-        typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-    }
-
-    /** L'image du jeu dans le rectangle d'ecran, sur fond noir. */
     private fun dessinerJeu(c: Canvas, r: Rect4, haut: Boolean) {
         versEcran(r, tmp)
-        if (haut) surCadreHaut?.invoke(tmp.left, tmp.top, tmp.right, tmp.bottom)
-        else surCadreBas?.invoke(tmp.left, tmp.top, tmp.right, tmp.bottom)
-        // La couche OpenGL trace l'image sous le skin : on ne recouvre rien.
-        if (trouEcran && !ecranVide) return
         c.drawRect(tmp, noir)
-        if (ecranVide || !jeuPret) {
-            texteVide.textSize = tmp.height() * 0.062f
-            c.drawText("AUCUN JEU CHARGÉ", tmp.centerX(),
-                       tmp.centerY() - texteVide.textSize * 0.2f, texteVide)
-            texteVide.textSize = tmp.height() * 0.045f
-            c.drawText("bouton JEUX", tmp.centerX(),
-                       tmp.centerY() + texteVide.textSize * 1.6f, texteVide)
+        // La liste ne s'affiche que sur l'ecran du bas : c'est lui qui est
+        // tactile sur la console, et c'est donc lui qui doit la recevoir.
+        if (listeVisible) {
+            if (!haut || dispo.items[Ids.ECRAN_BAS] == null) dessinerListe(c, tmp)
             return
         }
-        // Ou se trouve chaque ecran dans l'image du coeur.
-        //
-        // Citra empile les deux ecrans : celui du haut, 400 sur 240, occupe
-        // toute la largeur ; celui du bas, 320 sur 240, est centre juste en
-        // dessous. Couper l'image en deux moities egales prendrait donc une
-        // bande de fond noir de chaque cote de l'ecran tactile.
-        val hUn = srcJeu.height() / 2
-        val part = if (haut)
-            Rect(srcJeu.left, srcJeu.top, srcJeu.right, srcJeu.top + hUn)
-        else {
-            val lBas = (srcJeu.width() * 320f / 400f).toInt()
-            val marge = (srcJeu.width() - lBas) / 2
-            Rect(srcJeu.left + marge, srcJeu.top + hUn,
-                 srcJeu.left + marge + lBas, srcJeu.bottom)
+        if (!ecranVide && jeuPret) {
+            val hUn = srcJeu.height() / 2
+            val part = if (haut)
+                Rect(srcJeu.left, srcJeu.top, srcJeu.right, srcJeu.top + hUn)
+            else {
+                val lBas = (srcJeu.width() * 320f / 400f).toInt()
+                val marge = (srcJeu.width() - lBas) / 2
+                Rect(srcJeu.left + marge, srcJeu.top + hUn,
+                     srcJeu.left + marge + lBas, srcJeu.bottom)
+            }
+            c.save(); c.clipRect(tmp)
+            synchronized(cadreJeu) { c.drawBitmap(cadreJeu, part, tmp, peintureJeu) }
+            c.restore()
+            return
         }
-        // L'image remplit le rectangle de son ecran, toujours. La taille se
-        // regle dans l'editeur de disposition, en deplacant ce rectangle : la
-        // finesse ne doit rien changer a ce qui s'affiche ou.
-        val w = tmp.width()
-        val h = tmp.height()
-        val cx = tmp.centerX(); val cy = tmp.centerY()
-        tmp2.set(cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2)
-        c.save(); c.clipRect(tmp)
-        synchronized(cadreJeu) { c.drawBitmap(cadreJeu, part, tmp2, peintureJeu) }
-        c.restore()
+        if (ecranVide || !jeuPret) {
+            texteVide.textSize = tmp.height() * 0.055f
+            c.drawText("AUCUN JEU CHARGÉ", tmp.centerX(), tmp.centerY(), texteVide)
+            texteVide.textSize = tmp.height() * 0.040f
+            c.drawText("bouton JEUX", tmp.centerX(),
+                       tmp.centerY() + texteVide.textSize * 1.8f, texteVide)
+            return
+        }
+
     }
 
-    /** Bandeau de controle, affiche par-dessus tout quand il est actif. */
-    var afficherDiagnostic = false
-        set(v) { field = v; invalidate() }
-
-    private val peintureDiag = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = 0xFF7CE87C.toInt(); typeface = Typeface.MONOSPACE
-    }
-    private val fondDiag = Paint().apply { color = 0xB0000000.toInt() }
-
-    private fun dessinerDiagnostic(c: Canvas) {
-        val h = height * 0.028f
-        peintureDiag.textSize = h * 0.72f
-        c.drawRect(0f, 0f, width.toFloat(), h * 1.4f, fondDiag)
-        c.drawText(diagnostic(), h * 0.4f, h, peintureDiag)
-    }
-
-    /** Ce que l'application recoit reellement : sert au diagnostic. */
-    /** Renseigne par MainActivity : cadence reelle de l'emulation. */
-    var cadence = 0.0
-
-    fun diagnostic(): String {
-        val st = sticks[Ids.STICK_G]!!
-        val cr = sticks[Ids.CROIX]!!
-        return "%.1f i/s  boutons %04X  doigts %d  stick %.2f,%.2f  croix %.2f,%.2f".format(
-            cadence, boutons, doigts.size, st.x, st.y, cr.x, cr.y)
-    }
-
-    // ================= catalogue dans l'ecran =================
-
-    private var liste: List<String>? = null
-    private var defilement = 0f
-    private var rangPresse = -1
-    val listeOuverte: Boolean get() = liste != null
-    fun afficherListe(noms: List<String>) { liste = noms; defilement = 0f; rangPresse = -1; invalidate() }
-    fun fermerListe() { liste = null; rangPresse = -1; invalidate() }
-
+    private val fondListe = Paint().apply { color = 0xFF0B0B10.toInt() }
+    private val surbrillance = Paint().apply { color = 0xFF1E3A5F.toInt() }
     private val texteListe = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD); color = Color.WHITE
+        color = Color.WHITE
+        typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL)
     }
-    private val barreListe = Paint().apply { color = Color.WHITE }
+    private val texteTitre = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF8AB4F8.toInt()
+        typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
+    }
 
-    private fun dessinerListe(c: Canvas, r: Rect4) {
-        val noms = liste ?: return
-        versEcran(r, tmp)
-        c.save(); c.clipRect(tmp); c.drawRect(tmp, noir)
-        val rangs = 9f; val h = tmp.height() / rangs
-        texteListe.textSize = h * 0.58f
-        val marge = tmp.width() * 0.045f
-        texteListe.color = 0xFF9A9A9A.toInt()
-        c.drawText("CHOISIR UN JEU   ${noms.size}", tmp.left + marge, tmp.top + h * 0.72f, texteListe)
-        c.drawRect(tmp.left + marge, tmp.top + h * 0.95f, tmp.right - marge, tmp.top + h * 0.95f + 2f, barreListe)
-        val hautListe = tmp.top + h * 1.3f
-        val premier = (defilement / h).toInt().coerceAtLeast(0)
-        val dernier = (premier + rangs.toInt()).coerceAtMost(noms.size - 1)
-        for (i in premier..dernier) {
-            val y = hautListe + i * h - defilement
-            if (y > tmp.bottom) break
-            val presse = i == rangPresse
-            texteListe.color = if (presse) Color.BLACK else Color.WHITE
-            if (presse) c.drawRect(tmp.left, y - h * 0.72f, tmp.right, y + h * 0.24f, barreListe)
-            c.drawText(tronquer(noms[i].substringBeforeLast('.').uppercase(), tmp.width() - marge * 3f),
-                       tmp.left + marge * 2f, y, texteListe)
-            if (presse) c.drawText(">", tmp.left + marge * 0.5f, y, texteListe)
+    /** Hauteur d'une ligne de la liste, en pixels de l'ecran. */
+    private fun hauteurLigne(r: RectF) = r.height() * 0.085f
+
+    private fun dessinerListe(c: Canvas, r: RectF) {
+        c.drawRect(r, fondListe)
+        val hl = hauteurLigne(r)
+        texteTitre.textSize = hl * 0.58f
+        texteListe.textSize = hl * 0.52f
+        val marge = r.width() * 0.04f
+        c.drawText("JEUX  (" + listeJeux.size + ")", r.left + marge, r.top + hl * 0.9f, texteTitre)
+        if (listeJeux.isEmpty()) {
+            c.drawText("Aucun jeu — bouton JEUX pour choisir un dossier",
+                       r.left + marge, r.top + hl * 2.2f, texteListe)
+            return
+        }
+        val haut = r.top + hl * 1.35f
+        val visibles = ((r.bottom - haut) / hl).toInt().coerceAtLeast(1)
+        val premier = ((listeDefile / hl).toInt()).coerceIn(0,
+            (listeJeux.size - visibles).coerceAtLeast(0))
+        c.save(); c.clipRect(r.left, haut, r.right, r.bottom)
+        for (i in premier until min(listeJeux.size, premier + visibles + 1)) {
+            val y = haut + (i - premier) * hl
+            if (i == rangListe) c.drawRect(r.left, y, r.right, y + hl, surbrillance)
+            var nom = listeJeux[i]
+            while (texteListe.measureText(nom) > r.width() - marge * 2 && nom.length > 4)
+                nom = nom.substring(0, nom.length - 2)
+            c.drawText(nom, r.left + marge, y + hl * 0.68f, texteListe)
         }
         c.restore()
     }
 
-    private fun tronquer(s: String, largeur: Float): String {
-        if (texteListe.measureText(s) <= largeur) return s
-        var n = s.length
-        while (n > 1 && texteListe.measureText(s.substring(0, n) + "…") > largeur) n--
-        return s.substring(0, n) + "…"
-    }
-
-    private var listeY0 = 0f; private var listeDefil0 = 0f
-    private var listeAGlisse = false; private var listeActive = false
-
-    private fun listeTactile(e: MotionEvent): Boolean {
-        val noms = liste ?: return false
-        val r = dispo.items[Ids.ECRAN_BAS] ?: dispo.items[Ids.ECRAN_HAUT] ?: return false
-        versEcran(r, tmp)
-        val x = e.x; val y = e.y
-        val h = tmp.height() / 9f; val hautListe = tmp.top + h * 1.3f
-        when (e.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                listeActive = tmp.contains(x, y)
-                if (!listeActive) return false
-                listeY0 = y; listeDefil0 = defilement; listeAGlisse = false
-                rangPresse = (((y - hautListe + defilement) + h * 0.72f) / h).toInt()
-                if (rangPresse !in noms.indices) rangPresse = -1
-                invalidate()
-            }
-            MotionEvent.ACTION_MOVE -> {
-                if (!listeActive) return false
-                val d = y - listeY0
-                if (abs(d) > 12f) {
-                    listeAGlisse = true; rangPresse = -1
-                    val total = noms.size * h - (tmp.height() - h * 1.3f)
-                    defilement = (listeDefil0 - d).coerceIn(0f, max(0f, total)); invalidate()
-                }
-            }
-            MotionEvent.ACTION_UP -> {
-                if (!listeActive) return false
-                listeActive = false
-                val choisi = rangPresse; rangPresse = -1; invalidate()
-                if (!listeAGlisse && choisi in noms.indices) surChoixJeu?.invoke(choisi)
-            }
-            MotionEvent.ACTION_CANCEL -> {
-                if (!listeActive) return false
-                listeActive = false; rangPresse = -1; invalidate()
-            }
-            else -> return listeActive
+    /** Depose l'image relue par le pont. */
+    fun poserImage(pixels: IntArray, l: Int, h: Int) {
+        if (l <= 0 || h <= 0) return
+        if (l > cadreJeu.width || h > cadreJeu.height) {
+            surErreur?.invoke("image " + l + "x" + h + " plus grande que le cadre " +
+                              cadreJeu.width + "x" + cadreJeu.height)
+            return
         }
-        return true
+        if (l.toLong() * h > pixels.size) return
+        synchronized(cadreJeu) {
+            try {
+                cadreJeu.setPixels(pixels, 0, l, 0, 0, l, h)
+                srcJeu.set(0, 0, l, h)
+                jeuPret = true
+            } catch (e: Exception) {
+                surErreur?.invoke("dépôt de l'image impossible : " + e.message)
+            }
+        }
+        postInvalidateOnAnimation()
     }
 
-    // ================= tactile =================
+    // ---------- appuis ----------
 
+    private val actifs = HashMap<String, Long>()
+    private val relaches = HashMap<String, Long>()
     private val doigts = HashMap<Int, String>()
-    /** Doigt qui tient le stylet sur l'ecran du bas, s'il y en a un. */
-    private var doigtStylet = -1
-    private var tracesTactiles = 0
-    private val ordreCapture = Ids.FONCTIONS + listOf(Ids.FF, Ids.L, Ids.R,
-        Ids.ZL, Ids.ZR, Ids.SELECT, Ids.START, Ids.A, Ids.B, Ids.X, Ids.Y,
-        Ids.CROIX, Ids.STICK_G, Ids.STICK_D)
+    /** Doigts poses, meme au-dessus du vide entre deux touches. */
+    private val suivis = HashSet<Int>()
+    private var boutons = 0
 
-    /** Les sticks captent un peu au-dela de leur capuchon : le doigt glisse. */
-    private fun elementSousLarge(x: Float, y: Float): String? {
-        elementSous(x, y)?.let { return it }
-        for (id in Ids.DIRECTIONNELS) {
-            val r = dispo.items[id] ?: continue
-            versEcran(r, tmp)
-            val m = tmp.width() * 0.35f
-            tmp.inset(-m, -m)
-            if (tmp.contains(x, y)) return id
+    /**
+     * Position de chaque piece directionnelle, de -1 a 1.
+     *
+     * La 3DS en a trois : la croix, le stick principal et le petit stick de
+     * droite. Une seule position ne suffisait pas.
+     */
+    private class Axe { var x = 0f; var y = 0f; var pid = -1; var ox = 0f; var oy = 0f }
+    private val axes = mapOf(Ids.CROIX to Axe(), Ids.STICK_G to Axe(), Ids.STICK_D to Axe())
+
+    private val DUREE_APPUI = 55L
+    private val DUREE_RELACHE = 90L
+
+    private fun etatAppui(id: String, t: Long): Int {
+        actifs[id]?.let {
+            val dt = t - it
+            return if (dt < DUREE_APPUI) 1 else 2
         }
-        return null
+        relaches[id]?.let {
+            val dt = t - it
+            if (dt < DUREE_RELACHE) return if (dt < DUREE_RELACHE / 2) 2 else 1
+        }
+        return 0
     }
 
-    private fun elementSous(x: Float, y: Float): String? {
+    private fun animationEnCours(): Boolean {
+        val t = System.currentTimeMillis()
+        if (actifs.isNotEmpty()) return true
+        for (v in relaches.values) if (t - v < DUREE_RELACHE) return true
+        return false
+    }
+
+    /** Piece situee sous le doigt, d'apres l'opacite reelle de son dessin. */
+    private fun sous(x: Float, y: Float): String? {
         for (id in ordreCapture) {
             val r = dispo.items[id] ?: continue
             versEcran(r, tmp)
-            if (tmp.contains(x, y)) return id
+            if (!tmp.contains(x, y)) continue
+            val t = touches[id] ?: continue
+            val px = ((x - tmp.left) / tmp.width() * t.repos.width).toInt()
+            val py = ((y - tmp.top) / tmp.height() * t.repos.height).toInt()
+            if (px < 0 || py < 0 || px >= t.repos.width || py >= t.repos.height) continue
+            if (Color.alpha(t.repos.getPixel(px, py)) > 60) return id
         }
         return null
     }
 
-    override fun onTouchEvent(e: MotionEvent): Boolean {
-        if (liste != null && !modeEdition && listeTactile(e)) return true
-        if (e.actionMasked == MotionEvent.ACTION_DOWN) {
-            val el = elementSous(e.getX(e.actionIndex), e.getY(e.actionIndex))
-            if (el == null || !Ids.FONCTIONS.contains(el)) surTouche?.invoke()
-        }
-        if (modeEdition) return editionTactile(e)
+    /** Les touches de fonction d'abord : elles ne doivent jamais etre masquees. */
+    private val ordreCapture = Ids.FONCTIONS + listOf(
+        Ids.FF, Ids.L, Ids.R, Ids.ZL, Ids.ZR, Ids.SELECT, Ids.START,
+        Ids.A, Ids.B, Ids.X, Ids.Y, Ids.CROIX, Ids.STICK_G, Ids.STICK_D)
 
+    private val TABLE = mapOf(
+        Ids.A to Pad.A, Ids.B to Pad.B, Ids.X to Pad.X, Ids.Y to Pad.Y,
+        Ids.L to Pad.L, Ids.R to Pad.R, Ids.ZL to Pad.ZL, Ids.ZR to Pad.ZR,
+        Ids.SELECT to Pad.SELECT, Ids.START to Pad.START)
+
+    private fun majBoutons() {
+        var b = 0
+        for ((id, bit) in TABLE) if (actifs.containsKey(id)) b = b or bit
+        boutons = b
+    }
+
+    private var doigtStylet = -1
+
+    /** Vrai si le doigt agit sur l'ecran tactile de la console. */
+    private fun surEcranTactile(x: Float, y: Float): Boolean {
+        val r = dispo.items[Ids.ECRAN_BAS] ?: return false
+        versEcran(r, tmp)
+        if (!tmp.contains(x, y)) return false
+        surStylet?.invoke((x - tmp.left) / tmp.width(), (y - tmp.top) / tmp.height())
+        return true
+    }
+
+    private fun appuyer(pid: Int, x: Float, y: Float) {
+        suivis.add(pid)
+        if (!ecranVide && !listeVisible && surEcranTactile(x, y)) {
+            doigtStylet = pid
+            return
+        }
+        val el = sous(x, y) ?: return
+        axes[el]?.let { a ->
+            a.pid = pid; a.ox = x; a.oy = y; a.x = 0f; a.y = 0f
+            actifs[el] = System.currentTimeMillis()
+            doigts[pid] = el
+            return
+        }
+        doigts[pid] = el
+        actifs[el] = System.currentTimeMillis()
+        when (el) {
+            // Les touches de fonction se relachent d'elles-memes : elles
+            // ouvrent une fenetre, et le doigt ne revient jamais les lever.
+            Ids.MENU -> { relacherPlusTard(el); surMenu?.invoke() }
+            Ids.JEUX -> { relacherPlusTard(el); surJeux?.invoke() }
+            Ids.CHANGE -> { rangPaysage += 1; surChange?.invoke() }
+            else -> performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
+        }
+        if (el !in Ids.FONCTIONS) surTouche?.invoke()
+    }
+
+    /** Relache une touche au bout d'un instant, sans attendre le doigt. */
+    private fun relacherPlusTard(el: String) {
+        postDelayed({
+            doigts.entries.filter { it.value == el }.map { it.key }.forEach { doigts.remove(it) }
+            actifs.remove(el)
+            relaches[el] = System.currentTimeMillis()
+            invalidate()
+        }, 180L)
+    }
+
+    private fun relacher(pid: Int) {
+        suivis.remove(pid)
+        if (pid == doigtStylet) { doigtStylet = -1; surStylet?.invoke(-1f, -1f) }
+        for (a in axes.values) if (a.pid == pid) { a.pid = -1; a.x = 0f; a.y = 0f }
+        val el = doigts.remove(pid) ?: return
+        actifs.remove(el)
+        relaches[el] = System.currentTimeMillis()
+    }
+
+    private fun majAxe(id: String, a: Axe, x: Float, y: Float) {
+        val r = dispo.items[id] ?: return
+        versEcran(r, tmp)
+        // Course courte : le stick atteint sa pleine inclinaison sans qu'on
+        // ait a glisser le doigt tres loin.
+        // Course courte : la pleine inclinaison s'obtient sans glisser loin.
+        val course = max(tmp.width(), tmp.height()) * 0.34f
+        // Le deplacement se mesure depuis le CENTRE de la piece, pas depuis
+        // le point d'appui : partir du point d'appui inversait le sens des le
+        // second contact, et le stick fuyait le doigt.
+        a.x = ((x - tmp.centerX()) / course).coerceIn(-1f, 1f)
+        a.y = ((y - tmp.centerY()) / course).coerceIn(-1f, 1f)
+        if (abs(a.x) < 0.08f) a.x = 0f
+        if (abs(a.y) < 0.08f) a.y = 0f
+    }
+
+    private var listeDepart = 0f
+    private var listeY0 = 0f
+    private var listeBouge = false
+
+    /** Vrai si le doigt agit sur la liste affichee dans l'ecran. */
+    private fun toucherListe(e: MotionEvent): Boolean {
+        if (!listeVisible) return false
+        val r = dispo.items[Ids.ECRAN_BAS] ?: dispo.items[Ids.ECRAN_HAUT] ?: return false
+        versEcran(r, tmp2)
+        when (e.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                if (!tmp2.contains(e.x, e.y)) return false
+                listeY0 = e.y; listeDepart = listeDefile; listeBouge = false
+                return true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (kotlin.math.abs(e.y - listeY0) > 12f) listeBouge = true
+                val hl = hauteurLigne(tmp2)
+                val maxi = (listeJeux.size * hl - (tmp2.height() - hl * 1.35f))
+                    .coerceAtLeast(0f)
+                listeDefile = (listeDepart - (e.y - listeY0)).coerceIn(0f, maxi)
+                invalidate()
+                return true
+            }
+            MotionEvent.ACTION_UP -> {
+                if (!listeBouge && tmp2.contains(e.x, e.y)) {
+                    val hl = hauteurLigne(tmp2)
+                    val haut = tmp2.top + hl * 1.35f
+                    if (e.y >= haut) {
+                        val i = ((listeDefile / hl).toInt()) + ((e.y - haut) / hl).toInt()
+                        if (i in listeJeux.indices) { rangListe = i; surChoixJeu?.invoke(i) }
+                    }
+                }
+                invalidate()
+                return true
+            }
+        }
+        return listeVisible
+    }
+
+    override fun onTouchEvent(e: MotionEvent): Boolean {
+        if (modeEdition) return editer(e)
+        if (toucherListe(e)) return true
         when (e.actionMasked) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
                 val i = e.actionIndex
@@ -616,21 +605,40 @@ class SkinView(ctx: Context) : View(ctx) {
             MotionEvent.ACTION_MOVE -> {
                 for (i in 0 until e.pointerCount) {
                     val pid = e.getPointerId(i)
+                    if (!suivis.contains(pid)) continue
+                    val x = e.getX(i); val y = e.getY(i)
                     if (pid == doigtStylet) {
-                        if (!surEcranTactile(e.getX(i), e.getY(i))) {
-                            doigtStylet = -1; surTactile?.invoke(-1f, -1f)
+                        if (!surEcranTactile(x, y)) {
+                            doigtStylet = -1; surStylet?.invoke(-1f, -1f)
                         }
                         continue
                     }
-                    if (!suivis.contains(pid)) continue
-                    val id = doigts[pid]
-                    if (id != null && id in Ids.DIRECTIONNELS) { majStick(id, e.getX(i), e.getY(i)); continue }
-                    glisser(pid, e.getX(i), e.getY(i))
+                    val axe = axes.entries.firstOrNull { it.value.pid == pid }
+                    if (axe != null) { majAxe(axe.key, axe.value, x, y); continue }
+                    // Glisser d'une touche a l'autre enfonce la nouvelle sans
+                    // qu'on ait a lever le doigt. Le doigt reste suivi meme
+                    // au-dessus du vide entre deux touches.
+                    val nouv = sous(x, y)
+                    if (nouv == doigts[pid]) continue
+                    if (nouv in Ids.DIRECTIONNELS) continue
+                    val ancien = doigts.remove(pid)
+                    if (ancien != null) {
+                        actifs.remove(ancien)
+                        relaches[ancien] = System.currentTimeMillis()
+                    }
+                    // jamais une touche de l'application au passage du doigt
+                    if (nouv != null && nouv !in Ids.FONCTIONS) {
+                        doigts[pid] = nouv
+                        actifs[nouv] = System.currentTimeMillis()
+                    }
                 }
             }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_CANCEL -> {
-                if (e.actionMasked == MotionEvent.ACTION_CANCEL) doigts.keys.toList().forEach { relacher(it) }
-                else relacher(e.getPointerId(e.actionIndex))
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
+                relacher(e.getPointerId(e.actionIndex))
+            }
+            MotionEvent.ACTION_CANCEL -> {
+                doigts.keys.toList().forEach { relacher(it) }
+                suivis.clear()
             }
         }
         majBoutons()
@@ -638,207 +646,82 @@ class SkinView(ctx: Context) : View(ctx) {
         return true
     }
 
-    /**
-     * Le doigt reste suivi une fois pose, meme s'il survole le vide entre deux
-     * touches : sans cela, passer d'une fleche a l'autre en glissant faisait
-     * perdre le doigt des le premier pixel d'ecart, et la seconde fleche ne
-     * repondait plus.
-     */
-    private val suivis = HashSet<Int>()
+    // ---------- editeur de disposition ----------
 
-    private fun glisser(pid: Int, x: Float, y: Float) {
-        val avant = doigts[pid]
-        val sous = elementSousLarge(x, y)
-        if (sous == avant) return
-        // on quitte la touche precedente
-        if (avant != null) {
-            doigts.remove(pid)
-            if (doigts.values.none { it == avant }) {
-                actifs.remove(avant)
-                relaches[avant] = System.currentTimeMillis()
-            }
-        }
-        // les fonctions et les sticks ne se prennent pas au vol : seulement a l'appui
-        if (sous != null && sous !in Ids.DIRECTIONNELS && sous !in Ids.FONCTIONS) {
-            doigts[pid] = sous
-            actifs[sous] = System.currentTimeMillis()
-            performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
-        }
-    }
-
-    /**
-     * L'ecran du bas de la DS est tactile : un doigt pose dessus n'enfonce
-     * aucune touche, il commande le stylet. On transmet sa position en
-     * fractions du rectangle, le coeur se chargeant de la convertir.
-     */
-    private fun surEcranTactile(x: Float, y: Float): Boolean {
-        val r = dispo.items[Ids.ECRAN_BAS] ?: return false
-        versEcran(r, tmp)
-        if (!tmp.contains(x, y)) return false
-        surTactile?.invoke((x - tmp.left) / tmp.width(), (y - tmp.top) / tmp.height())
-        if (tracesTactiles < 5) {
-            tracesTactiles++
-            surErreur?.invoke("stylet : %.2f, %.2f dans l'écran du bas".format(
-                (x - tmp.left) / tmp.width(), (y - tmp.top) / tmp.height()))
-        }
-        return true
-    }
-
-    private fun appuyer(pid: Int, x: Float, y: Float) {
-        suivis.add(pid)
-        if (surEcranTactile(x, y)) { doigtStylet = pid; return }
-        val el = elementSousLarge(x, y) ?: return
-        val t = System.currentTimeMillis()
-        doigts[pid] = el
-        if (el in Ids.DIRECTIONNELS) {
-            val st = sticks[el]!!
-            st.actif = true; st.x0 = x; st.y0 = y; st.x = 0f; st.y = 0f
-        } else {
-            actifs[el] = t
-            when (el) {
-                Ids.MENU -> surMenu?.invoke()
-                Ids.CHANGE -> surChange?.invoke()
-                Ids.JEUX -> surJeux?.invoke()
-            }
-        }
-        performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
-    }
-
-    private fun relacher(pid: Int) {
-        suivis.remove(pid)
-        if (pid == doigtStylet) { doigtStylet = -1; surTactile?.invoke(-1f, -1f) }
-        val el = doigts.remove(pid) ?: return
-        if (el in Ids.DIRECTIONNELS) {
-            val st = sticks[el]!!
-            st.rx = st.x; st.ry = st.y; st.x = 0f; st.y = 0f
-            st.actif = false; st.retourDepuis = System.currentTimeMillis()
-            return
-        }
-        if (doigts.values.none { it == el }) {
-            actifs.remove(el)
-            relaches[el] = System.currentTimeMillis()
-        }
-    }
-
-    /** Position du stick d'apres le deplacement du doigt depuis l'appui, bornee a la course. */
-    private fun majStick(id: String, x: Float, y: Float) {
-        val st = sticks[id]!!
-        var nx: Float; var ny: Float
-        val course = (dispo.courses[id] ?: 0f)
-        if (course > 0f) {
-            // le dome glisse : on mesure le deplacement depuis l'appui
-            val c = course * ech
-            nx = (x - st.x0) / c; ny = (y - st.y0) / c
-        } else {
-            // la croix bascule sur place : la direction vient de l'endroit touche
-            val r = dispo.items[id] ?: return
-            versEcran(r, tmp)
-            nx = (x - tmp.centerX()) / (tmp.width() / 2f)
-            ny = (y - tmp.centerY()) / (tmp.height() / 2f)
-        }
-        val n = hypot(nx, ny)
-        if (n > 1f) { nx /= n; ny /= n }
-        if (n < zoneMorte) { nx = 0f; ny = 0f }
-        st.x = nx; st.y = ny
-    }
-
-    private val TABLE = mapOf(
-        Ids.A to Pad.A, Ids.B to Pad.B, Ids.X to Pad.X, Ids.Y to Pad.Y,
-        Ids.L to Pad.L, Ids.R to Pad.R, Ids.ZL to Pad.ZL, Ids.ZR to Pad.ZR,
-        Ids.SELECT to Pad.SELECT, Ids.START to Pad.START)
-
-
-    private fun majBoutons() {
-        var b = 0
-        for ((id, bit) in TABLE) if (actifs.containsKey(id)) b = b or bit
-        // la croix bascule : sa position devient quatre directions
-        val cr = sticks[Ids.CROIX]!!
-        if (cr.actif || System.currentTimeMillis() - cr.retourDepuis < 60) {
-            if (cr.y < -zoneMorte) b = b or Pad.HAUT
-            if (cr.y > zoneMorte) b = b or Pad.BAS
-            if (cr.x < -zoneMorte) b = b or Pad.GAUCHE
-            if (cr.x > zoneMorte) b = b or Pad.DROITE
-        }
-        boutons = b
-    }
-
-    // ================= editeur de disposition =================
-
-    private var edPoignee: String? = null
     private var edId: String? = null
-    private var edDepart = Rect4(0f, 0f, 0f, 0f)
-    private var edX0 = 0f
-    private var edY0 = 0f
+    private var edPoignee: String? = null
+    private var edX = 0f
+    private var edY = 0f
 
-    private fun dessinerEdition(c: Canvas) {
-        for ((id, r) in dispo.items) {
-            versEcran(r, tmp)
-            traitEdition.color = if (id == Ids.ECRAN_HAUT || id == Ids.ECRAN_BAS)
-                0xFF3AA0FF.toInt() else 0xFFC82128.toInt()
-            poignee.color = traitEdition.color
-            c.drawRect(tmp, traitEdition)
-            for (pt in listOf(PointF(tmp.right, tmp.centerY()), PointF(tmp.centerX(), tmp.bottom),
-                              PointF(tmp.right, tmp.bottom))) {
-                c.drawCircle(pt.x, pt.y, 22f, poignee)
-                c.drawCircle(pt.x, pt.y, 22f, poigneeBord)
-            }
-        }
-    }
-
-    private fun editionTactile(e: MotionEvent): Boolean {
+    private fun editer(e: MotionEvent): Boolean {
         val x = e.x; val y = e.y
         when (e.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 edId = null; edPoignee = null
                 for ((id, r) in dispo.items) {
                     versEcran(r, tmp)
-                    val p = 34f
-                    when {
-                        abs(x - tmp.right) < p && abs(y - tmp.bottom) < p -> { edId = id; edPoignee = "se" }
-                        abs(x - tmp.right) < p && abs(y - tmp.centerY()) < p -> { edId = id; edPoignee = "e" }
-                        abs(x - tmp.centerX()) < p && abs(y - tmp.bottom) < p -> { edId = id; edPoignee = "s" }
-                        tmp.contains(x, y) && id != Ids.ECRAN_HAUT && id != Ids.ECRAN_BAS ->
-                            { edId = id; edPoignee = null }
+                    val coin = 28f
+                    if (abs(x - tmp.right) < coin && abs(y - tmp.bottom) < coin) {
+                        edId = id; edPoignee = "taille"; break
                     }
-                    if (edId != null) break
+                    if (tmp.contains(x, y)) { edId = id; edPoignee = "place" }
                 }
-                if (edId == null) for (cle in listOf(Ids.ECRAN_BAS, Ids.ECRAN_HAUT)) {
-                    val e = dispo.items[cle] ?: continue
-                    versEcran(e, tmp)
-                    if (tmp.contains(x, y)) { edId = cle; break }
-                }
-                edId?.let { edDepart = dispo.items[it]!!.copy4(); edX0 = x; edY0 = y }
+                edX = x; edY = y
             }
             MotionEvent.ACTION_MOVE -> {
                 val id = edId ?: return true
-                val r = dispo.items[id]!!
-                val dx = (x - edX0) / ech; val dy = (y - edY0) / ech
-                when (edPoignee) {
-                    null -> { r.x = edDepart.x + dx; r.y = edDepart.y + dy }
-                    "e" -> r.w = max(30f, edDepart.w + dx)
-                    "s" -> r.h = max(30f, edDepart.h + dy)
-                    "se" -> {
-                        val f = max(0.2f, (edDepart.w + dx) / edDepart.w)
-                        r.w = max(30f, edDepart.w * f); r.h = max(30f, edDepart.h * f)
-                    }
-                }
+                val r = dispo.items[id] ?: return true
+                val dx = (x - edX) / ech
+                val dy = (y - edY) / ech
+                if (edPoignee == "taille") {
+                    r.w = (r.w + dx).coerceAtLeast(24f)
+                    r.h = (r.h + dy).coerceAtLeast(24f)
+                } else { r.x += dx; r.y += dy }
+                edX = x; edY = y
+                fondPret?.recycle(); fondPret = null
                 invalidate()
             }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> { edId = null; edPoignee = null }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                edId = null; edPoignee = null
+                Dispositions.enregistrer(context, Dispositions.habillage(enPaysage, rangPaysage), dispo)
+            }
         }
         return true
     }
 
-    /** L'habillage en cours : le vertical, ou l'une des quatre presentations. */
-    private fun habillage() = Dispositions.habillage(enPaysage, rangPaysage)
-
-    fun enregistrerDisposition() = Dispositions.enregistrer(context, habillage(), dispo)
-
     fun reinitialiserDisposition() {
-        Dispositions.reinitialiser(context, habillage())
-        dispo = Dispositions.parDefaut(context, habillage())
+        val h = Dispositions.habillage(enPaysage, rangPaysage)
+        Dispositions.reinitialiser(context, h)
+        dispo = Dispositions.parDefaut(context, h)
         fondPret?.recycle(); fondPret = null
         recalculer(width, height)
         invalidate()
     }
+
+    // ---------- boucle ----------
+
+    private fun boucle() {
+        Choreographer.getInstance().postFrameCallback(object : Choreographer.FrameCallback {
+            override fun doFrame(ns: Long) {
+                if (!isAttachedToWindow) { boucleLancee = false; return }
+                Choreographer.getInstance().postFrameCallback(this)
+                // La croix se comporte en manette a quatre directions.
+                val cr = axes[Ids.CROIX]!!
+                var b = boutons
+                if (cr.y < -0.35f) b = b or Pad.HAUT
+                if (cr.y > 0.35f) b = b or Pad.BAS
+                if (cr.x < -0.35f) b = b or Pad.GAUCHE
+                if (cr.x > 0.35f) b = b or Pad.DROITE
+                val g = axes[Ids.STICK_G]!!
+                val d = axes[Ids.STICK_D]!!
+                surCommandes?.invoke(b, g.x, g.y, d.x, d.y, actifs.containsKey(Ids.FF))
+                if (animationEnCours()) invalidate()
+            }
+        })
+    }
+
+    fun diagnostic(): String =
+        "%.1f i/s  boutons %04X  doigts %d  stick %.2f,%.2f".format(
+            cadence, boutons, doigts.size,
+            axes[Ids.STICK_G]!!.x, axes[Ids.STICK_G]!!.y)
 }

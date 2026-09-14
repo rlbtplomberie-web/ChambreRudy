@@ -1,63 +1,76 @@
 /*
- * Pont entre l'application et le coeur Citra (format libretro).
+ * Pont entre l'application et le coeur Citra.
  *
- * Difference majeure avec les ponts NES, Super Nintendo et PlayStation :
- * Citra n'a pas de rendu logiciel. Il dessine en OpenGL dans un tampon que
- * nous devons lui fournir. Toute l'emulation se deroule donc sur le fil du
- * rendu, et le coeur ne nous rend plus une image en memoire : il remplit une
- * texture que l'application affiche ensuite dans le cadre du skin.
+ * Le coeur est une bibliotheque libretro : on l'ouvre avec dlopen, on lui
+ * fournit les fonctions dont il a besoin — image, son, manette — puis on lui
+ * demande une image a la fois.
  *
- * D'ou les trois fonctions supplementaires appelees depuis le fil GL :
- *   natGlInit    cree le tampon de rendu et declare le contexte au coeur
- *   natGlTaille  redimensionne ce tampon quand la resolution interne change
- *   natGlImage   avance d'une image et renvoie la texture remplie
+ * Ce fichier ne concerne que la PSP. Rien n'y vient d'une autre console.
  */
 #include <jni.h>
 #include <dlfcn.h>
-#include <stdint.h>
-#include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <android/log.h>
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <signal.h>
 #include <pthread.h>
-#include <EGL/egl.h>
 #include <GLES3/gl3.h>
+#include <EGL/egl.h>
 
-/* Annonce anticipee du journal.
- *
- * Il est defini plus bas, mais des fonctions ecrites avant lui s'en servent.
- * En C, appeler une fonction non encore declaree est une erreur : cette ligne
- * l'evite une fois pour toutes, quel que soit l'ordre du fichier.
- */
+/* Le journal est defini plus bas mais utilise plus haut : on l'annonce ici,
+   sinon le compilateur refuse les appels qui le precedent. */
 static void noter(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
-#define TAG "Skin3DS"
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
+/* Journal du coeur, annonce ici pour la meme raison : il est defini plus bas
+   mais fourni au coeur plus haut. */
+static void journal_coeur(unsigned niveau, const char *fmt, ...)
+    __attribute__((format(printf, 2, 3)));
 
-/* ---------- extraits de libretro.h ---------- */
-struct retro_game_info { const char *path; const void *data; size_t size; const char *meta; };
-struct retro_system_info { const char *library_name, *library_version, *valid_extensions;
-                           bool need_fullpath, block_extract; };
-struct retro_game_geometry { unsigned base_width, base_height, max_width, max_height; float aspect_ratio; };
-struct retro_system_timing { double fps, sample_rate; };
-struct retro_system_av_info { struct retro_game_geometry geometry; struct retro_system_timing timing; };
+/* Fournies au coeur des qu'il demande le rendu materiel, donc avant d'etre
+   definies plus bas. */
+static uintptr_t fb_courant(void);
+static void *adresse_gl(const char *nom);
+
+/* ==================================================== interface libretro */
+
+enum {
+    ENV_SET_ROTATION = 1, ENV_GET_OVERSCAN = 2, ENV_GET_CAN_DUPE = 3,
+    ENV_SET_MESSAGE = 6, ENV_SHUTDOWN = 7, ENV_SET_PERFORMANCE_LEVEL = 8,
+    ENV_GET_SYSTEM_DIRECTORY = 9, ENV_SET_PIXEL_FORMAT = 10,
+    ENV_SET_INPUT_DESCRIPTORS = 11, ENV_SET_HW_RENDER = 14,
+    ENV_GET_VARIABLE = 15, ENV_SET_VARIABLES = 16, ENV_GET_VARIABLE_UPDATE = 17,
+    ENV_SET_SUPPORT_NO_GAME = 18, ENV_GET_LOG_INTERFACE = 27,
+    ENV_GET_PERF_INTERFACE = 28, ENV_GET_CORE_ASSETS_DIRECTORY = 30,
+    ENV_GET_SAVE_DIRECTORY = 31, ENV_SET_SYSTEM_AV_INFO = 32,
+    ENV_SET_GEOMETRY = 37, ENV_GET_USERNAME = 38, ENV_GET_LANGUAGE = 39,
+    ENV_GET_INPUT_BITMASKS = 51 | 0x10000,
+    ENV_GET_CORE_OPTIONS_VERSION = 52, ENV_SET_CORE_OPTIONS = 53,
+    ENV_SET_CORE_OPTIONS_INTL = 54, ENV_SET_CORE_OPTIONS_DISPLAY = 55,
+    ENV_SET_CORE_OPTIONS_V2 = 67, ENV_SET_CORE_OPTIONS_V2_INTL = 68,
+};
+
+enum { PIX_0RGB1555 = 0, PIX_XRGB8888 = 1, PIX_RGB565 = 2 };
+enum { DEVICE_JOYPAD = 1, DEVICE_POINTER = 6, DEVICE_ANALOG = 5 };
+/* Types de contexte graphique, dans les valeurs exactes de libretro.
+   J'avais mis OPENGLES2 a 1, qui est en realite l'OpenGL de bureau : ma
+   verification refusait alors le contexte que Citra demandait. */
+enum { HW_NONE = 0, HW_OPENGL = 1, HW_OPENGLES2 = 2, HW_OPENGL_CORE = 3,
+       HW_OPENGLES3 = 4, HW_OPENGLES_VERSION = 5, HW_VULKAN = 6 };
+
+#define FB_DUPLIQUE ((void *)-1)
+
 struct retro_variable { const char *key; const char *value; };
-struct retro_log_callback { void (*log)(int level, const char *fmt, ...); };
-
-typedef uintptr_t (*retro_hw_get_current_framebuffer_t)(void);
-typedef void *(*retro_proc_address_t)(void);
-typedef retro_proc_address_t (*retro_hw_get_proc_address_t)(const char *sym);
+struct retro_log_callback { void (*log)(unsigned, const char *, ...); };
 
 struct retro_hw_render_callback {
     unsigned context_type;
     void (*context_reset)(void);
-    retro_hw_get_current_framebuffer_t get_current_framebuffer;
-    retro_hw_get_proc_address_t get_proc_address;
+    uintptr_t (*get_current_framebuffer)(void);
+    void *(*get_proc_address)(const char *sym);
     bool depth, stencil, bottom_left_origin;
     unsigned version_major, version_minor;
     bool cache_context;
@@ -65,38 +78,49 @@ struct retro_hw_render_callback {
     bool debug_context;
 };
 
-typedef bool   (*retro_environment_t)(unsigned cmd, void *data);
-typedef void   (*retro_video_refresh_t)(const void *data, unsigned w, unsigned h, size_t pitch);
-typedef void   (*retro_audio_sample_t)(int16_t l, int16_t r);
-typedef size_t (*retro_audio_sample_batch_t)(const int16_t *data, size_t frames);
-typedef void   (*retro_input_poll_t)(void);
-typedef int16_t(*retro_input_state_t)(unsigned port, unsigned device, unsigned index, unsigned id);
-
-enum {
-    ENV_GET_CAN_DUPE = 3, ENV_GET_SYSTEM_DIRECTORY = 9, ENV_SET_PIXEL_FORMAT = 10,
-    ENV_SET_HW_RENDER = 14, ENV_GET_VARIABLE = 15, ENV_SET_VARIABLES = 16,
-    ENV_GET_VARIABLE_UPDATE = 17, ENV_SET_SUPPORT_NO_GAME = 18,
-    ENV_GET_LOG_INTERFACE = 27, ENV_GET_SAVE_DIRECTORY = 31, ENV_GET_LANGUAGE = 39,
-    ENV_GET_PREFERRED_HW_RENDER = 56, ENV_GET_CORE_OPTIONS_VERSION = 52,
-    ENV_SET_CORE_OPTIONS = 53, ENV_SET_CORE_OPTIONS_INTL = 54,
-    ENV_SET_CORE_OPTIONS_V2 = 67, ENV_SET_CORE_OPTIONS_V2_INTL = 68
+struct retro_game_geometry {
+    unsigned base_width, base_height, max_width, max_height;
+    float aspect_ratio;
 };
-/* Valeurs exactes de libretro.h : mes constantes etaient decalees d'un cran,
-   et je repondais "version personnalisee" la ou je croyais dire "GLES 3". */
-enum { HW_NONE = 0, HW_OPENGL = 1, HW_OPENGLES2 = 2, HW_OPENGL_CORE = 3,
-       HW_OPENGLES3 = 4, HW_OPENGLES_VERSION = 5, HW_VULKAN = 6 };
-enum { PIX_0RGB1555 = 0, PIX_XRGB8888 = 1, PIX_RGB565 = 2 };
-enum { DEVICE_JOYPAD = 1, DEVICE_ANALOG = 5, DEVICE_POINTER = 6 };
-enum { ANALOG_GAUCHE = 0, ANALOG_DROIT = 1 };
-#define FB_DUPLIQUE ((void *) -1)
+struct retro_system_timing { double fps, sample_rate; };
+struct retro_system_av_info {
+    struct retro_game_geometry geometry;
+    struct retro_system_timing timing;
+};
+struct retro_system_info {
+    const char *library_name, *library_version, *valid_extensions;
+    bool need_fullpath, block_extract;
+};
+struct retro_game_info {
+    const char *path;
+    const void *data;
+    size_t size;
+    const char *meta;
+};
 
-/* ---------- fonctions du coeur ---------- */
-static void   (*p_set_environment)(retro_environment_t);
-static void   (*p_set_video_refresh)(retro_video_refresh_t);
-static void   (*p_set_audio_sample)(retro_audio_sample_t);
-static void   (*p_set_audio_sample_batch)(retro_audio_sample_batch_t);
-static void   (*p_set_input_poll)(retro_input_poll_t);
-static void   (*p_set_input_state)(retro_input_state_t);
+/* ==================================================== etat du pont */
+
+static void *g_lib = NULL;
+static bool g_init = false;          /* bibliotheque ouverte */
+static bool g_coeur_init = false;    /* retro_init appele */
+static bool g_charge = false;        /* un jeu est charge */
+
+static char g_dossier[600] = {0};
+static char g_cache[600] = {0};
+static FILE *g_journal = NULL;
+static pthread_mutex_t g_journal_verrou = PTHREAD_MUTEX_INITIALIZER;
+
+/* Ou en est le pont : le capteur d'arret brutal l'affiche. */
+static const char *g_etape = "demarrage";
+static unsigned long g_images = 0;
+
+/* pointeurs vers les fonctions du coeur */
+static void   (*p_set_environment)(bool (*)(unsigned, void *));
+static void   (*p_set_video_refresh)(void (*)(const void *, unsigned, unsigned, size_t));
+static void   (*p_set_audio_sample)(void (*)(int16_t, int16_t));
+static size_t (*p_set_audio_sample_batch)(size_t (*)(const int16_t *, size_t));
+static void   (*p_set_input_poll)(void (*)(void));
+static void   (*p_set_input_state)(int16_t (*)(unsigned, unsigned, unsigned, unsigned));
 static void   (*p_init)(void);
 static void   (*p_deinit)(void);
 static bool   (*p_load_game)(const struct retro_game_info *);
@@ -109,94 +133,168 @@ static void   (*p_set_controller_port_device)(unsigned, unsigned);
 static size_t (*p_serialize_size)(void);
 static bool   (*p_serialize)(void *, size_t);
 static bool   (*p_unserialize)(const void *, size_t);
-static void   (*p_cheat_reset)(void);
-static void   (*p_cheat_set)(unsigned index, bool enabled, const char *code);
-static void  *(*p_get_memory_data)(unsigned id);
-static size_t (*p_get_memory_size)(unsigned id);
 
-static void *g_lib = NULL;
-static bool g_init = false, g_charge = false;
-/* Le coeur a-t-il ete initialise ? On le fait au premier jeu, pas au
-   demarrage : l'initialisation de Citra est lourde et faisait tomber
-   l'application avant qu'elle s'affiche. */
-static bool g_coeur_init = false;
-static char g_dossier[512] = "/data/local/tmp";
+#define CHARGE(nom) do { p_##nom = dlsym(g_lib, "retro_" #nom); \
+    if (!p_##nom) { noter("symbole manquant : retro_" #nom); return JNI_FALSE; } } while (0)
 
-/* ---------- variables de configuration ---------- */
-#define MAX_VARS 48
-static char g_cle[MAX_VARS][64], g_val[MAX_VARS][64];
+/* ==================================================== journal */
+
+static void ecrire_journal(const char *fmt, va_list ap) {
+    if (!g_journal) return;
+    pthread_mutex_lock(&g_journal_verrou);
+    vfprintf(g_journal, fmt, ap);
+    size_t n = strlen(fmt);
+    if (!n || fmt[n - 1] != '\n') fputc('\n', g_journal);
+    fflush(g_journal);
+    pthread_mutex_unlock(&g_journal_verrou);
+}
+
+static void noter(const char *fmt, ...) {
+    va_list ap; va_start(ap, fmt); ecrire_journal(fmt, ap); va_end(ap);
+}
+
+/* ==================================================== arrets brutaux */
+
+static struct sigaction g_avant[5];
+static const int SIGNAUX[] = { SIGSEGV, SIGBUS, SIGILL, SIGFPE, SIGABRT };
+
+static void gerer_signal(int sig, siginfo_t *info, void *ctx) {
+    const char *nom = sig == SIGSEGV ? "acces memoire interdit"
+                    : sig == SIGBUS  ? "acces mal aligne"
+                    : sig == SIGILL  ? "instruction illegale"
+                    : sig == SIGFPE  ? "erreur de calcul"
+                    : sig == SIGABRT ? "abandon" : "signal inconnu";
+    noter("ARRET BRUTAL : %s pendant « %s », apres %lu images",
+          nom, g_etape, g_images);
+    if (g_journal) { fflush(g_journal); fclose(g_journal); g_journal = NULL; }
+    for (unsigned i = 0; i < sizeof SIGNAUX / sizeof SIGNAUX[0]; i++) {
+        if (SIGNAUX[i] != sig) continue;
+        if ((g_avant[i].sa_flags & SA_SIGINFO) && g_avant[i].sa_sigaction) {
+            g_avant[i].sa_sigaction(sig, info, ctx); return;
+        }
+        if (g_avant[i].sa_handler && g_avant[i].sa_handler != SIG_DFL
+            && g_avant[i].sa_handler != SIG_IGN) {
+            g_avant[i].sa_handler(sig); return;
+        }
+        break;
+    }
+    signal(sig, SIG_DFL);
+    raise(sig);
+}
+
+static void installer_signaux(void) {
+    struct sigaction sa;
+    memset(&sa, 0, sizeof sa);
+    sa.sa_sigaction = gerer_signal;
+    sa.sa_flags = SA_SIGINFO | SA_ONSTACK;
+    sigemptyset(&sa.sa_mask);
+    for (unsigned i = 0; i < sizeof SIGNAUX / sizeof SIGNAUX[0]; i++)
+        sigaction(SIGNAUX[i], &sa, &g_avant[i]);
+    noter("capture des arrets brutaux installee");
+}
+
+/* ==================================================== options du coeur */
+
+#define MAX_VARS 64
+static char g_cle[MAX_VARS][64];
+static char g_val[MAX_VARS][64];
 static int g_nvars = 0;
 static bool g_vars_changees = true;
 
 static void var_poser(const char *cle, const char *val) {
-    for (int i = 0; i < g_nvars; i++)
-        if (!strcmp(g_cle[i], cle)) {
-            if (strcmp(g_val[i], val)) { strncpy(g_val[i], val, 63); g_vars_changees = true; }
+    for (int i = 0; i < g_nvars; i++) {
+        if (strcmp(g_cle[i], cle) == 0) {
+            snprintf(g_val[i], sizeof g_val[i], "%s", val);
+            g_vars_changees = true;
             return;
         }
-    if (g_nvars < MAX_VARS) {
-        strncpy(g_cle[g_nvars], cle, 63); strncpy(g_val[g_nvars], val, 63);
-        g_nvars++; g_vars_changees = true;
     }
+    if (g_nvars >= MAX_VARS) return;
+    snprintf(g_cle[g_nvars], sizeof g_cle[0], "%s", cle);
+    snprintf(g_val[g_nvars], sizeof g_val[0], "%s", val);
+    g_nvars++;
+    g_vars_changees = true;
 }
+
 static const char *var_lire(const char *cle) {
-    for (int i = 0; i < g_nvars; i++) if (!strcmp(g_cle[i], cle)) return g_val[i];
+    for (int i = 0; i < g_nvars; i++)
+        if (strcmp(g_cle[i], cle) == 0) return g_val[i];
     return NULL;
 }
 
-/* ---------- rendu materiel ---------- */
-static struct retro_hw_render_callback g_hw;
-static bool g_hw_demande = false, g_hw_pret = false;
+/* ==================================================== rendu */
+
 static GLuint g_fbo = 0, g_tex = 0, g_depth = 0;
-static int g_fw = 640, g_fh = 480;      /* taille du tampon de rendu */
-static unsigned g_bw = 640, g_bh = 480; /* taille utile annoncee par le coeur */
-static unsigned g_maxw = 640, g_maxh = 480; /* taille maximale qu'il peut dessiner */
-
-/* ---------- lecture de l'image ----------
- *
- * Plutot que de compter sur une surface OpenGL posee derriere la fenetre —
- * mecanisme capricieux qui depend du theme et du fabricant — on relit les
- * pixels du tampon de rendu et on les remet a l'application, qui les dessine
- * elle-meme dans le skin.
- *
- * Un glReadPixels ordinaire attend que le processeur graphique ait fini de
- * dessiner : on perd tout le parallelisme, et l'a-coup se sent. On passe donc
- * par deux tampons de transfert utilises en alternance — on demande la copie
- * d'une image et on releve celle demandee au tour precedent, qui est prete.
- */
-/* Rendu logiciel : le coeur nous remet directement les pixels. */
-static uint32_t *g_image_log = NULL;
-static size_t g_image_log_cap = 0;
-static unsigned g_image_log_l = 0, g_image_log_h = 0;
+static int g_fw = 0, g_fh = 0;
+static unsigned g_bw = 480, g_bh = 272;
+static unsigned g_maxw = 480, g_maxh = 272;
+static double g_fps = 60.0, g_sample_rate = 44100.0;
+static bool g_hw_demande = false, g_hw_pret = false;
+static struct retro_hw_render_callback g_hw;
 static int g_format = PIX_XRGB8888;
-static pthread_mutex_t g_image_verrou = PTHREAD_MUTEX_INITIALIZER;
-
-static uint8_t *g_lecture = NULL;
-static size_t g_lecture_taille = 0;
 static int g_mesures = 0;
+/* Clarte moyenne de la derniere image relue : dit si le coeur dessine. */
+static int g_clarte = -1;
 
-/* Barriere par tampon : elle dit quand la copie demandee a la carte graphique
-   est reellement terminee. Sans elle, on lit un tampon encore en cours
-   d'ecriture — invisible en basse finesse, ou la copie tient dans une image,
-   mais l'image se dechire des qu'elle grossit. */
-static GLsync g_barriere[2] = {0, 0};
-
-/* Tampon de sortie : l'image reduite qu'on relit reellement.
+/*
+ * Tampon de sortie : l'image reduite qu'on relit reellement.
  *
- * Citra ne relit jamais son image, il la trace directement. On ne peut pas
- * faire pareil ici, mais on peut en garder l'essentiel : que le cout ne
- * depende plus de la finesse. Le jeu est calcule en haute definition, puis la
- * carte ramene l'image a une taille fixe en moyennant les pixels — ce qui
- * adoucit les contours par-dessus le marche. */
+ * Le jeu est calcule en haute definition, mais on ne relit qu'une image
+ * ramenee a une taille fixe. La relecture coute donc la meme chose quelle que
+ * soit la finesse choisie, et le moyennage des pixels adoucit les contours.
+ */
 static GLuint g_fbo_sortie = 0, g_tex_sortie = 0;
 static int g_sortie_l = 0, g_sortie_h = 0;
-static int g_reduction = 800;
+static int g_reduction = 960;
 
+/*
+ * Barriere par tampon de transfert : elle dit quand la copie demandee a la
+ * carte graphique est reellement terminee. Sans elle on lit un tampon encore
+ * en cours d'ecriture, et l'image se dechire des qu'elle grossit.
+ */
+static GLsync g_barriere[2] = {0, 0};
 static GLuint g_pbo[2] = {0, 0};
 static int g_pbo_courant = 0;
 static bool g_pbo_rempli[2] = {false, false};
 static unsigned g_pbo_l[2] = {0, 0}, g_pbo_h[2] = {0, 0};
 static size_t g_pbo_taille = 0;
+
+static void liberer_fbo(void) {
+    if (g_fbo) { glDeleteFramebuffers(1, &g_fbo); g_fbo = 0; }
+    if (g_tex) { glDeleteTextures(1, &g_tex); g_tex = 0; }
+    if (g_depth) { glDeleteRenderbuffers(1, &g_depth); g_depth = 0; }
+    g_fw = g_fh = 0;
+}
+
+static bool creer_fbo(int w, int h) {
+    liberer_fbo();
+    glGenTextures(1, &g_tex);
+    glBindTexture(GL_TEXTURE_2D, g_tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glGenRenderbuffers(1, &g_depth);
+    glBindRenderbuffer(GL_RENDERBUFFER, g_depth);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
+
+    glGenFramebuffers(1, &g_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, g_tex, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+                              GL_RENDERBUFFER, g_depth);
+    GLenum st = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    if (st != GL_FRAMEBUFFER_COMPLETE) {
+        noter("tampon de rendu %d x %d incomplet (0x%x)", w, h, st);
+        liberer_fbo();
+        return false;
+    }
+    g_fw = w; g_fh = h;
+    return true;
+}
 
 static void liberer_sortie(void) {
     if (g_fbo_sortie) { glDeleteFramebuffers(1, &g_fbo_sortie); g_fbo_sortie = 0; }
@@ -217,20 +315,15 @@ static bool preparer_sortie(int w, int h) {
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, g_tex_sortie, 0);
     GLenum st = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    if (st != GL_FRAMEBUFFER_COMPLETE) {
-        noter("ECHEC : tampon de sortie incomplet, 0x%x", st);
-        liberer_sortie();
-        return false;
-    }
+    if (st != GL_FRAMEBUFFER_COMPLETE) { liberer_sortie(); return false; }
     g_sortie_l = w; g_sortie_h = h;
     noter("image reduite a %d x %d avant relecture", w, h);
     return true;
 }
 
 static void liberer_pbo(void) {
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 2; i++)
         if (g_barriere[i]) { glDeleteSync(g_barriere[i]); g_barriere[i] = 0; }
-    }
     if (g_pbo[0] || g_pbo[1]) glDeleteBuffers(2, g_pbo);
     g_pbo[0] = g_pbo[1] = 0;
     g_pbo_rempli[0] = g_pbo_rempli[1] = false;
@@ -250,433 +343,448 @@ static bool preparer_pbo(size_t taille) {
     return g_pbo[0] != 0;
 }
 
-/* ---------- codes de triche ----------
+/* ==================================================== tracé direct
  *
- * Contrairement a ceux de la Dreamcast, qui ecrivaient directement dans la
- * memoire de la console a chaque image, les codes Nintendo 64 sont au format
- * GameShark : c'est le coeur qui sait les interpreter. On se contente de les
- * lui transmettre.
+ * On dessine la texture du coeur directement a l'ecran, comme le fait
+ * l'application de reference. La relecture pixel par pixel etait une
+ * impasse : elle coute cher et depend de la taille de la surface.
  */
+static GLuint g_prog = 0, g_vao = 0, g_vbo = 0;
+static GLint g_uni_tex = -1;
 
-/* ---------- son ----------
- *
- * Mupen64Plus fait tourner l'emulation sur son propre fil — le journal le
- * montre : « [EmuThread] M64CMD_EXECUTE ». Les echantillons nous arrivent
- * donc depuis ce fil-la, pendant que l'application les retire depuis le fil
- * OpenGL. Sans protection, les deux touchent au meme compteur en meme temps :
- * il suffit qu'ils se croisent au mauvais moment pour qu'une copie deborde du
- * tampon et abime la memoire. C'est ce qui faisait abandonner le programme au
- * bout de quelques secondes, a un moment variable — trente-cinq images une
- * fois, deux cent vingt-trois une autre.
- */
+static const char *VS =
+    "#version 300 es\n"
+    "layout(location=0) in vec2 pos;\n"
+    "layout(location=1) in vec2 uv;\n"
+    "out vec2 v_uv;\n"
+    "void main() { v_uv = uv; gl_Position = vec4(pos, 0.0, 1.0); }\n";
+
+static const char *FS =
+    "#version 300 es\n"
+    "precision mediump float;\n"
+    "in vec2 v_uv;\n"
+    "uniform sampler2D t;\n"
+    "out vec4 couleur;\n"
+    "void main() { couleur = vec4(texture(t, v_uv).rgb, 1.0); }\n";
+
+static GLuint compiler(GLenum type, const char *code) {
+    GLuint s = glCreateShader(type);
+    glShaderSource(s, 1, &code, NULL);
+    glCompileShader(s);
+    GLint ok = 0;
+    glGetShaderiv(s, GL_COMPILE_STATUS, &ok);
+    if (!ok) {
+        char log[512];
+        glGetShaderInfoLog(s, sizeof log, NULL, log);
+        noter("ECHEC compilation du shader : %s", log);
+        glDeleteShader(s);
+        return 0;
+    }
+    return s;
+}
+
+static bool preparer_trace(void) {
+    if (g_prog) return true;
+    GLuint vs = compiler(GL_VERTEX_SHADER, VS);
+    GLuint fs = compiler(GL_FRAGMENT_SHADER, FS);
+    if (!vs || !fs) return false;
+    g_prog = glCreateProgram();
+    glAttachShader(g_prog, vs);
+    glAttachShader(g_prog, fs);
+    glLinkProgram(g_prog);
+    GLint ok = 0;
+    glGetProgramiv(g_prog, GL_LINK_STATUS, &ok);
+    glDeleteShader(vs); glDeleteShader(fs);
+    if (!ok) {
+        char log[512];
+        glGetProgramInfoLog(g_prog, sizeof log, NULL, log);
+        noter("ECHEC edition de liens du shader : %s", log);
+        glDeleteProgram(g_prog); g_prog = 0;
+        return false;
+    }
+    g_uni_tex = glGetUniformLocation(g_prog, "t");
+    glGenVertexArrays(1, &g_vao);
+    glGenBuffers(1, &g_vbo);
+    noter("trace direct pret");
+    return true;
+}
+
+/* ==================================================== son */
+
 #define SON_CAP (48000 * 2)
 static int16_t g_son[SON_CAP];
 static size_t g_son_n = 0;
 static pthread_mutex_t g_son_verrou = PTHREAD_MUTEX_INITIALIZER;
-static double g_sample_rate = 44100.0, g_fps = 60.0;
 
-/* ---------- manette ---------- */
-static int g_boutons = 0;
-static int16_t g_stick[2][2] = {{0, 0}, {0, 0}};
-static int16_t g_gachette[2] = {0, 0};
-/* Stylet : position sur l'ecran du bas, de -32767 a 32767, et contact. */
-static int16_t g_stylet_x = 0, g_stylet_y = 0;
-static int g_stylet_pose = 0;   /* inutilise sur Nintendo 64 */
-
-/* ============================================================ journal
- *
- * Le coeur est bavard, et ses messages sont la seule facon de savoir pourquoi
- * un jeu refuse de demarrer. On les ecrit dans un fichier que l'application
- * sait afficher : sur telephone, personne ne lit un logcat.
+/*
+ * Le coeur peut nous livrer le son depuis son propre fil : les deux bouts
+ * touchent au meme compteur, et sans verrou une copie finit par deborder.
  */
-static FILE *g_journal = NULL;
-static unsigned long g_images_emulees = 0;
-/* Ou en est le pont a cet instant : le capteur d'arret brutal l'affiche, ce
-   qui distingue un plantage du coeur d'un plantage de notre relecture. */
-static const char *g_etape = "demarrage";
-static bool g_tmp_ok = false;
-static int g_vus = 0;
-
-static pthread_mutex_t g_journal_verrou = PTHREAD_MUTEX_INITIALIZER;
-
-static void ecrire_journal(const char *fmt, va_list ap) {
-    if (!g_journal) return;
-    pthread_mutex_lock(&g_journal_verrou);
-    vfprintf(g_journal, fmt, ap);
-    size_t n = strlen(fmt);
-    if (!n || fmt[n - 1] != '\n') fputc('\n', g_journal);
-    fflush(g_journal);
-    pthread_mutex_unlock(&g_journal_verrou);
-}
-
-static void noter(const char *fmt, ...) {
-    va_list ap; va_start(ap, fmt);
-    ecrire_journal(fmt, ap);
-    va_end(ap);
-    va_start(ap, fmt);
-    __android_log_vprint(ANDROID_LOG_INFO, TAG, fmt, ap);
-    va_end(ap);
-}
-
-/* ============================================================ capture des arrets brutaux
- *
- * Un plantage natif ne laisse aucune trace lisible depuis le telephone : le
- * journal s'arrete au milieu d'une phrase et c'est tout. On intercepte donc
- * les signaux fatals pour ecrire ce qui s'est passe avant de mourir, puis on
- * repasse la main a qui les gerait avant nous — le coeur en installe parfois
- * pour son propre compte, et le priver des siens le casserait.
- */
-static struct sigaction g_avant[8];
-static const int SIGNAUX[] = { SIGSEGV, SIGBUS, SIGILL, SIGFPE, SIGABRT };
-
-static void gerer_signal(int sig, siginfo_t *info, void *ctx) {
-    const char *nom = sig == SIGSEGV ? "acces memoire interdit (SIGSEGV)"
-                    : sig == SIGBUS  ? "acces mal aligne (SIGBUS)"
-                    : sig == SIGILL  ? "instruction illegale (SIGILL)"
-                    : sig == SIGFPE  ? "erreur de calcul (SIGFPE)"
-                    : sig == SIGABRT ? "abandon (SIGABRT)" : "signal inconnu";
-    noter("ARRET BRUTAL : %s pendant « %s », apres %lu images (adresse %p)",
-          nom, g_etape, g_images_emulees, info ? info->si_addr : NULL);
-    if (g_journal) { fflush(g_journal); fclose(g_journal); g_journal = NULL; }
-    for (unsigned i = 0; i < sizeof SIGNAUX / sizeof SIGNAUX[0]; i++) {
-        if (SIGNAUX[i] != sig) continue;
-        if (g_avant[i].sa_flags & SA_SIGINFO) {
-            if (g_avant[i].sa_sigaction) { g_avant[i].sa_sigaction(sig, info, ctx); return; }
-        } else if (g_avant[i].sa_handler && g_avant[i].sa_handler != SIG_DFL
-                   && g_avant[i].sa_handler != SIG_IGN) {
-            g_avant[i].sa_handler(sig); return;
-        }
-        break;
-    }
-    signal(sig, SIG_DFL);
-    raise(sig);
-}
-
-static void installer_signaux(void) {
-    struct sigaction sa;
-    memset(&sa, 0, sizeof sa);
-    sa.sa_sigaction = gerer_signal;
-    sa.sa_flags = SA_SIGINFO | SA_ONSTACK;
-    sigemptyset(&sa.sa_mask);
-    for (unsigned i = 0; i < sizeof SIGNAUX / sizeof SIGNAUX[0]; i++)
-        sigaction(SIGNAUX[i], &sa, &g_avant[i]);
-    noter("capture des arrets brutaux installee");
-}
-
-/* ============================================================ rappels */
-static void journal(int level, const char *fmt, ...) {
-    (void)level;
-    va_list ap; va_start(ap, fmt);
-    ecrire_journal(fmt, ap);
-    va_end(ap);
-}
-
-static uintptr_t fb_courant(void) { return (uintptr_t)g_fbo; }
-
-static retro_proc_address_t proc_addr(const char *sym) {
-    return (retro_proc_address_t)eglGetProcAddress(sym);
-}
-
-static bool environnement(unsigned cmd, void *data) {
-    switch (cmd & 0xFFFF) {
-        case ENV_GET_CAN_DUPE: *(bool *)data = true; return true;
-        case ENV_GET_SYSTEM_DIRECTORY:
-        case ENV_GET_SAVE_DIRECTORY: *(const char **)data = g_dossier; return true;
-        case ENV_SET_PIXEL_FORMAT:
-            g_format = *(const int *)data;
-            noter("format des pixels : %s",
-                  g_format == PIX_XRGB8888 ? "XRGB8888" :
-                  g_format == PIX_RGB565 ? "RGB565" : "0RGB1555");
-            return true;
-        case ENV_GET_LOG_INTERFACE:
-            ((struct retro_log_callback *)data)->log = (void (*)(int, const char *, ...))journal;
-            return true;
-        case ENV_GET_LANGUAGE: *(unsigned *)data = 3; return true;
-        case ENV_GET_VARIABLE: {
-            struct retro_variable *v = (struct retro_variable *)data;
-            v->value = var_lire(v->key);
-            /* On note les cinquante premieres options demandees : leurs noms
-               changent d'une version du coeur a l'autre, et les deviner ne
-               marche pas. */
-            if (g_vus < 50) {
-                g_vus++;
-                noter("option demandee : %s -> %s", v->key, v->value ? v->value : "(non fixee)");
-            }
-            return v->value != NULL;
-        }
-        case ENV_GET_VARIABLE_UPDATE:
-            *(bool *)data = g_vars_changees; g_vars_changees = false; return true;
-        case ENV_SET_VARIABLES: case ENV_SET_CORE_OPTIONS: case ENV_SET_CORE_OPTIONS_INTL:
-        case ENV_SET_CORE_OPTIONS_V2: case ENV_SET_CORE_OPTIONS_V2_INTL:
-            return true;
-        case ENV_GET_CORE_OPTIONS_VERSION: *(unsigned *)data = 2; return true;
-        case ENV_SET_SUPPORT_NO_GAME: return true;
-        case ENV_GET_PREFERRED_HW_RENDER: *(unsigned *)data = HW_OPENGLES2; return true;
-        case ENV_SET_HW_RENDER: {
-            /* le coeur reclame un contexte : on accepte et on lui donne le notre */
-            struct retro_hw_render_callback *cb = (struct retro_hw_render_callback *)data;
-            g_hw = *cb;
-            g_hw.get_current_framebuffer = fb_courant;
-            g_hw.get_proc_address = proc_addr;
-            cb->get_current_framebuffer = fb_courant;
-            cb->get_proc_address = proc_addr;
-            g_hw_demande = true;
-                    noter("rendu materiel demande : type %u, version %u.%u, profondeur %d",
-                  cb->context_type, cb->version_major, cb->version_minor, (int)cb->depth);
-            return true;
-        }
-        default: return false;
-    }
-}
-
-/* Appele depuis le fil d'emulation du coeur, pas depuis le notre : on ne fait
-   qu'y deposer deux nombres, et la relecture les borne au tampon. */
-static void video(const void *data, unsigned w, unsigned h, size_t pitch) {
-    if (!w || !h) return;
-    if ((w != g_bw || h != g_bh) && g_mesures < 8)
-        noter("le coeur annonce %u x %u", w, h);
-    g_bw = w; g_bh = h;
-
-    /* Rendu materiel : data vaut le marqueur, l'image est dans notre tampon.
-       Rendu logiciel : data pointe sur les pixels, on les recopie. */
-    if (!data || data == FB_DUPLIQUE) return;
-
-    pthread_mutex_lock(&g_image_verrou);
-    size_t besoin = (size_t)w * h;
-    if (besoin > g_image_log_cap) {
-        free(g_image_log);
-        g_image_log = (uint32_t *)malloc(besoin * sizeof(uint32_t));
-        g_image_log_cap = g_image_log ? besoin : 0;
-    }
-    if (g_image_log) {
-        for (unsigned y = 0; y < h; y++) {
-            const uint8_t *ligne = (const uint8_t *)data + (size_t)y * pitch;
-            uint32_t *dst = g_image_log + (size_t)y * w;
-            if (g_format == PIX_RGB565) {
-                const uint16_t *src = (const uint16_t *)ligne;
-                for (unsigned x = 0; x < w; x++) {
-                    uint16_t v = src[x];
-                    unsigned r = (v >> 11) & 0x1F, g = (v >> 5) & 0x3F, b = v & 0x1F;
-                    dst[x] = 0xFF000000u | ((r * 255 / 31) << 16)
-                                         | ((g * 255 / 63) << 8) | (b * 255 / 31);
-                }
-            } else if (g_format == PIX_0RGB1555) {
-                const uint16_t *src = (const uint16_t *)ligne;
-                for (unsigned x = 0; x < w; x++) {
-                    uint16_t v = src[x];
-                    unsigned r = (v >> 10) & 0x1F, g = (v >> 5) & 0x1F, b = v & 0x1F;
-                    dst[x] = 0xFF000000u | ((r * 255 / 31) << 16)
-                                         | ((g * 255 / 31) << 8) | (b * 255 / 31);
-                }
-            } else {
-                const uint32_t *src = (const uint32_t *)ligne;
-                for (unsigned x = 0; x < w; x++) dst[x] = 0xFF000000u | (src[x] & 0x00FFFFFFu);
-            }
-        }
-        g_image_log_l = w; g_image_log_h = h;
-    }
-    pthread_mutex_unlock(&g_image_verrou);
-}
-
-static void son_un(int16_t l, int16_t r) {
+static void son_un(int16_t g, int16_t d) {
     pthread_mutex_lock(&g_son_verrou);
-    if (g_son_n + 2 <= SON_CAP) { g_son[g_son_n++] = l; g_son[g_son_n++] = r; }
+    if (g_son_n + 2 <= SON_CAP) { g_son[g_son_n++] = g; g_son[g_son_n++] = d; }
     pthread_mutex_unlock(&g_son_verrou);
 }
-static size_t son_lot(const int16_t *d, size_t frames) {
+
+static size_t son_lot(const int16_t *d, size_t images) {
     pthread_mutex_lock(&g_son_verrou);
-    size_t n = frames * 2;
+    size_t n = images * 2;
     if (g_son_n + n > SON_CAP) n = (g_son_n < SON_CAP) ? SON_CAP - g_son_n : 0;
-    if (n) {
-        memcpy(g_son + g_son_n, d, n * sizeof(int16_t));
-        g_son_n += n;
-    }
+    if (n) { memcpy(g_son + g_son_n, d, n * sizeof(int16_t)); g_son_n += n; }
     pthread_mutex_unlock(&g_son_verrou);
-    return frames;
+    return images;
 }
 
-static void manette_poll(void) {}
+/* Stylet : position sur l'ecran du bas, en unites libretro. */
+static int16_t g_stylet_x = 0, g_stylet_y = 0;
+static int g_stylet_pose = 0;
+/* Combien de fois le coeur a interroge l'ecran tactile. S'il ne le fait
+   jamais, le probleme n'est pas dans nos coordonnees. */
+static unsigned long g_pointeur_lu = 0;
+/* Derniere position transmise, pour la relire dans « Etat ». */
+static float g_st_fx = -1, g_st_fy = -1, g_st_gx = -1, g_st_gy = -1;
+/*
+ * Convention de coordonnees du stylet.
+ *
+ * 0 : rapportees a l'IMAGE ENTIERE, les deux ecrans empiles. C'est la regle
+ *     libretro, et celle qui marche sur la DS.
+ * 1 : rapportees a l'ECRAN DU BAS seul. Certains coeurs appliquent eux-memes
+ *     leur mise en page et attendent des coordonnees deja ramenees a la dalle
+ *     tactile.
+ */
+static int g_convention = 0;
 
-static int g_vus_manette = 0;
+/* ==================================================== manette */
+
+static int g_boutons = 0;
+static int16_t g_stick[2] = {0, 0};
+
+static void manette_poll(void) { }
 
 static int16_t manette_etat(unsigned port, unsigned device, unsigned index, unsigned id) {
-    /* On note les premieres interrogations : elles disent quel port et quel
-       type de peripherique le coeur lit reellement, ce qui distingue un skin
-       muet d'un coeur qui regarde ailleurs. */
-    if (g_vus_manette < 6) {
-        g_vus_manette++;
-        noter("le coeur lit : port %u, peripherique %u, index %u, id %u (boutons %04X)",
-              port, device, index, id, g_boutons);
-    }
-    if (port != 0) return 0;
-    if (device == DEVICE_JOYPAD) {
-        if (id == 256) return (int16_t)(g_boutons & 0xFFFF);
-        return (id <= 15) ? (g_boutons >> id) & 1 : 0;
+    /* Le pointeur peut etre interroge sur un autre port que la manette :
+       on le sert quel que soit le port, sinon l'ecran tactile reste muet. */
+    if (device != DEVICE_POINTER && port != 0) return 0;
+    if (device == DEVICE_ANALOG) {
+        if (index != 0) return 0;         /* la PSP n'a qu'un stick */
+        return (id == 0) ? g_stick[0] : (id == 1) ? g_stick[1] : 0;
     }
     if (device == DEVICE_POINTER) {
-        /* L'ecran du bas est tactile : le coeur l'interroge ainsi. */
+        g_pointeur_lu++;
+        /*
+         * L'ecran du bas est tactile.
+         *
+         * Le coeur demande d'abord COMBIEN de doigts sont poses — c'est
+         * l'identifiant 3. Sans cette reponse, il en conclut qu'il n'y en a
+         * aucun et n'interroge meme pas leur position : le stylet restait donc
+         * sans effet.
+         */
+        if (id == 3) return (int16_t)g_stylet_pose;   /* nombre de points */
         if (index != 0) return 0;
         if (id == 0) return g_stylet_x;
         if (id == 1) return g_stylet_y;
         if (id == 2) return (int16_t)g_stylet_pose;
         return 0;
     }
-    if (device == DEVICE_ANALOG) {
-        if (index <= 1 && id <= 1) return g_stick[index][id];
-        /* index 2 : les boutons lus en analogique. Les gachettes de la
-           certaines consoles s'y presentent sous les identifiants L2 et R2
-           comme je l'avais suppose. */
-        if (index == 2) {
-            if (id == 12) return g_gachette[0];
-            if (id == 13) return g_gachette[1];
+    if (device != DEVICE_JOYPAD) return 0;
+    if (id == 256) return (int16_t)(g_boutons & 0xFFFF);   /* lecture groupee */
+    return (id < 16 && (g_boutons & (1 << id))) ? 1 : 0;
+}
+
+/* ==================================================== rappels du coeur */
+
+/*
+ * Image logicielle : les pixels que le coeur nous remet directement.
+ *
+ * Un coeur peut dessiner de deux facons. En materiel, il ecrit dans le tampon
+ * qu'on lui a designe. En logiciel, il nous remet les pixels ici meme — et je
+ * les jetais, ce qui donnait un ecran noir alors que l'emulation tournait.
+ */
+#define SOFT_MAX (1024 * 1024)
+static uint32_t g_soft[SOFT_MAX];
+static unsigned g_soft_l = 0, g_soft_h = 0;
+static bool g_soft_pret = false;
+
+static void video(const void *data, unsigned w, unsigned h, size_t pitch) {
+    if (w && h) { g_bw = w; g_bh = h; }
+    if (!data) return;                       /* image identique a la precedente */
+    if (data == FB_DUPLIQUE) return;         /* le coeur a dessine en materiel */
+    if (!w || !h || (size_t)w * h > SOFT_MAX) return;
+
+    if (g_format == PIX_XRGB8888) {
+        const uint8_t *src = data;
+        for (unsigned y = 0; y < h; y++) {
+            const uint32_t *l = (const uint32_t *)(src + (size_t)y * pitch);
+            uint32_t *o = g_soft + (size_t)y * w;
+            for (unsigned x = 0; x < w; x++) o[x] = 0xFF000000u | (l[x] & 0x00FFFFFFu);
+        }
+    } else if (g_format == PIX_RGB565) {
+        const uint8_t *src = data;
+        for (unsigned y = 0; y < h; y++) {
+            const uint16_t *l = (const uint16_t *)(src + (size_t)y * pitch);
+            uint32_t *o = g_soft + (size_t)y * w;
+            for (unsigned x = 0; x < w; x++) {
+                unsigned p = l[x];
+                unsigned r = ((p >> 11) & 0x1F) * 255 / 31;
+                unsigned v = ((p >> 5) & 0x3F) * 255 / 63;
+                unsigned b = (p & 0x1F) * 255 / 31;
+                o[x] = 0xFF000000u | (r << 16) | (v << 8) | b;
+            }
+        }
+    } else {
+        const uint8_t *src = data;
+        for (unsigned y = 0; y < h; y++) {
+            const uint16_t *l = (const uint16_t *)(src + (size_t)y * pitch);
+            uint32_t *o = g_soft + (size_t)y * w;
+            for (unsigned x = 0; x < w; x++) {
+                unsigned p = l[x];
+                unsigned r = ((p >> 10) & 0x1F) * 255 / 31;
+                unsigned v = ((p >> 5) & 0x1F) * 255 / 31;
+                unsigned b = (p & 0x1F) * 255 / 31;
+                o[x] = 0xFF000000u | (r << 16) | (v << 8) | b;
+            }
         }
     }
-    return 0;
+    g_soft_l = w; g_soft_h = h;
+    g_soft_pret = true;
+    if (g_mesures < 3) {
+        g_mesures++;
+        noter("image LOGICIELLE recue : %u x %u, format %d", w, h, g_format);
+    }
 }
 
-/* ============================================================ tampon de rendu */
-static void liberer_fbo(void) {
-    if (g_fbo) { glDeleteFramebuffers(1, &g_fbo); g_fbo = 0; }
-    if (g_tex) { glDeleteTextures(1, &g_tex); g_tex = 0; }
-    if (g_depth) { glDeleteRenderbuffers(1, &g_depth); g_depth = 0; }
+static bool environnement(unsigned cmd, void *data) {
+    switch (cmd) {
+        case ENV_GET_CAN_DUPE:
+            *(bool *)data = true; return true;
+
+        case ENV_SET_PIXEL_FORMAT:
+            g_format = *(const int *)data;
+            return true;
+
+        case ENV_GET_SYSTEM_DIRECTORY:
+        case ENV_GET_SAVE_DIRECTORY:
+        case ENV_GET_CORE_ASSETS_DIRECTORY:
+            *(const char **)data = g_dossier;
+            return true;
+
+        case ENV_SET_HW_RENDER: {
+            struct retro_hw_render_callback *cb = data;
+
+            /*
+             * On renseigne la structure DU COEUR, pas seulement notre copie.
+             *
+             * Je gardais une copie et je mettais un pointeur nul dans la
+             * sienne, en pensant le renseigner plus tard — mais plus tard je
+             * ne touchais que ma copie. Le coeur appelait donc un pointeur nul
+             * pour savoir ou dessiner, et l'emulation tombait au bout de
+             * quelques images, le temps qu'il ait besoin du tampon.
+             */
+            cb->get_current_framebuffer = fb_courant;
+            cb->get_proc_address = adresse_gl;
+            g_hw = *cb;
+            g_hw_demande = true;
+            const char *nom =
+                g_hw.context_type == HW_OPENGLES2 ? "OpenGL ES 2" :
+                g_hw.context_type == HW_OPENGLES3 ? "OpenGL ES 3" :
+                g_hw.context_type == HW_OPENGLES_VERSION ? "OpenGL ES, version demandee" :
+                g_hw.context_type == HW_OPENGL ? "OpenGL de bureau" :
+                g_hw.context_type == HW_VULKAN ? "Vulkan" :
+                g_hw.context_type == HW_NONE ? "aucun" : "inconnu";
+            noter("rendu materiel demande : %s (type %u), profondeur %d, pochoir %d, "
+                  "origine en bas %d",
+                  nom, g_hw.context_type, (int)g_hw.depth, (int)g_hw.stencil,
+                  (int)g_hw.bottom_left_origin);
+            /*
+             * On accepte tout ce qui est OpenGL ES, y compris la forme
+             * « version demandee » que Citra emploie.
+             *
+             * Refuser ne servait a rien : le coeur dessine en materiel de
+             * toute facon, et sans tampon lie de notre part il ecrivait
+             * n'importe ou — d'ou l'acces memoire interdit apres quelques
+             * images. Mieux vaut fournir le tampon et signaler l'inconnu.
+             */
+            if (g_hw.context_type != HW_OPENGLES2 &&
+                g_hw.context_type != HW_OPENGLES3 &&
+                g_hw.context_type != HW_OPENGLES_VERSION) {
+                noter("ATTENTION : contexte %u inattendu, on le sert quand meme",
+                      g_hw.context_type);
+            }
+            return true;
+        }
+
+        case ENV_GET_VARIABLE: {
+            struct retro_variable *v = data;
+            const char *val = var_lire(v->key);
+            v->value = val;
+            return val != NULL;
+        }
+
+        case ENV_GET_VARIABLE_UPDATE:
+            *(bool *)data = g_vars_changees;
+            g_vars_changees = false;
+            return true;
+
+        case ENV_SET_VARIABLES:
+        case ENV_SET_CORE_OPTIONS:
+        case ENV_SET_CORE_OPTIONS_INTL:
+        case ENV_SET_CORE_OPTIONS_V2:
+        case ENV_SET_CORE_OPTIONS_V2_INTL:
+        case ENV_SET_CORE_OPTIONS_DISPLAY:
+        case ENV_SET_INPUT_DESCRIPTORS:
+        case ENV_SET_PERFORMANCE_LEVEL:
+        case ENV_SET_SUPPORT_NO_GAME:
+        case ENV_SET_MESSAGE:
+        case ENV_SET_ROTATION:
+            return true;
+
+        case ENV_GET_LOG_INTERFACE: {
+            struct retro_log_callback *cb = data;
+            cb->log = journal_coeur;
+            return true;
+        }
+
+        case ENV_GET_CORE_OPTIONS_VERSION:
+            *(unsigned *)data = 2; return true;
+
+        case ENV_GET_INPUT_BITMASKS:
+            return true;
+
+        case ENV_GET_LANGUAGE:
+            *(unsigned *)data = 1;   /* francais */
+            return true;
+
+        case ENV_SET_SYSTEM_AV_INFO:
+        case ENV_SET_GEOMETRY: {
+            const struct retro_system_av_info *av = data;
+            if (av->geometry.base_width) g_bw = av->geometry.base_width;
+            if (av->geometry.base_height) g_bh = av->geometry.base_height;
+            return true;
+        }
+
+        default:
+            return false;
+    }
 }
 
-static bool creer_fbo(int w, int h) {
-    liberer_fbo();
-    liberer_pbo();
-    liberer_sortie();
-    g_fw = w; g_fh = h;
-    glGenTextures(1, &g_tex);
-    glBindTexture(GL_TEXTURE_2D, g_tex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+/* Combien de fois le coeur a demande ou dessiner. S'il ne le demande jamais,
+   c'est qu'il dessine ailleurs, et relire notre tampon ne donne que du noir. */
+static unsigned long g_fb_demande = 0;
 
-    glGenFramebuffers(1, &g_fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, g_tex, 0);
-
-    glGenRenderbuffers(1, &g_depth);
-    glBindRenderbuffer(GL_RENDERBUFFER, g_depth);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depth);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, g_depth);
-
-    GLenum st = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    if (st != GL_FRAMEBUFFER_COMPLETE) { LOGE("tampon de rendu incomplet : 0x%x", st); return false; }
-    noter("tampon de rendu %d x %d", w, h);
-    return true;
+static uintptr_t fb_courant(void) {
+    g_fb_demande++;
+    return (uintptr_t)g_fbo;
 }
 
-/* ============================================================ JNI */
-#define CHARGE(nom) do { p_##nom = dlsym(g_lib, "retro_" #nom); \
-    if (!p_##nom) { noter("symbole manquant : retro_" #nom); return JNI_FALSE; } } while (0)
-#define CHARGE_OPT(nom) p_##nom = dlsym(g_lib, "retro_" #nom)
+/* Le coeur demande lui-meme les fonctions OpenGL dont il a besoin. */
+static void *adresse_gl(const char *nom) {
+    return (void *)eglGetProcAddress(nom);
+}
+
+/*
+ * Journal du coeur.
+ *
+ * Sans lui, un coeur qui demande ce canal recoit un refus, et certains s'en
+ * servent quand meme : l'appel part alors vers un pointeur jamais renseigne,
+ * ce qui donne exactement l'acces memoire interdit constate. En le
+ * fournissant, on evite ce piege ET on recupere les messages du coeur, qui
+ * disent ce qui lui manque.
+ */
+static void journal_coeur(unsigned niveau, const char *fmt, ...) {
+    static const char *NOMS[] = { "debug", "info", "attention", "ERREUR" };
+    char ligne[1024];
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(ligne, sizeof ligne, fmt, ap);
+    va_end(ap);
+    size_t n = strlen(ligne);
+    while (n && (ligne[n - 1] == '\n' || ligne[n - 1] == '\r')) ligne[--n] = 0;
+    if (n) noter("[%s] %s", NOMS[niveau < 4 ? niveau : 1], ligne);
+}
+
+/* ==================================================== fonctions Java */
 
 JNIEXPORT jboolean JNICALL
 Java_com_skin3ds_app_core_Coeur3DS_natInit(JNIEnv *env, jobject self, jstring chemin,
-                                         jstring dossier, jstring cache) {
+                                           jstring dossier, jstring cache) {
     (void)self;
     if (g_init) return JNI_TRUE;
     const char *c = (*env)->GetStringUTFChars(env, chemin, NULL);
     const char *d = (*env)->GetStringUTFChars(env, dossier, NULL);
-    const char *tmp = (*env)->GetStringUTFChars(env, cache, NULL);
-    strncpy(g_dossier, d, sizeof(g_dossier) - 1);
+    const char *t = (*env)->GetStringUTFChars(env, cache, NULL);
+    snprintf(g_dossier, sizeof g_dossier, "%s", d);
+    snprintf(g_cache, sizeof g_cache, "%s", t);
 
-    /* Citra alloue sa memoire virtuelle dans un fichier temporaire. Sur
-       Android il n'y a ni /tmp ni /dev/shm, d'ou l'echec avec errno 13 vu
-       dans le journal : il basculait alors sur un mode de repli qui repose
-       sur l'interception des fautes de segmentation, et se plantait. On lui
-       designe donc un dossier ou il a le droit d'ecrire. */
-    setenv("TMPDIR", tmp, 1);
-    setenv("HOME", d, 1);
-    /* Citra cherche ses donnees — police partagee, cles, NAND — sous le
-       dossier utilisateur qu'on lui designe. */
-    setenv("CITRA_USER_DIR", d, 1);
-    setenv("CITRA_SYSDATA", d, 1);
-    setenv("XDG_RUNTIME_DIR", tmp, 1);
-    {   /* on verifie tout de suite qu'on peut y ecrire : c'est la condition
-           qui manquait, et le journal le dira sans ambiguite */
-        char essai[700];
-        snprintf(essai, sizeof essai, "%s/essai_ecriture", tmp);
-        FILE *t = fopen(essai, "wb");
-        if (t) { fclose(t); remove(essai); }
-        g_tmp_ok = (t != NULL);
-    }
+    /* Citra cree des fichiers temporaires : sur Android il n'y a ni /tmp ni
+       /dev/shm, on lui designe donc un dossier ou il a le droit d'ecrire. */
+    setenv("TMPDIR", g_cache, 1);
+    setenv("HOME", g_dossier, 1);
+
     {
-        char jc[600];
+        char jc[700];
         snprintf(jc, sizeof jc, "%s/journal.txt", g_dossier);
-        /* en ajout, pas en ecrasement : sinon la trace d'un plantage
-           disparait des la relance suivante */
-        g_journal = fopen(jc, "a");
+        g_journal = fopen(jc, "a");     /* en ajout : une trace doit survivre */
         noter("");
-        noter("--- demarrage du coeur ---");
+        noter("--- ouverture du coeur ---");
         noter("dossier systeme : %s", g_dossier);
-        noter("dossier temporaire : %s", tmp);
-        noter("coeur : %s", c);
+        noter("dossier temporaire : %s", g_cache);
+        noter("bibliotheque : %s", c);
     }
-    noter("dossier temporaire accessible en ecriture : %s", g_tmp_ok ? "oui" : "NON");
+
     g_lib = dlopen(c, RTLD_NOW | RTLD_LOCAL);
     (*env)->ReleaseStringUTFChars(env, chemin, c);
     (*env)->ReleaseStringUTFChars(env, dossier, d);
-    (*env)->ReleaseStringUTFChars(env, cache, tmp);
+    (*env)->ReleaseStringUTFChars(env, cache, t);
     if (!g_lib) { noter("ECHEC dlopen : %s", dlerror()); return JNI_FALSE; }
 
     CHARGE(set_environment); CHARGE(set_video_refresh); CHARGE(set_audio_sample);
     CHARGE(set_audio_sample_batch); CHARGE(set_input_poll); CHARGE(set_input_state);
-    CHARGE(init); CHARGE(deinit); CHARGE(load_game); CHARGE(unload_game); CHARGE(run);
-    CHARGE(reset); CHARGE(get_system_info); CHARGE(get_system_av_info); CHARGE(set_controller_port_device);
-    CHARGE(serialize_size); CHARGE(serialize); CHARGE(unserialize);
-    CHARGE_OPT(cheat_reset); CHARGE_OPT(cheat_set);
-    CHARGE_OPT(get_memory_data); CHARGE_OPT(get_memory_size);
+    CHARGE(init); CHARGE(deinit); CHARGE(load_game); CHARGE(unload_game);
+    CHARGE(run); CHARGE(reset); CHARGE(get_system_info); CHARGE(get_system_av_info);
+    CHARGE(set_controller_port_device); CHARGE(serialize_size);
+    CHARGE(serialize); CHARGE(unserialize);
 
-    /* Options du coeur Citra. Les noms seront confirmes par le
-       journal, qui note chaque option reellement reclamee. */
-    /* Citra avec le moteur Angrylion : un rendu entierement logiciel.
+    /*
+     * Les reglages de Citra, dans les noms exacts du coeur.
      *
-     * Toute la couche OpenGL n'existait que parce que Flycast l'exigeait sur
-     * Dreamcast. Un coeur qui dessine en memoire la rend inutile — et avec
-     * elle disparait la classe entiere de problemes qui nous bloque : plus de
-     * contexte a partager, plus de tampon a relire, plus de moteur graphique
-     * qui abandonne faute d'une fonction manquante.
-     *
-     * C'est plus lent qu'un rendu materiel, mais c'est exact et ca tient. */
-    /* Rendu materiel par defaut, maintenant que le signal de contexte n'est
-       plus envoye trois fois. Le filet de securite de l'application ramene au
-       rendu logiciel si ca ne tient pas. */
-    /* Citra : rendu OpenGL, seul capable de monter la resolution interne.
-       Les deux ecrans arrivent empiles dans une seule image ; l'application la
-       coupe en deux et place chaque moitie dans le rectangle voulu par
-       l'habillage. C'est ce qui permet les cinq presentations sans rien
-       demander au coeur. */
+     * La resolution interne est le coeur du sujet : la console dessine en
+     * 480 sur 272, et ce facteur multiplie cette definition. Elle ne change
+     * jamais la taille affichee, seulement la finesse.
+     */
     /* Citra : rendu materiel, seul capable de monter la resolution interne.
      *
      * La disposition « Default Top-Bottom » empile les deux ecrans dans une
-     * seule image : l'ecran du haut, 400 sur 240, occupe toute la largeur ;
-     * celui du bas, 320 sur 240, est centre en dessous. L'application coupe
-     * cette image et place chaque moitie dans le rectangle voulu par
-     * l'habillage — c'est ce qui permet les cinq presentations sans rien
-     * demander au coeur.
+     * seule image : celui du haut, 400 sur 240, occupe toute la largeur ;
+     * celui du bas, 320 sur 240, est centre en dessous. L'application trace
+     * chaque moitie dans le rectangle voulu par l'habillage.
      */
     var_poser("citra_use_hw_renderer", "enabled");
     var_poser("citra_use_hw_shader", "enabled");
-    var_poser("citra_resolution_factor", "1");
+    var_poser("citra_use_shader_jit", "enabled");
+    var_poser("citra_resolution_factor", "1x (Native)");
     var_poser("citra_layout_option", "Default Top-Bottom Screen");
+    /* On n'intervertit jamais les deux ecrans : l'ecran du haut reste en
+       haut de l'image, celui du bas en dessous. C'est sur cette hypothese que
+       reposent le decoupage de l'image ET la position du stylet. */
     var_poser("citra_swap_screen", "Top");
     var_poser("citra_use_frame_limit", "enabled");
-    var_poser("citra_use_shader_jit", "enabled");
-    /* filtrage des textures : c'est lui qui adoucit reellement l'image */
-    var_poser("citra_texture_filter", "Anime4K");
-    var_poser("citra_is_new_3ds", "New 3DS");
-    /* Le recompilateur dynamique traduit le code de la console en code natif
-       a la volee, ce qui exige d'ecrire dans de la memoire executable. C'est
-       la que l'application tombait, apres quelques images — le temps qu'il
-       compile ses premiers blocs. L'interprete avec cache est nettement plus
-       stable, et reste rapide. Le bouton Essais permet de retenter l'autre. */
+    /*
+     * ECRAN TACTILE.
+     *
+     * Citra ne tient pas compte du stylet tant que cette option est
+     * desactivee — et elle l'est par defaut. C'est pour cela qu'il
+     * interrogeait le pointeur des milliers de fois sans reagir : il lisait la
+     * position, puis la jetait.
+     */
+    var_poser("citra_touch_touchscreen", "enabled");
+    var_poser("citra_mouse_touchscreen", "enabled");
+    /* on ne dessine pas de curseur par-dessus le jeu */
+    var_poser("citra_render_touchscreen", "disabled");
 
+    var_poser("citra_use_virtual_sd", "enabled");
+    var_poser("citra_is_new_3ds", "Old 3DS");
+    var_poser("citra_region_value", "Auto");
+    var_poser("citra_language", "French");
     p_set_environment(environnement);
     p_set_video_refresh(video);
     p_set_audio_sample(son_un);
@@ -684,147 +792,61 @@ Java_com_skin3ds_app_core_Coeur3DS_natInit(JNIEnv *env, jobject self, jstring ch
     p_set_input_poll(manette_poll);
     p_set_input_state(manette_etat);
 
-    /* Le capteur d'arrets brutaux AVANT toute initialisation du coeur : c'est
-       precisement la qu'un plantage natif peut survenir, et sans capteur
-       l'application disparait sans laisser de trace. */
+    /* Le capteur AVANT toute initialisation : c'est la qu'un plantage natif
+       peut survenir, et sans lui l'application disparait sans laisser de
+       trace. */
     installer_signaux();
 
-    /* On n'appelle PAS retro_init ici.
+    /*
+     * retro_init ICI, au chargement de la bibliotheque.
      *
-     * Citra est un coeur lourd : son initialisation touche au systeme de
-     * fichiers, a la memoire virtuelle et au processeur graphique. La faire au
-     * demarrage de l'application faisait tomber celle-ci avant meme qu'elle
-     * s'affiche, sans qu'aucun message ne remonte. On la repousse donc au
-     * chargement du premier jeu, ou l'on peut la rapporter proprement. */
+     * C'est l'ordre attendu par un coeur libretro, et celui qu'emploient les
+     * emulateurs qui fonctionnent. Le repousser laissait le coeur dans un
+     * etat incomplet : il ne prenait jamais en compte le contexte graphique,
+     * et son image restait noire.
+     */
+    p_init();
+    g_coeur_init = true;
     g_init = true;
-    noter("bibliotheque chargee ; le coeur sera initialise au premier jeu");
-    noter("coeur Citra pret, %d variables posees", g_nvars);
+    noter("bibliotheque ouverte ; le coeur sera initialise au premier jeu");
     return JNI_TRUE;
 }
 
-JNIEXPORT void JNICALL
-Java_com_skin3ds_app_core_Coeur3DS_natVariable(JNIEnv *env, jobject self, jstring cle, jstring val) {
-    (void)self;
-    const char *k = (*env)->GetStringUTFChars(env, cle, NULL);
-    const char *v = (*env)->GetStringUTFChars(env, val, NULL);
-    var_poser(k, v);
-    (*env)->ReleaseStringUTFChars(env, cle, k);
-    (*env)->ReleaseStringUTFChars(env, val, v);
-}
-
-/* Cree le tampon de rendu.
- *
- * On ne previent PAS le coeur ici : a ce moment aucun jeu n'est charge, et
- * surtout le signal « le contexte est pret » ne doit etre donne qu'une seule
- * fois par contexte. Je l'envoyais a trois endroits — creation de la surface,
- * redimensionnement du tampon, chargement du jeu — et le coeur recreait ses
- * ressources graphiques en pleine partie. C'est ce qui faisait tomber
- * l'application quelques images apres le demarrage, en rendu materiel.
- */
 JNIEXPORT jboolean JNICALL
 Java_com_skin3ds_app_core_Coeur3DS_natGlInit(JNIEnv *env, jobject self, jint w, jint h) {
     (void)env; (void)self;
     if (!creer_fbo(w, h)) return JNI_FALSE;
+    /* On previent le coeur que le contexte graphique existe. */
+    if (g_hw_demande && g_hw.context_reset) g_hw.context_reset();
     g_hw_pret = true;
+    noter("tampon de rendu cree en %d x %d", w, h);
     return JNI_TRUE;
 }
 
-/* Redimensionne le tampon de rendu.
- *
- * Si un jeu tourne, on suit le protocole : on annonce d'abord la perte du
- * contexte, on refait le tampon, puis on annonce qu'il est de nouveau pret.
- * Sans la premiere annonce, le coeur fabriquait un second jeu de ressources
- * sans liberer le premier.
- */
 JNIEXPORT jboolean JNICALL
 Java_com_skin3ds_app_core_Coeur3DS_natGlTaille(JNIEnv *env, jobject self, jint w, jint h) {
     (void)env; (void)self;
     if (w == g_fw && h == g_fh) return JNI_TRUE;
+    /* Si un jeu tourne, on suit le protocole : perte du contexte, nouveau
+       tampon, reprise. Sans la premiere annonce le coeur fabriquerait un
+       second jeu de ressources sans liberer le premier. */
     bool actif = g_charge && g_hw_demande;
-    if (actif && g_hw.context_destroy) {
-        noter("redimensionnement : contexte libere");
-        g_hw.context_destroy();
-    }
+    if (actif && g_hw.context_destroy) g_hw.context_destroy();
     if (!creer_fbo(w, h)) return JNI_FALSE;
-    if (actif && g_hw.context_reset) {
-        g_hw.context_reset();
-        noter("redimensionnement : contexte repris en %d x %d", w, h);
-    }
+    if (actif && g_hw.context_reset) g_hw.context_reset();
     return JNI_TRUE;
 }
 
-/* Avance d'une image. Renvoie l'identifiant de texture, ou 0 si rien.
-   La taille utile est deposee dans taille[0] et taille[1]. */
-JNIEXPORT jint JNICALL
-Java_com_skin3ds_app_core_Coeur3DS_natGlImage(JNIEnv *env, jobject self, jint boutons,
-                                            jint gx, jint gy, jint dx, jint dy,
-                                            jint gl_, jint gr_, jintArray taille) {
-    (void)self;
-    /* Un coeur a rendu logiciel n'a pas de contexte a preparer : on exige le
-       tampon materiel seulement s'il en a reclame un. */
-    if (!g_charge) return 0;
-    if (g_hw_demande && !g_hw_pret) return 0;
-    g_boutons = boutons;
-    g_stick[ANALOG_GAUCHE][0] = (int16_t)gx; g_stick[ANALOG_GAUCHE][1] = (int16_t)gy;
-    g_stick[ANALOG_DROIT][0] = (int16_t)dx;  g_stick[ANALOG_DROIT][1] = (int16_t)dy;
-    g_gachette[0] = (int16_t)gl_; g_gachette[1] = (int16_t)gr_;
-
-    g_etape = "emulation d'une image";
-    if (g_hw_demande) {
-        glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
-        glViewport(0, 0, g_fw, g_fh);
-    }
-    p_run();
-    if (g_hw_demande) glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    g_etape = "apres l'emulation";
-
-    jint t[2] = { (jint)g_bw, (jint)g_bh };
-    (*env)->SetIntArrayRegion(env, taille, 0, 2, t);
-    /* En rendu logiciel il n'y a pas de texture : on renvoie un jeton non nul
-       pour signaler qu'une image a bien ete produite. */
-    return g_hw_demande ? (jint)g_tex : 1;
-}
-
 JNIEXPORT jboolean JNICALL
-Java_com_skin3ds_app_core_Coeur3DS_natCharger(JNIEnv *env, jobject self, jstring chemin) {
+Java_com_skin3ds_app_core_Coeur3DS_natCharger(JNIEnv *env, jobject self, jstring fichier) {
     (void)self;
-    if (!g_init) return JNI_FALSE;
-    if (g_charge) {
-        /* On annonce au coeur que son contexte graphique disparait. Sans cette
-           annonce il gardait toutes ses ressources, et le chargement suivant
-           lui en faisait creer un second jeu par-dessus : d'ou l'image qui se
-           brouille et le son qui deraille en changeant de jeu. */
-        if (g_hw_demande && g_hw_pret && g_hw.context_destroy) {
-            g_hw.context_destroy();
-            noter("contexte graphique libere avant ejection");
-        }
-        g_hw_pret = false;
-        p_unload_game();
-        g_charge = false;
-    }
-    const char *c = (*env)->GetStringUTFChars(env, chemin, NULL);
+    const char *f = (*env)->GetStringUTFChars(env, fichier, NULL);
     static char copie[1024];
-    strncpy(copie, c, sizeof(copie) - 1);
-    (*env)->ReleaseStringUTFChars(env, chemin, c);
+    snprintf(copie, sizeof copie, "%s", f);
+    (*env)->ReleaseStringUTFChars(env, fichier, f);
 
-    /* La Nintendo 64 n'a pas de BIOS : rien a verifier avant de charger.
-       Une verification du BIOS Dreamcast trainait ici et refusait tous les
-       jeux avant meme de les transmettre au coeur. */
-    {
-        char b[700];
-        snprintf(b, sizeof b, "%s/mupen64plus.ini", g_dossier);
-        FILE *f = fopen(b, "rb");
-        if (f) { fseek(f, 0, SEEK_END); noter("catalogue : %ld octets", ftell(f)); fclose(f); }
-        else noter("catalogue absent sous %s", g_dossier);
-    }
-
-    /* Chaque coeur a sa maniere de recevoir un jeu.
-     *
-     * Celui de la Dreamcast lit une image de disque et se contente d'un
-     * chemin. Mupen64Plus veut la cartouche entiere en memoire : il l'annonce
-     * par need_fullpath a faux, et refusait tout puisqu'on ne lui passait
-     * qu'un chemin. On lui demande donc ce qu'il attend au lieu de le
-     * supposer, ce qui vaudra pour n'importe quel coeur. */
+    /* Chaque coeur recoit un jeu a sa maniere : certains veulent un chemin,
+       d'autres le contenu en memoire. On le lui demande. */
     struct retro_system_info si;
     memset(&si, 0, sizeof si);
     p_get_system_info(&si);
@@ -835,76 +857,53 @@ Java_com_skin3ds_app_core_Coeur3DS_natCharger(JNIEnv *env, jobject self, jstring
           si.need_fullpath ? "requis" : "non requis");
 
     static uint8_t *contenu = NULL;
-    free(contenu);
-    contenu = NULL;
+    free(contenu); contenu = NULL;
     struct retro_game_info info = { copie, NULL, 0, NULL };
 
     if (!si.need_fullpath) {
         FILE *fp = fopen(copie, "rb");
-        if (!fp) { noter("REFUS : fichier illisible %s", copie); return JNI_FALSE; }
+        if (!fp) { noter("REFUS : fichier illisible"); return JNI_FALSE; }
         fseek(fp, 0, SEEK_END);
         long taille = ftell(fp);
         fseek(fp, 0, SEEK_SET);
         if (taille <= 0) { fclose(fp); noter("REFUS : fichier vide"); return JNI_FALSE; }
-        contenu = (uint8_t *)malloc((size_t)taille);
+        contenu = malloc((size_t)taille);
         if (!contenu) { fclose(fp); noter("REFUS : memoire insuffisante"); return JNI_FALSE; }
         size_t lus = fread(contenu, 1, (size_t)taille, fp);
         fclose(fp);
         if (lus != (size_t)taille) {
-            noter("REFUS : lecture incomplete");
-            free(contenu); contenu = NULL; return JNI_FALSE;
+            noter("REFUS : lecture incomplete"); free(contenu); contenu = NULL;
+            return JNI_FALSE;
         }
-        info.data = contenu;
-        info.size = (size_t)taille;
-        noter("cartouche lue en memoire : %ld octets", taille);
+        info.data = contenu; info.size = (size_t)taille;
+        noter("jeu lu en memoire : %ld octets", taille);
     }
 
-    /* Initialisation du coeur, au premier jeu seulement. */
-    if (!g_coeur_init) {
-        g_etape = "initialisation du coeur";
-        noter("initialisation de Citra...");
-        p_init();
-        g_coeur_init = true;
-        noter("Citra initialise");
-    }
     g_etape = "chargement du jeu";
-    noter("chargement du jeu : %s", copie);
+    noter("chargement : %s", copie);
     if (!p_load_game(&info)) { noter("REFUS : le coeur n'a pas accepte le jeu"); return JNI_FALSE; }
-    noter("jeu accepte par le coeur");
+
     struct retro_system_av_info av;
     memset(&av, 0, sizeof av);
     p_get_system_av_info(&av);
-    if (av.timing.sample_rate > 1000) g_sample_rate = av.timing.sample_rate;
-    if (av.timing.fps > 10) g_fps = av.timing.fps;
-    if (av.geometry.base_width) { g_bw = av.geometry.base_width; g_bh = av.geometry.base_height; }
-    if (av.geometry.max_width) { g_maxw = av.geometry.max_width; g_maxh = av.geometry.max_height; }
-    noter("geometrie : base %u x %u, maximum %u x %u",
-          av.geometry.base_width, av.geometry.base_height, g_maxw, g_maxh);
-    /* Le port doit etre declare JOYPAD, pas ANALOG : declare ANALOG, le coeur
-       ne reconnait plus de manette sur le port A — c'est exactement l'erreur
-       que j'avais faite sur la PlayStation. Les sticks restent lus par les
-       requetes analogiques, qui fonctionnent quel que soit ce type. */
-    /* Manette Nintendo 64 : un JOYPAD. Son unique stick est lu par les
-       requetes analogiques, comme sur les autres consoles. */
-    /* Le journal disait : « Game controller 0 has nothing plugged in ». On
-       declare donc la manette AVANT que le coeur ne lance l'emulation, et on
-       redit les quatre ports pour qu'aucun ne reste ambigu. */
-    /* Une seule manette, sur le port 1, apres le chargement. Declarer les
-       ports vides ou appeler avant le chargement n'apporte rien et fait
-       abandonner certains coeurs. */
-    p_set_controller_port_device(0, DEVICE_JOYPAD);
-    /* Le tampon de rendu est mis a la taille que le coeur vient d'annoncer,
-     * AVANT de lui signaler que le contexte existe.
-     *
-     * Sans cela, le tampon garde la taille creee au demarrage : le coeur
-     * dessine plus grand, ne remplit qu'un coin, et c'est ce coin qui
-     * s'affiche en plein ecran. On redescend par moities si la carte refuse
-     * la taille demandee, plutot que de laisser un ecran noir.
+    if (av.geometry.base_width)  g_bw = av.geometry.base_width;
+    if (av.geometry.base_height) g_bh = av.geometry.base_height;
+    g_maxw = av.geometry.max_width  ? av.geometry.max_width  : g_bw;
+    g_maxh = av.geometry.max_height ? av.geometry.max_height : g_bh;
+    if (av.timing.fps > 10.0) g_fps = av.timing.fps;
+    if (av.timing.sample_rate > 8000.0) g_sample_rate = av.timing.sample_rate;
+    noter("geometrie : base %u x %u, maximum %u x %u", g_bw, g_bh, g_maxw, g_maxh);
+
+    /*
+     * Le tampon est mis a la taille annoncee par le coeur AVANT de lui
+     * signaler que le contexte existe. Sans cela il dessine plus grand que le
+     * tampon, ne remplit qu'un coin, et c'est ce coin qui s'affiche.
+     * On redescend par moities si la carte refuse la taille demandee.
      */
     if (g_hw_demande) {
         int vw = (int)g_maxw, vh = (int)g_maxh;
-        if (vw < 320) vw = 320;
-        if (vh < 240) vh = 240;
+        if (vw < 480) vw = 480;
+        if (vh < 272) vh = 272;
         if (vw > 4096) vw = 4096;
         if (vh > 4096) vh = 4096;
         if (vw != g_fw || vh != g_fh) {
@@ -914,80 +913,220 @@ Java_com_skin3ds_app_core_Coeur3DS_natCharger(JNIEnv *env, jobject self, jstring
                 if (creer_fbo(tw, th)) { pose = true; break; }
                 noter("tampon %d x %d refuse, on redescend", tw, th);
                 tw /= 2; th /= 2;
-                if (tw < 320 || th < 240) { tw = 320; th = 240; }
+                if (tw < 480 || th < 272) { tw = 480; th = 272; }
             }
-            if (!pose && !creer_fbo(320, 240)) {
+            if (!pose && !creer_fbo(480, 272)) {
                 noter("ECHEC : aucun tampon de rendu possible");
                 return JNI_FALSE;
             }
-            noter("tampon de rendu porte a %d x %d (le coeur demandait %d x %d)",
-                  g_fw, g_fh, vw, vh);
+            noter("tampon porte a %d x %d (demande %d x %d)", g_fw, g_fh, vw, vh);
         }
+        if (g_hw.context_reset) { g_hw.context_reset(); g_hw_pret = true; }
     }
 
-    /* Citra ne declare son rendu materiel qu'au chargement du jeu : c'est
-       donc maintenant qu'il faut lui signaler que le contexte existe, et non
-       a la creation de la surface. */
-    if (g_hw_demande && g_hw.context_reset) {
-        g_hw.context_reset();
-        g_hw_pret = true;
-    }
+    p_set_controller_port_device(0, DEVICE_JOYPAD);
+    /* On declare aussi le pointeur : c'est par lui que passe l'ecran
+       tactile de la console. */
+    p_set_controller_port_device(1, DEVICE_POINTER);
     g_charge = true;
-    g_son_n = 0;
-    noter("jeu pret : %u x %u, %.0f Hz, %.2f i/s", g_bw, g_bh, g_sample_rate, g_fps);
-    noter(g_hw_demande
-          ? "moteur graphique MATERIEL : la resolution interne peut monter"
-          : "moteur graphique LOGICIEL : la resolution restera celle d'origine");
+    g_images = 0;
+    pthread_mutex_lock(&g_son_verrou); g_son_n = 0; pthread_mutex_unlock(&g_son_verrou);
+    noter("jeu pret : %u x %u, %.0f Hz, %.2f i/s, rendu %s",
+          g_bw, g_bh, g_sample_rate, g_fps, g_hw_demande ? "materiel" : "logiciel");
     return JNI_TRUE;
 }
 
-/* Relit l'image rendue et la depose dans le tableau fourni, en ARGB.
-   Renvoie largeur << 16 | hauteur, ou 0 si aucune image n'est encore prete.
-   A appeler depuis le fil OpenGL, juste apres natGlImage. */
+JNIEXPORT void JNICALL
+Java_com_skin3ds_app_core_Coeur3DS_natEjecter(JNIEnv *env, jobject self) {
+    (void)env; (void)self;
+    if (g_charge) {
+        /* On annonce au coeur que son contexte disparait : sans cette annonce
+           il garde ses ressources, et le chargement suivant lui en fait creer
+           un second jeu par-dessus. */
+        if (g_hw_demande && g_hw_pret && g_hw.context_destroy) {
+            g_hw.context_destroy();
+            noter("contexte graphique libere avant ejection");
+        }
+        g_hw_pret = false;
+        p_unload_game();
+        g_charge = false;
+    }
+    pthread_mutex_lock(&g_son_verrou); g_son_n = 0; pthread_mutex_unlock(&g_son_verrou);
+}
+
+JNIEXPORT void JNICALL
+Java_com_skin3ds_app_core_Coeur3DS_natReset(JNIEnv *env, jobject self) {
+    (void)env; (void)self;
+    if (g_charge) p_reset();
+}
+
+JNIEXPORT jint JNICALL
+Java_com_skin3ds_app_core_Coeur3DS_natGlImage(JNIEnv *env, jobject self, jint boutons,
+                                              jfloat sx, jfloat sy) {
+    (void)env; (void)self;
+    if (!g_charge) return 0;
+    if (g_hw_demande && !g_hw_pret) return 0;
+
+    g_boutons = boutons;
+    g_stick[0] = (int16_t)(sx * 32767.0f);
+    g_stick[1] = (int16_t)(sy * 32767.0f);
+
+    g_etape = "emulation d'une image";
+    if (g_hw_demande) {
+        glBindFramebuffer(GL_FRAMEBUFFER, g_fbo);
+        glViewport(0, 0, g_fw, g_fh);
+    }
+    p_run();
+    if (g_hw_demande) {
+        /* Citra travaille sur son propre fil de rendu : ses commandes ne
+           sont pas forcement executees quand p_run revient. On attend qu'il
+           ait fini avant de relire, sinon on lit un tampon encore vide. */
+        glFinish();
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+    g_etape = "apres l'emulation";
+    g_images++;
+    if (g_images == 30) {
+        noter("apres 30 images : ecran tactile interroge %lu fois", g_pointeur_lu);
+        if (g_pointeur_lu == 0)
+            noter("ATTENTION : le coeur n'interroge jamais l'ecran tactile");
+    }
+    if (g_images == 30) {
+        noter("apres 30 images : le coeur a demande le tampon %lu fois",
+              g_fb_demande);
+        if (g_fb_demande == 0)
+            noter("ATTENTION : le coeur ne dessine pas dans notre tampon");
+    }
+    return 1;
+}
+
+/*
+ * Dessine l'image du coeur dans le rectangle de l'ecran.
+ *
+ * Les coordonnees sont celles de la vue, en pixels, origine en haut a gauche.
+ * OpenGL compte du bas vers le haut : la conversion se fait ici.
+ */
+JNIEXPORT jboolean JNICALL
+Java_com_skin3ds_app_core_Coeur3DS_natGlDessiner(JNIEnv *env, jobject self,
+                                                 jint x, jint y, jint w, jint h,
+                                                 jint vueL, jint vueH,
+                                                 jint partie) {
+    (void)env; (void)self;
+    if (!g_charge || !g_hw_pret || !g_tex || w <= 0 || h <= 0) return JNI_FALSE;
+    if (!preparer_trace()) return JNI_FALSE;
+    g_etape = "trace de l'image";
+
+    /* du repere de la vue vers celui d'OpenGL, normalise entre -1 et 1 */
+    float gx0 = (float)x / vueL * 2.0f - 1.0f;
+    float gx1 = (float)(x + w) / vueL * 2.0f - 1.0f;
+    float gy0 = 1.0f - (float)y / vueH * 2.0f;
+    float gy1 = 1.0f - (float)(y + h) / vueH * 2.0f;
+
+    /* Portion de la texture a tracer.
+     *
+     * Citra empile les deux ecrans : celui du haut, 400 sur 240, occupe toute
+     * la largeur ; celui du bas, 320 sur 240, est centre juste en dessous.
+     * « partie » vaut 0 pour l'ecran du haut, 1 pour celui du bas, 2 pour
+     * l'image entiere.
+     */
+    float u = (g_fw > 0) ? (float)g_bw / (float)g_fw : 1.0f;
+    float v = (g_fh > 0) ? (float)g_bh / (float)g_fh : 1.0f;
+    if (u > 1.0f) u = 1.0f;
+    if (v > 1.0f) v = 1.0f;
+
+    float u0 = 0.0f, u1 = u, v0 = 0.0f, v1 = v;
+    if (partie == 0) {                     /* ecran du haut : moitie superieure */
+        v0 = v * 0.5f; v1 = v;
+    } else if (partie == 1) {              /* ecran du bas : centre, plus etroit */
+        float large = u * (320.0f / 400.0f);
+        u0 = (u - large) * 0.5f;
+        u1 = u0 + large;
+        v0 = 0.0f; v1 = v * 0.5f;
+    }
+
+    /* v inverse : la texture du coeur a son origine en bas */
+    /* v inverse : la texture du coeur a son origine en bas */
+    const GLfloat quad[] = {
+        gx0, gy0, u0, v1,
+        gx1, gy0, u1, v1,
+        gx0, gy1, u0, v0,
+        gx1, gy1, u1, v0,
+    };
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, vueL, vueH);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    glDisable(GL_SCISSOR_TEST);
+    glDisable(GL_CULL_FACE);
+
+    glUseProgram(g_prog);
+    glBindVertexArray(g_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, g_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof quad, quad, GL_STREAM_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void *)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat),
+                          (void *)(2 * sizeof(GLfloat)));
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, g_tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glUniform1i(g_uni_tex, 0);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    if (g_mesures < 4) {
+        g_mesures++;
+        GLenum err = glGetError();
+        noter("trace : rectangle %d,%d %dx%d dans une vue %dx%d, "
+              "texture %ux%u sur %dx%d%s",
+              x, y, w, h, vueL, vueH, g_bw, g_bh, g_fw, g_fh,
+              err ? "  ERREUR OpenGL" : "");
+    }
+    glBindVertexArray(0);
+    glUseProgram(0);
+    g_etape = "apres le trace";
+    return JNI_TRUE;
+}
+
 JNIEXPORT jint JNICALL
 Java_com_skin3ds_app_core_Coeur3DS_natLirePixels(JNIEnv *env, jobject self, jintArray sortie) {
     (void)self;
     if (!g_charge) return 0;
     g_etape = "relecture de l'image";
 
-    /* Coeur a rendu logiciel : l'image est deja chez nous, rien a demander a
-       la carte graphique. C'est le chemin le plus simple et le plus sur, et
-       il doit passer avant toute exigence de contexte materiel. */
-    if (!g_hw_demande) {
-        pthread_mutex_lock(&g_image_verrou);
-        unsigned lw = g_image_log_l, lh = g_image_log_h;
-        if (!g_image_log || !lw || !lh) { pthread_mutex_unlock(&g_image_verrou); return 0; }
-        jsize cap0 = (*env)->GetArrayLength(env, sortie);
-        if ((jsize)(lw * lh) > cap0) { pthread_mutex_unlock(&g_image_verrou); return 0; }
-        (*env)->SetIntArrayRegion(env, sortie, 0, (jsize)(lw * lh), (const jint *)g_image_log);
-        pthread_mutex_unlock(&g_image_verrou);
-        if (g_mesures < 8) { g_mesures++; noter("image logicielle %u x %u", lw, lh); }
-        return (jint)((lw << 16) | lh);
+    /* Le coeur a dessine en logiciel : ses pixels sont deja prets. */
+    if (g_soft_pret) {
+        jsize cap = (*env)->GetArrayLength(env, sortie);
+        if ((jsize)(g_soft_l * g_soft_h) > cap) return 0;
+        (*env)->SetIntArrayRegion(env, sortie, 0,
+                                  (jsize)(g_soft_l * g_soft_h), (const jint *)g_soft);
+        unsigned long somme = 0;
+        const uint32_t *l = g_soft + (size_t)(g_soft_h / 2) * g_soft_l;
+        for (unsigned x = 0; x < g_soft_l; x++)
+            somme += (l[x] & 0xFF) + ((l[x] >> 8) & 0xFF) + ((l[x] >> 16) & 0xFF);
+        g_clarte = (int)(somme / (g_soft_l * 3));
+        return (jint)((g_soft_l << 16) | g_soft_h);
     }
 
     if (!g_hw_pret || !g_fbo) return 0;
+
     unsigned w = g_bw, h = g_bh;
     if (!w || !h) return 0;
     if (w > (unsigned)g_fw) w = g_fw;
     if (h > (unsigned)g_fh) h = g_fh;
-    /* Reduction sur la carte graphique, AVANT la relecture.
-     *
-     * Le jeu est calcule en haute definition, mais on ne relit qu'une image
-     * ramenee a une taille fixe. Deux consequences : la relecture coute la
-     * meme chose quelle que soit la finesse — trois megaoctets au lieu de
-     * quarante-neuf a x8 — et le moyennage des pixels adoucit les contours,
-     * ce qu'une simple montee en definition ne fait pas. */
+
+    /* Reduction sur la carte graphique, avant la relecture : le cout ne depend
+       plus de la finesse choisie, et le moyennage adoucit les contours. */
     unsigned sw = w, sh = h;
     if (g_reduction > 0 && (int)w > g_reduction) {
         sw = (unsigned)g_reduction;
         sh = (unsigned)((double)h * (double)g_reduction / (double)w + 0.5);
         if (sh < 1) sh = 1;
     }
-
     size_t n = (size_t)sw * sh * 4;
-    if (g_mesures < 4)
-        noter("relecture : %u x %u calcule, reduit a %u x %u", w, h, sw, sh);
-    if (!preparer_pbo(n)) { noter("ECHEC : tampons de transfert indisponibles"); return 0; }
+    if (g_mesures < 4) noter("relecture : %u x %u calcule, reduit a %u x %u", w, h, sw, sh);
+    if (!preparer_pbo(n)) return 0;
 
     GLuint source = g_fbo;
     if (sw != w || sh != h) {
@@ -1000,110 +1139,124 @@ Java_com_skin3ds_app_core_Coeur3DS_natLirePixels(JNIEnv *env, jobject self, jint
     }
     w = sw; h = sh;
 
-    /* on demande la copie de l'image reduite, sans attendre */
     glBindFramebuffer(GL_FRAMEBUFFER, source);
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, g_pbo[g_pbo_courant]);
     glReadPixels(0, 0, (GLsizei)w, (GLsizei)h, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    /* on pose une barriere : elle sera franchie quand la copie sera finie */
     if (g_barriere[g_pbo_courant]) glDeleteSync(g_barriere[g_pbo_courant]);
     g_barriere[g_pbo_courant] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
     g_pbo_rempli[g_pbo_courant] = true;
     g_pbo_l[g_pbo_courant] = w;
     g_pbo_h[g_pbo_courant] = h;
 
-    /* et on releve celle du tour precedent, qui a eu le temps d'arriver */
     int autre = 1 - g_pbo_courant;
     g_pbo_courant = autre;
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     if (!g_pbo_rempli[autre]) { glBindBuffer(GL_PIXEL_PACK_BUFFER, 0); return 0; }
 
     /* On attend que la copie du tour precedent soit reellement terminee.
        L'attente est bornee : plutot sauter une image que d'en montrer une
-       dechiree, et plutot que de bloquer le jeu si la carte tarde. */
+       dechiree, et plutot que de bloquer le jeu. */
     if (g_barriere[autre]) {
         GLenum r = glClientWaitSync(g_barriere[autre], GL_SYNC_FLUSH_COMMANDS_BIT, 8000000);
-        if (r == GL_TIMEOUT_EXPIRED) {
-            glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-            return 0;                  /* pas prete : on la prendra au tour suivant */
-        }
+        if (r == GL_TIMEOUT_EXPIRED) { glBindBuffer(GL_PIXEL_PACK_BUFFER, 0); return 0; }
         glDeleteSync(g_barriere[autre]);
         g_barriere[autre] = 0;
     }
 
     unsigned pw = g_pbo_l[autre], ph = g_pbo_h[autre];
     glBindBuffer(GL_PIXEL_PACK_BUFFER, g_pbo[autre]);
-    const uint8_t *src0 = (const uint8_t *)glMapBufferRange(
-        GL_PIXEL_PACK_BUFFER, 0, (GLsizeiptr)((size_t)pw * ph * 4), GL_MAP_READ_BIT);
-    if (!src0) {
-        noter("ECHEC : tampon de transfert illisible (%u x %u)", pw, ph);
-        glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-        return 0;
-    }
+    const uint8_t *src = glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0,
+                                          (GLsizeiptr)((size_t)pw * ph * 4), GL_MAP_READ_BIT);
+    if (!src) { glBindBuffer(GL_PIXEL_PACK_BUFFER, 0); return 0; }
 
     jsize cap = (*env)->GetArrayLength(env, sortie);
     if ((jsize)(pw * ph) > cap) {
         noter("ECHEC : image %u x %u trop grande pour le tableau (%d)", pw, ph, (int)cap);
-        glUnmapBuffer(GL_PIXEL_PACK_BUFFER); glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+        glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+        glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
         return 0;
     }
     jint *dst = (*env)->GetIntArrayElements(env, sortie, NULL);
-    if (!dst) {
-        glUnmapBuffer(GL_PIXEL_PACK_BUFFER); glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-        return 0;
-    }
-    unsigned long somme = 0;
+    /* OpenGL compte ses lignes du bas vers le haut, l'ecran du haut vers le
+       bas : on retourne en recopiant. */
     for (unsigned y = 0; y < ph; y++) {
-        /* OpenGL a son origine en bas, l'ecran en haut : on retourne */
-        const uint8_t *src = src0 + (size_t)(ph - 1 - y) * pw * 4;
-        jint *ligne = dst + (size_t)y * pw;
+        const uint8_t *l = src + (size_t)(ph - 1 - y) * pw * 4;
+        jint *o = dst + (size_t)y * pw;
         for (unsigned x = 0; x < pw; x++) {
-            uint8_t r = src[x * 4], g = src[x * 4 + 1], b = src[x * 4 + 2];
-            ligne[x] = (jint)(0xFF000000u | ((unsigned)r << 16) | ((unsigned)g << 8) | b);
-            if (y == ph / 2) somme += (unsigned)r + g + b;
+            o[x] = (jint)(0xFF000000u | ((unsigned)l[x * 4] << 16)
+                          | ((unsigned)l[x * 4 + 1] << 8) | (unsigned)l[x * 4 + 2]);
         }
     }
     (*env)->ReleaseIntArrayElements(env, sortie, dst, 0);
-    g_etape = "fin de relecture";
     glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-
-    if (++g_images_emulees % 60 == 0) noter("%lu images emulees", g_images_emulees);
-    if (g_mesures < 8) {
+    {
+        unsigned long somme = 0;
+        const uint8_t *l = src + (size_t)(ph / 2) * pw * 4;
+        for (unsigned x = 0; x < pw; x++)
+            somme += (unsigned)l[x * 4] + l[x * 4 + 1] + l[x * 4 + 2];
+        g_clarte = (int)(somme / (pw * 3));
+    }
+    if (g_mesures < 6) {
         g_mesures++;
-        noter("image relue %u x %u, clarte moyenne de la ligne mediane : %lu",
-              pw, ph, somme / (3UL * pw));
+        /* Moyenne d'une ligne : une image entierement noire se voit tout de
+           suite, et distingue « rien n'est dessine » de « rien n'est relu ». */
+        unsigned long somme = 0;
+        const uint8_t *l = src + (size_t)(ph / 2) * pw * 4;
+        for (unsigned x = 0; x < pw; x++)
+            somme += (unsigned)l[x * 4] + l[x * 4 + 1] + l[x * 4 + 2];
+        noter("image recue : %u x %u, clarte moyenne %.1f%s",
+              pw, ph, somme / (double)(pw * 3),
+              somme == 0 ? "  (IMAGE NOIRE)" : "");
     }
     return (jint)((pw << 16) | ph);
 }
 
-/* Depose les echantillons dans le tampon fourni et renvoie leur nombre.
-   Aucune allocation : c'est appele soixante fois par seconde. */
-/* Position du stylet, en fractions de l'ecran du bas. Une valeur hors de
-   l'intervalle signifie que le doigt s'est leve. */
+JNIEXPORT jint JNICALL
+Java_com_skin3ds_app_core_Coeur3DS_natSon(JNIEnv *env, jobject self, jshortArray sortie) {
+    (void)self;
+    jsize cap = (*env)->GetArrayLength(env, sortie);
+    static int16_t copie[SON_CAP];
+    pthread_mutex_lock(&g_son_verrou);
+    jsize n = (jsize)g_son_n;
+    if (n > cap) n = cap;
+    if (n > 0) memcpy(copie, g_son, (size_t)n * sizeof(int16_t));
+    g_son_n = 0;
+    pthread_mutex_unlock(&g_son_verrou);
+    if (n > 0) (*env)->SetShortArrayRegion(env, sortie, 0, n, copie);
+    return n;
+}
+
+/*
+ * Position du stylet, donnee en fractions de l'ecran du bas.
+ *
+ * Citra empile les deux ecrans : celui du bas, 320 sur 240, est centre sous
+ * celui du haut. Une position donnee sur l'ecran tactile doit donc etre
+ * ramenee dans cette fenetre-la, pas dans la moitie basse exacte.
+ */
 JNIEXPORT void JNICALL
 Java_com_skin3ds_app_core_Coeur3DS_natStylet(JNIEnv *e, jobject s, jfloat fx, jfloat fy) {
     (void)e; (void)s;
     if (fx < 0.0f || fy < 0.0f || fx > 1.0f || fy > 1.0f) { g_stylet_pose = 0; return; }
-
-    /* Ou se trouve l'ecran tactile dans l'image du coeur.
-     *
-     * Citra empile les deux ecrans : celui du haut, 400 sur 240, occupe toute
-     * la largeur ; celui du bas, 320 sur 240, est centre juste en dessous. Il
-     * ne remplit donc ni toute la largeur ni la moitie basse exacte, et une
-     * position donnee en fraction de l'ecran tactile doit etre ramenee dans
-     * cette fenetre-la. */
+    /*
+     * Le coeur raisonne sur l'image entiere, ou les deux ecrans sont empiles :
+     * celui du haut, 400 sur 240, occupe toute la largeur ; celui du bas,
+     * 320 sur 240, est centre juste en dessous. On calcule donc a partir des
+     * dimensions REELLES annoncees par le coeur, comme le fait la DS, plutot
+     * que de supposer des proportions.
+     */
     float largeur = (g_bw > 0) ? (float)g_bw : 400.0f;
     float hauteur = (g_bh > 0) ? (float)g_bh : 480.0f;
-    float lbas = largeur * (320.0f / 400.0f);        /* largeur de l'ecran du bas */
-    float hun = hauteur * 0.5f;                      /* hauteur d'un ecran */
+    float lbas = largeur * (320.0f / 400.0f);
+    float hbas = hauteur * 0.5f;
     float x0 = (largeur - lbas) * 0.5f;
-
     float gx = (x0 + fx * lbas) / largeur;
-    float gy = (hun + fy * hun) / hauteur;
+    float gy = (hbas + fy * hbas) / hauteur;
+    if (g_convention == 1) { gx = fx; gy = fy; }
     g_stylet_x = (int16_t)((gx * 2.0f - 1.0f) * 32767.0f);
     g_stylet_y = (int16_t)((gy * 2.0f - 1.0f) * 32767.0f);
     g_stylet_pose = 1;
+    g_st_fx = fx; g_st_fy = fy; g_st_gx = gx; g_st_gy = gy;
     if (g_mesures < 6) {
         g_mesures++;
         noter("stylet : ecran %.2f,%.2f -> image %.2f,%.2f (image %ux%u)",
@@ -1111,64 +1264,84 @@ Java_com_skin3ds_app_core_Coeur3DS_natStylet(JNIEnv *e, jobject s, jfloat fx, jf
     }
 }
 
-/* Jette les echantillons en attente : apres une relance, ils appartiennent a
-   la partie precedente et se jouent d'un coup. */
 JNIEXPORT void JNICALL
-Java_com_skin3ds_app_core_Coeur3DS_natSonVider(JNIEnv *e, jobject s) {
+Java_com_skin3ds_app_core_Coeur3DS_natSonVider(JNIEnv *env, jobject self) {
+    (void)env; (void)self;
+    pthread_mutex_lock(&g_son_verrou); g_son_n = 0; pthread_mutex_unlock(&g_son_verrou);
+}
+
+JNIEXPORT void JNICALL
+Java_com_skin3ds_app_core_Coeur3DS_natVariable(JNIEnv *env, jobject self,
+                                               jstring cle, jstring val) {
+    (void)self;
+    const char *k = (*env)->GetStringUTFChars(env, cle, NULL);
+    const char *v = (*env)->GetStringUTFChars(env, val, NULL);
+    var_poser(k, v);
+    noter("reglage : %s = %s", k, v);
+    (*env)->ReleaseStringUTFChars(env, cle, k);
+    (*env)->ReleaseStringUTFChars(env, val, v);
+}
+
+JNIEXPORT void JNICALL
+Java_com_skin3ds_app_core_Coeur3DS_natReduction(JNIEnv *env, jobject self, jint largeur) {
+    (void)env; (void)self;
+    g_reduction = largeur;
+    noter("relecture ramenee a %d px de large", largeur);
+}
+
+/* 1 si la derniere image venait du rendu logiciel, 0 du materiel. */
+JNIEXPORT jint JNICALL
+Java_com_skin3ds_app_core_Coeur3DS_natLogiciel(JNIEnv *e, jobject s) {
+    (void)e; (void)s; return g_soft_pret ? 1 : 0;
+}
+
+/* Change la convention de coordonnees du stylet. */
+JNIEXPORT void JNICALL
+Java_com_skin3ds_app_core_Coeur3DS_natConvention(JNIEnv *e, jobject s, jint c) {
     (void)e; (void)s;
-    pthread_mutex_lock(&g_son_verrou);
-    g_son_n = 0;
-    pthread_mutex_unlock(&g_son_verrou);
+    g_convention = c;
+    noter("stylet : coordonnees rapportees a %s",
+          c == 1 ? "l'ecran du bas" : "l'image entiere");
+}
+
+/* Etat du stylet en clair, pour l'ecran « Etat ». */
+JNIEXPORT jstring JNICALL
+Java_com_skin3ds_app_core_Coeur3DS_natStyletEtat(JNIEnv *env, jobject self) {
+    (void)self;
+    char t[256];
+    snprintf(t, sizeof t,
+             "stylet %s · écran %.2f,%.2f → transmis %.2f,%.2f · image %ux%u · "
+             "lu %lu fois · repère %s",
+             g_stylet_pose ? "posé" : "levé",
+             g_st_fx, g_st_fy, g_st_gx, g_st_gy, g_bw, g_bh, g_pointeur_lu,
+             g_convention == 1 ? "écran du bas" : "image entière");
+    return (*env)->NewStringUTF(env, t);
+}
+
+/* Combien de fois le coeur a interroge l'ecran tactile. */
+JNIEXPORT jint JNICALL
+Java_com_skin3ds_app_core_Coeur3DS_natPointeurLu(JNIEnv *e, jobject s) {
+    (void)e; (void)s; return (jint)(g_pointeur_lu & 0x7FFFFFFF);
 }
 
 JNIEXPORT jint JNICALL
-Java_com_skin3ds_app_core_Coeur3DS_natSon(JNIEnv *env, jobject self, jshortArray sortie) {
-    (void)self;
-    g_etape = "transfert du son";
-    jsize cap = (*env)->GetArrayLength(env, sortie);
-    static int16_t copie_son[SON_CAP];
-    pthread_mutex_lock(&g_son_verrou);
-    jsize n = (jsize)g_son_n;
-    if (n > cap) n = cap;
-    if (n > 0) memcpy(copie_son, g_son, (size_t)n * sizeof(int16_t));
-    g_son_n = 0;
-    pthread_mutex_unlock(&g_son_verrou);
-    if (n > 0) (*env)->SetShortArrayRegion(env, sortie, 0, n, copie_son);
-    return n;
+Java_com_skin3ds_app_core_Coeur3DS_natClarte(JNIEnv *e, jobject s) {
+    (void)e; (void)s; return (jint)g_clarte;
 }
 
-JNIEXPORT jboolean JNICALL
-Java_com_skin3ds_app_core_Coeur3DS_natRenduMateriel(JNIEnv *e, jobject s) {
-    (void)e; (void)s; return g_hw_demande ? JNI_TRUE : JNI_FALSE;
+JNIEXPORT jint JNICALL
+Java_com_skin3ds_app_core_Coeur3DS_natImages(JNIEnv *e, jobject s) {
+    (void)e; (void)s; return (jint)(g_images & 0x7FFFFFFF);
 }
 
 JNIEXPORT jint JNICALL
 Java_com_skin3ds_app_core_Coeur3DS_natMaxL(JNIEnv *e, jobject s) { (void)e; (void)s; return (jint)g_maxw; }
 JNIEXPORT jint JNICALL
 Java_com_skin3ds_app_core_Coeur3DS_natMaxH(JNIEnv *e, jobject s) { (void)e; (void)s; return (jint)g_maxh; }
-
-JNIEXPORT jdouble JNICALL Java_com_skin3ds_app_core_Coeur3DS_natFrequence(JNIEnv *e, jobject s) { (void)e; (void)s; return g_sample_rate; }
-JNIEXPORT jdouble JNICALL Java_com_skin3ds_app_core_Coeur3DS_natFps(JNIEnv *e, jobject s) { (void)e; (void)s; return g_fps; }
-JNIEXPORT void JNICALL Java_com_skin3ds_app_core_Coeur3DS_natReset(JNIEnv *e, jobject s) { (void)e; (void)s; if (g_charge) p_reset(); }
-
-JNIEXPORT void JNICALL
-Java_com_skin3ds_app_core_Coeur3DS_natEjecter(JNIEnv *env, jobject self) {
-    (void)env; (void)self;
-    if (g_charge) {
-        /* On annonce au coeur que son contexte graphique disparait. Sans cette
-           annonce il gardait toutes ses ressources, et le chargement suivant
-           lui en faisait creer un second jeu par-dessus : d'ou l'image qui se
-           brouille et le son qui deraille en changeant de jeu. */
-        if (g_hw_demande && g_hw_pret && g_hw.context_destroy) {
-            g_hw.context_destroy();
-            noter("contexte graphique libere avant ejection");
-        }
-        g_hw_pret = false;
-        p_unload_game();
-        g_charge = false;
-    }
-    g_son_n = 0;
-}
+JNIEXPORT jfloat JNICALL
+Java_com_skin3ds_app_core_Coeur3DS_natFps(JNIEnv *e, jobject s) { (void)e; (void)s; return (jfloat)g_fps; }
+JNIEXPORT jint JNICALL
+Java_com_skin3ds_app_core_Coeur3DS_natFrequence(JNIEnv *e, jobject s) { (void)e; (void)s; return (jint)g_sample_rate; }
 
 JNIEXPORT jbyteArray JNICALL
 Java_com_skin3ds_app_core_Coeur3DS_natSauver(JNIEnv *env, jobject self) {
@@ -1176,21 +1349,24 @@ Java_com_skin3ds_app_core_Coeur3DS_natSauver(JNIEnv *env, jobject self) {
     if (!g_charge) return NULL;
     size_t n = p_serialize_size();
     if (!n) return NULL;
-    void *buf = malloc(n);
-    if (!p_serialize(buf, n)) { free(buf); return NULL; }
-    jbyteArray out = (*env)->NewByteArray(env, (jsize)n);
-    (*env)->SetByteArrayRegion(env, out, 0, (jsize)n, (const jbyte *)buf);
-    free(buf);
-    return out;
+    void *tampon = malloc(n);
+    if (!tampon) return NULL;
+    jbyteArray res = NULL;
+    if (p_serialize(tampon, n)) {
+        res = (*env)->NewByteArray(env, (jsize)n);
+        if (res) (*env)->SetByteArrayRegion(env, res, 0, (jsize)n, tampon);
+    }
+    free(tampon);
+    return res;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_skin3ds_app_core_Coeur3DS_natRestaurer(JNIEnv *env, jobject self, jbyteArray donnees) {
+Java_com_skin3ds_app_core_Coeur3DS_natRestaurer(JNIEnv *env, jobject self, jbyteArray etat) {
     (void)self;
-    if (!g_charge) return JNI_FALSE;
-    jsize n = (*env)->GetArrayLength(env, donnees);
-    jbyte *buf = (*env)->GetByteArrayElements(env, donnees, NULL);
-    bool ok = p_unserialize(buf, (size_t)n);
-    (*env)->ReleaseByteArrayElements(env, donnees, buf, JNI_ABORT);
+    if (!g_charge || !etat) return JNI_FALSE;
+    jsize n = (*env)->GetArrayLength(env, etat);
+    jbyte *p = (*env)->GetByteArrayElements(env, etat, NULL);
+    bool ok = p_unserialize(p, (size_t)n);
+    (*env)->ReleaseByteArrayElements(env, etat, p, JNI_ABORT);
     return ok ? JNI_TRUE : JNI_FALSE;
 }

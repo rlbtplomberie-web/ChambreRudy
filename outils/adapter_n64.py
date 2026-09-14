@@ -201,6 +201,26 @@ def adapter_manifeste(chemin: str) -> None:
     # une version minimale inscrite ici ferait echouer la fusion des manifestes
     t = re.sub(r'<uses-sdk[^>]*/>', '', t)
 
+    # Sa classe d'application : on la releve AVANT de l'effacer.
+    #
+    # Deux applications ne peuvent pas en declarer chacune une — c'est celle
+    # de la Chambre qui doit gagner. Mais celle de l'emulateur prepare ses
+    # chemins et charge ses bibliotheques : sans elle il demarre nu. On garde
+    # donc son nom de cote, et la Chambre l'ouvrira elle-meme.
+    trouve = re.search(r'<application\b[^>]*?\sandroid:name\s*=\s*"([^"]+)"', t, re.S)
+    if trouve:
+        nom = trouve.group(1)
+        if nom.startswith('.'):
+            paquet = re.search(r'package\s*=\s*"([^"]+)"', t)
+            if paquet:
+                nom = paquet.group(1) + nom
+        try:
+            with open('applications_emulateurs.txt', 'a', encoding='utf-8') as f:
+                f.write(nom + '\n')
+            print('classe d application relevee :', nom)
+        except OSError:
+            pass
+
     # les attributs generaux : on les efface, les notres s'appliqueront
     for attribut in ('android:name', 'android:label', 'android:icon',
                      'android:roundIcon', 'android:theme', 'android:allowBackup',

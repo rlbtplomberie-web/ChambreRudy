@@ -1,6 +1,30 @@
-version 110
-  PageActivity.kt : mon bloc Dolphin s'etait insere AU MILIEU d'une chaine
-  d'appels, coupant « .putExtra("console", ...) » de son intention. D'ou
-  « 'if' must have both branches » et « Unresolved reference: putExtra ».
-  Les suppléments sont maintenant poses un par un, sans chainage.
-  Verifie : plus aucune chaine coupee dans tout le projet.
+version 113
+
+  3DS — son projet remis a l'identique
+    472 images PNG d'origine (elles avaient ete recompressees en WebP, 246
+    abimees), 5 positions.json intacts (les directions avaient ete inversees),
+    11 fichiers systeme, et SON pont natif : le notre n'avait que 19 des 26
+    fonctions que son code appelle — la 3DS aurait plante au lancement.
+    Une seule ligne differe : ses fichiers systeme sont sous « systeme_3ds »,
+    « systeme » appartenant deja a la PSP.
+
+  Nintendo 64 — son depot, sa revision, son overlay
+    mupen64plus-ae d'origine a 33bf702, comme son README. Sa classe
+    d'application AppMupen64Plus est relevee avant d'etre effacee du
+    manifeste, et la Chambre la reveille elle-meme au demarrage : c'est elle
+    qui prepare les chemins et charge les bibliotheques natives. Sans cela
+    l'emulateur demarrait nu — d'ou son message sur les autorisations.
+
+  GameCube et Wii — Dolphin compile A PART, comme RetroArch embarque ses coeurs
+    Tag 2606, enveloppes SDL retirees, son patch/apply.py : ses gestes, dans
+    son ordre. Puis Dolphin compile avec SON Gradle, SA version des outils et
+    SON NDK, et produit une bibliotheque que la Chambre embarque. La Chambre
+    garde les siens : rien de ce qui fait tourner les douze autres consoles
+    ne bouge. Sa classe DolphinApplication est reveillee comme celle de la 64.
+    GameCube et Wii ouvrent la meme EmulationActivity, avec la plateforme
+    indiquee : 0 pour l'une, 1 pour l'autre.
+
+  Si son apply.py ne s'applique pas, ou si Dolphin ne compile pas, un
+  avertissement le dit et le reste de l'application est intact.
+
+  A DEPOSER A LA RACINE : SkinGC-corrige.zip (deja en place)

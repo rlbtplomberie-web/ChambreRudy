@@ -108,10 +108,17 @@ dependencies {
      */
     if (File(rootDir, "m64base/app").isDirectory) implementation(project(":m64"))
 
-    // Dolphin, pour la GameCube et la Wii : meme principe, il est la ou il
-    // n'est pas selon que son dossier a ete prepare avant la compilation
-    if (File(rootDir, "dolphinbase/Source/Android/app").isDirectory)
-        implementation(project(":dolphinapp"))
+    /*
+     * Dolphin, pour la GameCube et la Wii.
+     *
+     * Il n'est pas rattache comme un module : il est compile A PART, avec sa
+     * propre version des outils, et nous arrive sous forme de bibliotheque —
+     * un .aar qui porte ses classes, ses ressources, ses assets et ses
+     * bibliotheques natives. La Chambre garde ainsi les siens, et rien de ce
+     * qui fait tourner les douze autres consoles ne bouge.
+     */
+    if (File(projectDir, "libs/dolphin.aar").isFile)
+        implementation(files("libs/dolphin.aar"))
 
     // reclamee par la facade de PPSSPP : PpssppActivity en herite
     implementation("androidx.appcompat:appcompat:1.6.1")
