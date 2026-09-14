@@ -1,18 +1,13 @@
-version 132 — un seul lot, deux choses
+version 133
 
-  1. La compilation repart
-     Mon outil qui modifiait SplashActivity.java abimait sa syntaxe et faisait
-     tout echouer. Il ne sert plus depuis qu'on ouvre directement le catalogue.
-     Retire du workflow et supprime.
-     Verifie : plus aucune trace de n64_autorisations, workflow bien forme.
+  Plantage du carton — corrige
+    « ArrayIndexOutOfBoundsException: index=-1 » dans consoleSuivante. En
+    touchant le carton pendant qu'une console rentre, l'index etait deja remis
+    a -1 quand l'animation se terminait, et l'on lisait la case -1. On retient
+    desormais LA console de ce mouvement-la.
 
-  2. Le jeu se lance depuis la vitrine
-     Mes deux essais precedents recalculaient a ma facon ce que son ecran de
-     jeu reclame. Il suffit qu'une valeur differe de celle de son catalogue
-     pour que le moteur refuse la cartouche.
-     On appelle desormais SA classe de lecture d'en-tete — la meme que son
-     catalogue — donc les valeurs sont identiques par construction. Le nom du
-     fichier est aussi simplifie : le coeur ouvre les fichiers en C, et les
-     parentheses et virgules le genaient.
-     Si quoi que ce soit resiste, on retombe sur son catalogue au lieu de
-     bloquer, et le journal dit pourquoi.
+  GameCube — l'essai a parle
+    Compile tel quel, son projet produit app-debug.apk de 33 Mo. Son apply.py
+    et Dolphin 2606 s'entendent donc parfaitement : le seul defaut etait ma
+    transformation en bibliotheque. Elle est remise, et le bilan dira
+    desormais si elle a mordu sur son fichier ou non.

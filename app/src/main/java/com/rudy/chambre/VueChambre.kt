@@ -687,12 +687,17 @@ class VueChambre(ctx: Context) : View(ctx) {
                     fin(null)
                 } else {
                     consoleIdx = suivant
-                    anime(700, { t -> sortie = t }, { fin(Decor.CONSOLES[consoleIdx]) })
+                    // on retient LA console de ce mouvement : si le carton est
+                    // touche a nouveau pendant l'animation, l'index a pu
+                    // changer d'ici la fin — et l'on lisait la case -1
+                    val celleCi = Decor.CONSOLES[suivant]
+                    anime(700, { t -> sortie = t }, { fin(celleCi) })
                 }
             })
         } else {
             consoleIdx = 0
-            anime(700, { t -> sortie = t }, { fin(Decor.CONSOLES[consoleIdx]) })
+            val premiere = Decor.CONSOLES[0]
+            anime(700, { t -> sortie = t }, { fin(premiere) })
         }
     }
 
