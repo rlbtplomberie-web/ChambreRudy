@@ -1,10 +1,20 @@
-version 114
-  Correction de MON erreur : j'avais supprime VueGL.kt chez moi, mais deposer
-  des archives n'efface rien dans le depot. L'ancien fichier y restait et
-  appelait des fonctions natives qui n'existent plus dans le pont de Rudy —
-  d'ou « Unresolved reference: taille, rendulMateriel, glImage ».
-  Il est desormais nomme dans a_supprimer.txt, avec l'ancien rangement des
-  ressources 3DS (assets/3ds/skin, sysdata, nand, config), remplace par
-  assets/skin et assets/systeme_3ds.
-  Les VueGL.kt de la DS et de la Dreamcast ne sont pas touches : ce sont les
-  leurs, et ils servent.
+version 115 — uniquement la Nintendo 64
+
+  « This app cannot proceed without these permissions »
+
+  Son ecran d'accueil reclame l'acces aux fichiers avant de demarrer. Depuis
+  Android 11, l'autorisation d'ECRITURE externe n'existe plus : le systeme la
+  refuse d'office. Sa verification ne peut donc jamais aboutir sur un
+  telephone recent — ce n'est pas un refus de sa part, c'est un barrage
+  infranchissable.
+
+  Le workflow vide desormais la liste de ce qu'il reclame, juste apres avoir
+  pose l'overlay de Rudy. Sa verification trouve alors qu'il ne manque rien.
+  Rien n'est perdu : la Chambre lui passe le jeu par son chemin, et il ecrit
+  ses sauvegardes dans son propre dossier, qui ne demande aucune autorisation.
+
+  L'outil dit dans le journal de compilation combien d'autorisations il a
+  trouvees et combien il en reste : si le code a change de forme, cela se voit
+  au lieu de passer inapercu.
+
+  Rien d'autre n'est touche.
