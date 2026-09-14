@@ -1,25 +1,18 @@
-version 131
+version 132 — un seul lot, deux choses
 
-  Nintendo 64 — le jeu se lance depuis la vitrine
-    Mes deux premiers essais recalculaient a ma facon ce que son ecran de jeu
-    reclame : empreinte, somme de controle, nom interne, pays. Il suffit
-    qu'une seule valeur differe de ce que son catalogue aurait produit pour
-    que le moteur refuse la cartouche — et c'est ce qui arrivait.
-    On appelle desormais SA propre classe de lecture d'en-tete, celle que son
-    catalogue emploie : les valeurs sont identiques par construction. Si elle
-    porte un autre nom dans une autre revision, on retombe sur mon calcul.
-    Le nom du fichier est aussi simplifie : le coeur ouvre les fichiers en C,
-    et les parentheses et virgules de « Banjo-Kazooie (Europe) (En,Fr,De) »
-    ne lui plaisaient pas.
-    Le journal dit d'ou viennent les valeurs employees.
+  1. La compilation repart
+     Mon outil qui modifiait SplashActivity.java abimait sa syntaxe et faisait
+     tout echouer. Il ne sert plus depuis qu'on ouvre directement le catalogue.
+     Retire du workflow et supprime.
+     Verifie : plus aucune trace de n64_autorisations, workflow bien forme.
 
-  Compilation — elle repart
-    Mon outil qui neutralisait la demande d'autorisation de SplashActivity
-    abimait la syntaxe du fichier et faisait tout echouer. Il ne sert plus
-    depuis qu'on ouvre directement le catalogue : il est supprime.
-
-  GameCube et Wii
-    L'etape Dolphin est prete et tracee. Elle n'a jamais tourne parce que
-    GitHub interdit a une compilation de modifier son propre workflow : il
-    faut deposer build.yml A LA MAIN dans .github/workflows. Une fois fait,
-    le bilan dira ou Dolphin en est, etape par etape.
+  2. Le jeu se lance depuis la vitrine
+     Mes deux essais precedents recalculaient a ma facon ce que son ecran de
+     jeu reclame. Il suffit qu'une valeur differe de celle de son catalogue
+     pour que le moteur refuse la cartouche.
+     On appelle desormais SA classe de lecture d'en-tete — la meme que son
+     catalogue — donc les valeurs sont identiques par construction. Le nom du
+     fichier est aussi simplifie : le coeur ouvre les fichiers en C, et les
+     parentheses et virgules le genaient.
+     Si quoi que ce soit resiste, on retombe sur son catalogue au lieu de
+     bloquer, et le journal dit pourquoi.
