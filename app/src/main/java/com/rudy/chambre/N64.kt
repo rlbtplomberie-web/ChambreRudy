@@ -22,6 +22,30 @@ import java.util.zip.ZipInputStream
  */
 object N64 {
 
+    /**
+     * Lance la N64 par son catalogue officiel.
+     *
+     * Le premier raccordement visait GameActivity directement. Cet ecran
+     * n'est pas une entree publique : il suppose que le catalogue a deja
+     * calcule sa fiche complete (MD5, CRC, pays, profil et assets). En
+     * partant de la galerie avec ROM_PATH, Mupen64Plus fait lui-meme le scan
+     * necessaire puis ouvre le jeu, comme lorsqu'un gestionnaire de fichiers
+     * lui transmet une cartouche.
+     */
+    fun intentionParCatalogue(ctx: Context, uri: String): Intent? {
+        val fichier = poserSurLeDisque(ctx, uri)?.first ?: return null
+        val galerie = try {
+            Class.forName("paulscode.android.mupen64plusae.GalleryActivity")
+        } catch (_: Throwable) { return null }
+
+        return Intent(ctx, galerie).apply {
+            putExtra(
+                "paulscode.android.mupen64plusae.ActivityHelper.Keys.ROM_PATH",
+                fichier.absolutePath
+            )
+        }
+    }
+
     /** Une ligne dans le journal que la tele sait relire. */
     private fun noter(ctx: Context, texte: String) {
         try {

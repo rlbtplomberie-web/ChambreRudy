@@ -208,7 +208,7 @@ class MainActivity : ComponentActivity() {
                     // Les trois moteurs plus lourds ne comprennent pas le
                     // simple extra "rom" des emulateurs integres.
                     if (console == "n64") {
-                        val direct = N64.intentionDeJeu(this@MainActivity, uriRom)
+                        val direct = N64.intentionParCatalogue(this@MainActivity, uriRom)
                         if (direct != null) {
                             startActivity(direct)
                             return@runOnUiThread

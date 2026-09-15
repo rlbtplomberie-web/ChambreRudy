@@ -365,9 +365,9 @@ class PageActivity : ComponentActivity() {
                      * dit ce qui a manque.
                      */
                     if (console == "n64") {
-                        val direct = N64.intentionDeJeu(this@PageActivity, uriRom)
+                        val direct = N64.intentionParCatalogue(this@PageActivity, uriRom)
                         if (direct != null) {
-                            noterJournal("N64 : entree directe dans la partie")
+                            noterJournal("N64 : jeu confie au catalogue Mupen64Plus")
                             startActivity(direct)
                             finish()
                             return@runOnUiThread
