@@ -30,7 +30,8 @@
     <application
         android:name="com.rudy.chambre.Chambre"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/retro_rom_launcher"
+        android:roundIcon="@mipmap/retro_rom_launcher"
         android:label="RetroRom"
         android:supportsRtl="true"
         android:hardwareAccelerated="true"
@@ -38,7 +39,7 @@
         android:largeHeap="true"
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/ThemePleinEcran"
-        tools:replace="android:theme,android:label,android:icon,android:allowBackup,android:supportsRtl">
+        tools:replace="android:theme,android:label,android:icon,android:roundIcon,android:allowBackup,android:supportsRtl">
 
         <!-- La chambre, dessinee en natif : l'ecran d'accueil -->
         <activity

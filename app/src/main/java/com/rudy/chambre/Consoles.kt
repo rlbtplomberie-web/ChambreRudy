@@ -57,23 +57,17 @@ object Consoles {
         Console("ds",   "Nintendo DS",      "com.skinds.app.MainActivity",
                 "skin_ds",   "dossier_roms",  listOf(".nds", ".zip"), coeur = "libmelonds.so"),
         /*
-         * La GameCube et la Wii ouvrent Dolphin lui-meme.
-         *
-         * Son projet ne pose pas un habillage sur un moteur : c'est Dolphin,
-         * avec ses pads greffes dedans par son patch/apply.py. Son ecran de
-         * jeu est donc celui de Dolphin, et non celui que j'avais ecrit.
+         * Les deux consoles ouvrent le meme ecran SkinGC : c'est l'emulateur
+         * avec les pads de Rudy. Le coeur Dolphin est charge en dessous,
+         * mais son ancienne activite Android n'est pas dans l'APK final.
          */
-        Console("gc",   "GameCube",         "org.dolphinemu.dolphinemu.activities.EmulationActivity",
+        Console("gc",   "GameCube",         "com.skingc.app.MainActivity",
                 "skin_gc",   "dossier_roms",  listOf(".iso", ".gcm", ".gcz", ".rvz", ".ciso",
                                                      ".dol", ".elf", ".zip"),
                 // Dolphin apporte ses propres bibliotheques, pas un fichier unique
                 coeur = null),
-        /*
-         * La Wii ouvre le meme ecran que la GameCube — Dolphin fait les deux —
-         * mais elle garde son propre dossier de jeux et ses propres formats,
-         * pour ne pas melanger les deux bibliotheques.
-         */
-        Console("wii",  "Wii",              "org.dolphinemu.dolphinemu.activities.EmulationActivity",
+        /* Meme moteur et memes pads, avec l'habillage Wii demande a l'ecran. */
+        Console("wii",  "Wii",              "com.skingc.app.MainActivity",
                 "skin_wii",  "dossier_roms",  listOf(".iso", ".wbfs", ".wad", ".rvz", ".ciso",
                                                      ".gcz", ".dol", ".elf", ".zip"),
                 coeur = null),
