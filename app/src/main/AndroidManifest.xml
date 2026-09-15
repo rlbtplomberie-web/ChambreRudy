@@ -30,6 +30,11 @@
     <!-- Autorise RetroRom a voir et ouvrir le Dolphin installe a part. -->
     <queries>
         <package android:name="org.dolphinemu.dolphinemu" />
+        <package android:name="com.skingc.app" />
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
     </queries>
 
     <application

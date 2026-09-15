@@ -3,6 +3,7 @@ package com.rudy.chambre
 import android.content.Context
 import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
@@ -20,7 +21,6 @@ import java.io.File
  * le choix de l'interface et de la plateforme reste fait par l'appelant.
  */
 object Dolphin {
-    private const val PAQUET = "org.dolphinemu.dolphinemu"
     private const val ECRAN_JEU = "org.dolphinemu.dolphinemu.activities.EmulationActivity"
 
     /**
@@ -30,14 +30,44 @@ object Dolphin {
      */
     fun intentionDeJeu(ctx: Context, uriTexte: String, wii: Boolean): Intent? {
         val chemin = cheminAccessibleParDolphin(ctx, uriTexte) ?: return null
-        val i = Intent().setComponent(ComponentName(PAQUET, ECRAN_JEU))
-        if (i.resolveActivity(ctx.packageManager) == null) return null
+        val i = intentionVersDolphinInstalle(ctx) ?: return null
         return i.apply {
             putExtra("SelectedGames", arrayOf(chemin))
             putExtra("SelectedTitle", if (wii) "Wii" else "GameCube")
             putExtra("Riivolution", false)
             putExtra("SystemMenu", false)
         }
+    }
+
+    /**
+     * SkinGC peut garder les classes de Dolphin, mais avoir son propre nom de
+     * paquet Android. C'est ce nom de paquet qui compte pour Android, pas le
+     * nom de la classe Kotlin. On le releve donc sur le telephone.
+     */
+    @Suppress("DEPRECATION")
+    private fun intentionVersDolphinInstalle(ctx: Context): Intent? {
+        val pm = ctx.packageManager
+        val candidats = linkedSetOf("org.dolphinemu.dolphinemu", "com.skingc.app")
+        val recherche = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        pm.queryIntentActivities(recherche, 0).forEach { candidats.add(it.activityInfo.packageName) }
+
+        for (paquet in candidats) {
+            val infos = try { pm.getPackageInfo(paquet, PackageManager.GET_ACTIVITIES) }
+                catch (_: Throwable) { continue }
+            val activites = infos.activities ?: emptyArray()
+            // L'activite porte habituellement ce nom, meme dans un APK SkinGC.
+            val jeu = activites.firstOrNull { it.name.endsWith(".EmulationActivity") }
+            if (jeu != null) {
+                val direct = Intent().setComponent(ComponentName(paquet, jeu.name))
+                if (direct.resolveActivity(pm) != null) return direct
+            }
+            // Dernier recours utile : on ouvre le vrai menu Dolphin/SkinGC,
+            // jamais l'ancien coeur libretro integre a RetroRom.
+            val lancement = pm.getLaunchIntentForPackage(paquet)
+            if (lancement != null && (paquet.contains("dolphin", true) || paquet == "com.skingc.app"))
+                return lancement
+        }
+        return null
     }
 
     private fun cheminAccessibleParDolphin(ctx: Context, uriTexte: String): String? {
