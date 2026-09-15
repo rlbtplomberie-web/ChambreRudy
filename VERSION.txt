@@ -1,22 +1,24 @@
-version 139 — uniquement la Nintendo 64
+version 140 — uniquement la Nintendo 64
 
-  La fenetre « autoriser / ne pas autoriser »
+  La fenetre venait des AUTORISATIONS DECLAREES, pas du code.
 
-  Son catalogue reclame l'acces aux fichiers au demarrage. Depuis Android 11,
-  l'autorisation d'ECRITURE externe ne peut plus etre accordee : Rudy voit la
-  fenetre, il autorise, et cela echoue quand meme. C'est pour cela que
-  l'emulateur se refermait aussitot.
+  Le bilan l'a montre : l'outil a bien repondu « oui » dans SplashActivity,
+  ScanRomsActivity et LegacyFilePicker — mais la fenetre restait. Elle ne
+  venait donc pas d'une verification, mais du fait meme que ces autorisations
+  soient declarees sans limite : Android les propose, et depuis la version 11
+  elles ne peuvent mener a rien.
 
-  Un nouvel outil repond « oui » a ses questions — « cette autorisation
-  est-elle accordee ? » devient « oui » — sans jamais toucher a ses
-  instructions. Une expression remplacee par une autre : la structure du
-  fichier ne bouge pas. Mon premier outil, lui, retirait la demande elle-meme
-  et cassait la syntaxe ; celui-ci refuse meme d'ecrire si les accolades ne
-  correspondent plus.
+  Deux corrections :
+    - dans le manifeste de la Chambre, READ et WRITE_EXTERNAL_STORAGE sont
+      bornees a Android 10. Au-dela, Android ne les propose plus du tout ;
+    - l'adaptateur borne les siennes de la meme facon lors de la fusion, et
+      retire MANAGE_EXTERNAL_STORAGE — celle qui ouvre une page de reglages
+      entiere. Verifie sur son vrai manifeste.
 
-  Eprouve sur un catalogue ecrit comme le sien : la declaration reste intacte,
-  la demande n'est jamais atteinte, et le fichier reste equilibre.
+  Rien n'est perdu : chaque emulateur ecrit dans le dossier externe de
+  l'application, qui n'exige aucune autorisation, et que la Chambre cree au
+  demarrage.
 
-  Rien n'est perdu : la Chambre pose la cartouche dans le dossier externe de
-  l'application, qui n'exige aucune autorisation — et qu'elle cree desormais
-  au demarrage.
+  A propos de « Unable to make path » : ce message est sans consequence. Le
+  dossier existe — la cartouche y a bien ete posee, 16384 Ko — et leur
+  creation renvoie « faux » simplement parce qu'il est deja la.

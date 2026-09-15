@@ -5,10 +5,24 @@
     <!-- Dreamcast, DS et 3DS rendent l'image par OpenGL ES 3 -->
     <uses-feature android:glEsVersion="0x00030000" android:required="true" />
 
-    <!-- Mega Drive, Game Boy et GBA ouvrent la cartouche par son chemin reel -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <!-- reclamees par le moteur de PPSSPP -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!--
+         L'acces aux fichiers, borne aux anciens Android.
+
+         Depuis Android 11 ces autorisations ne servent plus a rien : le
+         systeme refuse l'ecriture externe d'office, et la lecture passe par
+         le selecteur de documents. Mais tant qu'elles sont declarees sans
+         limite, les emulateurs les DEMANDENT, et Rudy voit une fenetre
+         « autoriser / ne pas autoriser » qui ne peut mener a rien.
+
+         En les bornant, Android ne les propose plus du tout sur les
+         telephones recents : plus de fenetre, et rien n'est perdu — chaque
+         emulateur ecrit dans le dossier de l'application, qui n'exige aucune
+         autorisation.
+    -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />

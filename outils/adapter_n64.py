@@ -231,6 +231,22 @@ def adapter_manifeste(chemin: str) -> None:
         t = re.sub(r'(<application\b[^>]*?)\s' + attribut + r'\s*=\s*"[^"]*"',
                    r'\1', t, flags=re.S)
 
+    # Ses autorisations de stockage sont bornees aux anciens Android.
+    #
+    # Sans cela, la fusion des manifestes les reintroduit sans limite, et le
+    # telephone propose de nouveau la fenetre « autoriser / ne pas autoriser »
+    # — celle qui ne peut mener a rien depuis Android 11.
+    # Celle-ci ouvre une page de reglages entiere, et ne sert a rien ici :
+    # la Chambre pose les cartouches dans le dossier de l'application.
+    t = re.sub(
+        r'\s*<uses-permission[^>]*MANAGE_EXTERNAL_STORAGE[^>]*/?>', '', t)
+
+    for perm in ('READ_EXTERNAL_STORAGE', 'WRITE_EXTERNAL_STORAGE'):
+        t = re.sub(
+            r'(<uses-permission[^>]*android:name="android\.permission\.' + perm
+            + r'")(\s*/?>)',
+            r'\1 android:maxSdkVersion="29"\2', t)
+
     # Ses ecrans se rangeaient dans leur propre pile.
     #
     # « singleTask » et « singleInstance » demandent a Android d'ouvrir une
