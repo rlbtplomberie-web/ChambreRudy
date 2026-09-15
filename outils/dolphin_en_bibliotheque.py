@@ -33,8 +33,14 @@ def basculer_en_bibliotheque(chemin: Path) -> bool:
     # 1. le greffon
     t = t.replace('id("com.android.application")', 'id("com.android.library")')
     t = t.replace("id 'com.android.application'", "id 'com.android.library'")
+    # Dolphin declare son greffon par un raccourci de son catalogue de
+    # versions : « alias(libs.plugins.android.application) ». Le raccourci
+    # vers la bibliotheque n'existe pas forcement dans ce catalogue — on
+    # ecrit donc le nom en clair, qui marche toujours.
     t = t.replace('alias(libs.plugins.android.application)',
-                  'alias(libs.plugins.android.library)')
+                  'id("com.android.library")')
+    t = t.replace('alias(libs.plugins.android.application())',
+                  'id("com.android.library")')
     t = re.sub(r"apply\s+plugin:\s*['\"]com\.android\.application['\"]",
                "apply plugin: 'com.android.library'", t)
 

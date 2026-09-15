@@ -31,71 +31,55 @@ object N64 {
     }
 
     fun intentionDeJeu(ctx: Context, uri: String): Intent? {
-        val fichier = poserSurLeDisque(ctx, uri) ?: return null
-        val octets = try { fichier.readBytes() } catch (_: Throwable) { return null }
-        if (octets.size < 0x40) return null
-
-        val rom = remettreDansLOrdre(octets) ?: return null
-        if (!rom.contentEquals(octets)) {
-            try { fichier.writeBytes(rom) } catch (_: Throwable) { return null }
-        }
-
         /*
-         * Les valeurs de la cartouche, calculees par SON code.
+         * Son coeur recoit DEUX chemins, pas un.
          *
-         * Mes deux premiers essais les recalculaient a ma facon. Il suffit
-         * qu'une seule differe de ce que son catalogue aurait produit pour
-         * que le moteur refuse la cartouche — et c'est ce qui arrivait.
+         * « ROM_PATH » et « ZIP_PATH » : quand le jeu est dans une archive,
+         * il attend le nom de l'entree A L'INTERIEUR de l'archive, et
+         * l'archive elle-meme a cote. C'est lui qui l'ouvre — Rudy me l'a
+         * dit, son emulateur sait lire les zip.
          *
-         * On appelle donc sa propre classe de lecture d'en-tete : les valeurs
-         * sont alors identiques par construction. Si elle a change de nom
-         * dans une autre revision, on retombe sur mon calcul.
+         * Je faisais l'inverse : j'extrayais a sa place et je lui donnais un
+         * fichier tout seul, en laissant la seconde case vide. D'ou son
+         * « erreur lors de l'ouverture du fichier ROM ».
          */
-        var sonCrc: String? = null
-        var sonNom: String? = null
-        var sonPays: Byte? = null
-        for (chemin in listOf(
-            "paulscode.android.mupen64plusae.util.RomHeader",
-            "paulscode.android.mupen64plusae.persistent.RomHeader")) {
-            try {
-                val classe = Class.forName(chemin)
-                val entete = classe.getConstructor(File::class.java).newInstance(fichier)
-                fun champ(vararg noms: String): Any? {
-                    for (n in noms) {
-                        try { return classe.getField(n).get(entete) } catch (_: Throwable) {}
-                    }
-                    return null
-                }
-                sonCrc = champ("crc") as? String
-                sonNom = champ("name", "internalName") as? String
-                sonPays = champ("countryCode") as? Byte
-                break
-            } catch (_: Throwable) {}
-        }
+        val pose = poserSurLeDisque(ctx, uri) ?: return null
+        val fichier = pose.first          // ce qu'on a pose : l'archive ou la cartouche
+        val dedans = pose.second          // le nom de l'entree, si c'est une archive
 
         val ecran = try {
             Class.forName("paulscode.android.mupen64plusae.game.GameActivity")
         } catch (_: Throwable) { return null }
 
-        // les noms exacts des renseignements, lus dans son propre code
         fun cle(nom: String): String? = try {
             Class.forName("paulscode.android.mupen64plusae.ActivityHelper\$Keys")
                 .getField(nom).get(null) as? String
         } catch (_: Throwable) { null }
 
-        // sans ces deux-la, son ecran se referme aussitot : inutile d'essayer
         val cleChemin = cle("ROM_PATH") ?: return null
         val cleEmpreinte = cle("ROM_MD5") ?: return null
 
-        noter(ctx, "N64 : " + fichier.name +
-              (if (sonCrc != null) " — valeurs lues par son code" else " — valeurs calculees"))
+        /*
+         * L'empreinte et l'en-tete se lisent sur la CARTOUCHE, pas sur
+         * l'archive. On sort donc ses octets en memoire, sans rien ecrire.
+         */
+        val octets = octetsDeLaCartouche(fichier, dedans) ?: return null
+        if (octets.size < 0x40) return null
+        val rom = remettreDansLOrdre(octets) ?: return null
 
         val i = Intent(ctx, ecran)
-        i.putExtra(cleChemin, fichier.absolutePath)
+        if (dedans != null) {
+            // l'entree dans l'archive, et l'archive a cote
+            i.putExtra(cleChemin, dedans)
+            cle("ZIP_PATH")?.let { i.putExtra(it, fichier.absolutePath) }
+        } else {
+            i.putExtra(cleChemin, fichier.absolutePath)
+            cle("ZIP_PATH")?.let { i.putExtra(it, "") }
+        }
         i.putExtra(cleEmpreinte, empreinte(rom))
-        cle("ROM_CRC")?.let { i.putExtra(it, sonCrc ?: sommeDeControle(rom)) }
-        cle("ROM_HEADER_NAME")?.let { i.putExtra(it, sonNom ?: nomInterne(rom)) }
-        cle("ROM_COUNTRY_CODE")?.let { i.putExtra(it, sonPays ?: rom[0x3E]) }
+        cle("ROM_CRC")?.let { i.putExtra(it, sommeDeControle(rom)) }
+        cle("ROM_HEADER_NAME")?.let { i.putExtra(it, nomInterne(rom)) }
+        cle("ROM_COUNTRY_CODE")?.let { i.putExtra(it, rom[0x3E]) }
         cle("ROM_GOOD_NAME")?.let { i.putExtra(it, fichier.nameWithoutExtension) }
         cle("ROM_DISPLAY_NAME")?.let { i.putExtra(it, fichier.nameWithoutExtension) }
         cle("ROM_ART_PATH")?.let { i.putExtra(it, "") }
@@ -104,54 +88,65 @@ object N64 {
         cle("NETPLAY_SERVER")?.let { i.putExtra(it, false) }
         cle("EXIT_GAME")?.let { i.putExtra(it, false) }
         cle("FORCE_EXIT_GAME")?.let { i.putExtra(it, false) }
+
+        noter(ctx, "N64 : " + fichier.name +
+              (if (dedans != null) " (archive, entree « $dedans »)" else " (cartouche seule)"))
         return i
     }
 
+    /** Les octets de la cartouche, qu'elle soit seule ou dans une archive. */
+    private fun octetsDeLaCartouche(fichier: File, dedans: String?): ByteArray? = try {
+        if (dedans == null) fichier.readBytes()
+        else ZipInputStream(fichier.inputStream()).use { zip ->
+            var e = zip.nextEntry
+            var trouve: ByteArray? = null
+            while (e != null) {
+                if (e.name == dedans) { trouve = zip.readBytes(); break }
+                e = zip.nextEntry
+            }
+            trouve
+        }
+    } catch (_: Throwable) { null }
+
     /**
-     * Le jeu vit dans le dossier de Rudy, parfois dans une archive. Son
-     * emulateur veut un vrai fichier : on le pose donc a cote de nous, et
-     * l'on n'y revient pas si c'est deja fait.
+     * Poser le jeu a cote de nous, tel quel.
+     *
+     * On ne l'extrait plus : son emulateur sait lire les archives. On copie
+     * donc le fichier tel qu'il est, avec un nom simple — le coeur ouvre les
+     * fichiers en C, et les parentheses et virgules le genaient.
+     *
+     * Renvoie le fichier pose, et le nom de l'entree si c'est une archive.
      */
-    private fun poserSurLeDisque(ctx: Context, uri: String): File? {
+    private fun poserSurLeDisque(ctx: Context, uri: String): Pair<File, String?>? {
         val dossier = File(ctx.filesDir, "jeux/n64").apply { mkdirs() }
         return try {
             val doc = androidx.documentfile.provider.DocumentFile
                 .fromSingleUri(ctx, Uri.parse(uri))
             val nom = doc?.name ?: "jeu.z64"
-            val estArchive = nom.endsWith(".zip", true)
-            /*
-             * Un nom simple, sans accents ni ponctuation.
-             *
-             * « Banjo-Kazooie (Europe) (En,Fr,De).z64 » passait tel quel au
-             * moteur, qui ouvrait le fichier par son chemin en C : les
-             * parentheses et les virgules ne lui plaisaient pas. On garde donc
-             * les lettres, les chiffres, le point et le tiret.
-             */
-            val brut = if (estArchive) nom.dropLast(4) + ".z64" else nom
-            val propre = brut.replace(Regex("[^A-Za-z0-9._-]"), "_")
-                             .replace(Regex("_+"), "_")
+            val propre = nom.replace(Regex("[^A-Za-z0-9._-]"), "_")
+                            .replace(Regex("_+"), "_")
             val cible = File(dossier, propre)
-            if (cible.isFile && cible.length() > 1024) return cible
 
-            ctx.contentResolver.openInputStream(Uri.parse(uri))?.use { flux ->
-                if (estArchive) {
-                    ZipInputStream(flux).use { zip ->
-                        var e = zip.nextEntry
-                        while (e != null) {
-                            val n = e.name.lowercase()
-                            if (n.endsWith(".z64") || n.endsWith(".n64") || n.endsWith(".v64")) {
-                                cible.outputStream().use { zip.copyTo(it) }
-                                return cible
-                            }
-                            e = zip.nextEntry
-                        }
-                    }
-                    null
-                } else {
+            if (!cible.isFile || cible.length() < 1024) {
+                ctx.contentResolver.openInputStream(Uri.parse(uri))?.use { flux ->
                     cible.outputStream().use { flux.copyTo(it) }
-                    cible
+                } ?: return null
+            }
+
+            if (!propre.endsWith(".zip", true)) return Pair(cible, null)
+
+            // une archive : on cherche le nom de la cartouche a l'interieur
+            ZipInputStream(cible.inputStream()).use { zip ->
+                var e = zip.nextEntry
+                while (e != null) {
+                    val n = e.name.lowercase()
+                    if (n.endsWith(".z64") || n.endsWith(".n64") || n.endsWith(".v64")) {
+                        return Pair(cible, e.name)
+                    }
+                    e = zip.nextEntry
                 }
             }
+            null
         } catch (_: Throwable) { null }
     }
 
