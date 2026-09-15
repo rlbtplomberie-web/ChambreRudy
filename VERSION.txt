@@ -1,20 +1,16 @@
-version 137 — uniquement la Nintendo 64
+version 138 — uniquement la Nintendo 64
 
-  Le journal a parle, et il donne la reponse.
+  Le journal a donne la cause exacte :
+      E GlobalPrefs: Unable to make path
+        /storage/emulated/0/Android/data/com.rudy.chambre/files
 
-  Il recevait bien tout : le fichier existe, 10997 Ko, l'empreinte est lue,
-  l'en-tete dit « 1080 SNOWBOARDING ». Le seul point faux etait le chemin.
+  C'est la que son emulateur range ses cartouches et ses reglages. Mais
+  Android ne cree ce dossier externe que lorsqu'une application le demande —
+  et la Chambre ne le demandait jamais. Il n'existait donc pas, et rien ne
+  pouvait s'y poser : d'ou son « erreur lors de l'ouverture du fichier ROM »,
+  malgre un fichier bien present, une empreinte juste et un en-tete lu.
 
-  Je lui donnais le NOM DE L'ENTREE dans l'archive :
-      ROM_PATH = 1080 TenEighty Snowboarding (Europe) (En,Ja,Fr,De).z64
-      ZIP_PATH = /data/.../1080_TenEighty_Snowboarding.zip
-
-  Or son coeur ne lit pas dans l'archive : il attend une cartouche POSEE, un
-  vrai fichier, dans le dossier ou il range ses cartouches sorties.
-
-  Desormais : on sort la cartouche de l'archive et on la pose CHEZ LUI, a
-  l'endroit qu'il designe — on le lui demande en lisant ses propres reglages,
-  ainsi cela tient meme si ce dossier change de nom. Puis on lui passe ce
-  chemin-la, et l'archive n'est plus mentionnee.
-
-  Le journal dira le chemin exact et la taille de la cartouche posee.
+  Desormais la Chambre demande ce dossier AU DEMARRAGE, avec ceux qu'ils
+  emploient — roms, data, saves, screenshots — et une seconde fois juste
+  avant de lancer un jeu. Aucune autorisation n'est necessaire : ce dossier
+  appartient a l'application.

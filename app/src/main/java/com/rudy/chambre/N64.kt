@@ -43,6 +43,23 @@ object N64 {
          * fichier tout seul, en laissant la seconde case vide. D'ou son
          * « erreur lors de l'ouverture du fichier ROM ».
          */
+        /*
+         * Son dossier externe doit exister avant qu'il ne s'en serve.
+         *
+         * Le journal l'a dit : « Unable to make path /storage/emulated/0/
+         * Android/data/com.rudy.chambre/files ». C'est la qu'il range ses
+         * cartouches et ses reglages, mais Android ne cree ce dossier que
+         * lorsqu'une application le demande. La Chambre ne le demandait
+         * jamais : il n'existait donc pas, et rien ne pouvait s'y poser.
+         *
+         * Il suffit de le demander une fois — Android le cree alors, avec les
+         * droits qu'il faut, sans aucune autorisation a accorder.
+         */
+        try {
+            ctx.getExternalFilesDir(null)?.mkdirs()
+            ctx.getExternalFilesDir("roms")?.mkdirs()
+        } catch (_: Throwable) {}
+
         val pose = poserSurLeDisque(ctx, uri) ?: return null
         val fichier = pose.first          // ce qu'on a pose : l'archive ou la cartouche
         val dedans = pose.second          // le nom de l'entree, si c'est une archive

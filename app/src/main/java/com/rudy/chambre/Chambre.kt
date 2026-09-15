@@ -158,6 +158,25 @@ class Chambre : Application() {
          * On la lance donc nous-memes, exactement comme Android le ferait :
          * on la cree, on lui donne le contexte, puis on l'ouvre.
          */
+        /*
+         * Les dossiers dont les emulateurs ont besoin.
+         *
+         * Ils rangent leurs cartouches et leurs reglages dans le dossier
+         * externe de l'application. Android ne le cree que lorsqu'on le lui
+         * demande : sans cela, Mupen64Plus se plaignait de ne pas pouvoir
+         * creer son chemin, et rien ne pouvait s'y poser.
+         *
+         * On le demande donc au demarrage, une fois pour toutes. Aucune
+         * autorisation n'est necessaire : ce dossier appartient a
+         * l'application.
+         */
+        try {
+            getExternalFilesDir(null)?.mkdirs()
+            for (nom in listOf("roms", "data", "saves", "screenshots")) {
+                getExternalFilesDir(nom)?.mkdirs()
+            }
+        } catch (_: Throwable) {}
+
         reveillerLesEmulateurs()
         poserLeBoutonDeRetour()
 
