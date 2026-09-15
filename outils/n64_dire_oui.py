@@ -22,6 +22,8 @@ la demande n'est jamais atteinte puisque la reponse est deja bonne.
 
 import re
 import sys
+import os
+import subprocess
 from pathlib import Path
 
 _rapport = []
@@ -79,25 +81,17 @@ def main() -> None:
         sys.exit(1)
     racine = Path(sys.argv[1])
 
-    # GitHub a deja le NDK 29, installe pour Dolphin. La revision de Mupen
-    # indique encore le NDK 26.1, absent des executeurs GitHub : Gradle essaie
-    # alors de le telecharger et la compilation s'arrete avant l'APK. Le code
-    # natif de cette revision se compile avec le NDK 29 ; on ne change que la
-    # version demandee par ses fichiers Gradle.
-    ndk_changements = 0
-    for f in list(racine.glob('**/*.gradle')) + list(racine.glob('**/*.gradle.kts')):
+    # Mupen64Plus utilise bien le NDK 26.1. Le NDK 29 de Dolphin ne sait pas
+    # compiler ses anciens Android.mk. On installe donc la version exacte dans
+    # le runner GitHub, avant que Gradle ne lance le moteur N64.
+    sdk = Path(os.environ.get('ANDROID_HOME', '')) / 'cmdline-tools/latest/bin/sdkmanager'
+    if sdk.is_file():
         try:
-            t = f.read_text(encoding='utf-8', errors='ignore')
-        except OSError:
-            continue
-        nouveau, n = re.subn(
-            r'(ndkVersion\s*(?:=\s*)?["\'])26\.1\.10909125(["\'])',
-            r'\g<1>29.0.14206865\2', t)
-        if n:
-            f.write_text(nouveau, encoding='utf-8')
-            ndk_changements += n
-    if ndk_changements:
-        dire(f'N64 : NDK 26.1 remplace par le NDK 29 deja installe ({ndk_changements} reglage(s))')
+            subprocess.run([str(sdk), 'ndk;26.1.10909125'], input='y\n', text=True,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT, check=True)
+            dire('N64 : son NDK 26.1 a ete installe pour conserver son moteur intact')
+        except Exception as e:
+            dire('N64 : installation du NDK 26.1 impossible : ' + str(e)[:90])
 
     cibles = []
     for f in list(racine.glob('**/*.java')) + list(racine.glob('**/*.kt')):
