@@ -27,6 +27,11 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- Autorise RetroRom a voir et ouvrir le Dolphin installe a part. -->
+    <queries>
+        <package android:name="org.dolphinemu.dolphinemu" />
+    </queries>
+
     <application
         android:name="com.rudy.chambre.Chambre"
         android:allowBackup="true"

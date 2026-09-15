@@ -375,6 +375,22 @@ class PageActivity : ComponentActivity() {
                         noterJournal("N64 : entree directe impossible, on ouvre le catalogue")
                     }
 
+                    // Dolphin est volontairement une application voisine :
+                    // elle conserve son menu et les pads de Rudy. On vise son
+                    // activite installee, pas une classe a l'interieur de RetroRom.
+                    if (fiche.paquetVoisin == "org.dolphinemu.dolphinemu") {
+                        val direct = Dolphin.intentionDeJeu(this@PageActivity, uriRom, console == "wii")
+                        if (direct == null) {
+                            noterJournal("Dolphin installe introuvable, ou chemin du jeu inaccessible")
+                            expliquerEchec(console, ClassNotFoundException("Dolphin installe introuvable"))
+                            return@runOnUiThread
+                        }
+                        startActivity(direct)
+                        noterJournal("jeu confie au Dolphin installe")
+                        finish()
+                        return@runOnUiThread
+                    }
+
                     /*
                      * A defaut, son catalogue.
                      *

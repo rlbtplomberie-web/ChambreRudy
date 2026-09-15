@@ -65,12 +65,12 @@ object Consoles {
                 "skin_gc",   "dossier_roms",  listOf(".iso", ".gcm", ".gcz", ".rvz", ".ciso",
                                                      ".dol", ".elf", ".zip"),
                 // Dolphin apporte ses propres bibliotheques, pas un fichier unique
-                coeur = null),
+                coeur = null, paquetVoisin = "org.dolphinemu.dolphinemu"),
         /* Meme Dolphin et meme interface complete, le format du jeu decide Wii/GC. */
         Console("wii",  "Wii",              "org.dolphinemu.dolphinemu.activities.EmulationActivity",
                 "skin_wii",  "dossier_roms",  listOf(".iso", ".wbfs", ".wad", ".rvz", ".ciso",
                                                      ".gcz", ".dol", ".elf", ".zip"),
-                coeur = null),
+                coeur = null, paquetVoisin = "org.dolphinemu.dolphinemu"),
         Console("psp",  "PSP",              "com.skinpsp.app.JeuActivity",
                 "skin_psp",  "dossier_roms",  listOf(".iso", ".cso", ".pbp", ".chd", ".elf"),
                 coeur = "libppsspp_jni.so"),

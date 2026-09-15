@@ -164,7 +164,9 @@ class MainActivity : ComponentActivity() {
                     o.put("ok", f.exists())
                 }
                 // l'ecran de cet emulateur existe-t-il vraiment dans cet APK ?
-                val present = try { Class.forName(c.activite); true } catch (_: Throwable) { false }
+                val present = c.paquetVoisin?.let { paquet ->
+                    packageManager.getLaunchIntentForPackage(paquet) != null
+                } ?: try { Class.forName(c.activite); true } catch (_: Throwable) { false }
                 o.put("ecran", present)
                 if (!present) o.put("ok", false)
                 o.put("dossier", Dossiers.dossier(this@MainActivity, c.id) != null)
@@ -213,6 +215,17 @@ class MainActivity : ComponentActivity() {
                             startActivity(direct)
                             return@runOnUiThread
                         }
+                    }
+                    if (fiche.paquetVoisin == "org.dolphinemu.dolphinemu") {
+                        val direct = Dolphin.intentionDeJeu(this@MainActivity, uriRom, console == "wii")
+                        if (direct == null) {
+                            android.widget.Toast.makeText(this@MainActivity,
+                                "Dolphin installe introuvable, ou jeu inaccessible",
+                                android.widget.Toast.LENGTH_LONG).show()
+                            return@runOnUiThread
+                        }
+                        startActivity(direct)
+                        return@runOnUiThread
                     }
                     if (fiche.activite.startsWith("org.dolphinemu")) {
                         val cheminJeu = Dolphin.preparerJeu(this@MainActivity, uriRom)
