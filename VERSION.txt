@@ -1,24 +1,18 @@
-version 135 — uniquement la Nintendo 64
+version 136 — uniquement la Nintendo 64
 
-  « Erreur lors de l'ouverture du fichier ROM »
+  Son ecran ne verifie rien lui-meme : l'erreur vient de son COEUR, plus loin,
+  et il l'ecrit dans le journal d'Android. Je le filtrais mal — je gardais
+  aussi tous les avertissements du systeme, qui noyaient ses messages. C'est
+  pour cela qu'on n'a jamais vu la raison du refus.
 
-  Son coeur recoit DEUX chemins, pas un : « ROM_PATH » et « ZIP_PATH ». Quand
-  le jeu est dans une archive, il attend le nom de l'entree A L'INTERIEUR de
-  l'archive, et l'archive elle-meme a cote. C'est lui qui l'ouvre — Rudy me
-  l'avait dit : son emulateur sait lire les zip.
+  Desormais la tele montre D'ABORD ce que dit son emulateur : les lignes de
+  mupen, paulscode, CoreService, CoreFragment, GameActivity.
 
-  Je faisais l'inverse : j'extrayais la cartouche a sa place et je lui
-  donnais un fichier tout seul, en laissant la seconde case vide. Il ne
-  pouvait donc pas ouvrir ce qu'il cherchait.
+  Et le journal note exactement ce qu'on lui donne :
+      N64 : fichier Banjo-Kazooie.zip — 8000 Ko — existe true
+      N64 : ROM_PATH = Banjo-Kazooie (Europe).z64
+      N64 : ZIP_PATH = /data/.../jeux/n64/Banjo-Kazooie.zip
+      N64 : empreinte 1AF3C2D9 — en-tete « BANJO KAZOOIE »
 
-  Desormais :
-    - le fichier est pose tel quel, sans extraction, avec un nom simple ;
-    - s'il s'agit d'une archive, on y cherche le nom de la cartouche ;
-    - on lui passe l'entree ET l'archive, comme son catalogue le fait ;
-    - l'empreinte et l'en-tete sont lus sur la cartouche, en memoire, sans
-      rien ecrire sur le disque.
-
-  Si quoi que ce soit resiste, on retombe sur son catalogue et le journal dit
-  ce qui a ete tente.
-
-  Rien d'autre n'est touche : la GameCube attend son tour.
+  Avec ces deux-la cote a cote — ce qu'on lui donne, et ce qu'il en dit — la
+  cause sera lisible au lieu d'etre devinee.

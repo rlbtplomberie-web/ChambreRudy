@@ -402,12 +402,21 @@ class ChambreActivity : ComponentActivity() {
             val p = Runtime.getRuntime().exec(
                 arrayOf("logcat", "-d", "-t", "400", "--pid=" + android.os.Process.myPid()))
             val lignes = p.inputStream.bufferedReader().readLines()
-            val utiles = lignes.filter { l ->
-                l.contains(" E ") || l.contains(" W ") ||
+            /*
+             * Ce qui nous interesse vraiment : ce que dit SON emulateur.
+             *
+             * Je gardais aussi tous les avertissements du systeme, et ils
+             * noyaient ses propres messages — c'est pour cela qu'on ne voyait
+             * jamais la raison du refus. On prend d'abord les siens.
+             */
+            val siennes = lignes.filter { l ->
                 l.contains("mupen", true) || l.contains("paulscode", true) ||
-                l.contains("dolphin", true) || l.contains("citra", true) ||
-                l.contains("AndroidRuntime") || l.contains("Permission")
+                l.contains("CoreService", true) || l.contains("CoreFragment", true) ||
+                l.contains("GameActivity", true) || l.contains("dolphin", true) ||
+                l.contains("citra", true) || l.contains("AndroidRuntime")
             }
+            val utiles = if (siennes.isNotEmpty()) siennes
+                         else lignes.filter { it.contains(" E ") }
             if (utiles.isEmpty()) ""
             else "\n\nCe qu'Android a note :\n" +
                  utiles.takeLast(16).joinToString("\n") { it.take(150) }

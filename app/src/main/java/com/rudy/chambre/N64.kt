@@ -89,8 +89,14 @@ object N64 {
         cle("EXIT_GAME")?.let { i.putExtra(it, false) }
         cle("FORCE_EXIT_GAME")?.let { i.putExtra(it, false) }
 
-        noter(ctx, "N64 : " + fichier.name +
-              (if (dedans != null) " (archive, entree « $dedans »)" else " (cartouche seule)"))
+        noter(ctx, "N64 : fichier " + fichier.name + " — " +
+              (fichier.length() / 1024) + " Ko — existe " + fichier.isFile)
+        noter(ctx, "N64 : ROM_PATH = " +
+              (if (dedans != null) dedans else fichier.absolutePath))
+        noter(ctx, "N64 : ZIP_PATH = " +
+              (if (dedans != null) fichier.absolutePath else "(vide)"))
+        noter(ctx, "N64 : empreinte " + empreinte(rom).take(8) +
+              " — en-tete « " + nomInterne(rom) + " »")
         return i
     }
 
