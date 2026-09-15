@@ -224,16 +224,11 @@ class MainActivity : ComponentActivity() {
                         }
                         i.putExtra("SelectedGames", arrayOf(cheminJeu))
                         i.putExtra("SelectedTitle", fiche.nom)
-                        i.putExtra("riivolution", false)
-                        i.putExtra("systemMenu", false)
+                        i.putExtra("Riivolution", false)
+                        i.putExtra("SystemMenu", false)
                         i.putExtra("platform", if (console == "wii") 1 else 0)
                     } else {
                         i.putExtra("rom", uriRom)
-                        // SkinGC sert aux deux consoles : il choisit son
-                        // habillage d'apres cette information.
-                        if (fiche.activite == "com.skingc.app.MainActivity") {
-                            i.putExtra("console", console)
-                        }
                     }
                     startActivity(i)
                 } catch (e: Throwable) {

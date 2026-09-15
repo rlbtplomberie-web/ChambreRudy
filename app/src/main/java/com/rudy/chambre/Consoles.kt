@@ -57,17 +57,17 @@ object Consoles {
         Console("ds",   "Nintendo DS",      "com.skinds.app.MainActivity",
                 "skin_ds",   "dossier_roms",  listOf(".nds", ".zip"), coeur = "libmelonds.so"),
         /*
-         * Les deux consoles ouvrent le meme ecran SkinGC : c'est l'emulateur
-         * avec les pads de Rudy. Le coeur Dolphin est charge en dessous,
-         * mais son ancienne activite Android n'est pas dans l'APK final.
+         * Ce sont les deux entrees du vrai Dolphin modifie par SkinGC.
+         * Ne pas les rediriger vers com.skingc : cet ancien ecran libretro
+         * n'a pas les menus Dolphin ni les pads installes dans Dolphin.
          */
-        Console("gc",   "GameCube",         "com.skingc.app.MainActivity",
+        Console("gc",   "GameCube",         "org.dolphinemu.dolphinemu.activities.EmulationActivity",
                 "skin_gc",   "dossier_roms",  listOf(".iso", ".gcm", ".gcz", ".rvz", ".ciso",
                                                      ".dol", ".elf", ".zip"),
                 // Dolphin apporte ses propres bibliotheques, pas un fichier unique
                 coeur = null),
-        /* Meme moteur et memes pads, avec l'habillage Wii demande a l'ecran. */
-        Console("wii",  "Wii",              "com.skingc.app.MainActivity",
+        /* Meme Dolphin et meme interface complete, le format du jeu decide Wii/GC. */
+        Console("wii",  "Wii",              "org.dolphinemu.dolphinemu.activities.EmulationActivity",
                 "skin_wii",  "dossier_roms",  listOf(".iso", ".wbfs", ".wad", ".rvz", ".ciso",
                                                      ".gcz", ".dol", ".elf", ".zip"),
                 coeur = null),

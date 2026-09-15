@@ -388,9 +388,6 @@ class PageActivity : ComponentActivity() {
 
                     val i = Intent(this@PageActivity, Class.forName(fiche.activite))
                     i.putExtra("rom", uriRom)
-                    // la GameCube et la Wii partagent leur ecran : il doit
-                    // savoir laquelle des deux a ete posee sur la table
-                    i.putExtra("console", console)
 
                     /*
                      * Dolphin ne regarde pas le supplement « rom ».
@@ -417,8 +414,10 @@ class PageActivity : ComponentActivity() {
                         }
                         i.putExtra("SelectedGames", arrayOf(cheminJeu))
                         i.putExtra("SelectedTitle", fiche.nom)
-                        i.putExtra("riivolution", false)
-                        i.putExtra("systemMenu", false)
+                        // Noms exacts des extras de Dolphin. Les minuscules
+                        // etaient ignorees silencieusement par l'emulateur.
+                        i.putExtra("Riivolution", false)
+                        i.putExtra("SystemMenu", false)
                         // la plateforme : 0 pour la GameCube, 1 pour la Wii.
                         // Dolphin la deduit du fichier, mais l'indiquer evite
                         // qu'il hesite sur les formats communs aux deux.
