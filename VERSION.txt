@@ -1,16 +1,22 @@
-version 138 — uniquement la Nintendo 64
+version 139 — uniquement la Nintendo 64
 
-  Le journal a donne la cause exacte :
-      E GlobalPrefs: Unable to make path
-        /storage/emulated/0/Android/data/com.rudy.chambre/files
+  La fenetre « autoriser / ne pas autoriser »
 
-  C'est la que son emulateur range ses cartouches et ses reglages. Mais
-  Android ne cree ce dossier externe que lorsqu'une application le demande —
-  et la Chambre ne le demandait jamais. Il n'existait donc pas, et rien ne
-  pouvait s'y poser : d'ou son « erreur lors de l'ouverture du fichier ROM »,
-  malgre un fichier bien present, une empreinte juste et un en-tete lu.
+  Son catalogue reclame l'acces aux fichiers au demarrage. Depuis Android 11,
+  l'autorisation d'ECRITURE externe ne peut plus etre accordee : Rudy voit la
+  fenetre, il autorise, et cela echoue quand meme. C'est pour cela que
+  l'emulateur se refermait aussitot.
 
-  Desormais la Chambre demande ce dossier AU DEMARRAGE, avec ceux qu'ils
-  emploient — roms, data, saves, screenshots — et une seconde fois juste
-  avant de lancer un jeu. Aucune autorisation n'est necessaire : ce dossier
-  appartient a l'application.
+  Un nouvel outil repond « oui » a ses questions — « cette autorisation
+  est-elle accordee ? » devient « oui » — sans jamais toucher a ses
+  instructions. Une expression remplacee par une autre : la structure du
+  fichier ne bouge pas. Mon premier outil, lui, retirait la demande elle-meme
+  et cassait la syntaxe ; celui-ci refuse meme d'ecrire si les accolades ne
+  correspondent plus.
+
+  Eprouve sur un catalogue ecrit comme le sien : la declaration reste intacte,
+  la demande n'est jamais atteinte, et le fichier reste equilibre.
+
+  Rien n'est perdu : la Chambre pose la cartouche dans le dossier externe de
+  l'application, qui n'exige aucune autorisation — et qu'elle cree desormais
+  au demarrage.
