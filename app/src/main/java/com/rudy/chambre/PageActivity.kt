@@ -400,7 +400,22 @@ class PageActivity : ComponentActivity() {
                      * Sans cette traduction il s'ouvrirait sans jeu.
                      */
                     if (fiche.activite.startsWith("org.dolphinemu")) {
-                        i.putExtra("SelectedGames", arrayOf(uriRom))
+                        // Dolphin ne sait pas ouvrir une URI content:// du
+                        // selecteur Android : son moteur C++ demande un
+                        // chemin de fichier. La copie est commune a GC/Wii;
+                        // leur interface reste differente grace a console.
+                        val cheminJeu = Dolphin.preparerJeu(this@PageActivity, uriRom)
+                        if (cheminJeu == null) {
+                            noterJournal("Dolphin : copie du jeu impossible")
+                            android.app.AlertDialog.Builder(this@PageActivity,
+                                    android.R.style.Theme_Material_Dialog_Alert)
+                                .setTitle(fiche.nom + " ne demarre pas")
+                                .setMessage("Le jeu n'a pas pu etre prepare pour Dolphin.")
+                                .setPositiveButton("Fermer", null)
+                                .show()
+                            return@runOnUiThread
+                        }
+                        i.putExtra("SelectedGames", arrayOf(cheminJeu))
                         i.putExtra("SelectedTitle", fiche.nom)
                         i.putExtra("riivolution", false)
                         i.putExtra("systemMenu", false)

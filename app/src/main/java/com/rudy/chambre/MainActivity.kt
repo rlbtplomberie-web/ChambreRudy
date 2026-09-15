@@ -205,7 +205,32 @@ class MainActivity : ComponentActivity() {
                             fiche.nom + " : aucun jeu designe", android.widget.Toast.LENGTH_LONG).show()
                         return@runOnUiThread
                     }
-                    startActivity(i.putExtra("rom", uriRom))
+                    // Les trois moteurs plus lourds ne comprennent pas le
+                    // simple extra "rom" des emulateurs integres.
+                    if (console == "n64") {
+                        val direct = N64.intentionDeJeu(this@MainActivity, uriRom)
+                        if (direct != null) {
+                            startActivity(direct)
+                            return@runOnUiThread
+                        }
+                    }
+                    if (fiche.activite.startsWith("org.dolphinemu")) {
+                        val cheminJeu = Dolphin.preparerJeu(this@MainActivity, uriRom)
+                        if (cheminJeu == null) {
+                            android.widget.Toast.makeText(this@MainActivity,
+                                fiche.nom + " : jeu impossible a preparer pour Dolphin",
+                                android.widget.Toast.LENGTH_LONG).show()
+                            return@runOnUiThread
+                        }
+                        i.putExtra("SelectedGames", arrayOf(cheminJeu))
+                        i.putExtra("SelectedTitle", fiche.nom)
+                        i.putExtra("riivolution", false)
+                        i.putExtra("systemMenu", false)
+                        i.putExtra("platform", if (console == "wii") 1 else 0)
+                    } else {
+                        i.putExtra("rom", uriRom)
+                    }
+                    startActivity(i)
                 } catch (e: Throwable) {
                     android.widget.Toast.makeText(this@MainActivity,
                         "lancement impossible : " + e, android.widget.Toast.LENGTH_LONG).show()

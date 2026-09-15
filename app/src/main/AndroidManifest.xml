@@ -31,7 +31,7 @@
         android:name="com.rudy.chambre.Chambre"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="La chambre de Rudy"
+        android:label="RetroRom"
         android:supportsRtl="true"
         android:hardwareAccelerated="true"
         android:requestLegacyExternalStorage="true"
