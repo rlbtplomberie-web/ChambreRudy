@@ -1,18 +1,20 @@
-version 136 — uniquement la Nintendo 64
+version 137 — uniquement la Nintendo 64
 
-  Son ecran ne verifie rien lui-meme : l'erreur vient de son COEUR, plus loin,
-  et il l'ecrit dans le journal d'Android. Je le filtrais mal — je gardais
-  aussi tous les avertissements du systeme, qui noyaient ses messages. C'est
-  pour cela qu'on n'a jamais vu la raison du refus.
+  Le journal a parle, et il donne la reponse.
 
-  Desormais la tele montre D'ABORD ce que dit son emulateur : les lignes de
-  mupen, paulscode, CoreService, CoreFragment, GameActivity.
+  Il recevait bien tout : le fichier existe, 10997 Ko, l'empreinte est lue,
+  l'en-tete dit « 1080 SNOWBOARDING ». Le seul point faux etait le chemin.
 
-  Et le journal note exactement ce qu'on lui donne :
-      N64 : fichier Banjo-Kazooie.zip — 8000 Ko — existe true
-      N64 : ROM_PATH = Banjo-Kazooie (Europe).z64
-      N64 : ZIP_PATH = /data/.../jeux/n64/Banjo-Kazooie.zip
-      N64 : empreinte 1AF3C2D9 — en-tete « BANJO KAZOOIE »
+  Je lui donnais le NOM DE L'ENTREE dans l'archive :
+      ROM_PATH = 1080 TenEighty Snowboarding (Europe) (En,Ja,Fr,De).z64
+      ZIP_PATH = /data/.../1080_TenEighty_Snowboarding.zip
 
-  Avec ces deux-la cote a cote — ce qu'on lui donne, et ce qu'il en dit — la
-  cause sera lisible au lieu d'etre devinee.
+  Or son coeur ne lit pas dans l'archive : il attend une cartouche POSEE, un
+  vrai fichier, dans le dossier ou il range ses cartouches sorties.
+
+  Desormais : on sort la cartouche de l'archive et on la pose CHEZ LUI, a
+  l'endroit qu'il designe — on le lui demande en lisant ses propres reglages,
+  ainsi cela tient meme si ce dossier change de nom. Puis on lui passe ce
+  chemin-la, et l'archive n'est plus mentionnee.
+
+  Le journal dira le chemin exact et la taille de la cartouche posee.

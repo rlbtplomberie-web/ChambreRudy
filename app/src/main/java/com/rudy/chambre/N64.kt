@@ -67,15 +67,31 @@ object N64 {
         if (octets.size < 0x40) return null
         val rom = remettreDansLOrdre(octets) ?: return null
 
-        val i = Intent(ctx, ecran)
-        if (dedans != null) {
-            // l'entree dans l'archive, et l'archive a cote
-            i.putExtra(cleChemin, dedans)
-            cle("ZIP_PATH")?.let { i.putExtra(it, fichier.absolutePath) }
-        } else {
-            i.putExtra(cleChemin, fichier.absolutePath)
-            cle("ZIP_PATH")?.let { i.putExtra(it, "") }
+        /*
+         * Le chemin qu'il attend.
+         *
+         * Je lui ai donne l'entree de l'archive : il n'a pas su l'ouvrir. Et
+         * pour cause — son coeur ne lit pas dans l'archive, il attend un
+         * fichier POSE, dans le dossier ou il range ses cartouches sorties.
+         *
+         * On extrait donc nous-memes, mais chez LUI, a l'endroit qu'il
+         * designe. On lui demande ce dossier ; a defaut, le notre fera.
+         */
+        val cartouche = if (dedans == null) fichier else {
+            val chezLui = sonDossierDeCartouches(ctx)
+            val sortie = File(chezLui, dedans.substringAfterLast('/'))
+            if (!sortie.isFile || sortie.length() < 1024) {
+                try {
+                    sortie.parentFile?.mkdirs()
+                    sortie.writeBytes(octets)
+                } catch (_: Throwable) { return null }
+            }
+            sortie
         }
+
+        val i = Intent(ctx, ecran)
+        i.putExtra(cleChemin, cartouche.absolutePath)
+        cle("ZIP_PATH")?.let { i.putExtra(it, "") }
         i.putExtra(cleEmpreinte, empreinte(rom))
         cle("ROM_CRC")?.let { i.putExtra(it, sommeDeControle(rom)) }
         cle("ROM_HEADER_NAME")?.let { i.putExtra(it, nomInterne(rom)) }
@@ -91,13 +107,37 @@ object N64 {
 
         noter(ctx, "N64 : fichier " + fichier.name + " — " +
               (fichier.length() / 1024) + " Ko — existe " + fichier.isFile)
-        noter(ctx, "N64 : ROM_PATH = " +
-              (if (dedans != null) dedans else fichier.absolutePath))
-        noter(ctx, "N64 : ZIP_PATH = " +
-              (if (dedans != null) fichier.absolutePath else "(vide)"))
+        noter(ctx, "N64 : ROM_PATH = " + cartouche.absolutePath +
+              " — " + (cartouche.length() / 1024) + " Ko")
         noter(ctx, "N64 : empreinte " + empreinte(rom).take(8) +
               " — en-tete « " + nomInterne(rom) + " »")
         return i
+    }
+
+    /**
+     * Le dossier ou il range ses cartouches sorties d'archive.
+     *
+     * On le lui demande, en lisant ses propres reglages : ainsi la cartouche
+     * se trouve la ou il la cherche, meme si ce dossier change d'une revision
+     * a l'autre.
+     */
+    private fun sonDossierDeCartouches(ctx: Context): File {
+        try {
+            val appDataClasse = Class.forName("paulscode.android.mupen64plusae.persistent.AppData")
+            val appData = appDataClasse.getConstructor(Context::class.java).newInstance(ctx)
+            val globalClasse = Class.forName("paulscode.android.mupen64plusae.persistent.GlobalPrefs")
+            val global = globalClasse.getConstructor(Context::class.java, appDataClasse)
+                .newInstance(ctx, appData)
+            for (champ in globalClasse.fields) {
+                if (champ.type != String::class.java) continue
+                val nom = champ.name.lowercase()
+                if ("unzip" in nom || ("rom" in nom && "dir" in nom)) {
+                    val chemin = champ.get(global) as? String
+                    if (!chemin.isNullOrEmpty()) return File(chemin)
+                }
+            }
+        } catch (_: Throwable) {}
+        return File(ctx.filesDir, "jeux/n64/sorties")
     }
 
     /** Les octets de la cartouche, qu'elle soit seule ou dans une archive. */
