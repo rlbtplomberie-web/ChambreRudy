@@ -190,10 +190,19 @@ jobs:
               grep -E "^> Task :app:(assemble|package|bundle)" /tmp/dolphin.log \
                 | tail -4 >> rapport_dolphin.txt || true
             fi
-            aar=$(find dolphinbase/Source/Android -name "*.aar" -size +1M | head -1)
+            # Un AAR peut etre petit : les bibliotheques natives de Dolphin
+            # sont parfois resolues a part par Gradle. Le filtre « +1 Mo »
+            # jetait donc l'AAR qui contient ses ecrans et ses menus, puis
+            # RetroRom compilait sans EmulationActivity.
+            aar=$(find dolphinbase/Source/Android/app/build/outputs/aar \
+              -name "*-debug.aar" -type f 2>/dev/null | head -1)
+            if [ -z "$aar" ]; then
+              aar=$(find dolphinbase/Source/Android -name "*.aar" -type f | head -1)
+            fi
             if [ -n "$aar" ]; then
               mkdir -p app/libs
               cp "$aar" app/libs/dolphin.aar
+              touch .dolphin_complet_integre
               echo "Dolphin compile : $(du -h app/libs/dolphin.aar | cut -f1)"
               echo "Dolphin : bibliotheque produite ($(du -h app/libs/dolphin.aar | cut -f1))" \
                 >> rapport_dolphin.txt
@@ -374,10 +383,10 @@ jobs:
           else
             echo "Nintendo 64 : ABSENT (depose 64-eMule-Skin64-V7.zip)" >> "$rapport"
           fi
-          if [ -d dolphinbase/Source/Android ]; then
-            echo "GameCube / Wii : Dolphin assemble" >> "$rapport"
+          if [ -f .dolphin_complet_integre ] && [ -s app/libs/dolphin.aar ]; then
+            echo "GameCube / Wii : Dolphin complet integre" >> "$rapport"
           else
-            echo "GameCube / Wii : Dolphin pas encore integre" >> "$rapport"
+            echo "GameCube / Wii : Dolphin complet ABSENT" >> "$rapport"
           fi
           if [ -s applications_emulateurs.txt ]; then
             sort -u applications_emulateurs.txt \
@@ -488,6 +497,19 @@ jobs:
                 echo "::error::Mupen64Plus a ete prepare mais n'est PAS dans l'APK"
                 exit 1
               fi
+            fi
+            # Cette verification empeche de publier une Chambre qui pretendra
+            # lancer Dolphin alors que seul libdolphin.so (l'ancien coeur
+            # libretro) a ete embarque. Il faut l'activite du vrai Dolphin,
+            # celle qui donne acces a ses menus et aux pads SkinGC.
+            if [ -f .dolphin_complet_integre ]; then
+              apk=$(find app/build/outputs/apk/debug -name '*.apk' | head -1)
+              if [ -z "$apk" ] || ! unzip -p "$apk" classes*.dex 2>/dev/null | \
+                    strings | grep -q 'org/dolphinemu/dolphinemu/activities/EmulationActivity'; then
+                echo "::error::Dolphin a ete prepare mais son ecran complet manque dans l'APK."
+                exit 1
+              fi
+              echo "  GameCube / Wii : ecran Dolphin complet present dans l'APK"
             fi
           fi
 
