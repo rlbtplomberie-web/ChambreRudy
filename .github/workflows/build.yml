@@ -157,8 +157,8 @@ jobs:
           # sur son fichier, cela se verra au lieu d'echouer en silence.
           python3 outils/dolphin_en_bibliotheque.py dolphinbase/Source/Android \
             | tee -a "$GITHUB_WORKSPACE/rapport_dolphin.txt"
-          if grep -q "com.android.library" dolphinbase/Source/Android/app/build.gradle.kts \
-               2>/dev/null; then
+          if grep -qE "com\.android\.library|plugins\.android\.library" \
+               dolphinbase/Source/Android/app/build.gradle.kts 2>/dev/null; then
             echo "Dolphin : son module est devenu bibliotheque" \
               >> "$GITHUB_WORKSPACE/rapport_dolphin.txt"
           else
@@ -167,7 +167,12 @@ jobs:
           fi
 
           cd dolphinbase/Source/Android
-          if ./gradlew :app:assembleDebug --no-daemon --stacktrace 2>&1 | tail -400 > /tmp/dolphin.log; then
+          # Le tuyau masquait tout : c'est « tail » qui rendait le verdict,
+          # et il reussit toujours. Dolphin echouait donc en silence, et l'on
+          # croyait qu'il avait compile sans rien produire.
+          set -o pipefail
+          if ./gradlew :app:assembleDebug --no-daemon --stacktrace 2>&1 \
+               | tail -400 > /tmp/dolphin.log; then
             cd "$GITHUB_WORKSPACE"
             # on cherche partout : le module ne s'appelle pas forcement
             # « app », et la bibliotheque ne tombe pas toujours au meme endroit
@@ -198,8 +203,10 @@ jobs:
             fi
           else
             echo "Dolphin : la compilation a echoue —" >> rapport_dolphin.txt
-            grep -E "^e: |error:|What went wrong|FAILED" /tmp/dolphin.log \
-              | head -4 | cut -c1-120 >> rapport_dolphin.txt || true
+            grep -E "^e: |error:|What went wrong|Could not|Unresolved|FAILED" \
+              /tmp/dolphin.log | head -5 | cut -c1-130 >> rapport_dolphin.txt || true
+            sed -n "/What went wrong/,/^\* Try/p" /tmp/dolphin.log \
+              | head -5 | cut -c1-130 >> rapport_dolphin.txt || true
             echo "::warning::Dolphin n'a pas compile : la GameCube et la Wii"
             echo "::warning::ne seront pas dans cet APK, le reste est intact."
           fi
@@ -230,12 +237,18 @@ jobs:
           if [ -z "$marque" ]; then echo "::error::habillage N64 incomplet"; exit 1; fi
           cp -a "$(dirname "$marque")"/. m64base/
 
-          # Son ecran d'accueil n'est plus ouvert du tout : la Chambre ouvre
-          # directement son catalogue, qui ne reclame aucune autorisation.
+          # Son catalogue demande lui aussi l'acces aux fichiers au demarrage.
+          # Depuis Android 11 l'ecriture externe ne peut plus etre accordee :
+          # Rudy voit la fenetre, il autorise, et cela echoue quand meme.
           #
-          # J'avais ecrit un outil pour neutraliser sa verification ; il
-          # abimait la syntaxe de SplashActivity et faisait echouer la
-          # compilation. Il ne sert plus a rien, on ne l'appelle plus.
+          # Cet outil repond « oui » a ses questions, sans jamais toucher a
+          # ses instructions : une expression remplacee par une autre, donc
+          # la structure du fichier ne bouge pas. Il refuse d'ecrire si les
+          # accolades ne correspondent plus.
+          #
+          # Rien n'est perdu : la Chambre pose la cartouche dans le dossier
+          # externe de l'application, qui n'exige aucune autorisation.
+          python3 outils/n64_dire_oui.py m64base
 
 
           # il devient un morceau de notre application, et non une application
@@ -374,6 +387,9 @@ jobs:
           fi
           # le compte rendu des autorisations de la N64, mis de cote plus tot :
           # c'est dans ce bilan que Rudy le lit, par l'appui long sur la tele
+          if [ -f rapport_n64.txt ]; then
+            cat rapport_n64.txt >> "$rapport"
+          fi
           if [ -f rapport_dolphin.txt ]; then
             cat rapport_dolphin.txt >> "$rapport"
           fi
