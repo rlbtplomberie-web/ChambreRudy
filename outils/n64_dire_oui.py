@@ -79,6 +79,26 @@ def main() -> None:
         sys.exit(1)
     racine = Path(sys.argv[1])
 
+    # GitHub a deja le NDK 29, installe pour Dolphin. La revision de Mupen
+    # indique encore le NDK 26.1, absent des executeurs GitHub : Gradle essaie
+    # alors de le telecharger et la compilation s'arrete avant l'APK. Le code
+    # natif de cette revision se compile avec le NDK 29 ; on ne change que la
+    # version demandee par ses fichiers Gradle.
+    ndk_changements = 0
+    for f in list(racine.glob('**/*.gradle')) + list(racine.glob('**/*.gradle.kts')):
+        try:
+            t = f.read_text(encoding='utf-8', errors='ignore')
+        except OSError:
+            continue
+        nouveau, n = re.subn(
+            r'(ndkVersion\s*(?:=\s*)?["\'])26\.1\.10909125(["\'])',
+            r'\g<1>29.0.14206865\2', t)
+        if n:
+            f.write_text(nouveau, encoding='utf-8')
+            ndk_changements += n
+    if ndk_changements:
+        dire(f'N64 : NDK 26.1 remplace par le NDK 29 deja installe ({ndk_changements} reglage(s))')
+
     cibles = []
     for f in list(racine.glob('**/*.java')) + list(racine.glob('**/*.kt')):
         try:
