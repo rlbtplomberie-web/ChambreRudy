@@ -171,15 +171,16 @@ jobs:
           # assembleDebug pouvait reussir sans emballer l'AAR et le workflow
           # publiait alors une RetroRom sans les ecrans de Dolphin.
           if ! ./gradlew :app:bundleDebugAar --no-daemon --stacktrace > /tmp/dolphin.log 2>&1; then
-            echo "=== CAUSE DOLPHIN (a lire) ==="
-            # Le bas de la trace Gradle ne dit rien. La cause est toujours
-            # plus haut ; on l'extrait en premier, lisible sur le telephone.
-            grep -n -E "^e: |^ERROR:|FAILURE:|What went wrong|Caused by:|Script compilation error|Unresolved reference|Could not|not found" \
-              /tmp/dolphin.log | head -30 || true
-            echo "=== CONTEXTE DE LA CAUSE ==="
-            sed -n "/FAILURE: Build failed/,/BUILD FAILED/p" /tmp/dolphin.log | head -80 || true
-            echo "=== FIN DE TRACE ==="
-            tail -30 /tmp/dolphin.log
+            # GitHub mobile coupe souvent la fin de Gradle, qui ne contient
+            # qu'une pile Java. On imprime donc le debut ET une recherche non
+            # sensible a la casse : l'erreur concrete ne peut plus disparaitre.
+            echo "=== DEBUT DU JOURNAL DOLPHIN ==="
+            sed -n '1,220p' /tmp/dolphin.log
+            echo "=== LIGNES IMPORTANTES DOLPHIN ==="
+            grep -niE "error|exception|failed|what went wrong|caused by|unresolved|could not|not found|unsupported|unknown" \
+              /tmp/dolphin.log | head -120 || true
+            echo "=== FIN DU JOURNAL DOLPHIN ==="
+            tail -80 /tmp/dolphin.log
             echo "Dolphin : echec de creation de son AAR" >> "$GITHUB_WORKSPACE/rapport_dolphin.txt"
             exit 1
           fi
