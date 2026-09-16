@@ -144,6 +144,61 @@ def relever_application(racine: Path) -> None:
         pass
 
 
+def preparer_dolphin_embarque(racine: Path) -> None:
+    """Adapte Dolphin a son usage *dans* RetroRom, sans toucher aux pads.
+
+    Dolphin declare normalement son ecran d'accueil comme lanceur. Une fois
+    incorpore dans RetroRom, ce filtre cree une seconde icone identique sur le
+    telephone. On conserve l'activite (elle sert encore aux menus), mais on
+    lui retire seulement le filtre HOME.
+
+    Le pad SkinGC calcule ses dimensions a partir de la surface de l'activite.
+    Dolphin laisse par defaut une marge de securite autour des encoches : sur
+    les grands Galaxy elle devient la bande noire observee a gauche ou en
+    haut. Forcer l'usage des bords courts donne au pad la surface physique
+    complete, sans le redimensionner ni le deformer.
+    """
+    manifeste = racine / 'app/src/main/AndroidManifest.xml'
+    if manifeste.exists():
+        texte = manifeste.read_text(encoding='utf-8')
+
+        def sans_lanceur(match: re.Match) -> str:
+            bloc = match.group(0)
+            if ('android.intent.action.MAIN' in bloc and
+                    'android.intent.category.LAUNCHER' in bloc):
+                return ''
+            return bloc
+
+        texte, nombre = re.subn(
+            r'\s*<intent-filter\b[^>]*>.*?</intent-filter>',
+            sans_lanceur, texte, flags=re.S)
+        if nombre:
+            manifeste.write_text(texte, encoding='utf-8')
+            print('lanceur Dolphin retire : une seule icone RetroRom')
+
+    activite = racine / (
+        'app/src/main/java/org/dolphinemu/dolphinemu/activities/'
+        'EmulationActivity.kt')
+    if not activite.exists():
+        return
+    texte = activite.read_text(encoding='utf-8')
+    ancien = '''attributes.layoutInDisplayCutoutMode =
+                if (BooleanSetting.MAIN_EXPAND_TO_CUTOUT_AREA.boolean) {
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                } else {
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER
+                }'''
+    nouveau = '''// RetroRom et SkinGC utilisent toute la dalle, y compris autour
+            // de la camera : le pad garde son echelle et n'est jamais etire.
+            attributes.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES'''
+    if ancien not in texte:
+        raise RuntimeError('reglage d encoche Dolphin introuvable')
+    texte = texte.replace(ancien, nouveau, 1)
+    activite.write_text(texte, encoding='utf-8')
+    print('Dolphin etendu sur toute la dalle, sans deformer SkinGC')
+
+
 def main() -> None:
     if len(sys.argv) < 2:
         print('usage : dolphin_en_bibliotheque.py <dossier Source/Android>')
@@ -154,6 +209,7 @@ def main() -> None:
         sys.exit(1)
 
     relever_application(racine)
+    preparer_dolphin_embarque(racine)
 
     fait = 0
     for nom in ('app/build.gradle.kts', 'app/build.gradle'):
