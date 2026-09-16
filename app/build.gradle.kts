@@ -131,6 +131,26 @@ dependencies {
     implementation("androidx.documentfile:documentfile:1.0.1")
     // Les ecrans et reglages de Dolphin 2606 utilisent Material 3.
     implementation("com.google.android.material:material:1.13.0")
+    // Un AAR local ne transmet pas ses dependances Gradle. Voici, en un seul
+    // bloc, toutes celles du projet Dolphin 2606 (menus, reglages, TV,
+    // selecteur de fichiers et ecran de demarrage).
+    implementation("androidx.cardview:cardview:1.0.0")
+    implementation("androidx.recyclerview:recyclerview:1.4.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.2.1")
+    implementation("androidx.fragment:fragment-ktx:1.8.9")
+    implementation("androidx.slidingpanelayout:slidingpanelayout:1.2.0")
+    implementation("androidx.core:core-splashscreen:1.2.0")
+    implementation("androidx.preference:preference-ktx:1.2.1")
+    implementation("androidx.profileinstaller:profileinstaller:1.4.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
+    implementation("androidx.leanback:leanback:1.2.0")
+    implementation("androidx.tvprovider:tvprovider:1.1.0")
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.2.0")
+    implementation("io.coil-kt:coil:2.7.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    implementation("com.nononsenseapps:filepicker:4.2.1")
     // sert les fichiers de la chambre comme un site local, pour que la page
     // puisse charger ses musiques, ses videos et ses jeux
     implementation("androidx.webkit:webkit:1.11.0")
