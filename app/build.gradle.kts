@@ -129,6 +129,8 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-ktx:1.9.2")
     implementation("androidx.documentfile:documentfile:1.0.1")
+    // Les ecrans et reglages de Dolphin 2606 utilisent Material 3.
+    implementation("com.google.android.material:material:1.13.0")
     // sert les fichiers de la chambre comme un site local, pour que la page
     // puisse charger ses musiques, ses videos et ses jeux
     implementation("androidx.webkit:webkit:1.11.0")
