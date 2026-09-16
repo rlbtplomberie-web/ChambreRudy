@@ -50,13 +50,14 @@ def basculer_en_bibliotheque(chemin: Path) -> bool:
         t = re.sub(r'\b' + mot + r'\s*=?\s*["\'][^"\']*["\']\s*;?', '', t)
         t = re.sub(r'\b' + mot + r'\s*=?\s*[\w.()]+\s*;?', '', t)
 
-    # 3. ce qui n'a de sens que pour une application
-    for bloc in ('signingConfigs', 'bundle', 'splits', 'applicationVariants'):
-        t = retirer_bloc(t, bloc)
-    # la ligne qui designe une signature, y compris au milieu d'une accolade :
-    # le bloc qu'elle appelle vient d'etre retire, elle ferait tout echouer
-    t = re.sub(r'^\s*signingConfig\s*=?\s*[^\n]*$', '', t, flags=re.M)
-    t = re.sub(r'signingConfig\s*=\s*signingConfigs[^\n},]*', '', t)
+    # 3. On ne retire PAS de blocs Gradle par recherche de mot.
+    #
+    # « bundle » et « splits » peuvent apparaitre dans une dependance ou un
+    # commentaire. L'ancien outil cherchait simplement ce mot puis supprimait
+    # jusqu'a la prochaine accolade : il coupait ainsi build.gradle.kts et
+    # provoquait « Expecting '}' ». Le plugin library signalera lui-meme une
+    # option incompatible s'il en rencontre une ; le fichier, lui, reste
+    # syntaxiquement intact.
 
     if t != avant:
         chemin.write_text(t, encoding='utf-8')
