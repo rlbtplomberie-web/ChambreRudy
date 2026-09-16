@@ -7,7 +7,9 @@ plugins {
 
 android {
     namespace = "com.rudy.chambre"
-    compileSdk = 34
+    // Dolphin 2606 est compile avec Android 36. RetroRom doit connaitre ce
+    // niveau pour accepter sa bibliotheque ; cela ne modifie aucun moteur.
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.rudy.chambre"

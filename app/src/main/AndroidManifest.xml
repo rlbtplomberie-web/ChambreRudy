@@ -49,7 +49,7 @@
         android:largeHeap="true"
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/ThemePleinEcran"
-        tools:replace="android:theme,android:label,android:icon,android:roundIcon,android:allowBackup,android:supportsRtl">
+        tools:replace="android:name,android:theme,android:label,android:icon,android:roundIcon,android:allowBackup,android:supportsRtl">
 
         <!-- La chambre, dessinee en natif : l'ecran d'accueil -->
         <activity
