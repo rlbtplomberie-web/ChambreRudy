@@ -58,6 +58,11 @@ def basculer_en_bibliotheque(chemin: Path) -> bool:
         t = re.sub(entier + r'\s*=\s*["\'][^"\']*["\']\s*;?', '', t)
         t = re.sub(entier + r'\s*=\s*[\w.()]+\s*;?', '', t)
 
+    # Cette optimisation n'est autorisee que lorsque le module produit son
+    # propre APK. Le moteur Dolphin est maintenant embarque dans RetroRom,
+    # donc Android interdit ce drapeau sur la bibliotheque.
+    t = re.sub(r'\bisShrinkResources\s*=\s*(true|false)\s*;?', '', t)
+
     # 3. On ne retire PAS de blocs Gradle par recherche de mot.
     #
     # « bundle » et « splits » peuvent apparaitre dans une dependance ou un
