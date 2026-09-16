@@ -50,8 +50,10 @@ def basculer_en_bibliotheque(chemin: Path) -> bool:
     # mangeait le debut de « applicationIdSuffix » et laissait une ligne
     # invalide du type « = \".debug\" ». C'est exactement le type d'erreur
     # Gradle qui ne donne ensuite qu'un vague « exit code 1 » dans GitHub.
+    # targetSdk appartient a l'application finale. Quand Dolphin est une
+    # bibliotheque, c'est RetroRom qui le declare dans son propre module.
     for mot in ('applicationId', 'applicationIdSuffix', 'versionCode', 'versionName',
-                'versionNameSuffix'):
+                'versionNameSuffix', 'targetSdk'):
         entier = r'\b' + mot + r'\b'
         t = re.sub(entier + r'\s*=\s*["\'][^"\']*["\']\s*;?', '', t)
         t = re.sub(entier + r'\s*=\s*[\w.()]+\s*;?', '', t)
