@@ -77,8 +77,6 @@ android {
         // dans l'enveloppe RetroRom, sans modifier les autres moteurs.
         isCoreLibraryDesugaringEnabled = true
     }
-    kotlinOptions { jvmTarget = "17" }
-
     externalNativeBuild {
         cmake { path = file("src/main/cpp/CMakeLists.txt"); version = "3.22.1" }
     }
@@ -99,6 +97,13 @@ android {
         ignoreAssetsPatterns += listOf("dexopt")
     }
     androidResources { noCompress += listOf("png", "jpg", "webp", "bin", "txt", "app", "romfs", "tmd", "bcfnt", "zim", "pgf", "ini", "meta", "json") }
+}
+
+// Syntaxe Kotlin 2.x (l'ancienne kotlinOptions/jvmTarget est refusee).
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
 }
 
 dependencies {
