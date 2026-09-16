@@ -73,6 +73,9 @@ android {
          */
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // Dolphin l'exige dans son AAR. Cela ajoute la compatibilite Java
+        // dans l'enveloppe RetroRom, sans modifier les autres moteurs.
+        isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions { jvmTarget = "17" }
 
@@ -99,9 +102,8 @@ android {
 }
 
 dependencies {
-    // la bibliotheque qui assure cette traduction
-    // la variante « nio » : Mupen64Plus se sert des fonctions de fichiers
-    // recentes de Java, que la version ordinaire ne sait pas traduire
+    // Même version que Dolphin 2606 : elle est imposee par son AAR.
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     /*
      * L'emulateur N64 de Rudy : Mupen64Plus, prepare par le workflow dans
