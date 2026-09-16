@@ -46,9 +46,15 @@ def basculer_en_bibliotheque(chemin: Path) -> bool:
 
     # 2. l'identifiant d'application : une bibliotheque n'en porte pas
     # meme quand plusieurs reglages partagent une ligne, separes par « ; »
-    for mot in ('applicationId', 'applicationIdSuffix', 'versionCode', 'versionName'):
-        t = re.sub(r'\b' + mot + r'\s*=?\s*["\'][^"\']*["\']\s*;?', '', t)
-        t = re.sub(r'\b' + mot + r'\s*=?\s*[\w.()]+\s*;?', '', t)
+    # Le mot doit etre entier : sans la seconde borne, « applicationId »
+    # mangeait le debut de « applicationIdSuffix » et laissait une ligne
+    # invalide du type « = \".debug\" ». C'est exactement le type d'erreur
+    # Gradle qui ne donne ensuite qu'un vague « exit code 1 » dans GitHub.
+    for mot in ('applicationId', 'applicationIdSuffix', 'versionCode', 'versionName',
+                'versionNameSuffix'):
+        entier = r'\b' + mot + r'\b'
+        t = re.sub(entier + r'\s*=\s*["\'][^"\']*["\']\s*;?', '', t)
+        t = re.sub(entier + r'\s*=\s*[\w.()]+\s*;?', '', t)
 
     # 3. On ne retire PAS de blocs Gradle par recherche de mot.
     #
