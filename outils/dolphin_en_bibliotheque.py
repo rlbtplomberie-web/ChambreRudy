@@ -63,6 +63,21 @@ def basculer_en_bibliotheque(chemin: Path) -> bool:
     # donc Android interdit ce drapeau sur la bibliotheque.
     t = re.sub(r'\bisShrinkResources\s*=\s*(true|false)\s*;?', '', t)
 
+    # Le greffon « application » genere deux constantes que l'interface de
+    # Dolphin emploie pour son ecran A propos et son adaptateur GameCube.
+    # Une bibliotheque ne les genere pas : on les fournit explicitement pour
+    # conserver son interface et ses pads, sans creer une seconde APK.
+    marque = 'RETRO_ROM_DOLPHIN_LIBRARY_CONSTANTS'
+    if marque not in t:
+        ajout = (
+            'defaultConfig {\n'
+            '        // ' + marque + '\n'
+            '        buildConfigField("String", "VERSION_NAME", "\\\"2606\\\"")\n'
+            '        buildConfigField("String", "APPLICATION_ID", '
+            '"\\\"org.dolphinemu.dolphinemu\\\"")\n'
+        )
+        t = t.replace('defaultConfig {', ajout, 1)
+
     # 3. On ne retire PAS de blocs Gradle par recherche de mot.
     #
     # « bundle » et « splits » peuvent apparaitre dans une dependance ou un
