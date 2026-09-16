@@ -40,6 +40,8 @@
     <application
         android:name="com.rudy.chambre.Chambre"
         android:allowBackup="true"
+        android:fullBackupContent="@xml/retrom_backup_rules"
+        android:dataExtractionRules="@xml/retrom_backup_rules_api_31"
         android:icon="@mipmap/retro_rom_launcher"
         android:roundIcon="@mipmap/retro_rom_launcher"
         android:label="RetroRom"
@@ -49,7 +51,7 @@
         android:largeHeap="true"
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/ThemePleinEcran"
-        tools:replace="android:name,android:theme,android:label,android:icon,android:roundIcon,android:allowBackup,android:supportsRtl">
+        tools:replace="android:name,android:theme,android:label,android:icon,android:roundIcon,android:allowBackup,android:fullBackupContent,android:dataExtractionRules,android:supportsRtl">
 
         <!-- La chambre, dessinee en natif : l'ecran d'accueil -->
         <activity
@@ -158,6 +160,20 @@
             android:resizeableActivity="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density"
             android:theme="@style/ThemeChambre" />
+
+        <!-- Un seul partageur de fichiers pour Dolphin et Mupen64Plus. Les
+             deux declarent la meme classe dans l'APK unique : cette regle
+             commune garde l'acces aux ROMs des deux consoles. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.filesprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/retrom_file_provider_paths"
+                tools:replace="android:resource" />
+        </provider>
 
         <!-- NES : reglages repris de son projet -->
         <activity

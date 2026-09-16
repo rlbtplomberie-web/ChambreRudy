@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Les ROMs et sauvegardes restent sur l'appareil. -->
+    <exclude domain="external" path="." />
+</full-backup-content>
