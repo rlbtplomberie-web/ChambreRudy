@@ -167,58 +167,29 @@ jobs:
           fi
 
           cd dolphinbase/Source/Android
-          # Le tuyau masquait tout : c'est « tail » qui rendait le verdict,
-          # et il reussit toujours. Dolphin echouait donc en silence, et l'on
-          # croyait qu'il avait compile sans rien produire.
-          set -o pipefail
-          if ./gradlew :app:assembleDebug --no-daemon --stacktrace 2>&1 \
-               | tail -400 > /tmp/dolphin.log; then
-            cd "$GITHUB_WORKSPACE"
-            # on cherche partout : le module ne s'appelle pas forcement
-            # « app », et la bibliotheque ne tombe pas toujours au meme endroit
-            # ce qu'il a reellement produit, quel qu'en soit le genre
-            produit=$(find dolphinbase/Source/Android -path "*/build/outputs/*" \
-              \( -name "*.aar" -o -name "*.apk" \) -size +1M | head -3)
-            if [ -n "$produit" ]; then
-              echo "Dolphin : il a produit —" >> rapport_dolphin.txt
-              echo "$produit" | while read -r f; do
-                echo "   $(basename "$f") $(( $(stat -c%s "$f") / 1048576 )) Mo" >> rapport_dolphin.txt
-              done
-            else
-              echo "Dolphin : RIEN produit — ni bibliotheque ni application" >> rapport_dolphin.txt
-              echo "Dolphin : ses taches de sortie —" >> rapport_dolphin.txt
-              grep -E "^> Task :app:(assemble|package|bundle)" /tmp/dolphin.log \
-                | tail -4 >> rapport_dolphin.txt || true
-            fi
-            # Un AAR peut etre petit : les bibliotheques natives de Dolphin
-            # sont parfois resolues a part par Gradle. Le filtre « +1 Mo »
-            # jetait donc l'AAR qui contient ses ecrans et ses menus, puis
-            # RetroRom compilait sans EmulationActivity.
-            aar=$(find dolphinbase/Source/Android/app/build/outputs/aar \
-              -name "*-debug.aar" -type f 2>/dev/null | head -1)
-            if [ -z "$aar" ]; then
-              aar=$(find dolphinbase/Source/Android -name "*.aar" -type f | head -1)
-            fi
-            if [ -n "$aar" ]; then
-              mkdir -p app/libs
-              cp "$aar" app/libs/dolphin.aar
-              touch .dolphin_complet_integre
-              echo "Dolphin compile : $(du -h app/libs/dolphin.aar | cut -f1)"
-              echo "Dolphin : bibliotheque produite ($(du -h app/libs/dolphin.aar | cut -f1))" \
-                >> rapport_dolphin.txt
-            else
-              echo "Dolphin : compile mais aucune bibliotheque produite" >> rapport_dolphin.txt
-              echo "::warning::Dolphin compile mais aucun .aar produit."
-            fi
-          else
-            echo "Dolphin : la compilation a echoue —" >> rapport_dolphin.txt
-            grep -E "^e: |error:|What went wrong|Could not|Unresolved|FAILED" \
-              /tmp/dolphin.log | head -5 | cut -c1-130 >> rapport_dolphin.txt || true
-            sed -n "/What went wrong/,/^\* Try/p" /tmp/dolphin.log \
-              | head -5 | cut -c1-130 >> rapport_dolphin.txt || true
-            echo "::warning::Dolphin n'a pas compile : la GameCube et la Wii"
-            echo "::warning::ne seront pas dans cet APK, le reste est intact."
+          # Une bibliotheque Android se construit avec cette tache exacte.
+          # assembleDebug pouvait reussir sans emballer l'AAR et le workflow
+          # publiait alors une RetroRom sans les ecrans de Dolphin.
+          if ! ./gradlew :app:bundleDebugAar --no-daemon --stacktrace > /tmp/dolphin.log 2>&1; then
+            tail -220 /tmp/dolphin.log
+            echo "Dolphin : echec de creation de son AAR" >> "$GITHUB_WORKSPACE/rapport_dolphin.txt"
+            exit 1
           fi
+
+          cd "$GITHUB_WORKSPACE"
+          aar=$(find dolphinbase/Source/Android/app/build/outputs/aar \
+            -name "*-debug.aar" -type f | head -1)
+          if [ -z "$aar" ] || [ ! -s "$aar" ]; then
+            echo "::error::Dolphin n'a pas produit app-debug.aar. Pas d'APK RetroRom publiee."
+            find dolphinbase/Source/Android/app/build/outputs -type f 2>/dev/null || true
+            exit 1
+          fi
+          mkdir -p app/libs
+          cp "$aar" app/libs/dolphin.aar
+          touch .dolphin_complet_integre
+          echo "Dolphin compile : $(du -h app/libs/dolphin.aar | cut -f1)"
+          echo "Dolphin : bibliotheque produite ($(du -h app/libs/dolphin.aar | cut -f1))" \
+            >> rapport_dolphin.txt
 
       - name: Preparer l'emulateur N64 de Rudy
         run: |
