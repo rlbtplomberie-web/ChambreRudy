@@ -14,6 +14,10 @@ permissions:
 jobs:
   apk:
     runs-on: ubuntu-latest
+    env:
+      # A augmenter seulement quand Dolphin, son patch SkinGC ou sa conversion
+      # en AAR change. Les simples changements de chambre reutilisent l'AAR.
+      DOLPHIN_CACHE_VERSION: "2606-skingc-retrom-v2"
     # Dolphin compile son moteur C++ en entier : c'est long, et le delai par
     # defaut ne suffirait pas.
     timeout-minutes: 180
@@ -97,6 +101,14 @@ jobs:
             echo "NDK 29.0.14206865 et CMake 3.22.1 installes"
           fi
 
+      - name: Recuperer Dolphin deja compile
+        id: cache-dolphin
+        if: hashFiles('SkinGC-corrige.zip') != ''
+        uses: actions/cache@v4
+        with:
+          path: app/libs/dolphin.aar
+          key: dolphin-arm64-${{ env.DOLPHIN_CACHE_VERSION }}-${{ hashFiles('SkinGC-corrige.zip') }}
+
       - name: Preparer l'emulateur GameCube et Wii de Rudy
         run: |
           set -e
@@ -107,6 +119,18 @@ jobs:
             exit 0
           fi
           echo "Dolphin : archive trouvee" >> rapport_dolphin.txt
+
+          # Quand l'AAR est en cache, Dolphin et ses pads sont strictement les
+          # memes que lors de sa derniere compilation complete. Inutile de
+          # retelecharger son depot ou de recompiler son moteur C++ pour une
+          # modification de la chambre, d'un jeu HTML ou d'une autre console.
+          if [ -s app/libs/dolphin.aar ] && unzip -t app/libs/dolphin.aar >/dev/null 2>&1; then
+            touch .dolphin_complet_integre
+            echo "Dolphin : AAR restauree du cache" >> rapport_dolphin.txt
+            echo "Dolphin deja compile : reutilisation du cache"
+            exit 0
+          fi
+          rm -f app/libs/dolphin.aar
 
           rm -f applications_emulateurs.txt
           echo "habillage GameCube trouve : on prepare Dolphin 2606"
@@ -139,6 +163,10 @@ jobs:
       - name: Compiler Dolphin a part, avec SON Gradle
         run: |
           set -e
+          if [ -s app/libs/dolphin.aar ] && unzip -t app/libs/dolphin.aar >/dev/null 2>&1; then
+            touch .dolphin_complet_integre
+            exit 0
+          fi
           [ -d dolphinbase/Source/Android ] || exit 0
 
           # Dolphin garde SA configuration : sa version d'Android Gradle, son
