@@ -479,26 +479,21 @@ class ChambreActivity : ComponentActivity() {
     // ================= les menus =================
 
     private fun proposerTiroir() {
-        menu()
-            .setTitle("Le tiroir est ouvert")
-            .setItems(arrayOf("Dessiner", "Jouer aux cartes", "Refermer")) { _, i ->
-                when (i) {
-                    0 -> startActivity(Intent(this,
-                        com.rudy.chambre.atelier.AtelierActivity::class.java))
-                    1 -> menuCartes()
-                    else -> { son.bruit("tiroir.mp3"); vue.ouvrirTiroir(false) }
-                }
-            }.show()
+        panneau("Que veux-tu faire ?", listOf("Dessiner", "Jouer aux cartes"), 0,
+            0xF10A1435.toInt(), 0xFFFFC54E.toInt(), "NON, REFERMER") { i ->
+            if (i == 0) confirmer("Voulez-vous dessiner ?") {
+                startActivity(Intent(this, com.rudy.chambre.atelier.AtelierActivity::class.java))
+            } else menuCartes()
+        }
     }
 
     private fun menuCartes() {
-        menu()
-            .setTitle("Jeu de cartes")
-            .setItems(arrayOf("Poker", "Blackjack")) { _, i ->
-                startActivity(Intent(this, if (i == 0)
-                    com.rudy.chambre.cartes.PokerActivity::class.java
-                else com.rudy.chambre.cartes.BlackjackActivity::class.java))
-            }.show()
+        panneau("À quel jeu de cartes veux-tu jouer ?", listOf("Poker", "Blackjack"), 0,
+            0xF10A1435.toInt(), 0xFFFFC54E.toInt(), "RETOUR") { i ->
+            startActivity(Intent(this, if (i == 0)
+                com.rudy.chambre.cartes.PokerActivity::class.java
+            else com.rudy.chambre.cartes.BlackjackActivity::class.java))
+        }
     }
 
     /**
@@ -513,9 +508,9 @@ class ChambreActivity : ComponentActivity() {
                 0xF5261A42.toInt(), 0x59FFDC96,
                 "← Refermer l'armoire") { i ->
             when (i) {
-                0 -> startActivity(Intent(this, com.rudy.chambre.monopoly.MonopolyActivity::class.java))
-                1 -> startActivity(Intent(this, com.rudy.chambre.echecs.EchecsActivity::class.java))
-                2 -> startActivity(Intent(this, com.rudy.chambre.dames.DamesActivity::class.java))
+                0 -> confirmer("Voulez-vous jouer au Monopoly ?") { startActivity(Intent(this, com.rudy.chambre.monopoly.MonopolyActivity::class.java)) }
+                1 -> confirmer("Voulez-vous jouer aux échecs ?") { startActivity(Intent(this, com.rudy.chambre.echecs.EchecsActivity::class.java)) }
+                2 -> confirmer("Voulez-vous jouer aux dames ?") { startActivity(Intent(this, com.rudy.chambre.dames.DamesActivity::class.java)) }
             }
         }
     }
@@ -538,14 +533,14 @@ class ChambreActivity : ComponentActivity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(12f), dp(10f), dp(12f), dp(10f))
             background = GradientDrawable().apply {
-                cornerRadius = dp(18f).toFloat()
-                colors = intArrayOf(fond, 0xF5120B24.toInt())
+                cornerRadius = dp(28f).toFloat()
+                colors = intArrayOf(0xFC071331.toInt(), fond, 0xFC071331.toInt())
                 orientation = GradientDrawable.Orientation.TL_BR
-                setStroke(dp(2f), bordure)
+                setStroke(dp(3f), bordure)
             }
         }
         bloc.addView(TextView(this).apply {
-            text = titre; textSize = 14f
+            text = "▲  $titre  ▲"; textSize = 16f
             setTextColor(0xFFFFEEC2.toInt())
             setTypeface(null, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER
@@ -558,9 +553,9 @@ class ChambreActivity : ComponentActivity() {
                 text = nom; textSize = 11f
                 setTextColor(if (i == enAvant) 0xFF2A1C06.toInt() else Color.WHITE)
                 background = GradientDrawable().apply {
-                    cornerRadius = dp(12f).toFloat()
-                    setColor(if (i == enAvant) 0xFFE8C36A.toInt() else 0x33FFFFFF)
-                    setStroke(dp(1f), 0x66FFDC96)
+                cornerRadius = dp(18f).toFloat()
+                setColor(if (i == enAvant) 0xFF45208D.toInt() else 0xFF0E1B42.toInt())
+                setStroke(dp(2f), if (i == enAvant) 0xFFFFD35A.toInt() else 0xFFB67A21.toInt())
                 }
                 setOnClickListener { fermerLePanneau(); surChoix(i) }
             }, LinearLayout.LayoutParams(0, -2, 1f).apply {
@@ -594,10 +589,17 @@ class ChambreActivity : ComponentActivity() {
             .withEndAction { (p.parent as? FrameLayout)?.removeView(p) }.start()
     }
 
+    /** Le même cadre Zelda pour toutes les confirmations Oui / Non. */
+    private fun confirmer(question: String, oui: () -> Unit) {
+        panneau(question, listOf("OUI", "NON"), 0,
+            0xF10A1435.toInt(), 0xFFFFC54E.toInt(), "RETOUR") { i ->
+            if (i == 0) oui()
+        }
+    }
+
     private fun menuDehors() {
-        menu()
-            .setTitle("Voulez-vous sortir ?")
-            .setItems(arrayOf("Tir au but", "Faire des paniers", "Balle au prisonnier", "PariBoxe")) { _, i ->
+        panneau("À quel jeu veux-tu jouer ?", listOf("Tir au but", "Paniers", "Balle prisonnier", "PariBoxe"), 3,
+            0xF10A1435.toInt(), 0xFFFFC54E.toInt(), "RETOUR") { i ->
                 // Les jeux de plein air et PariBoxe sont integres a RetroRom.
                 val ecrans = listOf(
                     com.rudy.chambre.penalty.PenaltyActivity::class.java,
@@ -606,9 +608,7 @@ class ChambreActivity : ComponentActivity() {
                     com.rudy.chambre.pariboxe.PariBoxeActivity::class.java
                 )
                 startActivity(Intent(this, ecrans[i]))
-            }
-            .setNegativeButton("Rester", null)
-            .show()
+        }
     }
 
     /** La vitrine de la console posee sur le bureau. */

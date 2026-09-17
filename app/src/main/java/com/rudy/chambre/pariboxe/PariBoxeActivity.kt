@@ -138,6 +138,14 @@ class PariBoxeActivity : ComponentActivity() {
                   AndroidPariBoxe.combatFini(chauve <= 0.01 ? 'RUDY' : 'LE CHAUVE');
                 }
               }, 120);
+              ['joy', 'guard', 'dodge', 'attack'].forEach(function (id) {
+                var bouton = document.getElementById(id);
+                if (!bouton || bouton.__vibrationPariBoxe) return;
+                bouton.__vibrationPariBoxe = true;
+                bouton.addEventListener('pointerdown', function () {
+                  if (window.AndroidPariBoxe) AndroidPariBoxe.vibrer(28);
+                }, { passive: true });
+              });
             })();
             """.trimIndent(), null
         )
