@@ -1790,8 +1790,38 @@ html body #game #label{
   var a=largeur(cpu), b=largeur(rudy);
   if(a<vCpu-0.5)  flash("coup");   // Rudy touche
   if(b<vRudy-0.5) flash("recu");   // Rudy encaisse
-  vCpu=a; vRudy=b;
-  teinte(cpu,a); teinte(rudy,b);
+ vCpu=a; vRudy=b;
+ teinte(cpu,a); teinte(rudy,b);
  },100);
 })();
 </script>
+
+<!-- Placement verrouillé sur la maquette de combat fournie par Rudy (S26 Ultra horizontal). -->
+<style id="maquette-rudy-ring-final">
+/* Les pieds restent sur le tapis du ring, jamais sur le public. */
+html body #game #fighter{left:37%!important;bottom:25%!important}
+html body #game #enemy{bottom:25%!important}
+
+/* Commandes de la taille et aux positions visibles sur la maquette. */
+html body #game #joy{
+ left:9.5%!important;top:66%!important;right:auto!important;bottom:auto!important;
+ width:215px!important;height:215px!important;
+ transform:translate(-50%,-50%)!important;
+}
+html body #game #stick{width:88px!important;height:88px!important;left:59px!important;top:59px!important}
+html body #game #guard{
+ left:94.9%!important;top:55%!important;right:auto!important;bottom:auto!important;
+ width:90px!important;height:90px!important;
+ transform:translate(-50%,-50%)!important;font-size:15px!important;
+}
+html body #game #dodge{
+ left:94.9%!important;top:67.4%!important;right:auto!important;bottom:auto!important;
+ width:90px!important;height:90px!important;
+ transform:translate(-50%,-50%)!important;font-size:14px!important;
+}
+html body #game #attack{
+ left:89.3%!important;top:77.9%!important;right:auto!important;bottom:auto!important;
+ width:90px!important;height:90px!important;
+ transform:translate(-50%,-50%)!important;font-size:15px!important;
+}
+</style>
