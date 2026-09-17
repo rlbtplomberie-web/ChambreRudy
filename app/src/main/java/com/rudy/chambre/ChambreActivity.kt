@@ -110,8 +110,15 @@ class ChambreActivity : ComponentActivity() {
         racine.addView(etiquette, FrameLayout.LayoutParams(-2, -2))
         setContentView(racine)
 
-        // l'ouverture du carton, une seule fois par lancement
-        if (etat == null) vue.post { vue.jouerIntro() }
+        // « Bureau » depuis un emulateur doit revenir immediatement a la
+        // chambre utile (TV, tiroirs et consoles), jamais a l'introduction.
+        val retourBureau = intent.getBooleanExtra("retour_bureau", false)
+        if (retourBureau) {
+            vue.post { vue.cadrerSurLaTele() }
+        } else if (etat == null) {
+            // l'ouverture du carton, une seule fois par lancement
+            vue.post { vue.jouerIntro() }
+        }
         // la premiere console est prete avant meme qu'on touche le carton
         vue.postDelayed({ preparerVideo(Decor.CONSOLES[0]) }, 1200)
     }
