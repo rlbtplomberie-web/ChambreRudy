@@ -4,7 +4,10 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.net.Uri
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
@@ -69,7 +72,8 @@ class PariBoxeActivity : ComponentActivity() {
         }
         racine.addView(web, FrameLayout.LayoutParams(-1, -1))
         setContentView(racine)
-        com.rudy.chambre.Ambiance.adoucirLaMusique()
+        // Pendant PariBoxe, la musique de la chambre est silencieuse.
+        com.rudy.chambre.SonPartage.volume(0f)
     }
 
     /**
@@ -113,6 +117,16 @@ class PariBoxeActivity : ComponentActivity() {
     private inner class PontAndroid {
         @JavascriptInterface fun combatFini(gagnant: String) {
             runOnUiThread { afficherFin(gagnant) }
+        }
+
+        @JavascriptInterface fun vibrer(dureeMs: Int) {
+            val duree = dureeMs.coerceIn(12, 80).toLong()
+            val vibreur = getSystemService(Vibrator::class.java) ?: return
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibreur.vibrate(VibrationEffect.createOneShot(duree, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION") vibreur.vibrate(duree)
+            }
         }
     }
 
