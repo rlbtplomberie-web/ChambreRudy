@@ -83,7 +83,23 @@ class Chambre : Application() {
                         setPadding((10 * dens).toInt(), (5 * dens).toInt(),
                                    (10 * dens).toInt(), (5 * dens).toInt())
                         alpha = .55f
-                        setOnClickListener { a.finish() }
+                        setOnClickListener {
+                            /*
+                             * « Bureau » est le raccourci pose au-dessus des
+                             * emulateurs. Fermer seulement Mupen le laisse
+                             * parfois vider toute sa tache et Android revient
+                             * alors au telephone. On ouvre donc explicitement
+                             * la vraie chambre, deja cadree sur le bureau.
+                             */
+                            try {
+                                val retour = android.content.Intent(a, ChambreActivity::class.java)
+                                    .putExtra("retour_bureau", true)
+                                    .addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                                              android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                                a.startActivity(retour)
+                            } catch (_: Throwable) {}
+                            a.finish()
+                        }
                     }
                     val p = android.widget.FrameLayout.LayoutParams(-2, -2,
                         android.view.Gravity.BOTTOM or android.view.Gravity.END)
