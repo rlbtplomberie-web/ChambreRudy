@@ -51,12 +51,12 @@ class PariBoxeActivity : ComponentActivity() {
             settings.mediaPlaybackRequiresUserGesture = false
             settings.allowFileAccess = true
             settings.allowContentAccess = false
-            // Le fichier de Rudy est deja calibre en vw/vh pour son ecran.
-            // WebView ne doit ni l'agrandir, ni le reduire, ni appliquer un zoom d'aperçu.
-            settings.useWideViewPort = false
+            // Le HTML de Rudy calcule seul la taille et le placement en vw/vh.
+            // On conserve un viewport mobile standard, sans mise à l'échelle imposée.
+            settings.useWideViewPort = true
             settings.loadWithOverviewMode = false
             settings.textZoom = 100
-            setInitialScale(100)
+            setInitialScale(0)
             overScrollMode = WebView.OVER_SCROLL_NEVER
             setBackgroundColor(Color.BLACK)
             addJavascriptInterface(PontAndroid(), "AndroidPariBoxe")
@@ -79,9 +79,9 @@ class PariBoxeActivity : ComponentActivity() {
      * limite d'envoi GitHub. Il est réuni sans le modifier avant son affichage.
      */
     private fun preparerJeu(): File {
-        val cible = File(cacheDir, "pariboxe-v2.html")
+        val cible = File(cacheDir, "pariboxe-v3.html")
         if (cible.isFile && cible.length() > 30_000_000L) return cible
-        val temporaire = File(cacheDir, "pariboxe-v1.tmp")
+        val temporaire = File(cacheDir, "pariboxe-v3.tmp")
         try {
             FileOutputStream(temporaire).use { destination ->
                 assets.open("pariboxe/index.html.000").use { it.copyTo(destination) }
