@@ -21,9 +21,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.rudy.chambre.ChambreActivity
-import org.tukaani.xz.XZInputStream
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
 
 /**
@@ -77,27 +75,17 @@ class PariBoxeActivity : ComponentActivity() {
     }
 
     /**
-     * Les animations de PariBoxe sont volumineuses. Elles restent completes,
-     * mais sont stockees compressees dans l'APK afin que la mise a jour puisse
-     * etre deposee depuis le telephone. Android les decompresse une seule fois
-     * dans son cache avant de lancer le combat.
+     * Le HTML de Rudy est réparti en deux assets seulement pour passer la
+     * limite d'envoi GitHub. Il est réuni sans le modifier avant son affichage.
      */
     private fun preparerJeu(): File {
-        val cible = File(cacheDir, "pariboxe-v1.html")
+        val cible = File(cacheDir, "pariboxe-v2.html")
         if (cible.isFile && cible.length() > 30_000_000L) return cible
         val temporaire = File(cacheDir, "pariboxe-v1.tmp")
-        val compresse = File(cacheDir, "pariboxe-v1.xz")
         try {
-            // Les deux morceaux sont des assets normaux : ils sont reunis ici
-            // avant la decompression et n'exigent ni internet ni permission.
-            FileOutputStream(compresse).use { destination ->
-                assets.open("pariboxe/index.html.xz.000").use { it.copyTo(destination) }
-                assets.open("pariboxe/index.html.xz.001").use { it.copyTo(destination) }
-            }
-            FileInputStream(compresse).use { brut ->
-                XZInputStream(brut).use { source ->
-                    FileOutputStream(temporaire).use { destination -> source.copyTo(destination) }
-                }
+            FileOutputStream(temporaire).use { destination ->
+                assets.open("pariboxe/index.html.000").use { it.copyTo(destination) }
+                assets.open("pariboxe/index.html.001").use { it.copyTo(destination) }
             }
             if (cible.exists()) cible.delete()
             if (!temporaire.renameTo(cible)) {
@@ -106,10 +94,8 @@ class PariBoxeActivity : ComponentActivity() {
             }
         } catch (e: Throwable) {
             temporaire.delete()
-            compresse.delete()
             throw IllegalStateException("PariBoxe ne peut pas etre prepare", e)
         }
-        compresse.delete()
         return cible
     }
 

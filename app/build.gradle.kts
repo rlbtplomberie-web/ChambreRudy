@@ -162,5 +162,4 @@ dependencies {
     // Decompression locale de PariBoxe : l'archive de mise a jour reste
     // assez petite pour etre deposee depuis le telephone, sans retirer une
     // seule animation du combat.
-    implementation("org.tukaani:xz:1.10")
 }
