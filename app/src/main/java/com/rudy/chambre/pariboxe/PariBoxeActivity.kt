@@ -50,6 +50,12 @@ class PariBoxeActivity : ComponentActivity() {
             settings.mediaPlaybackRequiresUserGesture = false
             settings.allowFileAccess = true
             settings.allowContentAccess = false
+            // Le fichier de Rudy est deja calibre en vw/vh pour son ecran.
+            // WebView ne doit ni l'agrandir, ni le reduire, ni appliquer un zoom d'aperçu.
+            settings.useWideViewPort = false
+            settings.loadWithOverviewMode = false
+            settings.textZoom = 100
+            setInitialScale(100)
             overScrollMode = WebView.OVER_SCROLL_NEVER
             setBackgroundColor(Color.BLACK)
             addJavascriptInterface(PontAndroid(), "AndroidPariBoxe")
