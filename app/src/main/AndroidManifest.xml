@@ -144,6 +144,14 @@
             android:theme="@style/ThemeChambre"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density" />
 
+        <!-- PariBoxe : le combat Rudy contre le chauve, integre a RetroRom -->
+        <activity
+            android:name="com.rudy.chambre.pariboxe.PariBoxeActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/ThemeChambre"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density" />
+
         <!-- Les jeux, les vitrines et l'atelier, ouverts par-dessus -->
         <activity
             android:name="com.rudy.chambre.PageActivity"

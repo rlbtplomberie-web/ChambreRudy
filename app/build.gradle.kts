@@ -159,4 +159,8 @@ dependencies {
     // sert les fichiers de la chambre comme un site local, pour que la page
     // puisse charger ses musiques, ses videos et ses jeux
     implementation("androidx.webkit:webkit:1.11.0")
+    // Decompression locale de PariBoxe : l'archive de mise a jour reste
+    // assez petite pour etre deposee depuis le telephone, sans retirer une
+    // seule animation du combat.
+    implementation("org.tukaani:xz:1.10")
 }

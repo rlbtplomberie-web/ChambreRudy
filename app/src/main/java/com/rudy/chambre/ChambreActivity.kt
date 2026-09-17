@@ -597,12 +597,13 @@ class ChambreActivity : ComponentActivity() {
     private fun menuDehors() {
         menu()
             .setTitle("Voulez-vous sortir ?")
-            .setItems(arrayOf("Tir au but", "Faire des paniers", "Balle au prisonnier")) { _, i ->
-                // les trois jeux de plein air, desormais en natif
+            .setItems(arrayOf("Tir au but", "Faire des paniers", "Balle au prisonnier", "PariBoxe")) { _, i ->
+                // Les jeux de plein air et PariBoxe sont integres a RetroRom.
                 val ecrans = listOf(
                     com.rudy.chambre.penalty.PenaltyActivity::class.java,
                     com.rudy.chambre.basket.BasketActivity::class.java,
-                    com.rudy.chambre.balle.PartieActivity::class.java
+                    com.rudy.chambre.balle.PartieActivity::class.java,
+                    com.rudy.chambre.pariboxe.PariBoxeActivity::class.java
                 )
                 startActivity(Intent(this, ecrans[i]))
             }
