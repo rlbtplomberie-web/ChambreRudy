@@ -83,7 +83,37 @@ class Chambre : Application() {
                         setPadding((10 * dens).toInt(), (5 * dens).toInt(),
                                    (10 * dens).toInt(), (5 * dens).toInt())
                         alpha = .55f
-                        setOnClickListener { a.finish() }
+                        setOnClickListener {
+                            /*
+                             * La vitrine est volontairement fermee au
+                             * lancement d'un jeu. Un simple finish() ici ne
+                             * peut donc pas la reveler : il fait sortir de
+                             * RetroRom. On rouvre explicitement la Chambre
+                             * (ou celle qui est deja dans la pile), puis on
+                             * retire seulement l'ecran de l'emulateur.
+                             */
+                            try {
+                                val retour = android.content.Intent(
+                                    a, Class.forName("com.rudy.chambre.ChambreActivity")
+                                ).apply {
+                                    addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                                    addFlags(android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                                }
+                                a.startActivity(retour)
+                            } catch (_: Throwable) {
+                                // Secours pour les anciennes compilations
+                                // qui ont encore la chambre Web comme accueil.
+                                try {
+                                    a.startActivity(android.content.Intent(
+                                        a, Class.forName("com.rudy.chambre.MainActivity")
+                                    ).apply {
+                                        addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                                        addFlags(android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                                    })
+                                } catch (_: Throwable) {}
+                            }
+                            a.finish()
+                        }
                     }
                     val p = android.widget.FrameLayout.LayoutParams(-2, -2,
                         android.view.Gravity.BOTTOM or android.view.Gravity.END)
