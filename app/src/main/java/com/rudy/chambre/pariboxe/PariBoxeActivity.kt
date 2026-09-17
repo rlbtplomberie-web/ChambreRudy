@@ -51,9 +51,9 @@ class PariBoxeActivity : ComponentActivity() {
             settings.mediaPlaybackRequiresUserGesture = false
             settings.allowFileAccess = true
             settings.allowContentAccess = false
-            // Le HTML de Rudy calcule seul la taille et le placement en vw/vh.
-            // On conserve un viewport mobile standard, sans mise à l'échelle imposée.
-            settings.useWideViewPort = true
+            // Conserver le viewport mobile horizontal : c'est lui qui active
+            // la mise en page S26 Ultra déjà prévue dans le HTML de Rudy.
+            settings.useWideViewPort = false
             settings.loadWithOverviewMode = false
             settings.textZoom = 100
             setInitialScale(0)
