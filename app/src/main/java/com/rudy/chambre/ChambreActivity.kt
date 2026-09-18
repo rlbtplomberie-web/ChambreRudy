@@ -232,8 +232,21 @@ class ChambreActivity : ComponentActivity() {
              * Elle ne sert que si le bureau est libre : tant qu'une console
              * est posee, la tele lui appartient.
              */
-            // la loupe : rien pour l'instant, Rudy dira ce qu'elle fait
-            "loupe" -> dire("une loupe")
+            /*
+             * La loupe : elle montre de pres la console posee sur le bureau.
+             * Sans console sur le bureau, elle ne sert a rien.
+             */
+            "loupe" -> {
+                val console = vue.consolePosee()
+                when {
+                    console == null -> dire("posez d'abord une console")
+                    com.rudy.chambre.loupe.Loupe.aUnePage(console.id) -> {
+                        son.bruit("pose.mp3")
+                        com.rudy.chambre.loupe.Loupe.ouvrir(this, console.id)
+                    }
+                    else -> dire("pas encore de loupe pour la " + console.nom)
+                }
+            }
             "telecommande" -> {
                 if (vue.consolePosee() != null) {
                     dire("veuillez d'abord ranger la console")
