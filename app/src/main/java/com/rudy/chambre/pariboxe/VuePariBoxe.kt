@@ -36,9 +36,13 @@ import kotlin.math.roundToInt
  * d'origine (largeur x hauteur). L'ombre portee du HTML (drop-shadow 0 9px
  * 5px, noir 50 %) est precalculee et posee dans le repere de l'image.
  */
+private const val RUDY_DEPART = 37.0
+private const val CPU_DEPART = 62.5
+
 class Sprite(
     val bmp: Bitmap, val largeur: Int, val hauteur: Int, val dx: Int, val dy: Int,
-    val ombre: Bitmap?, val ombreRect: RectF
+    val ombre: Bitmap?, val ombreRect: RectF,
+    val dest: RectF = RectF(dx.toFloat(), dy.toFloat(), (dx + bmp.width).toFloat(), (dy + bmp.height).toFloat())
 )
 
 /**
@@ -128,7 +132,7 @@ class VuePariBoxe(ctx: Context, private val son: SonPariBoxe) : View(ctx) {
     private var label = "GARDE"
     private var worldOffset = 0.0
     private var lastTick = -1.0
-    private var rudyPct = 50.0
+    private var rudyPct = RUDY_DEPART
 
     // ------------------------------------------------------------------ CPU
     private val finsCpu = setOf("damage", "dodge", "guard", "direct", "kick", "lowkick", "backfist")
@@ -137,7 +141,7 @@ class VuePariBoxe(ctx: Context, private val son: SonPariBoxe) : View(ctx) {
     private var em = "idle"
     private var ef = 0
     private var eBusy = false
-    private var ex = 65.12054656786727
+    private var ex = CPU_DEPART
     private var lastE = 0.0
     private var cpuImpactDone = false
     private var cpuNext = 0.0
@@ -265,11 +269,11 @@ class VuePariBoxe(ctx: Context, private val son: SonPariBoxe) : View(ctx) {
                 try { son.preparer(dir) } catch (_: Throwable) { }
                 val cpt = Planches.lireComptes(dir)
                 val tampon = IntArray(980 * 820)
-                val apercu = Planches.planche(File(dir, "theo/idle_0.img"), tampon)?.let { preparer(it, 520f, 760f) }
+                val apercu = Planches.planche(File(dir, "theo/idle_0.img"), tampon)?.let { preparer(it, 520f, 760f, echCpuMax()) }
                 main.post { apercuTheo = apercu }
                 val bw = if (petitEcran) 390f else 520f
                 val bh = if (petitEcran) 470f else 760f
-                val rudy = chargerJeu(dir, cpt, "rudy", bw, bh, tampon)
+                val rudy = chargerJeu(dir, cpt, "rudy", bw, bh, tampon, reduc())
                 main.post { F = rudy }
             } catch (_: Throwable) { }
         }
@@ -285,7 +289,7 @@ class VuePariBoxe(ctx: Context, private val son: SonPariBoxe) : View(ctx) {
             try {
                 while (!extraitOk && !ferme) Thread.sleep(50)
                 val dir = Planches.dossier(app)
-                val jeuE = chargerJeu(dir, Planches.lireComptes(dir), nomDossier(jeu), 520f, 760f, IntArray(980 * 820))
+                val jeuE = chargerJeu(dir, Planches.lireComptes(dir), nomDossier(jeu), 520f, 760f, IntArray(980 * 820), echCpuMax())
                 main.post {
                     if (chargementJeu != jeu) { recycler(jeuE); return@post }
                     val ancien = E
@@ -302,7 +306,7 @@ class VuePariBoxe(ctx: Context, private val son: SonPariBoxe) : View(ctx) {
 
     private fun chargerJeu(
         dir: File, cpt: Map<String, Map<String, Int>>, nom: String,
-        bw: Float, bh: Float, tampon: IntArray
+        bw: Float, bh: Float, tampon: IntArray, ech: Float = 1f
     ): Map<String, Array<Sprite>> {
         val res = LinkedHashMap<String, Array<Sprite>>()
         val modes = cpt[nom] ?: emptyMap()
@@ -311,7 +315,7 @@ class VuePariBoxe(ctx: Context, private val son: SonPariBoxe) : View(ctx) {
             for (i in 0 until n) {
                 if (ferme) return res
                 val pl = Planches.planche(File(dir, "$nom/${m}_$i.img"), tampon) ?: continue
-                liste.add(preparer(pl, bw, bh))
+                liste.add(preparer(pl, bw, bh, ech))
             }
             if (liste.isNotEmpty()) res[m] = liste.toTypedArray()
         }
@@ -319,7 +323,7 @@ class VuePariBoxe(ctx: Context, private val son: SonPariBoxe) : View(ctx) {
     }
 
     /** Ombre portee precalculee + passage de l'image en memoire graphique. */
-    private fun preparer(pl: Planche, bw: Float, bh: Float): Sprite {
+    private fun preparer(pl: Planche, bw: Float, bh: Float, ech: Float = 1f): Sprite {
         val k = min(bw / pl.largeur, bh / pl.hauteur)      // echelle « contain » de CETTE planche
         var ombre: Bitmap? = null
         val r = RectF()
@@ -368,8 +372,30 @@ class VuePariBoxe(ctx: Context, private val son: SonPariBoxe) : View(ctx) {
             r.set(pl.dx - pad * sx, pl.dy - pad * sy + decal, pl.dx + (sw + pad) * sx, pl.dy + (sh + pad) * sy + decal)
             ombre = sortie
         } catch (_: Throwable) { ombre = null }
-        val bmp = try { pl.bmp.copy(Bitmap.Config.HARDWARE, false)?.also { pl.bmp.recycle() } ?: pl.bmp } catch (_: Throwable) { pl.bmp }
-        return Sprite(bmp, pl.largeur, pl.hauteur, pl.dx, pl.dy, ombre, r)
+        val dest = RectF(pl.dx.toFloat(), pl.dy.toFloat(), (pl.dx + pl.bmp.width).toFloat(), (pl.dy + pl.bmp.height).toFloat())
+        // Image ramenee a sa taille reelle a l'ecran, par divisions successives
+        // par 2 : contours lisses au lieu de crenelés quand les persos sont petits.
+        var src = pl.bmp
+        try {
+            val q = k * ech * dens * 1.15f
+            if (q < 0.85f) {
+                val cw = max(1, (pl.bmp.width * q).roundToInt())
+                val ch = max(1, (pl.bmp.height * q).roundToInt())
+                while (src.width / 2 >= cw && src.height / 2 >= ch) {
+                    val d = Bitmap.createScaledBitmap(src, src.width / 2, src.height / 2, true)
+                    if (src !== pl.bmp && d !== src) src.recycle()
+                    src = d
+                }
+                if (src.width != cw || src.height != ch) {
+                    val d = Bitmap.createScaledBitmap(src, cw, ch, true)
+                    if (src !== pl.bmp && d !== src) src.recycle()
+                    src = d
+                }
+                if (src !== pl.bmp) pl.bmp.recycle()
+            }
+        } catch (_: Throwable) { src = pl.bmp }
+        val bmp = try { src.copy(Bitmap.Config.HARDWARE, false)?.also { src.recycle() } ?: src } catch (_: Throwable) { src }
+        return Sprite(bmp, pl.largeur, pl.hauteur, pl.dx, pl.dy, ombre, r, dest)
     }
 
     // ================================================================ geometrie (px CSS)
@@ -391,12 +417,15 @@ class VuePariBoxe(ctx: Context, private val son: SonPariBoxe) : View(ctx) {
      * proportion du HTML sur grand ecran (Rudy = la moitie de la hauteur),
      * pieds toujours sur la meme ligne. Sur grand ecran rien ne change.
      */
-    private fun reduc() = min(1f, 0.50f * H / (743f * kR()))
+    private fun reduc() = min(1f, 0.34f * H / (743f * kR()))
     private fun piedsY() = H - H * 0.03f - 30f * kR()
+    /** Pieds poses sur le tapis du ring (75 % de la hauteur), comme la capture du HTML. */
+    private fun piedsCible() = H * 0.753f
+    private fun echCpuMax() = reduc() * kR() * 743f * 1.09f / (kC * 650f)
     private fun reduire(r: RectF): RectF {
-        val k = reduc(); if (k >= 1f) return r
-        val cx = r.centerX(); val py = piedsY()
-        return RectF(cx + (r.left - cx) * k, py + (r.top - py) * k, cx + (r.right - cx) * k, py + (r.bottom - py) * k)
+        val k = reduc()
+        val cx = r.centerX(); val py = piedsY(); val dy = piedsCible() - py
+        return RectF(cx + (r.left - cx) * k, py + dy + (r.top - py) * k, cx + (r.right - cx) * k, py + dy + (r.bottom - py) * k)
     }
     private fun rectRudy(): RectF {
         val l = W * rudyPct.toFloat() / 100f - rbw / 2f
@@ -486,8 +515,8 @@ class VuePariBoxe(ctx: Context, private val son: SonPariBoxe) : View(ctx) {
         lastTick = t
         if (ready && move != 0 && !guardHeld) {
             worldOffset += move * dt * 0.018
-            worldOffset = max(-42.0, min(42.0, worldOffset))
-            rudyPct = 50.0 + worldOffset
+            worldOffset = max(8.0 - RUDY_DEPART, min(92.0 - RUDY_DEPART, worldOffset))
+            rudyPct = RUDY_DEPART + worldOffset
         }
         // --- draw() de l'adversaire (105 ms, 118 ms en marche)
         if (lastE == 0.0) lastE = t
@@ -523,7 +552,7 @@ class VuePariBoxe(ctx: Context, private val son: SonPariBoxe) : View(ctx) {
         val a = rectRudy(); val b = rectCpu()
         // il reste du cote droit de Rudy et s'approche jusqu'a portee
         if (!cpuAnyHit()) {
-            ex = if (b.centerX() > a.centerX()) max(52.0, ex - .55) else min(92.0, ex + .55)
+            ex = if (b.centerX() > a.centerX()) max(20.0, ex - .55) else min(92.0, ex + .55)
             setE("forward")
             return
         }
@@ -708,8 +737,8 @@ class VuePariBoxe(ctx: Context, private val son: SonPariBoxe) : View(ctx) {
         cdTexte = ""
         ready = false; mode = "idle"; frame = 0; lastR = 0.0; attackBusy = false
         guardHeld = false; guardRelease = false; attackIndex = 0; move = 0; label = "GARDE"
-        worldOffset = 0.0; lastTick = -1.0; rudyPct = 50.0
-        cpuHP = 100; rudyHP = 100; em = "idle"; ef = 0; eBusy = false; ex = 65.12054656786727
+        worldOffset = 0.0; lastTick = -1.0; rudyPct = RUDY_DEPART
+        cpuHP = 100; rudyHP = 100; em = "idle"; ef = 0; eBusy = false; ex = CPU_DEPART
         lastE = 0.0; cpuImpactDone = false; cpuNext = 0.0; seen = ""; serial = 0
         joyId = -1; guardId = -1; stickX = 0f; stickY = 0f
         vuRudy = ""; dernierSrcE = ""; affiche = false; combatCommence = false
@@ -886,7 +915,7 @@ class VuePariBoxe(ctx: Context, private val son: SonPariBoxe) : View(ctx) {
                 val s = liste[if (ready) min(frame, liste.size - 1) else 0]
                 val l = W * rudyPct.toFloat() / 100f - rbw / 2f
                 val b = H - H * 0.03f
-                c.save(); c.scale(reduc(), reduc(), l + rbw / 2f, piedsY())
+                c.save(); c.translate(0f, piedsCible() - piedsY()); c.scale(reduc(), reduc(), l + rbw / 2f, piedsY())
                 dessinerSprite(c, s, l, b, rbw, rbh, 1f, l + rbw / 2f, b)
                 c.restore()
             }
@@ -897,7 +926,7 @@ class VuePariBoxe(ctx: Context, private val son: SonPariBoxe) : View(ctx) {
         if (s != null) {
             val cx = W * ex.toFloat() / 100f
             val b = H - cpuBas()
-            c.save(); c.scale(reduc(), reduc(), cx, piedsY())
+            c.save(); c.translate(0f, piedsCible() - piedsY()); c.scale(reduc(), reduc(), cx, piedsY())
             dessinerSprite(c, s, cx - 260f, b, 520f, 760f, cpuEchelle(), cx, b)
             c.restore()
         }
@@ -923,7 +952,7 @@ class VuePariBoxe(ctx: Context, private val son: SonPariBoxe) : View(ctx) {
         c.scale(k, k)
         val o = s.ombre
         if (o != null && !o.isRecycled) c.drawBitmap(o, null, s.ombreRect, pOmbre)
-        if (!s.bmp.isRecycled) c.drawBitmap(s.bmp, s.dx.toFloat(), s.dy.toFloat(), pSprite)
+        if (!s.bmp.isRecycled) c.drawBitmap(s.bmp, null, s.dest, pSprite)
         c.restore()
     }
 
