@@ -48,7 +48,7 @@ class SonPariBoxe {
             idImpact = pool.load(wav(File(sons, "impact.wav"), impact(1.0)).path, 1)
             idImpactFort = pool.load(wav(File(sons, "impact_fort.wav"), impact(1.25)).path, 1)
             idKo = pool.load(wav(File(sons, "ko.wav"), ko()).path, 1)
-            idSouffles = IntArray(3) { pool.load(wav(File(sons, "souffle$it.wav"), souffle()).path, 1) }
+            idSouffles = IntArray(3) { pool.load(wav(File(sons, "souffle$it.wav"), bruitSouffle()).path, 1) }
         } catch (_: Throwable) { }
         try {
             val mp = MediaPlayer()
@@ -204,7 +204,7 @@ class SonPariBoxe {
     }
 
     /** Sifflement : bruit passe-bande Q 1.4, 420 -> 2100 Hz (0.16 s), gain .0001 -> .12 (0.05) -> .0001 (0.2). */
-    private fun souffle(): DoubleArray {
+    private fun bruitSouffle(): DoubleArray {
         val n = (0.22 * SR).toInt()
         val buf = DoubleArray(n)
         val bp = PasseBande()
