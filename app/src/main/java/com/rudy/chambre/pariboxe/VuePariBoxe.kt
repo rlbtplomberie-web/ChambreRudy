@@ -3,6 +3,7 @@ package com.rudy.chambre.pariboxe
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.ColorMatrix
@@ -11,476 +12,452 @@ import android.graphics.LinearGradient
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
-import android.graphics.PorterDuff
-import android.graphics.PorterDuffColorFilter
 import android.graphics.RadialGradient
 import android.graphics.RectF
-import android.graphics.RenderEffect
-import android.graphics.RenderNode
 import android.graphics.Shader
 import android.graphics.Typeface
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.os.SystemClock
+import android.view.Choreographer
 import android.view.MotionEvent
 import android.view.View
 import java.io.File
+import java.nio.ByteBuffer
 import java.util.concurrent.Executors
+import kotlin.math.ceil
+import kotlin.math.exp
 import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 /**
- * PariBoxe en natif : la meme scene que le fichier HTML de Rudy.
+ * Une planche prete a dessiner. (dx, dy) : place du recadrage dans l'image
+ * d'origine (largeur x hauteur). L'ombre portee du HTML (drop-shadow 0 9px
+ * 5px, noir 50 %) est precalculee et posee dans le repere de l'image.
+ */
+class Sprite(
+    val bmp: Bitmap, val largeur: Int, val hauteur: Int, val dx: Int, val dy: Int,
+    val ombre: Bitmap?, val ombreRect: RectF
+)
+
+/**
+ * PariBoxe en natif : reprise fidele du fichier HTML de Rudy.
  *
- * Toutes les mesures sont celles du HTML, en « px CSS » (= dp) puis
- * multipliees par la densite de l'ecran :
- *  - Rudy : boite 390x470 (ecran de moins de 520 de haut, sinon 520x760),
- *    image « contain » posee en bas au centre, centre a 50 %, pieds a 3 %,
- *    avec sa taille d'image propre a chaque geste (980x820 ou 900x760) ;
- *  - l'adversaire : boite 520x760, mise a l'echelle pour avoir la meme
- *    hauteur que Rudy et la meme ligne de pieds (calcul « cpu-meme-niveau ») ;
- *  - filtre des combattants : luminosite .93, contraste 1.06, saturation
- *    1.04 et ombre portee (0 9px 5px, noir 50 %) ;
- *  - commandes aux positions exactes validees dans le HTML.
+ * Toutes les mesures sont en « px CSS » (= dp), exactement comme la page :
+ *  - Rudy : boite 520x760 (390x470 si l'ecran fait 520 px de haut ou
+ *    moins), centree a 50 %, pieds a 3 % ; chaque planche y est posee
+ *    « contain » en bas au centre AVEC SA PROPRE TAILLE (coups et garde en
+ *    900x760, le reste en 980x820 : c'est ce qui donne leur vraie taille) ;
+ *  - l'adversaire : boite 520x760 mise a l'echelle pour avoir la meme
+ *    hauteur et la meme ligne de pieds que Rudy (script cpu-meme-niveau) ;
+ *  - filtre des deux combattants : luminosite .93, contraste 1.06,
+ *    saturation 1.04 et ombre portee ;
+ *  - manette et boutons aux positions « positions-exactes-utilisateur » ;
+ *  - meme moteur de combat : cadences, IA, boites de coups, degats.
  */
 @SuppressLint("ViewConstructor")
-class VuePariBoxe(ctx: Context) : View(ctx) {
+class VuePariBoxe(ctx: Context, private val son: SonPariBoxe) : View(ctx) {
 
-    private enum class Ecran { CHARGEMENT, DEPART, CHOIX, COMBAT, FIN }
-
-    private val d = resources.displayMetrics.density
-    private val prefs = ctx.getSharedPreferences("pariboxe", Context.MODE_PRIVATE)
+    private val dens = resources.displayMetrics.density
+    private var W = 0f
+    private var H = 0f
+    /** Ecran tenu en vertical : comme le HTML (@media portrait), le jeu entier pivote de 90 degres. */
+    private var pivote = false
     private val main = Handler(Looper.getMainLooper())
-    private val chargeur = Executors.newSingleThreadExecutor()
-    private val tampon = IntArray(980 * 820)
-    var son: SonPariBoxe? = null
-
-    var enMarche = true
-        set(v) { field = v; if (v) postInvalidateOnAnimation() }
+    private val fil = Executors.newSingleThreadExecutor()
+    @Volatile private var ferme = false
 
     // ------------------------------------------------------------------ images
-    @Volatile private var ecran = Ecran.CHARGEMENT
-    @Volatile private var comptes: Map<String, Map<String, Int>> = emptyMap()
-    @Volatile private var fond: Bitmap? = null
-    @Volatile private var depart: Bitmap? = null
-    @Volatile private var choixImg: Bitmap? = null
-    @Volatile private var iconeValor: Bitmap? = null
-    @Volatile private var iconeMody: Bitmap? = null
-    @Volatile private var finImg: Bitmap? = null
-    @Volatile private var rudy: Combattant? = null
-    @Volatile private var adversaire: Combattant? = null
-    @Volatile private var erreur: String? = null
+    private var dossier: File? = null
+    private var fond: Bitmap? = null
+    private var depart: Bitmap? = null
+    private var choix: Bitmap? = null
+    private var iconeValor: Bitmap? = null
+    private var iconeMody: Bitmap? = null
+    private var imageFin: Bitmap? = null
+    private var F: Map<String, Array<Sprite>>? = null            // Rudy
+    private var E: Map<String, Array<Sprite>>? = null            // l'adversaire equipe
+    private var jeuCharge: String? = null                         // "E", "V" ou "MO"
+    private var chargementJeu: String? = null
+    private var apercuTheo: Sprite? = null                        // E.idle[0] avant le choix
+    private var chargementLance = false
+    @Volatile private var extraitOk = false
 
-    // --------------------------------------------------------- etat de Rudy
+    // ------------------------------------------------------------------ ecrans
+    private var ecran = DEPART
+    private var tEcran = 0.0
+    private var starting = false
+    private var revanche: String? = null      // sessionStorage « pariboxeRejouer »
+
+    private class Carte(
+        val nom: String, val jeu: String,
+        val l: Float, val t: Float, val w: Float, val h: Float,
+        val art: FloatArray?, val plaque: FloatArray?
+    )
+    /** Zones des trois cartes, en % de l'image du decor (1672x941). */
+    private val cartes = listOf(
+        Carte("TH\u00c9O", "E", 32.3f, 38.6f, 15.6f, 43.2f, null, null),
+        Carte("VALOR", "V", 49.3f, 38.6f, 15.4f, 41.4f,
+            floatArrayOf(49.4f, 38.9f, 15.2f, 34.9f), floatArrayOf(49.4f, 74.0f, 15.2f, 5.8f)),
+        Carte("MODY", "MO", 65.4f, 38.6f, 15.3f, 41.4f,
+            floatArrayOf(65.5f, 38.9f, 15.1f, 34.9f), floatArrayOf(65.5f, 74.0f, 15.1f, 5.8f))
+    )
+    private var actif = 0
+    private var fini = false
+    private var tValide = -1.0
+
+    private var equipe = false
+    private var cpuJeu = "E"
+    private var cpuNom = "CPU"
+    private var perso = 1f               // window.__cpuTaille
+    private var cdTexte = ""
+
+    // ------------------------------------------------------------------ Rudy
+    private val attacks = arrayOf("direct1", "direct2", "kick", "uppercut")
+    private val actions = setOf("direct1", "direct2", "kick", "uppercut", "dodge", "damage")
+    private var ready = false            // window.__combatReady
     private var mode = "idle"
     private var frame = 0
-    private var lastR = 0L
+    private var lastR = 0.0
     private var attackBusy = false
     private var guardHeld = false
     private var guardRelease = false
     private var attackIndex = 0
     private var move = 0
-    private val attacks = arrayOf("direct1", "direct2", "kick", "uppercut")
-    private val actions = setOf("direct1", "direct2", "kick", "uppercut", "dodge", "damage")
     private var label = "GARDE"
+    private var worldOffset = 0.0
+    private var lastTick = -1.0
+    private var rudyPct = 50.0
 
-    private var echelle = clampf(prefs.getFloat("fighterScale", 1f), .45f, 1.8f)
-    private var editX = clampf(prefs.getFloat("fighterX", 50f), 5f, 95f)
-    private var editY = clampf(prefs.getFloat("fighterY", 3f), 1.5f, 55f)
-    private var gauche = editX
-    private var decalage = 0f
-    private var lastTick = 0L
-
-    // ------------------------------------------------------ etat du CPU
+    // ------------------------------------------------------------------ CPU
+    private val finsCpu = setOf("damage", "dodge", "guard", "direct", "kick", "lowkick", "backfist")
+    private var cpuHP = 100
+    private var rudyHP = 100
     private var em = "idle"
     private var ef = 0
-    private var eLast = 0L
     private var eBusy = false
-    private var ex = 65.12054656786727f
-    private var cpuHP = 100f
-    private var rudyHP = 100f
-    private var cpuNext = 0L
+    private var ex = 65.12054656786727
+    private var lastE = 0.0
     private var cpuImpactDone = false
+    private var cpuNext = 0.0
     private var seen = ""
     private var serial = 0
-    private val eActions = setOf("damage", "dodge", "guard", "direct", "kick", "lowkick", "backfist")
-    private val eCoups = setOf("direct", "kick", "lowkick", "backfist")
 
-    private var jeuCpu = "E"
-    private var nomCpu = "CPU"
-    private var tailleCpu = 1f
-
-    // ----------------------------------------------------------- deroulement
-    private var ready = false
-    private var demarrage = false
-    private var revanche: String? = null
-    private var compte: String? = null
-    private var combatCommence = false
-    private var finAffiche = false
-    private var finCle = ""
-    private var generation = 0
-
-    private var actif = 0
-    private var fini = false
-    private var tChoix = 0L
-    private var tValide = 0L
-    private var nomChoisi = ""
-    private var tFin = 0L
-
-    private var vuRudy = ""
-    private var dernierEnemy = ""
-    private var hpVuCpu = 100f
-    private var hpVuRudy = 100f
-    private val barreCpu = Barre()
-    private val barreRudy = Barre()
-    private var flashType = 0
-    private var tFlash = 0L
-
-    // ----------------------------------------------------------- tactile
-    private val cibles = HashMap<Int, String>()
+    // ------------------------------------------------------------------ divers
+    private var gen = 0
     private var joyId = -1
+    private var guardId = -1
     private var stickX = 0f
     private var stickY = 0f
-    private var dragSx = 0f
-    private var dragSy = 0f
-    private var dragX0 = 0f
-    private var dragY0 = 0f
+    private var vuRudy = ""
+    private var dernierSrcE = ""
+    private var affiche = false
+    private var combatCommence = false
+    private var vCpu = 100f
+    private var vRudy = 100f
+    private var flashType = 0            // 1 : Rudy touche, 2 : Rudy encaisse
+    private var flashT0 = -1e9
+    private var teinteCpu = 0
+    private var teinteRudy = 0
+    private val barreCpu = Barre()
+    private val barreRudy = Barre()
+    private var tImage = 0.0
 
-    // --------------------------------------------------------------- pinceaux
-    private val gras: Typeface = Typeface.create(Typeface.SANS_SERIF, 900, false)
-    private val pImage = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-    private val pPerso = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
-        colorFilter = ColorMatrixColorFilter(matriceFiltre())
-    }
-    private val pOmbre = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
-        colorFilter = PorterDuffColorFilter(Color.argb(128, 0, 0, 0), PorterDuff.Mode.SRC_IN)
-    }
-    private val pRemp = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val pTrait = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
-    private val pTexte = Paint(Paint.ANTI_ALIAS_FLAG).apply { typeface = gras; textAlign = Paint.Align.CENTER }
-    private val r1 = RectF()
-    private val r2 = RectF()
-    private val chemin = Path()
-    private val matrice = Matrix()
-    private val noeudRudy: RenderNode? = if (Build.VERSION.SDK_INT >= 29) RenderNode("ombreRudy") else null
-    private val noeudCpu: RenderNode? = if (Build.VERSION.SDK_INT >= 29) RenderNode("ombreCpu") else null
-
-    // =====================================================================
-    // Chargement
-    // =====================================================================
-
-    fun lancer() {
-        chargeur.execute {
-            try {
-                Planches.extraire(context)
-                val dir = Planches.dossier(context)
-                comptes = Planches.lireComptes(dir)
-                fond = Planches.image(File(dir, "fond.img"))
-                depart = Planches.image(File(dir, "depart.img"))
-                main.post { if (ecran == Ecran.CHARGEMENT) ecran = Ecran.DEPART; invalidate() }
-                son?.let { s -> Thread { s.preparer(dir) }.start() }
-                choixImg = Planches.image(File(dir, "choix.img"))
-                iconeValor = Planches.image(File(dir, "icone_valor.img"))
-                iconeMody = Planches.image(File(dir, "icone_mody.img"))
-                val r = Combattant("rudy", comptes["rudy"] ?: emptyMap())
-                rudy = r
-                main.post { if (adversaire == null) equiperPlanches("theo") }
-                remplir(r)
-            } catch (e: Throwable) {
-                erreur = e.toString()
-                main.post { invalidate() }
-            }
+    /** width:% avec « transition: width .22s ease-out ». */
+    private inner class Barre {
+        var de = 100f; var vers = 100f; var t0 = -1e9
+        fun fixer(v: Float) { val m = maintenant(); de = valeur(m); vers = v; t0 = m }
+        fun remettre() { de = 100f; vers = 100f; t0 = -1e9 }
+        fun valeur(t: Double): Float {
+            val q = ((t - t0) / 220.0).coerceIn(0.0, 1.0)
+            return de + (vers - de) * EASE_OUT.y(q).toFloat()
         }
     }
 
-    /** Charge les planches d'un combattant, en commencant par la garde. */
-    private fun remplir(c: Combattant) {
-        val dir = Planches.dossier(context)
-        val ordre = (listOf("idle", "forward", "back", "guard") + c.comptes.keys).distinct()
-        for (m in ordre) {
-            for (i in 0 until c.compte(m)) {
-                if (c.abandonne) return
-                val cle = "${m}_$i"
-                if (c.images.containsKey(cle)) continue
-                val p = try { Planches.planche(File(dir, "${c.nom}/$cle.img"), tampon) } catch (_: Throwable) { null }
-                if (p != null) c.images[cle] = p
+    init {
+        isClickable = true
+        intervalle(35) { pollCoupsRudy() }
+        intervalle(40) { pollSouffleRudy() }
+        intervalle(150) { verifie() }
+        intervalle(100) { pollFlash() }
+    }
+
+    private fun maintenant() = System.nanoTime() / 1e6
+
+    /** setInterval */
+    private fun intervalle(ms: Long, f: () -> Unit) {
+        val r = object : Runnable {
+            override fun run() {
+                if (ferme) return
+                try { f() } catch (_: Throwable) { }
+                main.postDelayed(this, ms)
             }
+        }
+        main.postDelayed(r, ms)
+    }
+
+    /** setTimeout, annule par un « rechargement » de la page. */
+    private fun plusTard(ms: Long, f: () -> Unit) {
+        val g = gen
+        main.postDelayed({ if (!ferme && g == gen) f() }, ms)
+    }
+
+    // ================================================================ cycle (requestAnimationFrame)
+
+    private val rappel = object : Choreographer.FrameCallback {
+        override fun doFrame(ns: Long) {
+            if (ferme) return
+            val t = ns / 1e6
+            tImage = t
+            try { boucle(t) } catch (_: Throwable) { }
+            invalidate()
+            Choreographer.getInstance().postFrameCallback(this)
         }
     }
 
-    /** Sur le fil principal : prepare les planches de l'adversaire choisi. */
-    private fun equiperPlanches(cle: String) {
-        if (adversaire?.nom == cle) return
-        adversaire?.abandonne = true
-        val c = Combattant(cle, comptes[cle] ?: emptyMap())
-        adversaire = c
-        chargeur.execute { remplir(c) }
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        Choreographer.getInstance().postFrameCallback(rappel)
     }
 
-    fun fermer() {
-        generation++
-        adversaire?.abandonne = true
-        rudy?.abandonne = true
-        chargeur.shutdownNow()
+    override fun onDetachedFromWindow() {
+        Choreographer.getInstance().removeFrameCallback(rappel)
+        super.onDetachedFromWindow()
+    }
+
+    fun liberer() {
+        ferme = true
         main.removeCallbacksAndMessages(null)
+        Choreographer.getInstance().removeFrameCallback(rappel)
+        fil.shutdownNow()
     }
 
-    // =====================================================================
-    // Outils
-    // =====================================================================
-
-    private fun clampf(v: Float, a: Float, b: Float) = max(a, min(b, v))
-    private fun W() = width / d
-    private fun H() = height / d
-    private fun petit() = H() <= 520f
-    private fun vwClamp(a: Float, p: Float, b: Float) = clampf(W() * p / 100f, a, b)
-    private fun flou(bCss: Float): Float = max(0.1f, (bCss * d / 2f - 0.5f) / 0.57735f)
-
-    private fun apres(ms: Long, f: () -> Unit) {
-        val g = generation
-        main.postDelayed({ if (g == generation) f() }, ms)
-    }
-
-    private fun matriceFiltre(): ColorMatrix {
-        val b = 0.93f; val c = 1.06f; val s = 1.04f
-        val mb = ColorMatrix(floatArrayOf(
-            b, 0f, 0f, 0f, 0f,  0f, b, 0f, 0f, 0f,  0f, 0f, b, 0f, 0f,  0f, 0f, 0f, 1f, 0f))
-        val o = 255f * (0.5f - 0.5f * c)
-        val mc = ColorMatrix(floatArrayOf(
-            c, 0f, 0f, 0f, o,  0f, c, 0f, 0f, o,  0f, 0f, c, 0f, o,  0f, 0f, 0f, 1f, 0f))
-        val ms = ColorMatrix(floatArrayOf(
-            0.213f + 0.787f * s, 0.715f - 0.715f * s, 0.072f - 0.072f * s, 0f, 0f,
-            0.213f - 0.213f * s, 0.715f + 0.285f * s, 0.072f - 0.072f * s, 0f, 0f,
-            0.213f - 0.213f * s, 0.715f - 0.715f * s, 0.072f + 0.928f * s, 0f, 0f,
-            0f, 0f, 0f, 1f, 0f))
-        val r = ColorMatrix()
-        r.setConcat(mc, mb)
-        r.setConcat(ms, r)
-        return r
-    }
-
-    /** cubic-bezier CSS */
-    private fun bezier(x1: Float, y1: Float, x2: Float, y2: Float, x: Float): Float {
-        if (x <= 0f) return 0f
-        if (x >= 1f) return 1f
-        var lo = 0f; var hi = 1f; var u = x
-        repeat(24) {
-            u = (lo + hi) / 2f
-            val bx = 3 * (1 - u) * (1 - u) * u * x1 + 3 * (1 - u) * u * u * x2 + u * u * u
-            if (bx < x) lo = u else hi = u
+    override fun onSizeChanged(w: Int, h: Int, ow: Int, oh: Int) {
+        super.onSizeChanged(w, h, ow, oh)
+        pivote = h > w
+        W = (if (pivote) h else w) / dens
+        H = (if (pivote) w else h) / dens
+        if (w > 0 && h > 0 && !chargementLance) {
+            chargementLance = true
+            lancerChargement(H <= 520f)
         }
-        return 3 * (1 - u) * (1 - u) * u * y1 + 3 * (1 - u) * u * u * y2 + u * u * u
-    }
-    private fun ease(p: Float) = bezier(.25f, .1f, .25f, 1f, p)
-    private fun easeOut(p: Float) = bezier(0f, 0f, .58f, 1f, p)
-    private fun easeInOut(p: Float) = bezier(.42f, 0f, .58f, 1f, p)
-    /** animation « infinite alternate » en ease-in-out, de 0 a 1 */
-    private fun vaEtVient(t: Long, dureeMs: Long): Float {
-        val cycle = t / dureeMs
-        var p = (t % dureeMs).toFloat() / dureeMs
-        if (cycle % 2L == 1L) p = 1f - p
-        return easeInOut(p)
     }
 
-    private class Barre {
-        var de = 100f; var vers = 100f; var t0 = 0L
-        fun valeur(t: Long, f: (Float) -> Float): Float {
-            val p = ((t - t0) / 220f).coerceIn(0f, 1f)
-            return de + (vers - de) * f(p)
+    // ================================================================ chargement
+
+    private fun lancerChargement(petitEcran: Boolean) {
+        val app = context.applicationContext
+        fil.execute {
+            try {
+                Planches.extraire(app)
+                val dir = Planches.dossier(app)
+                val dep = Planches.image(File(dir, "depart.img"))
+                val fo = Planches.image(File(dir, "fond.img"))
+                val ch = Planches.image(File(dir, "choix.img"))
+                val iv = Planches.image(File(dir, "icone_valor.img"))
+                val im = Planches.image(File(dir, "icone_mody.img"))
+                main.post {
+                    dossier = dir
+                    depart = dep; fond = fo; choix = ch; iconeValor = iv; iconeMody = im
+                }
+                extraitOk = true
+                try { son.preparer(dir) } catch (_: Throwable) { }
+                val cpt = Planches.lireComptes(dir)
+                val tampon = IntArray(980 * 820)
+                val apercu = Planches.planche(File(dir, "theo/idle_0.img"), tampon)?.let { preparer(it, 520f, 760f) }
+                main.post { apercuTheo = apercu }
+                val bw = if (petitEcran) 390f else 520f
+                val bh = if (petitEcran) 470f else 760f
+                val rudy = chargerJeu(dir, cpt, "rudy", bw, bh, tampon)
+                main.post { F = rudy }
+            } catch (_: Throwable) { }
         }
-        fun cible(v: Float, t: Long, f: (Float) -> Float) { de = valeur(t, f); vers = v; t0 = t }
-        fun remettre() { de = 100f; vers = 100f; t0 = 0L }
     }
 
-    // =====================================================================
-    // Geometrie (px CSS), identique au HTML
-    // =====================================================================
+    private fun nomDossier(jeu: String) = when (jeu) { "V" -> "valor"; "MO" -> "mody"; else -> "theo" }
 
-    private fun boiteRudyL() = if (petit()) 390f else 520f
-    private fun boiteRudyH() = if (petit()) 470f else 760f
-
-    private fun kR() = min(boiteRudyL() / 980f, boiteRudyH() / 820f)
-    private fun kC() = min(520f / 980f, 760f / 820f)
-    /** script cpu-meme-niveau-que-rudy */
-    private fun cpuScale() = echelle * kR() * 743f * tailleCpu / (kC() * 650f)
-    private fun cpuBottom(): Float {
-        val gh = H()
-        val pieds = gh * editY / 100f + 30f * kR() * echelle
-        return (pieds - 21f * kC() * cpuScale()) / gh * 100f
+    private fun chargerAdversaire(jeu: String) {
+        if (jeuCharge == jeu || chargementJeu == jeu) return
+        chargementJeu = jeu
+        val app = context.applicationContext
+        fil.execute {
+            try {
+                while (!extraitOk && !ferme) Thread.sleep(50)
+                val dir = Planches.dossier(app)
+                val jeuE = chargerJeu(dir, Planches.lireComptes(dir), nomDossier(jeu), 520f, 760f, IntArray(980 * 820))
+                main.post {
+                    if (chargementJeu != jeu) { recycler(jeuE); return@post }
+                    val ancien = E
+                    E = jeuE; jeuCharge = jeu; chargementJeu = null
+                    if (ancien != null && ancien !== jeuE) recycler(ancien)
+                }
+            } catch (_: Throwable) { }
+        }
     }
 
-    private fun rectRudy(r: RectF): RectF {
-        val w = boiteRudyL() * echelle; val h = boiteRudyH() * echelle
-        val cx = W() * gauche / 100f; val bas = H() - H() * editY / 100f
-        r.set(cx - w / 2f, bas - h, cx + w / 2f, bas)
-        return r
+    private fun recycler(j: Map<String, Array<Sprite>>) {
+        j.values.forEach { l -> l.forEach { s -> try { s.bmp.recycle(); s.ombre?.recycle() } catch (_: Throwable) { } } }
     }
 
-    private fun rectCpu(r: RectF): RectF {
-        val sc = cpuScale()
-        val w = 520f * sc; val h = 760f * sc
-        val cx = W() * ex / 100f; val bas = H() - H() * cpuBottom() / 100f
-        r.set(cx - w / 2f, bas - h, cx + w / 2f, bas)
-        return r
+    private fun chargerJeu(
+        dir: File, cpt: Map<String, Map<String, Int>>, nom: String,
+        bw: Float, bh: Float, tampon: IntArray
+    ): Map<String, Array<Sprite>> {
+        val res = LinkedHashMap<String, Array<Sprite>>()
+        val modes = cpt[nom] ?: emptyMap()
+        for ((m, n) in modes) {
+            val liste = ArrayList<Sprite>()
+            for (i in 0 until n) {
+                if (ferme) return res
+                val pl = Planches.planche(File(dir, "$nom/${m}_$i.img"), tampon) ?: continue
+                liste.add(preparer(pl, bw, bh))
+            }
+            if (liste.isNotEmpty()) res[m] = liste.toTypedArray()
+        }
+        return res
     }
 
-    private fun corps(r: RectF, o: RectF): RectF {
-        o.set(r.left + r.width() * .20f, r.top + r.height() * .10f,
-              r.right - r.width() * .20f, r.bottom - r.height() * .05f)
-        return o
+    /** Ombre portee precalculee + passage de l'image en memoire graphique. */
+    private fun preparer(pl: Planche, bw: Float, bh: Float): Sprite {
+        val k = min(bw / pl.largeur, bh / pl.hauteur)      // echelle « contain » de CETTE planche
+        var ombre: Bitmap? = null
+        val r = RectF()
+        try {
+            val b = pl.bmp
+            val f = 4
+            val sw = max(1, (b.width + f - 1) / f)
+            val sh = max(1, (b.height + f - 1) / f)
+            val reduit = Bitmap.createScaledBitmap(b, sw, sh, true)
+            val px = IntArray(sw * sh)
+            reduit.getPixels(px, 0, sw, 0, 0, sw, sh)
+            if (reduit !== b) reduit.recycle()
+            // drop-shadow : flou de 5 px CSS = ecart-type 2.5 px CSS
+            val sig = max(0.35f, (2.5f / k) * sw / b.width)
+            val rk = max(1, ceil(3f * sig).toInt())
+            val pad = rk + 1
+            val w2 = sw + 2 * pad
+            val h2 = sh + 2 * pad
+            val a = FloatArray(w2 * h2)
+            for (y in 0 until sh) for (x in 0 until sw) a[(y + pad) * w2 + x + pad] = (px[y * sw + x] ushr 24).toFloat()
+            val noyau = FloatArray(2 * rk + 1)
+            var somme = 0f
+            for (i in -rk..rk) { val v = exp(-(i * i) / (2f * sig * sig)); noyau[i + rk] = v; somme += v }
+            for (i in noyau.indices) noyau[i] /= somme
+            val c = FloatArray(w2 * h2)
+            for (y in 0 until h2) {
+                val base = y * w2
+                for (x in 0 until w2) {
+                    var s = 0f
+                    for (i in -rk..rk) { val xx = x + i; if (xx in 0 until w2) s += a[base + xx] * noyau[i + rk] }
+                    c[base + x] = s
+                }
+            }
+            val sortie = Bitmap.createBitmap(w2, h2, Bitmap.Config.ALPHA_8)
+            val rb = sortie.rowBytes
+            val oct = ByteArray(rb * h2)
+            for (y in 0 until h2) for (x in 0 until w2) {
+                var s = 0f
+                for (i in -rk..rk) { val yy = y + i; if (yy in 0 until h2) s += c[yy * w2 + x] * noyau[i + rk] }
+                oct[y * rb + x] = s.roundToInt().coerceIn(0, 255).toByte()
+            }
+            sortie.copyPixelsFromBuffer(ByteBuffer.wrap(oct))
+            val sx = b.width.toFloat() / sw
+            val sy = b.height.toFloat() / sh
+            val decal = 9f / k                              // 9 px CSS vers le bas
+            r.set(pl.dx - pad * sx, pl.dy - pad * sy + decal, pl.dx + (sw + pad) * sx, pl.dy + (sh + pad) * sy + decal)
+            ombre = sortie
+        } catch (_: Throwable) { ombre = null }
+        val bmp = try { pl.bmp.copy(Bitmap.Config.HARDWARE, false)?.also { pl.bmp.recycle() } ?: pl.bmp } catch (_: Throwable) { pl.bmp }
+        return Sprite(bmp, pl.largeur, pl.hauteur, pl.dx, pl.dy, ombre, r)
     }
 
-    private fun chevauche(a: RectF, b: RectF) =
-        a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top
+    // ================================================================ geometrie (px CSS)
 
-    private fun rudyTouche(kind: String): Boolean {
-        val r = rectRudy(RectF())
-        val h = when (kind) {
+    private val petit get() = H <= 520f
+    private val rbw get() = if (petit) 390f else 520f
+    private val rbh get() = if (petit) 470f else 760f
+    private val kC = min(520f / 980f, 760f / 820f)
+    private fun kR() = min(rbw / 980f, rbh / 820f)
+    /** « cpu-meme-niveau-que-rudy » : RUDY_H 743, RUDY_PIEDS 30, CPU_H 650, CPU_PIEDS 21. */
+    private fun cpuEchelle() = kR() * 743f * perso / (kC * 650f)
+    private fun cpuBas(): Float {
+        val pieds = H * 3f / 100f + 30f * kR()
+        return pieds - 21f * kC * cpuEchelle()
+    }
+    /**
+     * Taille des combattants sur telephone : le HTML les fait occuper ~80 %
+     * de la hauteur d'un ecran de telephone couche. On les ramene a la
+     * proportion du HTML sur grand ecran (Rudy = la moitie de la hauteur),
+     * pieds toujours sur la meme ligne. Sur grand ecran rien ne change.
+     */
+    private fun reduc() = min(1f, 0.50f * H / (743f * kR()))
+    private fun piedsY() = H - H * 0.03f - 30f * kR()
+    private fun reduire(r: RectF): RectF {
+        val k = reduc(); if (k >= 1f) return r
+        val cx = r.centerX(); val py = piedsY()
+        return RectF(cx + (r.left - cx) * k, py + (r.top - py) * k, cx + (r.right - cx) * k, py + (r.bottom - py) * k)
+    }
+    private fun rectRudy(): RectF {
+        val l = W * rudyPct.toFloat() / 100f - rbw / 2f
+        val b = H - H * 0.03f
+        return reduire(RectF(l, b - rbh, l + rbw, b))
+    }
+    private fun rectCpu(): RectF {
+        val s = cpuEchelle()
+        val cx = W * ex.toFloat() / 100f
+        val b = H - cpuBas()
+        return reduire(RectF(cx - 260f * s, b - 760f * s, cx + 260f * s, b))
+    }
+    private fun overlap(a: RectF, b: RectF) = a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top
+    private fun bodyBox(r: RectF) = RectF(r.left + r.width() * .20f, r.top + r.height() * .10f,
+        r.right - r.width() * .20f, r.bottom - r.height() * .05f)
+    private fun rudyHitBox(kind: String): RectF {
+        val r = rectRudy()
+        return when (kind) {
             "kick" -> RectF(r.left + r.width() * .55f, r.top + r.height() * .42f, r.right, r.top + r.height() * .82f)
             "uppercut" -> RectF(r.left + r.width() * .52f, r.top + r.height() * .15f, r.right, r.top + r.height() * .58f)
             else -> RectF(r.left + r.width() * .55f, r.top + r.height() * .20f, r.right, r.top + r.height() * .58f)
         }
-        return chevauche(h, corps(rectCpu(RectF()), RectF()))
     }
-
-    private fun cpuTouche(kind: String): Boolean {
-        val r = rectCpu(RectF())
-        val h = if (kind == "kick" || kind == "lowkick")
+    private fun cpuHitBox(kind: String): RectF {
+        val r = rectCpu()
+        return if (kind == "kick" || kind == "lowkick")
             RectF(r.left, r.top + r.height() * .42f, r.left + r.width() * .48f, r.top + r.height() * .86f)
         else RectF(r.left, r.top + r.height() * .18f, r.left + r.width() * .48f, r.top + r.height() * .58f)
-        return chevauche(h, corps(rectRudy(RectF()), RectF()))
     }
+    private fun realRudyHitsCPU(kind: String) = overlap(rudyHitBox(kind), bodyBox(rectCpu()))
+    private fun realCPUHitsRudy(kind: String) = overlap(cpuHitBox(kind), bodyBox(rectRudy()))
 
-    // commandes : centre (% ecran), diametre, echelle
-    private fun joyCx() = W() * 9.462570231237109f / 100f
-    private fun joyCy() = H() * 66.57407681147257f / 100f
-    private fun joyTaille() = if (petit()) 145f else 180f
+    private val joyTaille get() = if (petit) 145f else 180f
+    private val stickTaille get() = if (petit) 60f else 74f
+    private val stickPos get() = if (petit) 38f else 53f
+    private val joyEch = .8f
+    private fun joyCx() = W * 9.462570231237109f / 100f
+    private fun joyCy() = H * 66.57407681147257f / 100f
 
-    private class Commande(val id: String, val px: Float, val py: Float, val grand: Float, val petitD: Float,
-                           val ech: Float, val couleur: Int, val texte: String, val police: Float)
-
-    private val commandes = listOf(
-        Commande("guard", 96.32917952560999f, 55.89247147242227f, 125f, 105f, .4f, 0xFF00602D.toInt(), "GARDE", 19f),
-        Commande("attack", 89.2761723548869f, 78.11360756556192f, 150f, 125f, .35f, 0xFFA90000.toInt(), "POING", 22f),
-        Commande("dodge", 94.67678556429941f, 68.56770912806192f, 92f, 92f, .5f, 0xFF08277D.toInt(), "ESQUIVE", 14f)
-    )
-
-    private fun stage(r: RectF): RectF {
-        val w = W(); val h = H()
-        val sw = min(w, h * 1672f / 941f); val sh = sw * 941f / 1672f
-        r.set((w - sw) / 2f, (h - sh) / 2f, (w + sw) / 2f, (h + sh) / 2f)
-        return r
+    private class Bouton(val px: Float, val py: Float, val ech: Float, val couleur: Int, val texte: String, val police: Float)
+    private val gardeB = Bouton(96.32917952560999f, 55.89247147242227f, .4f, 0xFF00602D.toInt(), "GARDE", 19f)
+    private val poingB = Bouton(89.2761723548869f, 78.11360756556192f, .35f, 0xFFA90000.toInt(), "POING", 22f)
+    private val esquiveB = Bouton(94.67678556429941f, 68.56770912806192f, .5f, 0xFF08277D.toInt(), "ESQUIVE", 14f)
+    private fun tailleB(b: Bouton) = when (b.texte) {
+        "GARDE" -> if (petit) 105f else 125f
+        "POING" -> if (petit) 125f else 150f
+        else -> 92f
     }
+    private fun dansBouton(b: Bouton, x: Float, y: Float) =
+        hypot(x - W * b.px / 100f, y - H * b.py / 100f) <= tailleB(b) / 2f * b.ech
 
-    // =====================================================================
-    // Deroulement : depart, choix, compte a rebours, fin
-    // =====================================================================
+    // ================================================================ moteur (celui du HTML)
 
-    private fun begin() {
-        if (demarrage) return
-        demarrage = true
-        val r = revanche
-        if (r != null) {
-            revanche = null
-            val c = when (r) { "V" -> Triple("V", "VALOR", "valor"); "MO" -> Triple("MO", "MODY", "mody")
-                               else -> Triple("E", "TH\u00c9O", "theo") }
-            equiper(c.first, c.second)
-            ecran = Ecran.COMBAT
-            lancerCombat()
-        } else {
-            ecran = Ecran.CHOIX
-            actif = 0; fini = false; tChoix = SystemClock.uptimeMillis()
-        }
-    }
+    private fun setMode(m: String) { if (mode != m) { mode = m; frame = 0; lastR = 0.0 } }
+    private fun setE(m: String) { if (em == m) return; em = m; ef = 0; lastE = maintenant() }
+    private fun listeE(m: String): Array<Sprite>? = E?.get(m) ?: E?.get("idle")
 
-    private fun equiper(jeu: String, nom: String) {
-        tailleCpu = if (jeu == "V") 1.09f else 1f
-        jeuCpu = jeu
-        nomCpu = nom
-        equiperPlanches(when (jeu) { "V" -> "valor"; "MO" -> "mody"; else -> "theo" })
-    }
-
-    private fun lancerCombat() {
-        son?.demarrerMusique()
-        compte = "3"
-        apres(1000) { compte = "2" }
-        apres(2000) { compte = "1" }
-        apres(3000) { compte = null; ready = true }
-    }
-
-    private val cartes = listOf(
-        floatArrayOf(32.3f, 38.6f, 15.6f, 43.2f),
-        floatArrayOf(49.3f, 38.6f, 15.4f, 41.4f),
-        floatArrayOf(65.4f, 38.6f, 15.3f, 41.4f))
-    private val nomsCartes = listOf("TH\u00c9O", "VALOR", "MODY")
-    private val jeuxCartes = listOf("E", "V", "MO")
-    private val arts = listOf(null, floatArrayOf(49.4f, 38.9f, 15.2f, 34.9f), floatArrayOf(65.5f, 38.9f, 15.1f, 34.9f))
-    private val plaques = listOf(null, floatArrayOf(49.4f, 74.0f, 15.2f, 5.8f), floatArrayOf(65.5f, 74.0f, 15.1f, 5.8f))
-
-    private fun valider() {
-        if (fini) return
-        fini = true
-        equiper(jeuxCartes[actif], nomsCartes[actif])
-        nomChoisi = nomsCartes[actif]
-        tValide = SystemClock.uptimeMillis()
-        apres(1100) {
-            ecran = Ecran.COMBAT
-            lancerCombat()
-        }
-    }
-
-    private fun ecranFin(cle: String) {
-        if (finAffiche) return
-        finAffiche = true
-        ready = false
-        son?.arreterMusique()
-        finCle = cle
-        finImg = null
-        tFin = SystemClock.uptimeMillis()
-        ecran = Ecran.FIN
-        val dir = Planches.dossier(context)
-        Thread {
-            val b = Planches.image(File(dir, "fin_$cle.img"))
-            main.post { if (finCle == cle && finAffiche) finImg = b }
-        }.start()
-    }
-
-    /** location.reload() du HTML : on repart de l'ecran COMMENCER. */
-    private fun recharger(rejouer: Boolean) {
-        generation++
-        revanche = if (rejouer) jeuCpu else null
-        mode = "idle"; frame = 0; lastR = 0L
-        attackBusy = false; guardHeld = false; guardRelease = false; attackIndex = 0; move = 0
-        label = "GARDE"
-        editX = clampf(prefs.getFloat("fighterX", 50f), 5f, 95f)
-        editY = clampf(prefs.getFloat("fighterY", 3f), 1.5f, 55f)
-        gauche = editX; decalage = 0f; lastTick = 0L
-        em = "idle"; ef = 0; eLast = 0L; eBusy = false; ex = 65.12054656786727f
-        cpuHP = 100f; rudyHP = 100f; cpuNext = 0L; cpuImpactDone = false; seen = ""; serial = 0
-        hpVuCpu = 100f; hpVuRudy = 100f; barreCpu.remettre(); barreRudy.remettre()
-        flashType = 0
-        nomCpu = "CPU"; tailleCpu = 1f; jeuCpu = "E"
-        ready = false; demarrage = false; compte = null
-        combatCommence = false; finAffiche = false; finImg = null
-        cibles.clear(); joyId = -1; stickX = 0f; stickY = 0f
-        vuRudy = ""; dernierEnemy = ""
-        ecran = Ecran.DEPART
-    }
-
-    // =====================================================================
-    // Logique du combat (chaque image)
-    // =====================================================================
-
-    private fun setMode(m: String) { if (mode != m) { mode = m; frame = 0; lastR = 0L } }
-    private fun setE(m: String, t: Long) { if (em == m) return; em = m; ef = 0; eLast = t }
-    private fun nbR(m: String) = rudy?.compte(m) ?: 0
-    private fun nbE(m: String) = adversaire?.compte(m) ?: 0
-
-    private fun logique(t: Long) {
-        // --- animation de Rudy (script principal, 70 ms par image) ---
-        if (lastR == 0L) lastR = t
+    private fun boucle(t: Double) {
+        val f = F ?: return
+        // --- animate() de Rudy (planche toutes les 70 ms)
+        if (lastR == 0.0) lastR = t
         if (!ready) {
             lastR = t; frame = 0; mode = "idle"
             attackBusy = false; guardHeld = false; guardRelease = false; move = 0
@@ -493,125 +470,141 @@ class VuePariBoxe(ctx: Context) : View(ctx) {
                     if (frame < 4) frame++
                     else { guardRelease = false; setMode(if (move < 0) "back" else if (move > 0) "forward" else "idle") }
                 }
-            } else if (mode in actions) {
+            } else if (actions.contains(mode)) {
                 frame++
-                if (frame >= nbR(mode)) {
+                if (frame >= (f[mode]?.size ?: 1)) {
                     attackBusy = false
                     setMode(if (guardHeld) "guard" else if (move < 0) "back" else if (move > 0) "forward" else "idle")
                 }
             } else {
-                val n = nbR(mode)
-                frame = if (n > 0) (frame + 1) % n else 0
+                frame = (frame + 1) % (f[mode]?.size ?: 1)
             }
         }
-
-        // --- deplacement de Rudy ---
-        val dt = if (lastTick == 0L) 0L else min(40L, t - lastTick)
+        // --- tick() : deplacement de Rudy
+        if (lastTick < 0) lastTick = t
+        val dt = min(40.0, t - lastTick)
         lastTick = t
         if (ready && move != 0 && !guardHeld) {
-            decalage = clampf(decalage + move * dt * 0.018f, -42f, 42f)
-            gauche = editX + decalage
+            worldOffset += move * dt * 0.018
+            worldOffset = max(-42.0, min(42.0, worldOffset))
+            rudyPct = 50.0 + worldOffset
         }
-
-        // --- animation du CPU ---
-        if (eLast == 0L) eLast = t
+        // --- draw() de l'adversaire (105 ms, 118 ms en marche)
+        if (lastE == 0.0) lastE = t
         if (!ready) {
-            eLast = t; ef = 0; em = "idle"; eBusy = false
-        } else {
+            lastE = t; ef = 0; em = "idle"; eBusy = false
+            dernierSrcE = "idle:0"
+        } else if (E != null) {
+            val n = listeE(em)?.size ?: 1
             val step = if (em == "forward" || em == "back") 118 else 105
-            if (t - eLast >= step) { eLast = t; ef++ }
-            if (ef >= max(1, nbE(em))) {
-                if (em in eActions) { eBusy = false; setE("idle", t) } else ef = 0
+            if (t - lastE >= step) { lastE = t; ef++ }
+            if (ef >= n) {
+                if (finsCpu.contains(em)) { eBusy = false; setE("idle") } else ef = 0
+            }
+            // souffle de l'adversaire : la 2e image d'un coup vient de s'afficher
+            val idx = min(ef, (listeE(em)?.size ?: 1) - 1)
+            val src = "$em:$idx"
+            if (src != dernierSrcE) {
+                dernierSrcE = src
+                if (idx == 1 && (em == "direct" || em == "kick" || em == "lowkick" || em == "backfist")) son.souffle()
             }
         }
-
-        // --- IA du CPU, toutes les 120 ms ---
+        // --- cpuThink() toutes les 120 ms
         if (t >= cpuNext) {
             cpuNext = t + 120
-            if (ready && !eBusy && cpuHP > 0f && rudyHP > 0f) penser(t)
-        }
-
-        // --- les coups de Rudy frappent 180 ms apres leur debut ---
-        if (ready) {
-            if (mode in attacks && mode != seen) {
-                val my = ++serial
-                val kind = mode
-                apres(180) { if (my == serial) hitCpu(if (kind == "kick" || kind == "uppercut") 7f else 5f) }
-            }
-            seen = mode
-        }
-
-        // --- souffles ---
-        if (mode != vuRudy && mode in attacks) son?.souffle()
-        vuRudy = mode
-        val ei = if (ready) min(ef, max(0, nbE(em) - 1)) else 0
-        val cleE = (if (ready) em else "idle") + "_" + ei
-        if (cleE != dernierEnemy) {
-            dernierEnemy = cleE
-            if (ready && em in eCoups && ei == 1) son?.souffle()
-        }
-
-        // --- barres de vie, impacts, flash ---
-        if (cpuHP != hpVuCpu) {
-            if (cpuHP < hpVuCpu - .5f) { son?.coup(cpuHP, hpVuCpu - cpuHP); flashType = 1; tFlash = t }
-            barreCpu.cible(cpuHP, t, this::easeOut); hpVuCpu = cpuHP
-        }
-        if (rudyHP != hpVuRudy) {
-            if (rudyHP < hpVuRudy - .5f) { son?.coup(rudyHP, hpVuRudy - rudyHP); flashType = 2; tFlash = t }
-            barreRudy.cible(rudyHP, t, this::easeOut); hpVuRudy = rudyHP
-        }
-
-        // --- fin du combat ---
-        if (!finAffiche) {
-            if (ready) combatCommence = true
-            if (combatCommence) {
-                if (cpuHP < 1f) ecranFin(when (jeuCpu) { "V" -> "rudy_valor"; "MO" -> "rudy_mody"; else -> "rudy_theo" })
-                else if (rudyHP < 1f) ecranFin(when (jeuCpu) { "V" -> "valor"; "MO" -> "mody"; else -> "theo" })
-            }
+            if (ready && E != null && !eBusy && cpuHP > 0 && rudyHP > 0) cpuThink()
         }
     }
 
-    private fun penser(t: Long) {
-        val a = rectRudy(RectF()); val b = rectCpu(RectF())
-        val coups = listOf("direct", "backfist", "kick", "lowkick")
-        if (coups.none { cpuTouche(it) }) {
-            ex = if (b.centerX() > a.centerX()) max(52f, ex - .55f) else min(92f, ex + .55f)
-            setE("forward", t)
+    private fun cpuAnyHit() = realCPUHitsRudy("direct") || realCPUHitsRudy("backfist") ||
+        realCPUHitsRudy("kick") || realCPUHitsRudy("lowkick")
+
+    private fun cpuThink() {
+        val a = rectRudy(); val b = rectCpu()
+        // il reste du cote droit de Rudy et s'approche jusqu'a portee
+        if (!cpuAnyHit()) {
+            ex = if (b.centerX() > a.centerX()) max(52.0, ex - .55) else min(92.0, ex + .55)
+            setE("forward")
             return
         }
         val rnd = Math.random()
-        if (rnd < .10) { eBusy = true; setE("dodge", t); return }
-        if (rnd < .22) { eBusy = true; setE("guard", t); return }
-        val possibles = coups.filter { cpuTouche(it) }
-        if (possibles.isEmpty()) return
-        val kind = possibles[(Math.random() * possibles.size).toInt().coerceAtMost(possibles.size - 1)]
-        eBusy = true; cpuImpactDone = false; setE(kind, t)
-        apres(if (kind == "direct" || kind == "backfist") 285L else 350L) {
+        if (rnd < .10) { eBusy = true; setE("dodge"); return }
+        if (rnd < .22) { eBusy = true; setE("guard"); return }
+        val possible = listOf("direct", "backfist", "kick", "lowkick").filter { realCPUHitsRudy(it) }
+        if (possible.isEmpty()) return
+        val kind = possible[min(possible.size - 1, (Math.random() * possible.size).toInt())]
+        eBusy = true; cpuImpactDone = false; setE(kind)
+        plusTard(if (kind == "direct" || kind == "backfist") 285L else 350L) {
             if (!cpuImpactDone) {
                 cpuImpactDone = true
-                if (cpuTouche(kind)) hitRudy(kind)
+                if (realCPUHitsRudy(kind)) hitRudy(kind)
             }
         }
     }
 
     private fun hitRudy(kind: String) {
-        if (!cpuTouche(kind)) return
-        if (kind == "direct" && mode == "dodge") return
-        if (guardHeld) return
-        rudyHP = max(0f, rudyHP - if (kind == "kick" || kind == "lowkick") 6f else 4f)
+        if (!realCPUHitsRudy(kind)) return
+        if (kind == "direct" && mode == "dodge") return      // l'esquive annule un DIRECT
+        if (guardHeld) return                               // la GARDE absorbe le coup
+        val avant = rudyHP
+        rudyHP = max(0, rudyHP - (if (kind == "kick" || kind == "lowkick") 6 else 4))
+        bars(avant, cpuHP)
         if (!attackBusy) { attackBusy = true; setMode("damage"); label = "D\u00c9G\u00c2TS" }
     }
 
-    private fun hitCpu(power: Float) {
-        if (!rudyTouche(mode) || em == "dodge" || em == "guard") return
-        cpuHP = max(0f, cpuHP - power)
-        eBusy = true
-        setE("damage", SystemClock.uptimeMillis())
+    private fun hitCpu(power: Int) {
+        if (!realRudyHitsCPU(mode) || em == "dodge" || em == "guard") return
+        val avant = cpuHP
+        cpuHP = max(0, cpuHP - power)
+        bars(rudyHP, avant)
+        eBusy = true; setE("damage")
     }
 
-    // =====================================================================
-    // Commandes (memes regles que le HTML)
-    // =====================================================================
+    /** bars() + ce que les MutationObserver du HTML faisaient a chaque changement. */
+    private fun bars(rudyAvant: Int, cpuAvant: Int) {
+        if (cpuHP != cpuAvant) {
+            barreCpu.fixer(cpuHP.toFloat())
+            if (cpuHP < cpuAvant) son.coup(cpuHP.toFloat(), (cpuAvant - cpuHP).toFloat())
+        }
+        if (rudyHP != rudyAvant) {
+            barreRudy.fixer(rudyHP.toFloat())
+            if (rudyHP < rudyAvant) son.coup(rudyHP.toFloat(), (rudyAvant - rudyHP).toFloat())
+        }
+        verifie()
+    }
+
+    private fun pollCoupsRudy() {
+        if (!ready) return
+        if (attacks.contains(mode) && mode != seen) {
+            val my = ++serial
+            val kind = mode
+            plusTard(180) { if (my == serial) hitCpu(if (kind == "kick" || kind == "uppercut") 7 else 5) }
+        }
+        seen = mode
+    }
+
+    private fun pollSouffleRudy() {
+        val m = mode
+        if (m != vuRudy && attacks.contains(m)) son.souffle()
+        vuRudy = m
+    }
+
+    private fun pollFlash() {
+        val a = cpuHP.toFloat(); val b = rudyHP.toFloat()
+        if (a < vCpu - 0.5f) { flashType = 1; flashT0 = maintenant() }
+        if (b < vRudy - 0.5f) { flashType = 2; flashT0 = maintenant() }
+        vCpu = a; vRudy = b
+        teinteCpu = if (a <= 25f) 2 else if (a <= 55f) 1 else 0
+        teinteRudy = if (b <= 25f) 2 else if (b <= 55f) 1 else 0
+    }
+
+    private fun verifie() {
+        if (affiche) return
+        if (ready) combatCommence = true
+        if (!combatCommence) return
+        if (cpuHP < 1) ecranFin(when (cpuJeu) { "V" -> "rudy_valor"; "MO" -> "rudy_mody"; else -> "rudy_theo" })
+        else if (rudyHP < 1) ecranFin(when (cpuJeu) { "V" -> "valor"; "MO" -> "mody"; else -> "theo" })
+    }
 
     private fun doAttack() {
         if (attackBusy) return
@@ -621,650 +614,837 @@ class VuePariBoxe(ctx: Context) : View(ctx) {
         setMode(a)
         label = when (a) { "direct1" -> "DIRECT 1"; "direct2" -> "DIRECT 2"; "kick" -> "COUP DE PIED"; else -> "UPPERCUT" }
     }
-
     private fun esquive() {
         if (attackBusy) return
         attackBusy = true; guardHeld = false; guardRelease = false
         setMode("dodge"); label = "ESQUIVE"
     }
-
     private fun garde() {
-        if (attackBusy) return
+        if (attackBusy) return          // le coup reste prioritaire
         guardHeld = true; guardRelease = false; setMode("guard"); label = "PROTECTION"
     }
-
-    private fun releaseGuard() {
-        if (mode == "guard") { guardHeld = false; guardRelease = true }
-    }
-
-    private fun joyMove(x: Float, y: Float) {
+    private fun releaseGuard() { if (mode == "guard") { guardHeld = false; guardRelease = true } }
+    private fun joyMoveXY(x: Float, y: Float) {
         val dx = x - joyCx(); val dy = y - joyCy()
-        val maxi = joyTaille() * .8f * .30f
-        val dist = hypot(dx, dy).let { if (it == 0f) 1f else it }
-        val k = min(1f, maxi / dist)
+        val mx = joyTaille * joyEch * .30f
+        val d0 = hypot(dx, dy)
+        val d = if (d0 == 0f) 1f else d0
+        val k = min(1f, mx / d)
         stickX = dx * k; stickY = dy * k
-        move = if (dx > 22f) 1 else if (dx < -22f) -1 else 0
+        move = if (dx > 22) 1 else if (dx < -22) -1 else 0
         if (!attackBusy && mode != "guard") {
             setMode(if (move > 0) "forward" else if (move < 0) "back" else "idle")
             label = if (move > 0) "AVANCE" else if (move < 0) "RECULE" else "GARDE"
         }
     }
-
     private fun resetJoy() {
         joyId = -1; move = 0; stickX = 0f; stickY = 0f
         if (!attackBusy && mode != "guard") { setMode("idle"); label = "GARDE" }
     }
 
-    private fun cibleCombat(x: Float, y: Float): String? {
-        if (hypot(x - joyCx(), y - joyCy()) <= joyTaille() * .8f / 2f) return "joy"
-        for (c in commandes) {
-            val dia = if (petit()) c.petitD else c.grand
-            if (hypot(x - W() * c.px / 100f, y - H() * c.py / 100f) <= dia * c.ech / 2f) return c.id
+    // ================================================================ ecrans
+
+    private fun begin() {
+        if (starting) return
+        starting = true
+        val r = revanche
+        if (r != null) {
+            revanche = null
+            equiper(cartes.firstOrNull { it.jeu == r } ?: cartes[0])
+            lancerCombat()
+            return
         }
-        if (rectRudy(r1).contains(x, y)) return "rudy"
-        return null
+        ecran = CHOIX; tEcran = maintenant()
+        actif = 0; fini = false; tValide = -1.0
     }
 
-    private fun rectCommencer(r: RectF): RectF {
-        val fs = vwClamp(18f, 3f, 34f)
-        pTexte.textSize = fs * d; pTexte.letterSpacing = 0f
-        val w = pTexte.measureText("COMMENCER") / d + 3f * fs + 6f
-        val h = 1.15f * fs + 1.1f * fs + 6f
-        val bas = H() - H() * .07f
-        r.set((W() - w) / 2f, bas - h, (W() + w) / 2f, bas)
-        return r
+    private fun equiper(c: Carte) {
+        perso = if (c.jeu == "V") 1.09f else 1f     // Valor un peu plus grand que Rudy
+        cpuJeu = c.jeu; cpuNom = c.nom
+        equipe = true
+        chargerAdversaire(c.jeu)
     }
 
-    private fun rectsFin(a: RectF, b: RectF) {
-        val st = stage(RectF())
-        val fs = vwClamp(14f, 2.2f, 28f)
-        pTexte.textSize = fs * d; pTexte.letterSpacing = 0f
-        val w1 = pTexte.measureText("REJOUER") / d + 2.4f * fs + 6f
-        val w2 = pTexte.measureText("RETOUR") / d + 2.4f * fs + 6f
-        val h = 1.15f * fs + .9f * fs + 6f
-        val bas = st.bottom - st.height() * .035f
-        val g = st.centerX() - (w1 + 14f + w2) / 2f
-        a.set(g, bas - h, g + w1, bas)
-        b.set(g + w1 + 14f, bas - h, g + w1 + 14f + w2, bas)
+    private fun valider() {
+        if (fini) return
+        fini = true
+        equiper(cartes[actif])
+        tValide = maintenant()
+        plusTard(1100) { lancerCombat() }
     }
 
-    private fun flecheRect(droite: Boolean, r: RectF): RectF {
-        val st = stage(RectF())
-        val fs = vwClamp(22f, 4f, 48f)
-        val l = st.left + st.width() * (if (droite) .83f else .265f)
-        val cy = st.top + st.height() * .59f
-        val h = 1.15f * fs + 20f
-        r.set(l, cy - h / 2f, l + .62f * fs + 20f, cy + h / 2f)
-        return r
+    private fun lancerCombat() {
+        // les planches doivent etre pretes (dans le HTML elles le sont deja)
+        if (F == null || jeuCharge != cpuJeu) { plusTard(100) { lancerCombat() }; return }
+        ecran = COMBAT
+        son.demarrerMusique()
+        cdTexte = "3"
+        plusTard(1000) { cdTexte = "2" }
+        plusTard(2000) { cdTexte = "1" }
+        plusTard(3000) { cdTexte = ""; ready = true }
     }
 
-    private fun carteRect(i: Int, r: RectF): RectF {
-        val st = stage(RectF()); val c = cartes[i]
-        r.set(st.left + st.width() * c[0] / 100f, st.top + st.height() * c[1] / 100f,
-              st.left + st.width() * (c[0] + c[2]) / 100f, st.top + st.height() * (c[1] + c[3]) / 100f)
-        return r
+    private fun ecranFin(clef: String) {
+        if (affiche) return
+        affiche = true
+        ready = false                   // les combattants se figent
+        son.arreterMusique()
+        imageFin = null
+        val dir = dossier
+        if (dir != null) fil.execute {
+            val b = Planches.image(File(dir, "fin_$clef.img"))
+            main.post { if (affiche && ecran == FIN) imageFin = b else b?.recycle() }
+        }
+        ecran = FIN; tEcran = maintenant()
     }
+
+    /** location.reload() : tout repart de zero, seule la revanche est gardee. */
+    private fun recharge(rejouer: Boolean) {
+        revanche = if (rejouer) cpuJeu else null
+        gen++
+        ecran = DEPART; starting = false
+        actif = 0; fini = false; tValide = -1.0
+        equipe = false; cpuJeu = "E"; cpuNom = "CPU"; perso = 1f
+        cdTexte = ""
+        ready = false; mode = "idle"; frame = 0; lastR = 0.0; attackBusy = false
+        guardHeld = false; guardRelease = false; attackIndex = 0; move = 0; label = "GARDE"
+        worldOffset = 0.0; lastTick = -1.0; rudyPct = 50.0
+        cpuHP = 100; rudyHP = 100; em = "idle"; ef = 0; eBusy = false; ex = 65.12054656786727
+        lastE = 0.0; cpuImpactDone = false; cpuNext = 0.0; seen = ""; serial = 0
+        joyId = -1; guardId = -1; stickX = 0f; stickY = 0f
+        vuRudy = ""; dernierSrcE = ""; affiche = false; combatCommence = false
+        vCpu = 100f; vRudy = 100f; flashType = 0; flashT0 = -1e9; teinteCpu = 0; teinteRudy = 0
+        barreCpu.remettre(); barreRudy.remettre()
+        imageFin?.recycle(); imageFin = null
+    }
+
+    // ================================================================ toucher
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(e: MotionEvent): Boolean {
+        fun jx(k: Int) = (if (pivote) e.getY(k) else e.getX(k)) / dens
+        fun jy(k: Int) = (if (pivote) width - e.getX(k) else e.getY(k)) / dens
+        val i = e.actionIndex
         when (e.actionMasked) {
-            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
-                val i = e.actionIndex
-                appui(e.getPointerId(i), e.getX(i) / d, e.getY(i) / d)
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN ->
+                appui(e.getPointerId(i), jx(i), jy(i))
+            MotionEvent.ACTION_MOVE -> {
+                if (joyId >= 0 && ready && ecran == COMBAT) {
+                    val k = e.findPointerIndex(joyId)
+                    if (k >= 0) joyMoveXY(jx(k), jy(k))
+                }
             }
-            MotionEvent.ACTION_MOVE -> for (i in 0 until e.pointerCount)
-                deplace(e.getPointerId(i), e.getX(i) / d, e.getY(i) / d)
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
-                val i = e.actionIndex
-                relache(e.getPointerId(i), e.getX(i) / d, e.getY(i) / d, false)
-            }
-            MotionEvent.ACTION_CANCEL -> {
-                for (i in 0 until e.pointerCount) relache(e.getPointerId(i), e.getX(i) / d, e.getY(i) / d, true)
-                cibles.clear()
-            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP ->
+                relache(e.getPointerId(i), jx(i), jy(i), false)
+            MotionEvent.ACTION_CANCEL ->
+                for (k in 0 until e.pointerCount) relache(e.getPointerId(k), jx(k), jy(k), true)
         }
         return true
     }
 
     private fun appui(id: Int, x: Float, y: Float) {
         when (ecran) {
-            Ecran.DEPART -> if (rectCommencer(r1).contains(x, y)) cibles[id] = "depart"
-            Ecran.CHOIX -> {
-                if (fini) return
-                if (flecheRect(false, r1).contains(x, y)) { actif = (actif + 2) % 3; return }
-                if (flecheRect(true, r1).contains(x, y)) { actif = (actif + 1) % 3; return }
-                for (i in 0..2) if (carteRect(i, r1).contains(x, y)) {
-                    if (actif != i) actif = i else valider()
-                    return
+            CHOIX -> appuiChoix(x, y)
+            FIN -> appuiFin(x, y)
+            COMBAT -> {
+                if (!ready) return        // « combat-countdown-lock »
+                when {
+                    dansBouton(esquiveB, x, y) -> esquive()
+                    dansBouton(poingB, x, y) -> doAttack()
+                    dansBouton(gardeB, x, y) -> { guardId = id; garde() }
+                    hypot(x - joyCx(), y - joyCy()) <= joyTaille * joyEch / 2f -> { joyId = id; joyMoveXY(x, y) }
                 }
-            }
-            Ecran.FIN -> {
-                rectsFin(r1, r2)
-                if (r1.contains(x, y)) recharger(true)
-                else if (r2.contains(x, y)) recharger(false)
-            }
-            Ecran.COMBAT -> {
-                if (!ready) return
-                when (cibleCombat(x, y)) {
-                    "joy" -> { joyId = id; cibles[id] = "joy"; joyMove(x, y) }
-                    "guard" -> { cibles[id] = "guard"; garde() }
-                    "attack" -> doAttack()
-                    "dodge" -> esquive()
-                    "rudy" -> { cibles[id] = "rudy"; dragSx = x; dragSy = y; dragX0 = editX; dragY0 = editY }
-                    else -> {}
-                }
-            }
-            else -> {}
-        }
-    }
-
-    private fun deplace(id: Int, x: Float, y: Float) {
-        when (cibles[id]) {
-            "joy" -> if (id == joyId && ready) joyMove(x, y)
-            "rudy" -> if (ready) {
-                editX = clampf(dragX0 + (x - dragSx) / W() * 100f, 5f, 95f)
-                editY = clampf(dragY0 - (y - dragSy) / H() * 100f, 1.5f, 55f)
-                gauche = editX
             }
         }
     }
 
     private fun relache(id: Int, x: Float, y: Float, annule: Boolean) {
-        when (cibles.remove(id)) {
-            "depart" -> if (!annule && ecran == Ecran.DEPART && rectCommencer(r1).contains(x, y)) begin()
-            "joy" -> if (id == joyId) resetJoy()
-            "guard" -> releaseGuard()
-            "rudy" -> prefs.edit().putFloat("fighterX", editX).putFloat("fighterY", editY).apply()
-        }
-    }
-
-    // =====================================================================
-    // Dessin
-    // =====================================================================
-
-    override fun onDraw(c: Canvas) {
-        val t = SystemClock.uptimeMillis()
-        if (ecran == Ecran.CHARGEMENT || width == 0) {
-            c.drawColor(Color.BLACK)
-            pTexte.textSize = 16f * d; pTexte.letterSpacing = 0f; pTexte.color = Color.WHITE
-            pTexte.clearShadowLayer()
-            c.drawText(if (erreur != null) "PariBoxe : $erreur" else "Chargement\u2026", width / 2f, height / 2f, pTexte)
-            if (enMarche && erreur == null) postInvalidateOnAnimation()
+        if (ecran == DEPART) {
+            if (!annule && depart != null && rectCommencer().contains(x, y)) begin()
             return
         }
-        logique(t)
-        dessinerJeu(c, t)
-        compte?.let { dessinerCompte(c, it) }
+        if (ecran != COMBAT || !ready) {
+            if (id == joyId) joyId = -1
+            if (id == guardId) guardId = -1
+            return
+        }
+        if (id == joyId) resetJoy()
+        if (id == guardId) { guardId = -1; releaseGuard() }
+    }
+
+    // ================================================================ dessin
+
+    private val pSprite = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG).apply {
+        // filter: brightness(.93) contrast(1.06) saturate(1.04)
+        val cm = ColorMatrix()
+        cm.setScale(.93f, .93f, .93f, 1f)
+        val c = 1.06f
+        val o = (0.5f - 0.5f * c) * 255f
+        cm.postConcat(ColorMatrix(floatArrayOf(c, 0f, 0f, 0f, o, 0f, c, 0f, 0f, o, 0f, 0f, c, 0f, o, 0f, 0f, 0f, 1f, 0f)))
+        val s = 1.04f
+        cm.postConcat(ColorMatrix(floatArrayOf(
+            .213f + .787f * s, .715f - .715f * s, .072f - .072f * s, 0f, 0f,
+            .213f - .213f * s, .715f + .285f * s, .072f - .072f * s, 0f, 0f,
+            .213f - .213f * s, .715f - .715f * s, .072f + .928f * s, 0f, 0f,
+            0f, 0f, 0f, 1f, 0f)))
+        colorFilter = ColorMatrixColorFilter(cm)
+    }
+    private val pOmbre = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG).apply { color = 0x80000000.toInt() }
+    private val pImg = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
+    private val p = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val pT = Paint(Paint.ANTI_ALIAS_FLAG).apply { typeface = Typeface.create(Typeface.SANS_SERIF, 900, false) }
+    private val rTmp = RectF()
+    private val chemin = Path()
+
+    override fun onDraw(c: Canvas) {
+        c.drawColor(Color.BLACK)
+        if (W <= 0f) return
+        val t = if (tImage > 0) tImage else maintenant()
+        c.save()
+        if (pivote) { c.translate(width.toFloat(), 0f); c.rotate(90f) }
+        c.scale(dens, dens)
         when (ecran) {
-            Ecran.DEPART -> dessinerDepart(c)
-            Ecran.CHOIX -> dessinerChoix(c, t)
-            Ecran.FIN -> dessinerFin(c, t)
-            else -> {}
+            DEPART -> dessinerDepart(c)
+            CHOIX -> {
+                // #pariboxeStart.selectPerso : fondu d'entree .45s, le ring apparait derriere
+                dessinerJeu(c)
+                val o = EASE.y(((t - tEcran) / 450.0).coerceIn(0.0, 1.0)).toFloat()
+                calque(c, o) { dessinerChoix(c, t) }
+            }
+            FIN -> {
+                dessinerJeu(c)
+                val o = EASE.y(((t - tEcran) / 250.0).coerceIn(0.0, 1.0)).toFloat()
+                calque(c, o) { dessinerFin(c, t) }
+            }
+            else -> dessinerJeu(c)
         }
-        if (enMarche) postInvalidateOnAnimation()
-    }
-
-    private fun couvrir(c: Canvas, b: Bitmap, l: Float, tp: Float, w: Float, h: Float) {
-        val s = max(w / b.width, h / b.height)
-        val dw = b.width * s; val dh = b.height * s
-        r1.set(l + (w - dw) / 2f, tp + (h - dh) / 2f, l + (w + dw) / 2f, tp + (h + dh) / 2f)
-        c.save(); c.clipRect(l, tp, l + w, tp + h)
-        c.drawBitmap(b, null, r1, pImage)
         c.restore()
     }
 
-    private fun dessinerJeu(c: Canvas, t: Long) {
-        val w = width.toFloat(); val h = height.toFloat()
-        c.drawColor(Color.BLACK)
-        fond?.let { couvrir(c, it, 0f, 0f, w, h) }
-
-        dessinerLabel(c)
-        dessinerAmbiance(c, w, h)
-
-        // Rudy
-        rudy?.let { r ->
-            val m = if (ready) mode else "idle"
-            val f = if (ready) min(frame, max(0, nbR(m) - 1)) else 0
-            val p = r.image(m, f) ?: r.image("idle", 0)
-            if (p != null) dessinerPerso(c, p, boiteRudyL(), boiteRudyH(), W() * gauche / 100f,
-                H() - H() * editY / 100f, echelle, noeudRudy)
-        }
-
-        dessinerFlash(c, t, w, h)
-
-        // adversaire
-        adversaire?.let { a ->
-            val m = if (ready) em else "idle"
-            val f = if (ready) min(ef, max(0, nbE(m) - 1)) else 0
-            val p = a.image(m, f) ?: a.image("idle", 0)
-            if (p != null) dessinerPerso(c, p, 520f, 760f, W() * ex / 100f,
-                H() - H() * cpuBottom() / 100f, cpuScale(), noeudCpu)
-        }
-
-        dessinerHud(c, t)
-        dessinerCommandes(c)
+    private inline fun calque(c: Canvas, o: Float, bloc: () -> Unit) {
+        if (o >= 0.999f) { bloc(); return }
+        val n = c.saveLayerAlpha(0f, 0f, W, H, (o * 255).roundToInt().coerceIn(0, 255))
+        bloc()
+        c.restoreToCount(n)
     }
 
-    /** <img> object-fit:contain, object-position:center bottom, transform scale S depuis le bas-centre. */
-    private fun dessinerPerso(c: Canvas, p: Planche, bw: Float, bh: Float, cx: Float, bas: Float, s: Float, noeud: RenderNode?) {
-        val k = min(bw / p.largeur, bh / p.hauteur)
-        val dw = p.largeur * k; val dh = p.hauteur * k
-        val l = -dw / 2f + p.dx * k
-        val tp = -dh + p.dy * k
-        r2.set((cx + s * l) * d, (bas + s * tp) * d,
-               (cx + s * (l + p.bmp.width * k)) * d, (bas + s * (tp + p.bmp.height * k)) * d)
-        val dec = 9f * s * d
-        val sigma = 2.5f * s * d
-        if (Build.VERSION.SDK_INT >= 31 && noeud != null && c.isHardwareAccelerated) {
-            ombreFloue(c, p.bmp, r2, dec, sigma, noeud)
-        } else {
-            r1.set(r2); r1.offset(0f, dec)
-            c.drawBitmap(p.bmp, null, r1, pOmbre)
-        }
-        c.drawBitmap(p.bmp, null, r2, pPerso)
+    /** background-size: cover, centre. */
+    private fun couvrir(c: Canvas, b: Bitmap, x: Float, y: Float, w: Float, h: Float) {
+        val e = max(w / b.width, h / b.height)
+        val dw = b.width * e; val dh = b.height * e
+        rTmp.set(x + (w - dw) / 2f, y + (h - dh) / 2f, x + (w + dw) / 2f, y + (h + dh) / 2f)
+        c.save(); c.clipRect(x, y, x + w, y + h)
+        c.drawBitmap(b, null, rTmp, pImg)
+        c.restore()
     }
 
-    @android.annotation.TargetApi(31)
-    private fun ombreFloue(c: Canvas, b: Bitmap, dst: RectF, dec: Float, sigma: Float, noeud: RenderNode) {
-        val marge = sigma * 3f
-        val l = (dst.left - marge).toInt()
-        val tp = (dst.top + dec - marge).toInt()
-        val w = (dst.width() + 2 * marge).toInt() + 2
-        val h = (dst.height() + 2 * marge).toInt() + 2
-        noeud.setPosition(l, tp, l + w, tp + h)
-        val rc = noeud.beginRecording(w, h)
-        r1.set(dst.left - l, dst.top + dec - tp, dst.right - l, dst.bottom + dec - tp)
-        rc.drawBitmap(b, null, r1, pOmbre)
-        noeud.endRecording()
-        val rayon = max(0.1f, (sigma - 0.5f) / 0.57735f)
-        noeud.setRenderEffect(RenderEffect.createBlurEffect(rayon, rayon, Shader.TileMode.DECAL))
-        c.drawRenderNode(noeud)
+    /** « aspect-ratio 1672/941 ; max-width/height 100% ; margin auto ». */
+    private fun scene(): RectF {
+        val e = min(W / 1672f, H / 941f)
+        val sw = 1672f * e; val sh = 941f * e
+        return RectF((W - sw) / 2f, (H - sh) / 2f, (W + sw) / 2f, (H + sh) / 2f)
     }
 
-    private fun dessinerAmbiance(c: Canvas, w: Float, h: Float) {
-        // vignettage (dessous), puis halo du ring (dessus)
-        pRemp.color = Color.BLACK
-        pRemp.shader = RadialGradient(0f, 0f, 1f,
-            intArrayOf(0x00000000, 0x00000000, 0x6B000000), floatArrayOf(0f, .55f, 1f), Shader.TileMode.CLAMP)
-            .also { matrice.setScale(1.2f * w, .9f * h); matrice.postTranslate(.5f * w, .45f * h); it.setLocalMatrix(matrice) }
-        c.drawRect(0f, 0f, w, h, pRemp)
-        pRemp.shader = RadialGradient(0f, 0f, 1f,
-            intArrayOf(0x29FFC46E, 0x0DFFAA50, 0x00FFAA50, 0x00FFAA50), floatArrayOf(0f, .55f, .75f, 1f), Shader.TileMode.CLAMP)
-            .also { matrice.setScale(.6f * w, .34f * h); matrice.postTranslate(.5f * w, .88f * h); it.setLocalMatrix(matrice) }
-        c.drawRect(0f, 0f, w, h, pRemp)
-        pRemp.shader = null
+    /** line-height « normal » d'Arial, arrondi comme Chrome. */
+    private fun lh(fs: Float) = ((fs * .905f).roundToInt() + (fs * .212f).roundToInt() + (fs * .0327f).roundToInt()).toFloat()
+    private fun asc(fs: Float) = (fs * .905f).roundToInt().toFloat()
+    private fun borne(a: Float, v: Float, b: Float) = max(a, min(v, b))
+    private fun police(fs: Float, espacement: Float = 0f) {
+        pT.textSize = fs
+        pT.letterSpacing = if (fs > 0f) espacement / fs else 0f
+        pT.clearShadowLayer()
+        pT.textAlign = Paint.Align.LEFT
+        pT.alpha = 255
     }
+    /** rayon Android pour un ecart-type donne. */
+    private fun rayon(sig: Float) = max(0.1f, (sig - 0.5f) / 0.57735f)
 
-    private fun dessinerFlash(c: Canvas, t: Long, w: Float, h: Float) {
-        if (flashType == 0) return
-        val duree = if (flashType == 1) 180f else 260f
-        val p = (t - tFlash) / duree
-        if (p >= 1f) { flashType = 0; return }
-        val op = (if (flashType == 1) .55f else .7f) * (1f - easeOut(p))
-        val g = if (flashType == 1)
-            RadialGradient(0f, 0f, 1f, intArrayOf(0x8CFFFFFF.toInt(), 0x00FFFFFF), floatArrayOf(0f, .70f), Shader.TileMode.CLAMP)
-                .also { matrice.setScale(.70f * w, .60f * h); matrice.postTranslate(.5f * w, .55f * h); it.setLocalMatrix(matrice) }
-        else
-            RadialGradient(0f, 0f, 1f, intArrayOf(0x99FF3C28.toInt(), 0x00FF3C28), floatArrayOf(0f, .72f), Shader.TileMode.CLAMP)
-                .also { matrice.setScale(.75f * w, .65f * h); matrice.postTranslate(.5f * w, .55f * h); it.setLocalMatrix(matrice) }
-        pRemp.color = Color.BLACK
-        pRemp.shader = g
-        pRemp.alpha = (op * 255).toInt().coerceIn(0, 255)
-        c.drawRect(0f, 0f, w, h, pRemp)
-        pRemp.shader = null
-        pRemp.alpha = 255
-    }
-
-    /** ombre portee d'une forme a fond transparent : on ne la dessine qu'autour. */
-    private fun ombreForme(c: Canvas, r: RectF, rayon: Float, dy: Float, flouCss: Float, couleur: Int) {
-        chemin.reset(); chemin.addRoundRect(r, rayon, rayon, Path.Direction.CW)
+    /** box-shadow exterieur (invisible sous la boite, comme en CSS). */
+    private fun ombreBoite(c: Canvas, r: RectF, ra: Float, dy: Float, flou: Float, etal: Float, couleur: Int) {
         c.save()
+        chemin.reset(); chemin.addRoundRect(r, ra, ra, Path.Direction.CW)
         c.clipOutPath(chemin)
-        pRemp.color = couleur
-        pRemp.setShadowLayer(flou(flouCss), 0f, dy * d, couleur)
-        c.drawPath(chemin, pRemp)
-        pRemp.clearShadowLayer()
-        pRemp.color = Color.BLACK
+        p.reset(); p.isAntiAlias = true; p.color = couleur
+        if (flou > 0f) p.maskFilter = BlurMaskFilter(rayon(flou / 2f), BlurMaskFilter.Blur.NORMAL)
+        rTmp.set(r.left - etal, r.top - etal + dy, r.right + etal, r.bottom + etal + dy)
+        c.drawRoundRect(rTmp, ra + etal, ra + etal, p)
+        p.maskFilter = null
         c.restore()
     }
 
-    private fun texteCentre(c: Canvas, s: String, x: Float, cy: Float, p: Paint) {
-        val fm = p.fontMetrics
-        c.drawText(s, x, cy - (fm.ascent + fm.descent) / 2f, p)
-    }
+    // ---------------------------------------------------------------- combat
 
-    /** texte avec ses text-shadow CSS (liste du dessus vers le dessous) */
-    private fun texteOmbre(c: Canvas, s: String, x: Float, cy: Float, couleur: Int, dures: List<Float>, floues: List<Pair<Float, Int>>) {
-        for ((b, col) in floues.reversed()) {
-            pTexte.color = col
-            pTexte.setShadowLayer(flou(b), 0f, 0f, col)
-            texteCentre(c, s, x, cy, pTexte)
-        }
-        pTexte.clearShadowLayer()
-        for (dy in dures) { pTexte.color = Color.BLACK; texteCentre(c, s, x, cy + dy * d, pTexte) }
-        pTexte.color = couleur
-        texteCentre(c, s, x, cy, pTexte)
-    }
-
-    private fun dessinerLabel(c: Canvas) {
-        val fs = if (petit()) 17f else 20f
-        val top = if (petit()) 12f else 24f
-        pTexte.textSize = fs * d; pTexte.letterSpacing = 2f / fs; pTexte.clearShadowLayer()
-        val tw = pTexte.measureText(label) / d
-        val bw = tw + 50f + 4f
-        val bh = 1.15f * fs + 24f + 4f
-        val l = (W() - bw) / 2f
-        r1.set(l * d, top * d, (l + bw) * d, (top + bh) * d)
-        ombreForme(c, r1, 16f * d, 4f, 14f, 0x99000000.toInt())
-        pRemp.shader = LinearGradient(0f, r1.top, 0f, r1.bottom, 0xD1000000.toInt(), 0xD1121212.toInt(), Shader.TileMode.CLAMP)
-        c.drawRoundRect(r1, 16f * d, 16f * d, pRemp)
-        pRemp.shader = null
-        pTrait.color = 0x8CFFE27A.toInt(); pTrait.strokeWidth = 2f * d
-        r2.set(r1); r2.inset(d, d)
-        c.drawRoundRect(r2, 15f * d, 15f * d, pTrait)
-        pTexte.color = 0xFFFFE27A.toInt()
-        texteCentre(c, label, r1.centerX(), r1.centerY(), pTexte)
-    }
-
-    private fun dessinerHud(c: Canvas, t: Long) {
-        val hw = if (petit()) W() * .52f else min(W() * .58f, 780f)
-        val left = (W() - hw) / 2f
-        val top = if (petit()) 5f else 8f
-        val side = min(hw * .46f, (hw - 70f) / 2f)
-        val fs = vwClamp(11f, 1.5f, 19f)
-        val lineH = 1.12f * fs
-        val barH = if (petit()) 11f else 15f
-
-        pTexte.textSize = fs * d; pTexte.letterSpacing = 1.5f / fs
-        pTexte.textAlign = Paint.Align.LEFT
-        texteOmbre(c, "RUDY", (left + 2f) * d, (top + lineH / 2f) * d, 0xFFFFE27A.toInt(),
-            listOf(2f), listOf(8f to 0xE6000000.toInt()))
-        pTexte.textAlign = Paint.Align.RIGHT
-        texteOmbre(c, nomCpu, (left + hw - 2f - 1.5f) * d, (top + lineH / 2f) * d, 0xFFFFE27A.toInt(),
-            listOf(2f), listOf(8f to 0xE6000000.toInt()))
-        pTexte.textAlign = Paint.Align.CENTER
-
-        barre(c, left, top + lineH, side, barH, barreRudy.valeur(t, this::easeOut), rudyHP)
-        barre(c, left + hw - side, top + lineH, side, barH, barreCpu.valeur(t, this::easeOut), cpuHP)
-    }
-
-    private fun barre(c: Canvas, l: Float, tp: Float, w: Float, h: Float, pct: Float, cible: Float) {
-        r1.set(l * d, tp * d, (l + w) * d, (tp + h) * d)
-        val rad = 9f * d
-        // ombre portee de la barre (filter drop-shadow du HUD)
-        pRemp.color = 0xFF141414.toInt()
-        pRemp.setShadowLayer(flou(5f), 0f, 3f * d, 0xCC000000.toInt())
-        c.drawRoundRect(r1, rad, rad, pRemp)
-        pRemp.clearShadowLayer()
-        pRemp.shader = LinearGradient(0f, r1.top, 0f, r1.bottom, 0xFF141414.toInt(), 0xFF2A2A2A.toInt(), Shader.TileMode.CLAMP)
-        c.drawRoundRect(r1, rad, rad, pRemp)
-        pRemp.shader = null
-        // interieur
-        r2.set(r1); r2.inset(2f * d, 2f * d)
-        val inner = RectF(r2)
-        c.save()
-        chemin.reset(); chemin.addRoundRect(inner, 7f * d, 7f * d, Path.Direction.CW)
-        c.clipPath(chemin)
-        // ombre interieure (inset 0 2px 4px)
-        pRemp.shader = LinearGradient(0f, inner.top, 0f, inner.top + 4f * d, 0xB3000000.toInt(), 0x00000000, Shader.TileMode.CLAMP)
-        c.drawRect(inner, pRemp)
-        val cols = when {
-            cible <= 25f -> intArrayOf(0xFFFF8A7A.toInt(), 0xFFC31C10.toInt(), 0xFF7A0D05.toInt())
-            cible <= 55f -> intArrayOf(0xFFFFE066.toInt(), 0xFFE0A21A.toInt(), 0xFF8A5E05.toInt())
-            else -> intArrayOf(0xFF7EF29A.toInt(), 0xFF19A64A.toInt(), 0xFF0B6B2E.toInt())
-        }
-        val fin = inner.left + inner.width() * clampf(pct, 0f, 100f) / 100f
-        if (fin > inner.left) {
-            pRemp.shader = LinearGradient(0f, inner.top, 0f, inner.bottom, cols, floatArrayOf(0f, .55f, 1f), Shader.TileMode.CLAMP)
-            c.drawRect(inner.left, inner.top, fin, inner.bottom, pRemp)
-            pRemp.shader = null
-            pRemp.color = 0x59FFFFFF
-            c.drawRect(inner.left, inner.top, fin, inner.top + 2f * d, pRemp)
-        }
-        pRemp.shader = null
-        c.restore()
-        pTrait.color = 0xFFF0E2B0.toInt(); pTrait.strokeWidth = 2f * d
-        r2.set(r1); r2.inset(d, d)
-        c.drawRoundRect(r2, 8f * d, 8f * d, pTrait)
-    }
-
-    private fun dessinerCommandes(c: Canvas) {
-        // joystick
-        val js = joyTaille(); val jc = .8f
-        val cx = joyCx() * d; val cy = joyCy() * d
-        pRemp.color = 0xCC080808.toInt()
-        c.drawCircle(cx, cy, js / 2f * jc * d, pRemp)
-        pTrait.color = 0xFF666666.toInt(); pTrait.strokeWidth = 5f * jc * d
-        c.drawCircle(cx, cy, (js / 2f - 2.5f) * jc * d, pTrait)
-        val st = if (petit()) 60f else 74f
-        val sl = if (petit()) 38f else 53f
-        val lx = 5f + sl + st / 2f - js / 2f + stickX
-        val ly = 5f + sl + st / 2f - js / 2f + stickY
-        pRemp.color = 0xFF242424.toInt()
-        pRemp.setShadowLayer(flou(22f) * jc, 0f, 0f, Color.BLACK)
-        c.drawCircle(cx + lx * jc * d, cy + ly * jc * d, st / 2f * jc * d, pRemp)
-        pRemp.clearShadowLayer()
-
-        // boutons
-        for (b in commandes) {
-            val dia = if (petit()) b.petitD else b.grand
-            val bx = W() * b.px / 100f * d; val by = H() * b.py / 100f * d
-            val rr = dia / 2f * b.ech * d
-            pRemp.color = b.couleur
-            c.drawCircle(bx, by, rr, pRemp)
-            pTrait.color = 0xFF555555.toInt(); pTrait.strokeWidth = 5f * b.ech * d
-            c.drawCircle(bx, by, rr - 2.5f * b.ech * d, pTrait)
-            pTexte.textSize = b.police * b.ech * d; pTexte.letterSpacing = 0f
-            pTexte.clearShadowLayer(); pTexte.color = Color.WHITE
-            texteCentre(c, b.texte, bx, by, pTexte)
-        }
-    }
-
-    private fun dessinerCompte(c: Canvas, s: String) {
-        c.drawColor(0x1F000000)
-        pTexte.textSize = vwClamp(90f, 22f, 260f) * d; pTexte.letterSpacing = 0f
-        texteOmbre(c, s, width / 2f, height / 2f, 0xFFFFD800.toInt(),
-            listOf(5f), listOf(16f to Color.BLACK, 32f to Color.BLACK))
-    }
-
-    /** bouton « pilule » du HTML : anneau colore, bord blanc, fond noir .82/.85 */
-    private fun pilule(c: Canvas, r: RectF, texte: String, fs: Float, rayon: Float, anneau: Int, fondA: Int, flouOmbre: Float) {
-        val px = RectF(r.left * d, r.top * d, r.right * d, r.bottom * d)
-        chemin.reset(); chemin.addRoundRect(px, rayon * d, rayon * d, Path.Direction.CW)
-        // les box-shadow ne se voient qu'autour du bouton
-        c.save()
-        c.clipOutPath(chemin)
-        pRemp.color = Color.BLACK
-        pRemp.setShadowLayer(flou(flouOmbre), 0f, 5f * d, Color.BLACK)
-        c.drawPath(chemin, pRemp)
-        pRemp.clearShadowLayer()
-        r2.set(px); r2.inset(-3f * d, -3f * d)
-        pRemp.color = anneau
-        c.drawRoundRect(r2, (rayon + 3f) * d, (rayon + 3f) * d, pRemp)
-        c.restore()
-        // fond semi-transparent, puis bord blanc de 3 px
-        pRemp.color = Color.argb(fondA, 0, 0, 0)
-        c.drawPath(chemin, pRemp)
-        pTrait.color = Color.WHITE; pTrait.strokeWidth = 3f * d
-        r2.set(px); r2.inset(1.5f * d, 1.5f * d)
-        c.drawRoundRect(r2, (rayon - 1.5f) * d, (rayon - 1.5f) * d, pTrait)
-        pTexte.textSize = fs * d; pTexte.letterSpacing = 0f; pTexte.clearShadowLayer(); pTexte.color = Color.WHITE
-        texteCentre(c, texte, px.centerX(), px.centerY(), pTexte)
-    }
-
-    private fun dessinerDepart(c: Canvas) {
-        val w = width.toFloat(); val h = height.toFloat()
-        c.drawColor(Color.BLACK)
-        depart?.let { couvrir(c, it, 0f, 0f, w, h) }
-        val r = rectCommencer(RectF())
-        pilule(c, r, "COMMENCER", vwClamp(18f, 3f, 34f), 16f, 0xFFB40000.toInt(), 209, 18f)
-    }
-
-    private fun carteIn(t: Long, t0: Long, delai: Long): FloatArray {
-        val p = ((t - t0 - delai) / 500f).coerceIn(0f, 1f)
-        val e = bezier(.2f, .9f, .3f, 1.3f, p)
-        return floatArrayOf(e.coerceIn(0f, 1f), 38f * (1f - e), .9f + .1f * e)
-    }
-
-    private fun dessinerChoix(c: Canvas, t: Long) {
-        val w = width.toFloat(); val h = height.toFloat()
-        val fondu = ease(((t - tChoix) / 450f).coerceIn(0f, 1f))
-        val calque = if (fondu < 1f) c.saveLayerAlpha(0f, 0f, w, h, (fondu * 255).toInt()) else -1
-        c.drawColor(Color.BLACK)
-        val st = stage(RectF())
-        val sp = RectF(st.left * d, st.top * d, st.right * d, st.bottom * d)
-        choixImg?.let { c.drawBitmap(it, null, sp, pImage) }
-
-        // flash blanc de validation (sous les cartes)
-        if (fini) {
-            val p = ((t - tValide) / 500f).coerceIn(0f, 1f)
-            val op = .9f * (1f - easeOut(p))
-            if (op > 0f) { pRemp.color = Color.argb((op * 255).toInt(), 255, 255, 255); c.drawRect(sp, pRemp) }
-        }
-
-        // portraits et plaques de Valor et Mody
-        for (i in 1..2) {
-            val an = carteIn(t, tChoix, 220)
-            val art = arts[i]!!; val pl = plaques[i]!!
-            val ra = RectF(st.left + st.width() * art[0] / 100f, st.top + st.height() * art[1] / 100f,
-                st.left + st.width() * (art[0] + art[2]) / 100f, st.top + st.height() * (art[1] + art[3]) / 100f)
-            val rp = RectF(st.left + st.width() * pl[0] / 100f, st.top + st.height() * pl[1] / 100f,
-                st.left + st.width() * (pl[0] + pl[2]) / 100f, st.top + st.height() * (pl[1] + pl[3]) / 100f)
-            for ((k, rr) in listOf(0 to ra, 1 to rp)) {
-                c.save()
-                c.translate(0f, an[1] * d)
-                c.scale(an[2], an[2], rr.centerX() * d, rr.centerY() * d)
-                val px = RectF(rr.left * d, rr.top * d, rr.right * d, rr.bottom * d)
-                val a = (an[0] * 255).toInt()
-                if (k == 0) {
-                    r2.set(px); r2.inset(-2f * d, -2f * d)
-                    pRemp.color = Color.argb((0.85f * a).toInt(), 0, 0, 0)
-                    c.drawRoundRect(r2, 6f * d, 6f * d, pRemp)
-                    pRemp.color = Color.argb(a, 11, 11, 11)
-                    c.drawRoundRect(px, 4f * d, 4f * d, pRemp)
-                    val ic = if (i == 1) iconeValor else iconeMody
-                    ic?.let {
-                        val s = min(px.width() / it.width, px.height() / it.height)
-                        val dw = it.width * s; val dh = it.height * s
-                        r2.set(px.centerX() - dw / 2f, px.centerY() - dh / 2f, px.centerX() + dw / 2f, px.centerY() + dh / 2f)
-                        pImage.alpha = a
-                        c.drawBitmap(it, null, r2, pImage)
-                        pImage.alpha = 255
-                    }
-                } else {
-                    pRemp.color = Color.argb(a, 11, 11, 11)
-                    c.drawRoundRect(px, 4f * d, 4f * d, pRemp)
-                    pTrait.color = Color.argb(a, 0xD8, 0xA4, 0x00); pTrait.strokeWidth = 2f * d
-                    r2.set(px); r2.inset(d, d)
-                    c.drawRoundRect(r2, 3f * d, 3f * d, pTrait)
-                    val fs = vwClamp(11f, 1.6f, 22f)
-                    pTexte.textSize = fs * d; pTexte.letterSpacing = 1f / fs; pTexte.clearShadowLayer()
-                    pTexte.color = Color.argb(a, 0, 0, 0)
-                    texteCentre(c, nomsCartes[i], px.centerX(), px.centerY() + 2f * d, pTexte)
-                    pTexte.color = Color.argb(a, 0xFF, 0xD8, 0x00)
-                    texteCentre(c, nomsCartes[i], px.centerX(), px.centerY(), pTexte)
-                }
+    private fun dessinerJeu(c: Canvas) {
+        fond?.let { couvrir(c, it, 0f, 0f, W, H) }
+        dessinerEtiquette(c)                 // #label (z auto)
+        dessinerAmbiance(c)                  // #ambiance (z 2)
+        // Rudy (#fighter, z 6)
+        val f = F
+        if (f != null) {
+            val liste = if (ready) f[mode] else f["idle"]
+            if (liste != null && liste.isNotEmpty()) {
+                val s = liste[if (ready) min(frame, liste.size - 1) else 0]
+                val l = W * rudyPct.toFloat() / 100f - rbw / 2f
+                val b = H - H * 0.03f
+                c.save(); c.scale(reduc(), reduc(), l + rbw / 2f, piedsY())
+                dessinerSprite(c, s, l, b, rbw, rbh, 1f, l + rbw / 2f, b)
                 c.restore()
             }
         }
-
-        // cadre jaune qui pulse autour de la carte choisie
-        run {
-            val an = carteIn(t, tChoix, 100L + 120L * actif)
-            val cr = carteRect(actif, RectF())
-            val e = vaEtVient(t - tChoix, 850)
-            val flouG = 12f + 18f * e
-            val etal = 3f + 7f * e
-            val alpha = .55f + .4f * e
-            val sc = 1f + .02f * e
-            c.save()
-            c.translate(0f, an[1] * d)
-            c.scale(an[2], an[2], cr.centerX() * d, cr.centerY() * d)
-            c.scale(sc, sc, cr.centerX() * d, cr.centerY() * d)
-            val fr = RectF((cr.left - 7f) * d, (cr.top - 7f) * d, (cr.right + 7f) * d, (cr.bottom + 7f) * d)
-            val a = an[0]
-            val jaune = Color.argb((alpha * a * 255).toInt(), 255, 216, 0)
-            pTrait.color = jaune
-            pTrait.strokeWidth = (2f * etal) * d
-            pTrait.setShadowLayer(flou(flouG), 0f, 0f, jaune)
-            c.drawRoundRect(fr, 9f * d, 9f * d, pTrait)
-            pTrait.clearShadowLayer()
-            pTrait.color = Color.argb((a * 255).toInt(), 255, 216, 0)
-            pTrait.strokeWidth = 4f * d
-            r2.set(fr); r2.inset(2f * d, 2f * d)
-            c.drawRoundRect(r2, 7f * d, 7f * d, pTrait)
+        dessinerFlash(c)                     // #impactFlash (z 45)
+        // adversaire (#enemy, z 50)
+        val s = spriteCpu()
+        if (s != null) {
+            val cx = W * ex.toFloat() / 100f
+            val b = H - cpuBas()
+            c.save(); c.scale(reduc(), reduc(), cx, piedsY())
+            dessinerSprite(c, s, cx - 260f, b, 520f, 760f, cpuEchelle(), cx, b)
             c.restore()
         }
-
-        if (!fini) {
-            // fleches
-            val fs = vwClamp(22f, 4f, 48f)
-            val opF = .45f + .55f * vaEtVient(t, 1000)
-            for (droite in listOf(false, true)) {
-                val fr = flecheRect(droite, RectF())
-                val gx = fr.left + 10f + .09f * fs
-                val cy = fr.centerY() + .05f * fs
-                val lw = .44f * fs; val lh = .69f * fs
-                chemin.reset()
-                if (droite) {
-                    chemin.moveTo(gx * d, (cy - lh / 2f) * d); chemin.lineTo((gx + lw) * d, cy * d); chemin.lineTo(gx * d, (cy + lh / 2f) * d)
-                } else {
-                    chemin.moveTo((gx + lw) * d, (cy - lh / 2f) * d); chemin.lineTo(gx * d, cy * d); chemin.lineTo((gx + lw) * d, (cy + lh / 2f) * d)
-                }
-                chemin.close()
-                val a = (opF * 255).toInt()
-                pRemp.color = Color.argb(a, 0, 0, 0)
-                pRemp.setShadowLayer(flou(12f), 0f, 0f, Color.argb(a, 0, 0, 0))
-                c.drawPath(chemin, pRemp)
-                pRemp.clearShadowLayer()
-                c.save(); c.translate(0f, 3f * d); c.drawPath(chemin, pRemp); c.restore()
-                pRemp.color = Color.argb(a, 255, 216, 0)
-                c.drawPath(chemin, pRemp)
-            }
-            // astuce
-            val fa = vwClamp(10f, 1.5f, 18f)
-            val opA = .35f + .65f * vaEtVient(t, 1200)
-            pTexte.textSize = fa * d; pTexte.letterSpacing = 0f
-            val cyA = st.bottom - st.height() * .025f - .575f * fa
-            val calA = c.saveLayerAlpha(0f, 0f, w, h, (opA * 255).toInt())
-            pTexte.color = Color.BLACK; pTexte.setShadowLayer(flou(3f), 0f, 2f * d, Color.BLACK)
-            texteCentre(c, "APPUIE SUR LE COMBATTANT POUR LE CHOISIR", st.centerX() * d, cyA * d, pTexte)
-            pTexte.clearShadowLayer(); pTexte.color = Color.WHITE
-            texteCentre(c, "APPUIE SUR LE COMBATTANT POUR LE CHOISIR", st.centerX() * d, cyA * d, pTexte)
-            c.restoreToCount(calA)
-        } else {
-            // nom du combattant choisi
-            val p = ((t - tValide) / 900f).coerceIn(0f, 1f)
-            val (op, sc) = if (p < .35f) { val q = easeOut(p / .35f); q to (.6f + .52f * q) }
-                           else { val q = easeOut((p - .35f) / .65f); 1f to (1.12f - .12f * q) }
-            val fs = vwClamp(30f, 7f, 90f)
-            val cx = st.centerX() * d; val cy = (st.top + st.height() * .22f) * d
-            c.save(); c.scale(sc, sc, cx, cy)
-            pTexte.textSize = fs * d; pTexte.letterSpacing = 0f
-            val cal = c.saveLayerAlpha(0f, 0f, w, h, (op * 255).toInt())
-            texteOmbre(c, nomChoisi, cx, cy, 0xFFFFD800.toInt(), listOf(5f), listOf(24f to Color.BLACK))
-            c.restoreToCount(cal)
-            c.restore()
-        }
-        if (calque >= 0) c.restoreToCount(calque)
+        dessinerHud(c)                       // #hudFight (z 60)
+        dessinerCommandes(c)                 // manette et boutons (z 9999)
+        if (cdTexte.isNotEmpty()) dessinerCompte(c)
     }
 
-    private fun dessinerFin(c: Canvas, t: Long) {
-        val w = width.toFloat(); val h = height.toFloat()
-        val fondu = ease(((t - tFin) / 250f).coerceIn(0f, 1f))
-        val calque = if (fondu < 1f) c.saveLayerAlpha(0f, 0f, w, h, (fondu * 255).toInt()) else -1
-        c.drawColor(Color.BLACK)
-        val st = stage(RectF())
-        finImg?.let { c.drawBitmap(it, null, RectF(st.left * d, st.top * d, st.right * d, st.bottom * d), pImage) }
-        val a = RectF(); val b = RectF()
-        rectsFin(a, b)
-        val fs = vwClamp(14f, 2.2f, 28f)
-        val sc = 1f + .05f * vaEtVient(t - tFin, 900)
-        for ((r, txt, col) in listOf(Triple(a, "REJOUER", 0xFFB40000.toInt()), Triple(b, "RETOUR", 0xFF087D20.toInt()))) {
-            c.save(); c.scale(sc, sc, r.centerX() * d, r.centerY() * d)
-            pilule(c, r, txt, fs, 14f, col, 217, 16f)
+    private fun spriteCpu(): Sprite? {
+        if (!equipe || E == null || jeuCharge != cpuJeu) return if (!equipe) apercuTheo else null
+        val l = (if (ready) listeE(em) else listeE("idle")) ?: return null
+        if (l.isEmpty()) return null
+        return l[if (ready) min(ef, l.size - 1) else 0]
+    }
+
+    /** object-fit: contain ; object-position: center bottom ; puis scale() autour du bas-centre. */
+    private fun dessinerSprite(c: Canvas, s: Sprite, bl: Float, bb: Float, bw: Float, bh: Float, ech: Float, ax: Float, ay: Float) {
+        val k = min(bw / s.largeur, bh / s.hauteur)
+        val iw = s.largeur * k; val ih = s.hauteur * k
+        c.save()
+        if (ech != 1f) c.scale(ech, ech, ax, ay)
+        c.translate(bl + (bw - iw) / 2f, bb - ih)
+        c.scale(k, k)
+        val o = s.ombre
+        if (o != null && !o.isRecycled) c.drawBitmap(o, null, s.ombreRect, pOmbre)
+        if (!s.bmp.isRecycled) c.drawBitmap(s.bmp, s.dx.toFloat(), s.dy.toFloat(), pSprite)
+        c.restore()
+    }
+
+    private fun degradeEllipse(cx: Float, cy: Float, rx: Float, ry: Float, couleurs: IntArray, arrets: FloatArray): Shader {
+        val g = RadialGradient(cx, cy, rx, couleurs, arrets, Shader.TileMode.CLAMP)
+        val m = Matrix(); m.setScale(1f, ry / rx, cx, cy)
+        g.setLocalMatrix(m)
+        return g
+    }
+
+    private fun dessinerAmbiance(c: Canvas) {
+        p.reset(); p.isAntiAlias = true
+        p.shader = degradeEllipse(W * .5f, H * .88f, W * .6f, H * .34f,
+            intArrayOf(Color.argb(41, 255, 196, 110), Color.argb(13, 255, 170, 80), Color.argb(0, 255, 170, 80)),
+            floatArrayOf(0f, .55f, .75f))
+        c.drawRect(0f, 0f, W, H, p)
+        p.shader = degradeEllipse(W * .5f, H * .45f, W * 1.2f, H * .9f,
+            intArrayOf(Color.argb(0, 0, 0, 0), Color.argb(0, 0, 0, 0), Color.argb(107, 0, 0, 0)),
+            floatArrayOf(0f, .55f, 1f))
+        c.drawRect(0f, 0f, W, H, p)
+        p.shader = null
+    }
+
+    private fun dessinerFlash(c: Canvas) {
+        if (flashType == 0) return
+        val d = if (flashType == 1) 180.0 else 260.0
+        val q = (tImage - flashT0) / d
+        if (q < 0 || q >= 1) return
+        val o0 = if (flashType == 1) .55f else .7f
+        val o = o0 * (1f - EASE_OUT.y(q).toFloat())
+        p.reset(); p.isAntiAlias = true
+        p.shader = if (flashType == 1)
+            degradeEllipse(W * .5f, H * .55f, W * .7f, H * .6f,
+                intArrayOf(Color.argb(140, 255, 255, 255), Color.argb(0, 255, 255, 255)), floatArrayOf(0f, .7f))
+        else
+            degradeEllipse(W * .5f, H * .55f, W * .75f, H * .65f,
+                intArrayOf(Color.argb(153, 255, 60, 40), Color.argb(0, 255, 60, 40)), floatArrayOf(0f, .72f))
+        p.alpha = (o * 255).roundToInt().coerceIn(0, 255)
+        c.drawRect(0f, 0f, W, H, p)
+        p.shader = null
+    }
+
+    private fun dessinerEtiquette(c: Canvas) {
+        val fs = if (petit) 17f else 20f
+        police(fs, 2f)
+        val w = pT.measureText(label) + 50f + 4f
+        val h = lh(fs) + 24f + 4f
+        val top = if (petit) 12f else 24f
+        val r = RectF(W / 2f - w / 2f, top, W / 2f + w / 2f, top + h)
+        ombreBoite(c, r, 16f, 4f, 14f, 0f, Color.argb(153, 0, 0, 0))
+        p.reset(); p.isAntiAlias = true
+        p.shader = LinearGradient(0f, r.top, 0f, r.bottom, Color.argb(209, 0, 0, 0), Color.argb(209, 18, 18, 18), Shader.TileMode.CLAMP)
+        c.drawRoundRect(r, 16f, 16f, p)
+        p.shader = null
+        p.style = Paint.Style.STROKE; p.strokeWidth = 2f; p.color = Color.argb(140, 255, 226, 122)
+        rTmp.set(r.left + 1f, r.top + 1f, r.right - 1f, r.bottom - 1f)
+        c.drawRoundRect(rTmp, 15f, 15f, p)
+        p.style = Paint.Style.FILL
+        pT.color = 0xFFFFE27A.toInt()
+        c.drawText(label, r.left + 2f + 25f, r.top + 2f + 12f + asc(fs), pT)
+    }
+
+    private fun dessinerHud(c: Canvas) {
+        val hw = if (petit) W * .52f else min(W * .58f, 780f)
+        val left = (W - hw) / 2f
+        val top = if (petit) 5f else 8f
+        val sw = hw * .46f
+        val fs = borne(11f, W * .015f, 19f)
+        val hauteurB = lh(fs)
+        val hh = if (petit) 11f else 15f
+        val coteD = left + hw - sw
+        val barres = listOf(
+            Triple(left, barreRudy.valeur(tImage), teinteRudy),
+            Triple(coteD, barreCpu.valeur(tImage), teinteCpu))
+        for ((x0, v, teinte) in barres) {
+            val r = RectF(x0, top + hauteurB, x0 + sw, top + hauteurB + hh)
+            // drop-shadow(0 3px 5px rgba(0,0,0,.8)) du bandeau
+            p.reset(); p.isAntiAlias = true; p.color = Color.argb(204, 0, 0, 0)
+            p.maskFilter = BlurMaskFilter(rayon(2.5f), BlurMaskFilter.Blur.NORMAL)
+            rTmp.set(r.left, r.top + 3f, r.right, r.bottom + 3f)
+            c.drawRoundRect(rTmp, 9f, 9f, p)
+            p.maskFilter = null
+            p.shader = LinearGradient(0f, r.top, 0f, r.bottom, 0xFF141414.toInt(), 0xFF2A2A2A.toInt(), Shader.TileMode.CLAMP)
+            c.drawRoundRect(r, 9f, 9f, p)
+            p.shader = null
+            val inner = RectF(r.left + 2f, r.top + 2f, r.right - 2f, r.bottom - 2f)
+            c.save()
+            chemin.reset(); chemin.addRoundRect(inner, 7f, 7f, Path.Direction.CW)
+            c.clipPath(chemin)
+            val cols = when (teinte) {
+                2 -> intArrayOf(0xFFFF8A7A.toInt(), 0xFFC31C10.toInt(), 0xFF7A0D05.toInt())
+                1 -> intArrayOf(0xFFFFE066.toInt(), 0xFFE0A21A.toInt(), 0xFF8A5E05.toInt())
+                else -> intArrayOf(0xFF7EF29A.toInt(), 0xFF19A64A.toInt(), 0xFF0B6B2E.toInt())
+            }
+            val bw = inner.width() * max(0f, v) / 100f
+            if (bw > 0f) {
+                p.shader = LinearGradient(0f, inner.top, 0f, inner.bottom, cols, floatArrayOf(0f, .55f, 1f), Shader.TileMode.CLAMP)
+                c.drawRect(inner.left, inner.top, inner.left + bw, inner.bottom, p)
+                p.shader = null
+                p.color = Color.argb(89, 255, 255, 255)
+                c.drawRect(inner.left, inner.top, inner.left + bw, inner.top + 2f, p)
+            }
+            // ombre interieure (inset 0 2px 4px rgba(0,0,0,.9))
+            p.color = Color.argb(230, 0, 0, 0)
+            p.maskFilter = BlurMaskFilter(rayon(2f), BlurMaskFilter.Blur.NORMAL)
+            chemin.reset()
+            chemin.fillType = Path.FillType.EVEN_ODD
+            chemin.addRect(inner.left - 20f, inner.top - 20f, inner.right + 20f, inner.bottom + 20f, Path.Direction.CW)
+            rTmp.set(inner.left, inner.top + 2f, inner.right, inner.bottom + 2f)
+            chemin.addRoundRect(rTmp, 7f, 7f, Path.Direction.CW)
+            c.drawPath(chemin, p)
+            chemin.fillType = Path.FillType.WINDING
+            p.maskFilter = null
+            c.restore()
+            p.style = Paint.Style.STROKE; p.strokeWidth = 2f; p.color = 0xFFF0E2B0.toInt()
+            rTmp.set(r.left + 1f, r.top + 1f, r.right - 1f, r.bottom - 1f)
+            c.drawRoundRect(rTmp, 8f, 8f, p)
+            p.style = Paint.Style.FILL
+        }
+        // noms (ombres 0 0 8px et 0 2px 0, puis le texte)
+        police(fs, 1.5f)
+        pT.color = 0xFFFFE27A.toInt()
+        val base = top + asc(fs)
+        for (passe in 0..1) {
+            if (passe == 0) pT.setShadowLayer(rayon(4f), 0f, 0f, Color.argb(230, 0, 0, 0))
+            else pT.setShadowLayer(0.1f, 0f, 2f, Color.BLACK)
+            pT.textAlign = Paint.Align.LEFT
+            c.drawText("RUDY", left + 2f, base, pT)
+            pT.textAlign = Paint.Align.RIGHT
+            c.drawText(cpuNom, coteD + sw - 2f, base, pT)
+        }
+        pT.textAlign = Paint.Align.LEFT
+        pT.clearShadowLayer()
+    }
+
+    private fun dessinerCommandes(c: Canvas) {
+        // #joy : translate(-50%,-50%) scale(.8)
+        val cx = joyCx(); val cy = joyCy()
+        val tj = joyTaille
+        c.save()
+        c.scale(joyEch, joyEch, cx, cy)
+        p.reset(); p.isAntiAlias = true
+        p.color = 0xCC080808.toInt()
+        c.drawCircle(cx, cy, tj / 2f, p)
+        p.style = Paint.Style.STROKE; p.strokeWidth = 5f; p.color = 0xFF666666.toInt()
+        c.drawCircle(cx, cy, tj / 2f - 2.5f, p)
+        p.style = Paint.Style.FILL
+        val st = stickTaille
+        val decal = 5f + stickPos + st / 2f - tj / 2f
+        val sx = cx + decal + stickX / joyEch
+        val sy = cy + decal + stickY / joyEch
+        p.color = Color.BLACK
+        p.maskFilter = BlurMaskFilter(rayon(11f), BlurMaskFilter.Blur.NORMAL)
+        c.drawCircle(sx, sy, st / 2f, p)
+        p.maskFilter = null
+        p.color = 0xFF242424.toInt()
+        c.drawCircle(sx, sy, st / 2f, p)
+        c.restore()
+        // GARDE, POING, ESQUIVE, dans l'ordre du HTML
+        for (b in arrayOf(gardeB, poingB, esquiveB)) {
+            val bx = W * b.px / 100f; val by = H * b.py / 100f
+            val tb = tailleB(b)
+            c.save()
+            c.scale(b.ech, b.ech, bx, by)
+            p.reset(); p.isAntiAlias = true; p.color = b.couleur
+            c.drawCircle(bx, by, tb / 2f, p)
+            p.style = Paint.Style.STROKE; p.strokeWidth = 5f; p.color = 0xFF555555.toInt()
+            c.drawCircle(bx, by, tb / 2f - 2.5f, p)
+            p.style = Paint.Style.FILL
+            police(b.police)
+            pT.color = Color.WHITE
+            pT.textAlign = Paint.Align.CENTER
+            c.drawText(b.texte, bx, by - lh(b.police) / 2f + asc(b.police), pT)
+            pT.textAlign = Paint.Align.LEFT
             c.restore()
         }
-        if (calque >= 0) c.restoreToCount(calque)
+    }
+
+    private fun dessinerCompte(c: Canvas) {
+        p.reset(); p.color = Color.argb(31, 0, 0, 0)
+        c.drawRect(0f, 0f, W, H, p)
+        val fs = borne(90f, W * .22f, 260f)
+        police(fs)
+        pT.textAlign = Paint.Align.CENTER
+        val base = (H - lh(fs)) / 2f + asc(fs)
+        pT.color = Color.BLACK
+        pT.setShadowLayer(rayon(16f), 0f, 0f, Color.BLACK)
+        c.drawText(cdTexte, W / 2f, base, pT)
+        pT.setShadowLayer(rayon(8f), 0f, 0f, Color.BLACK)
+        c.drawText(cdTexte, W / 2f, base, pT)
+        pT.clearShadowLayer()
+        c.drawText(cdTexte, W / 2f, base + 5f, pT)
+        pT.color = 0xFFFFD800.toInt()
+        c.drawText(cdTexte, W / 2f, base, pT)
+        pT.textAlign = Paint.Align.LEFT
+    }
+
+    // ---------------------------------------------------------------- ecran de depart
+
+    private fun rectCommencer(): RectF {
+        val fs = borne(18f, W * .03f, 34f)
+        police(fs)
+        val w = pT.measureText("COMMENCER") + 3f * fs + 6f
+        val h = lh(fs) + 1.1f * fs + 6f
+        val bas = H - H * .07f
+        return RectF(W / 2f - w / 2f, bas - h, W / 2f + w / 2f, bas)
+    }
+
+    private fun dessinerDepart(c: Canvas) {
+        val d = depart
+        if (d == null) {
+            police(16f); pT.color = Color.WHITE; pT.textAlign = Paint.Align.CENTER
+            c.drawText("Chargement\u2026", W / 2f, H / 2f, pT)
+            pT.textAlign = Paint.Align.LEFT
+            return
+        }
+        couvrir(c, d, 0f, 0f, W, H)
+        boutonCss(c, rectCommencer(), 16f, 0xFFB40000.toInt(), Color.argb(209, 0, 0, 0),
+            "COMMENCER", borne(18f, W * .03f, 34f), 18f)
+    }
+
+    /** bouton : bordure 3px blanche, anneau 3px colore, ombre 0 5px (flou) noire. */
+    private fun boutonCss(c: Canvas, r: RectF, ra: Float, anneau: Int, fondC: Int, texte: String, fs: Float, flou: Float) {
+        ombreBoite(c, r, ra, 5f, flou, 0f, Color.BLACK)
+        p.reset(); p.isAntiAlias = true
+        p.style = Paint.Style.STROKE; p.strokeWidth = 3f; p.color = anneau
+        rTmp.set(r.left - 1.5f, r.top - 1.5f, r.right + 1.5f, r.bottom + 1.5f)
+        c.drawRoundRect(rTmp, ra + 1.5f, ra + 1.5f, p)
+        p.style = Paint.Style.FILL; p.color = fondC
+        c.drawRoundRect(r, ra, ra, p)
+        p.style = Paint.Style.STROKE; p.color = Color.WHITE
+        rTmp.set(r.left + 1.5f, r.top + 1.5f, r.right - 1.5f, r.bottom - 1.5f)
+        c.drawRoundRect(rTmp, ra - 1.5f, ra - 1.5f, p)
+        p.style = Paint.Style.FILL
+        police(fs)
+        pT.color = Color.WHITE
+        pT.textAlign = Paint.Align.CENTER
+        c.drawText(texte, r.centerX(), r.centerY() - lh(fs) / 2f + asc(fs), pT)
+        pT.textAlign = Paint.Align.LEFT
+    }
+
+    // ---------------------------------------------------------------- choix du combattant
+
+    private fun pct(s: RectF, l: Float, t: Float, w: Float, h: Float) =
+        RectF(s.left + s.width() * l / 100f, s.top + s.height() * t / 100f,
+            s.left + s.width() * (l + w) / 100f, s.top + s.height() * (t + h) / 100f)
+
+    /** selCarteIn .5s cubic-bezier(.2,.9,.3,1.3) both -> [opacite, decalage Y, echelle]. */
+    private fun entree(t: Double, retard: Double): FloatArray {
+        val q = ((t - tEcran - retard) / 500.0).coerceIn(0.0, 1.0)
+        val e = ENTREE.y(q).toFloat()
+        return floatArrayOf(e.coerceIn(0f, 1f), 38f * (1f - e), .9f + .1f * e)
+    }
+
+    /** animation infinite alternate ease-in-out -> 0..1 */
+    private fun alterne(t: Double, duree: Double): Float {
+        val cyc = ((t - tEcran) / duree) % 2.0
+        val x = if (cyc <= 1.0) cyc else 2.0 - cyc
+        return EASE_IN_OUT.y(x).toFloat()
+    }
+
+    private fun flecheRect(s: RectF, gauche: Boolean): RectF {
+        val fs = borne(22f, W * .04f, 48f)
+        val w = fs * .77f + 20f
+        val h = lh(fs) + 20f
+        val l = s.left + s.width() * (if (gauche) .265f else .83f)
+        val cy = s.top + s.height() * .59f
+        return RectF(l, cy - h / 2f, l + w, cy + h / 2f)
+    }
+
+    private fun appuiChoix(x: Float, y: Float) {
+        if (fini) return
+        val s = scene()
+        // carte active au-dessus (z-index 3), puis les autres, la derniere en haut
+        val ordre = listOf(actif) + cartes.indices.filter { it != actif }.reversed()
+        for (i in ordre) {
+            val r = pct(s, cartes[i].l, cartes[i].t, cartes[i].w, cartes[i].h)
+            if (i == actif) r.inset(-7f, -7f)
+            if (r.contains(x, y)) {
+                if (actif != i) { actif = i; return }
+                valider(); return
+            }
+        }
+        if (flecheRect(s, false).contains(x, y)) { actif = (actif + 1) % cartes.size; return }
+        if (flecheRect(s, true).contains(x, y)) { actif = (actif - 1 + cartes.size) % cartes.size; return }
+    }
+
+    private fun dessinerChoix(c: Canvas, t: Double) {
+        c.drawColor(Color.BLACK)
+        val s = scene()
+        choix?.let { c.drawBitmap(it, null, s, pImg) }
+        // #selFlash (sous les portraits)
+        if (tValide >= 0) {
+            val q = (t - tValide) / 500.0
+            if (q in 0.0..1.0) {
+                p.reset(); p.color = Color.WHITE
+                p.alpha = (.9f * (1f - EASE_OUT.y(q).toFloat()) * 255).roundToInt().coerceIn(0, 255)
+                c.drawRect(s, p)
+            }
+        }
+        // portraits et plaques de nom (Valor, Mody)
+        val a = entree(t, 220.0)
+        if (a[0] > 0f) for (carte in cartes) {
+            val art = carte.art
+            if (art != null) {
+                val r = pct(s, art[0], art[1], art[2], art[3])
+                c.save()
+                transformer(c, r, a)
+                val n = c.saveLayerAlpha(r.left - 3f, r.top - 3f, r.right + 3f, r.bottom + 3f, (a[0] * 255).roundToInt())
+                p.reset(); p.isAntiAlias = true
+                p.style = Paint.Style.STROKE; p.strokeWidth = 2f; p.color = Color.argb(217, 0, 0, 0)
+                rTmp.set(r.left - 1f, r.top - 1f, r.right + 1f, r.bottom + 1f)
+                c.drawRoundRect(rTmp, 5f, 5f, p)
+                p.style = Paint.Style.FILL; p.color = 0xFF0B0B0B.toInt()
+                c.drawRoundRect(r, 4f, 4f, p)
+                val ic = if (carte.jeu == "V") iconeValor else iconeMody
+                if (ic != null) {
+                    c.save()
+                    chemin.reset(); chemin.addRoundRect(r, 4f, 4f, Path.Direction.CW); c.clipPath(chemin)
+                    val e = min(r.width() / ic.width, r.height() / ic.height)
+                    val dw = ic.width * e; val dh = ic.height * e
+                    rTmp.set(r.centerX() - dw / 2f, r.centerY() - dh / 2f, r.centerX() + dw / 2f, r.centerY() + dh / 2f)
+                    c.drawBitmap(ic, null, rTmp, pImg)
+                    c.restore()
+                }
+                c.restoreToCount(n)
+                c.restore()
+            }
+            val pl = carte.plaque
+            if (pl != null) {
+                val r = pct(s, pl[0], pl[1], pl[2], pl[3])
+                c.save()
+                transformer(c, r, a)
+                val n = c.saveLayerAlpha(r.left - 3f, r.top - 3f, r.right + 3f, r.bottom + 3f, (a[0] * 255).roundToInt())
+                p.reset(); p.isAntiAlias = true; p.color = 0xFF0B0B0B.toInt()
+                c.drawRoundRect(r, 4f, 4f, p)
+                p.style = Paint.Style.STROKE; p.strokeWidth = 2f; p.color = 0xFFD8A400.toInt()
+                rTmp.set(r.left + 1f, r.top + 1f, r.right - 1f, r.bottom - 1f)
+                c.drawRoundRect(rTmp, 3f, 3f, p)
+                p.style = Paint.Style.FILL
+                val fs = borne(11f, W * .016f, 22f)
+                police(fs, 1f)
+                pT.color = 0xFFFFD800.toInt(); pT.textAlign = Paint.Align.CENTER
+                pT.setShadowLayer(rayon(1f), 0f, 2f, Color.BLACK)
+                c.drawText(carte.nom, r.centerX(), r.centerY() - lh(fs) / 2f + asc(fs), pT)
+                pT.clearShadowLayer(); pT.textAlign = Paint.Align.LEFT
+                c.restoreToCount(n)
+                c.restore()
+            }
+        }
+        // fleches
+        if (!fini) {
+            val fs = borne(22f, W * .04f, 48f)
+            val o = .45f + .55f * alterne(t, 1000.0)
+            for (g in booleanArrayOf(true, false)) {
+                val r = flecheRect(s, g)
+                val gw = fs * .77f
+                val x0 = r.left + 10f
+                val cy = r.centerY()
+                val demi = gw * .5f
+                chemin.reset()
+                if (g) { chemin.moveTo(x0 + gw, cy - demi); chemin.lineTo(x0, cy); chemin.lineTo(x0 + gw, cy + demi) }
+                else { chemin.moveTo(x0, cy - demi); chemin.lineTo(x0 + gw, cy); chemin.lineTo(x0, cy + demi) }
+                chemin.close()
+                val n = c.saveLayerAlpha(r.left - 20f, r.top - 20f, r.right + 20f, r.bottom + 20f, (o * 255).roundToInt())
+                p.reset(); p.isAntiAlias = true; p.color = Color.BLACK
+                p.maskFilter = BlurMaskFilter(rayon(6f), BlurMaskFilter.Blur.NORMAL)
+                c.drawPath(chemin, p)
+                p.maskFilter = null
+                c.save(); c.translate(0f, 3f); c.drawPath(chemin, p); c.restore()
+                p.color = 0xFFFFD800.toInt()
+                c.drawPath(chemin, p)
+                c.restoreToCount(n)
+            }
+        }
+        // #selNom
+        if (tValide >= 0) {
+            val q = ((t - tValide) / 900.0).coerceIn(0.0, 1.0)
+            val o: Float
+            val e: Float
+            if (q <= .35) { val u = EASE_OUT.y(q / .35).toFloat(); o = u; e = .6f + (1.12f - .6f) * u }
+            else { val u = EASE_OUT.y((q - .35) / .65).toFloat(); o = 1f; e = 1.12f + (1f - 1.12f) * u }
+            val fs = borne(30f, W * .07f, 90f)
+            police(fs)
+            val cx = W / 2f
+            val cy = s.top + s.height() * .22f
+            val nom = cartes[actif].nom
+            c.save()
+            c.scale(e, e, cx, cy)
+            val base = cy - lh(fs) / 2f + asc(fs)
+            val n = c.saveLayerAlpha(0f, 0f, W, H, (o * 255).roundToInt().coerceIn(0, 255))
+            pT.textAlign = Paint.Align.CENTER
+            pT.color = Color.BLACK
+            pT.setShadowLayer(rayon(12f), 0f, 0f, Color.BLACK)
+            c.drawText(nom, cx, base, pT)
+            pT.clearShadowLayer()
+            c.drawText(nom, cx, base + 5f, pT)
+            pT.color = 0xFFFFD800.toInt()
+            c.drawText(nom, cx, base, pT)
+            pT.textAlign = Paint.Align.LEFT
+            c.restoreToCount(n)
+            c.restore()
+        }
+        // #selAstuce
+        if (!fini) {
+            val fs = borne(10f, W * .015f, 18f)
+            police(fs)
+            val o = .35f + .65f * alterne(t, 1200.0)
+            val al = (o * 255).roundToInt()
+            pT.color = Color.WHITE
+            pT.alpha = al
+            pT.textAlign = Paint.Align.CENTER
+            pT.setShadowLayer(rayon(1.5f), 0f, 2f, Color.argb(al, 0, 0, 0))
+            val bas = s.bottom - s.height() * .025f
+            c.drawText("APPUIE SUR LE COMBATTANT POUR LE CHOISIR", W / 2f, bas - lh(fs) + asc(fs), pT)
+            pT.clearShadowLayer(); pT.textAlign = Paint.Align.LEFT; pT.alpha = 255
+        }
+        // cadre dore de la carte active (::before, z-index 3)
+        val carte = cartes[actif]
+        val ae = entree(t, 100.0 + 120.0 * actif)
+        if (ae[0] > 0f) {
+            val r = pct(s, carte.l, carte.t, carte.w, carte.h)
+            c.save()
+            transformer(c, r, ae)
+            val n = c.saveLayerAlpha(r.left - 60f, r.top - 60f, r.right + 60f, r.bottom + 60f, (ae[0] * 255).roundToInt())
+            val puls = alterne(t, 850.0)
+            val cadre = RectF(r.left - 7f, r.top - 7f, r.right + 7f, r.bottom + 7f)
+            c.scale(1f + .02f * puls, 1f + .02f * puls, cadre.centerX(), cadre.centerY())
+            ombreBoite(c, cadre, 9f, 0f, 12f + 18f * puls, 3f + 7f * puls,
+                Color.argb(((.55f + .40f * puls) * 255).roundToInt(), 255, 216, 0))
+            val dedans = RectF(cadre.left + 4f, cadre.top + 4f, cadre.right - 4f, cadre.bottom - 4f)
+            c.save()
+            chemin.reset(); chemin.addRoundRect(dedans, 5f, 5f, Path.Direction.CW); c.clipPath(chemin)
+            p.reset(); p.isAntiAlias = true
+            p.color = Color.argb(((.25f + .25f * puls) * 255).roundToInt(), 255, 216, 0)
+            p.maskFilter = BlurMaskFilter(rayon((14f + 12f * puls) / 2f), BlurMaskFilter.Blur.NORMAL)
+            chemin.reset(); chemin.fillType = Path.FillType.EVEN_ODD
+            chemin.addRect(dedans.left - 60f, dedans.top - 60f, dedans.right + 60f, dedans.bottom + 60f, Path.Direction.CW)
+            chemin.addRoundRect(dedans, 5f, 5f, Path.Direction.CW)
+            c.drawPath(chemin, p)
+            chemin.fillType = Path.FillType.WINDING
+            p.maskFilter = null
+            c.restore()
+            p.style = Paint.Style.STROKE; p.strokeWidth = 4f; p.color = 0xFFFFD800.toInt()
+            rTmp.set(cadre.left + 2f, cadre.top + 2f, cadre.right - 2f, cadre.bottom - 2f)
+            c.drawRoundRect(rTmp, 7f, 7f, p)
+            p.style = Paint.Style.FILL
+            c.restoreToCount(n)
+            c.restore()
+        }
+    }
+
+    /** translateY puis scale autour du centre de la boite. */
+    private fun transformer(c: Canvas, r: RectF, a: FloatArray) {
+        c.translate(0f, a[1])
+        c.scale(a[2], a[2], r.centerX(), r.centerY())
+    }
+
+    // ---------------------------------------------------------------- fin du combat
+
+    private fun boutonsFin(): Pair<RectF, RectF> {
+        val s = scene()
+        val fs = borne(14f, W * .022f, 28f)
+        police(fs)
+        val h = lh(fs) + .9f * fs + 6f
+        val w1 = pT.measureText("REJOUER") + 2.4f * fs + 6f
+        val w2 = pT.measureText("RETOUR") + 2.4f * fs + 6f
+        val tot = w1 + 14f + w2
+        val bas = s.bottom - s.height() * .035f
+        val x0 = s.centerX() - tot / 2f
+        return Pair(RectF(x0, bas - h, x0 + w1, bas), RectF(x0 + w1 + 14f, bas - h, x0 + tot, bas))
+    }
+
+    private fun appuiFin(x: Float, y: Float) {
+        val (a, b) = boutonsFin()
+        if (a.contains(x, y)) recharge(true)
+        else if (b.contains(x, y)) recharge(false)
+    }
+
+    private fun dessinerFin(c: Canvas, t: Double) {
+        c.drawColor(Color.BLACK)
+        val s = scene()
+        imageFin?.let { if (!it.isRecycled) c.drawBitmap(it, null, s, pImg) }
+        val (a, b) = boutonsFin()
+        val fs = borne(14f, W * .022f, 28f)
+        val e = 1f + .05f * alterne(t, 900.0)
+        val boutons = listOf(Triple(a, "REJOUER", 0xFFB40000.toInt()), Triple(b, "RETOUR", 0xFF087D20.toInt()))
+        for ((r, txt, ann) in boutons) {
+            c.save()
+            c.scale(e, e, r.centerX(), r.centerY())
+            boutonCss(c, r, 14f, ann, Color.argb(217, 0, 0, 0), txt, fs, 16f)
+            c.restore()
+        }
+    }
+
+    // ================================================================ courbes CSS
+
+    private class Bezier(val x1: Double, val y1: Double, val x2: Double, val y2: Double) {
+        private fun bx(t: Double) = 3 * (1 - t) * (1 - t) * t * x1 + 3 * (1 - t) * t * t * x2 + t * t * t
+        private fun by(t: Double) = 3 * (1 - t) * (1 - t) * t * y1 + 3 * (1 - t) * t * t * y2 + t * t * t
+        fun y(x: Double): Double {
+            if (x <= 0) return 0.0
+            if (x >= 1) return 1.0
+            var lo = 0.0
+            var hi = 1.0
+            for (i in 0 until 30) {
+                val m = (lo + hi) / 2
+                if (bx(m) < x) lo = m else hi = m
+            }
+            return by((lo + hi) / 2)
+        }
+    }
+
+    private companion object {
+        const val DEPART = 0
+        const val CHOIX = 1
+        const val COMBAT = 2
+        const val FIN = 3
+        val EASE = Bezier(.25, .1, .25, 1.0)
+        val EASE_OUT = Bezier(0.0, 0.0, .58, 1.0)
+        val EASE_IN_OUT = Bezier(.42, 0.0, .58, 1.0)
+        val ENTREE = Bezier(.2, .9, .3, 1.3)
     }
 }

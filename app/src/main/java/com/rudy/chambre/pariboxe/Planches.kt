@@ -5,60 +5,63 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStream
 import java.nio.ByteBuffer
-import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Une planche de combattant, recadree sur le personnage pour economiser la
- * memoire. On garde la taille d'origine de l'image (largeur x hauteur) et la
- * place du recadrage (dx, dy) : l'affichage reste ainsi exactement celui du
- * HTML, ou chaque image est posee « contain » en bas au centre de sa boite.
+ * Une planche recadree sur le personnage (economie de memoire). On garde la
+ * taille d'origine de l'image (largeur x hauteur) et la place du recadrage
+ * (dx, dy) : l'affichage reste celui du HTML, ou chaque image est posee
+ * « contain » en bas au centre de sa boite.
  */
 class Planche(val bmp: Bitmap, val largeur: Int, val hauteur: Int, val dx: Int, val dy: Int)
 
-/** Toutes les planches d'un combattant (Rudy, Theo, Valor ou Mody). */
-class Combattant(val nom: String, val comptes: Map<String, Int>) {
-    val images = ConcurrentHashMap<String, Planche>()
-    @Volatile var abandonne = false
-    fun image(mode: String, i: Int): Planche? = images["${mode}_$i"]
-    fun compte(mode: String): Int = comptes[mode] ?: 0
-}
-
 /**
- * Les images du combat viennent du fichier HTML de Rudy lui-meme
+ * Les images et la musique du combat sont celles du fichier HTML de Rudy
  * (assets/pariboxe/index.html.000 + .001) : rien n'est redessine ni
- * recompresse. Au premier lancement, chaque image et la musique sont
- * decodees une seule fois dans le cache ; les lancements suivants les
- * relisent directement.
+ * recompresse. Au premier lancement chaque image est decodee une fois dans
+ * le cache ; les lancements suivants la relisent directement.
  */
 object Planches {
-    private const val VERSION = "pariboxe-natif-v1"
-    private const val GUIL: Byte = 34     // "
-    private const val VIRG: Byte = 44     // ,
-    private const val CROCH_O: Byte = 91  // [
-    private const val CROCH_F: Byte = 93  // ]
-    private const val ACC_F: Byte = 125   // }
+    private const val VERSION = "pariboxe-natif-v2"
+    private val GUIL = '"'.code.toByte()
+    private val VIRG = ','.code.toByte()
+    private val CROCH_O = '['.code.toByte()
+    private val CROCH_F = ']'.code.toByte()
+    private val ACC_O = '{'.code.toByte()
+    private val ACC_F = '}'.code.toByte()
 
     fun dossier(ctx: Context) = File(ctx.cacheDir, VERSION)
 
+    @Synchronized
     fun extraire(ctx: Context) {
         val dir = dossier(ctx)
         if (File(dir, "ok").isFile) return
-        // les anciennes copies de la WebView ne servent plus
+        // l'ancienne copie de la WebView ne sert plus
         File(ctx.cacheDir, "pariboxe-html-original-v4.html").delete()
         File(ctx.cacheDir, "pariboxe-html-original-v4.tmp").delete()
         dir.deleteRecursively()
         dir.mkdirs()
 
-        val s = lireHtml(ctx)
+        val parties = listOf("pariboxe/index.html.000", "pariboxe/index.html.001")
+        var total = 0
+        for (nom in parties) ctx.assets.open(nom).use { total += compter(it) }
+        val s = ByteArray(total)
+        var pos = 0
+        for (nom in parties) ctx.assets.open(nom).use { e ->
+            while (true) {
+                val n = e.read(s, pos, total - pos)
+                if (n <= 0) break
+                pos += n
+            }
+        }
 
         val index = StringBuilder()
-        val jeux = listOf("rudy" to "const F=", "theo" to "const E=",
-                          "valor" to "const V=", "mody" to "const MO=")
+        val jeux = listOf("rudy" to "const F=", "theo" to "const E=", "valor" to "const V=", "mody" to "const MO=")
         for ((nom, marque) in jeux) {
             val p = cherche(s, marque, 0)
             require(p >= 0) { "planches $nom introuvables" }
-            val obj = lireObjet(s, p + marque.length)
+            val obj = lireObjet(s, cherche(s, "{", p))
             for ((mode, liste) in obj) {
                 liste.forEachIndexed { i, r -> ecrire(File(dir, "$nom/${mode}_$i.img"), s, r[0], r[1]) }
                 index.append(nom).append(' ').append(mode).append(' ').append(liste.size).append('\n')
@@ -93,16 +96,6 @@ object Planches {
 
         File(dir, "planches.txt").writeText(index.toString())
         File(dir, "ok").writeText("1")
-    }
-
-    /** Recolle les deux morceaux du HTML en un seul tableau d'octets. */
-    private fun lireHtml(ctx: Context): ByteArray {
-        val a = ctx.assets.open("pariboxe/index.html.000").use { it.readBytes() }
-        val b = ctx.assets.open("pariboxe/index.html.001").use { it.readBytes() }
-        val s = ByteArray(a.size + b.size)
-        System.arraycopy(a, 0, s, 0, a.size)
-        System.arraycopy(b, 0, s, a.size, b.size)
-        return s
     }
 
     /** nom -> (mode -> nombre d'images), dans l'ordre du HTML. */
@@ -140,15 +133,25 @@ object Planches {
                 }
             }
         }
-        if (x1 < 0) { b.prepareToDraw(); return Planche(b, w, h, 0, 0) }
+        if (x1 < 0) return Planche(b, w, h, 0, 0)
         val c = if (x0 == 0 && y0 == 0 && x1 == w - 1 && y1 == h - 1) b
                 else Bitmap.createBitmap(b, x0, y0, x1 - x0 + 1, y1 - y0 + 1)
         if (c !== b) b.recycle()
-        c.prepareToDraw()
         return Planche(c, w, h, x0, y0)
     }
 
     // --- lecture du HTML, octet par octet -----------------------------------
+
+    private fun compter(e: InputStream): Int {
+        val buf = ByteArray(1 shl 16)
+        var n = 0
+        while (true) {
+            val k = e.read(buf)
+            if (k < 0) break
+            n += k
+        }
+        return n
+    }
 
     private fun cherche(s: ByteArray, motif: String, depuis: Int): Int {
         val m = motif.toByteArray(Charsets.UTF_8)
@@ -175,6 +178,7 @@ object Planches {
     /** Lit {"mode":["data:...;base64,XXX", ...], ...} -> positions du base64. */
     private fun lireObjet(s: ByteArray, accolade: Int): LinkedHashMap<String, MutableList<IntArray>> {
         val res = LinkedHashMap<String, MutableList<IntArray>>()
+        require(accolade >= 0 && s[accolade] == ACC_O)
         var i = accolade + 1
         while (i < s.size) {
             val c = s[i]

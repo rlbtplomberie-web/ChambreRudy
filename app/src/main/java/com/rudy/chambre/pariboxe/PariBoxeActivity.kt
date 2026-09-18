@@ -10,44 +10,60 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.rudy.chambre.ChambreActivity
+import java.io.File
 
 /**
- * PariBoxe en natif (plus de WebView) : la scene est dessinee par
- * [VuePariBoxe] avec les planches de sprites du fichier HTML de Rudy,
- * aux memes tailles, positions et vitesses d'animation.
+ * PariBoxe en natif : plus de WebView.
+ * Les images, les sprites et la musique sont extraits tels quels du fichier HTML
+ * (assets pariboxe/index.html.000 + .001) puis dessines par VuePariBoxe
+ * avec les memes tailles, positions et cadences que la page.
  */
 class PariBoxeActivity : ComponentActivity() {
+    private lateinit var son: SonPariBoxe
     private lateinit var vue: VuePariBoxe
-    private val son = SonPariBoxe()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        WindowInsetsControllerCompat(window, window.decorView).apply {
-            hide(WindowInsetsCompat.Type.systemBars())
-            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        }
+        pleinEcran()
 
-        vue = VuePariBoxe(this).apply { son = this@PariBoxeActivity.son }
+        // ancien cache de la version WebView (40 Mo) devenu inutile
+        try {
+            File(cacheDir, "pariboxe-html-original-v4.html").delete()
+            File(cacheDir, "pariboxe-html-original-v4.tmp").delete()
+        } catch (_: Throwable) { }
+
+        son = SonPariBoxe()
+        vue = VuePariBoxe(this, son)
         setContentView(FrameLayout(this).apply {
             setBackgroundColor(Color.BLACK)
             addView(vue, FrameLayout.LayoutParams(-1, -1))
         })
         com.rudy.chambre.SonPartage.volume(0f)
-        vue.lancer()
+    }
+
+    private fun pleinEcran() {
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) pleinEcran()
     }
 
     override fun onResume() {
         super.onResume()
-        WindowInsetsControllerCompat(window, window.decorView).hide(WindowInsetsCompat.Type.systemBars())
-        son.reprise()
-        vue.enMarche = true
+        // PariBoxe ne se joue qu'a l'horizontale (et la vue pivote d'elle-meme si l'ecran reste vertical)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        try { son.reprise() } catch (_: Throwable) { }
     }
 
     override fun onPause() {
-        vue.enMarche = false
-        son.pause()
+        try { son.pause() } catch (_: Throwable) { }
         super.onPause()
     }
 
@@ -62,7 +78,7 @@ class PariBoxeActivity : ComponentActivity() {
     override fun onBackPressed() = retourBureau()
 
     override fun onDestroy() {
-        try { vue.fermer() } catch (_: Throwable) { }
+        try { vue.liberer() } catch (_: Throwable) { }
         try { son.liberer() } catch (_: Throwable) { }
         com.rudy.chambre.Ambiance.rendreLaMusique()
         super.onDestroy()
