@@ -22,7 +22,10 @@ object Loupe {
 
     /** Console posee (id de Decor.CONSOLES) -> page a montrer. */
     private val PAGES = mapOf(
-        "gb" to "gameboy.html"
+        "gb" to "gameboy.html",
+        "ps1" to "playstation.html",
+        "n64" to "nintendo64.html",
+        "psp" to "psp.html"
     )
 
     fun aUnePage(idConsole: String) = PAGES.containsKey(idConsole)
