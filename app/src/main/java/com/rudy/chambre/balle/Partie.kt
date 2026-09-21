@@ -126,18 +126,38 @@ class Partie(var W: Float, var H: Float) {
         T = 0f
     }
 
-    /** Ses limites de terrain (« bounds »). */
+    /*
+     * Les lignes de prison, telles qu'elles sont peintes sur le terrain : en biais (perspective).
+     * L'image du terrain (1536 x 864) couvre l'ecran sans se deformer ; on retrouve donc,
+     * pour une hauteur y a l'ecran, l'endroit exact de la ligne.
+     */
+    private fun cadreX(): Float { val s = max(W / 1536f, H / 864f); return (W - 1536f * s) / 2f }
+    private fun cadreY(): Float { val s = max(W / 1536f, H / 864f); return (H - 864f * s) / 2f }
+    private fun cadreL(): Float = 1536f * max(W / 1536f, H / 864f)
+    private fun cadreH(): Float = 864f * max(W / 1536f, H / 864f)
+    /** La ligne de la prison de gauche (celle de l'equipe B) a la hauteur y. */
+    fun ligneG(y: Float): Float {
+        val ny = (y - cadreY()) / cadreH()
+        return cadreX() + cadreL() * (.261f - .757f * (ny - .477f))
+    }
+    /** La ligne de la prison de droite (celle de l'equipe A) a la hauteur y. */
+    fun ligneD(y: Float): Float = W - ligneG(y)
+    /** A qui est la prison ou se trouve la balle : 1 = gauche (equipe B), 0 = droite (equipe A), -1 = sur le terrain. */
+    fun prisonDeLaBalle(): Int = if (B.x < ligneG(B.y)) 1 else if (B.x > ligneD(B.y)) 0 else -1
+
+    /** Ses limites de terrain (« bounds ») : on ne passe jamais la ligne de prison, dans un sens comme dans l'autre. */
     fun bounds(p: Joueur) {
-        val prisonEdgeL = W * .125f; val prisonEdgeR = W * .875f; val mid = W * .5f
+        val mid = W * .5f; val marge = 10f
         val top = H * .50f; val bottom = H * .84f
         if (p.prison) {
-            if (p.team == 0) p.x = max(prisonEdgeR + 8f, min(W - 12f, p.x))
-            else p.x = max(12f, min(prisonEdgeL - 8f, p.x))
+            p.y = max(top, min(H * .76f, p.y))          // plus bas, la prison n'a plus de place
+            if (p.team == 0) p.x = max(ligneD(p.y) + marge, min(W - 12f, p.x))
+            else p.x = max(12f, min(ligneG(p.y) - marge, p.x))
         } else {
-            if (p.team == 0) p.x = max(prisonEdgeL + 8f, min(mid - 8f, p.x))
-            else p.x = max(mid + 8f, min(prisonEdgeR - 8f, p.x))
+            p.y = max(top, min(bottom, p.y))
+            if (p.team == 0) p.x = max(ligneG(p.y) + marge, min(mid - 8f, p.x))
+            else p.x = max(mid + 8f, min(ligneD(p.y) - marge, p.x))
         }
-        p.y = max(top, min(bottom, p.y))
     }
 
     fun enPrisonPlusTard(p: Joueur) {
@@ -223,9 +243,13 @@ class Partie(var W: Float, var H: Float) {
     /** Un seul coequipier court apres la balle (« cpuMayChaseBall »). */
     fun peutCourirApresLaBalle(p: Joueur): Boolean {
         if (B.held != null || B.passTarget != null) return false
+        val zone = prisonDeLaBalle()
         var best: Joueur? = null; var bestD = Float.MAX_VALUE
         for (q in P) {
-            if (q.h || q.prison || q.pendingJail || q.team != p.team) continue
+            if (q.h || q.pendingJail || q.team != p.team) continue
+            // balle dans une prison : seuls ses prisonniers peuvent aller la chercher ;
+            // balle sur le terrain : seuls les joueurs libres
+            if (zone >= 0) { if (!q.prison || q.team != zone) continue } else if (q.prison) continue
             val dx = q.x - B.x; val dy = q.y - B.y; val d = dx * dx + dy * dy
             if (d < bestD) { bestD = d; best = q }
         }
@@ -409,7 +433,7 @@ fun Partie.update(dt: Float) {
             tirChargeRate()
             B.deadBall = true; B.lastTeam = null; B.thrower = null; B.charged = false
             B.vx *= -.42f
-            B.x = if (B.x < W / 2f) W * .145f else W * .855f
+            B.x = max(8f, min(W - 8f, B.x))              // elle rebondit sur le grillage et reste en prison
         }
         if (B.y < H * .45f || B.y > H * .88f) {
             tirChargeRate()
@@ -419,12 +443,40 @@ fun Partie.update(dt: Float) {
         }
     }
 
-    // ---- une balle arretee dans un coin revient vers le terrain ----
+    // ---- la ligne de prison ----
+    // Prison vide : la ligne est un mur, la balle rebondit et revient dans le terrain.
+    // Prison occupee : la balle y entre et s'y arrete, pour que les prisonniers la ramassent.
+    if (B.held == null && B.passTarget == null) {
+        val zone = prisonDeLaBalle()
+        if (zone >= 0) {
+            val occupee = P.any { it.team == zone && it.prison }
+            if (!occupee) {
+                tirChargeRate()
+                B.deadBall = true; B.lastTeam = null; B.thrower = null; B.charged = false
+                B.x = if (zone == 1) ligneG(B.y) + 3f else ligneD(B.y) - 3f
+                B.vx = -B.vx * .62f
+                if (abs(B.vx) < 60f) B.vx = if (zone == 1) 60f else -60f   // elle repart toujours vers le terrain
+                son("rebond", 60f)
+            } else if (!(B.thrower?.prison == true && B.thrower?.team == zone)) {
+                // (le tir d'un prisonnier depuis sa prison, lui, n'est pas freine : il part vers le terrain)
+                val frein = max(0f, 1f - 3.2f * dt)                      // elle ralentit vite et s'arrete dans la prison
+                B.vx *= frein; B.vy *= frein
+            }
+        }
+    }
+
+    // ---- une balle arretee en prison y reste, pour que les prisonniers la ramassent ----
+    // (elle ne revient vers le terrain que si cette prison est vide : personne ne pourrait la prendre)
     if (B.held == null && B.deadBall && hypot(B.vx, B.vy) < 55f) {
-        val gauche = W * .145f; val droite = W * .855f
         val haut = H * .515f; val bas = H * .825f
-        if (B.x < gauche) B.x = min(gauche, B.x + 180f * dt)
-        if (B.x > droite) B.x = max(droite, B.x - 180f * dt)
+        val zone = prisonDeLaBalle()
+        if (zone >= 0) {
+            val personne = P.none { it.team == zone && it.prison }
+            if (personne) {
+                if (zone == 1) B.x = min(ligneG(B.y) + 24f, B.x + 180f * dt)
+                else B.x = max(ligneD(B.y) - 24f, B.x - 180f * dt)
+            } else if (B.y > H * .76f) B.y = max(H * .76f, B.y - 180f * dt)   // a portee des prisonniers
+        }
         if (B.y < haut) B.y = min(haut, B.y + 180f * dt)
         if (B.y > bas) B.y = max(bas, B.y - 180f * dt)
     }
@@ -515,6 +567,10 @@ fun Partie.update(dt: Float) {
             } else if (s < 165f && p.cool <= 0f) {
                 // une balle libre n'est ramassee que par un seul joueur
                 if (B.pickupOwner != null && B.pickupOwner !== p) continue
+                // en prison : seuls ses prisonniers ; sur le terrain : seuls les joueurs libres
+                val zoneB = prisonDeLaBalle()
+                val autorise = if (zoneB >= 0) (p.prison && p.team == zoneB) else !p.prison
+                if (!autorise) continue
                 B.pickupOwner = p
                 val auSol = B.z <= 8f || B.deadBall
                 B.deadBall = true; B.lastTeam = null; B.thrower = null; B.passTarget = null
