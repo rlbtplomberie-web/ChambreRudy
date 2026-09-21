@@ -154,7 +154,7 @@
 
         <!-- Sortir à Shinato : le jeu Rudy Style (WebView, fichiers dans assets/shinato) -->
         <activity
-            android:name="com.rudy.chambre.shinato.ShinatoActivity"
+            android:name="com.rudy.chambre.ShinatoActivity"
             android:exported="false"
             android:screenOrientation="fullSensor"
             android:hardwareAccelerated="true"

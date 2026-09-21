@@ -619,7 +619,7 @@ class ChambreActivity : ComponentActivity() {
                     com.rudy.chambre.basket.BasketActivity::class.java,
                     com.rudy.chambre.balle.PartieActivity::class.java,
                     com.rudy.chambre.pariboxe.PariBoxeActivity::class.java,
-                    com.rudy.chambre.shinato.ShinatoActivity::class.java   // le jeu Rudy Style : la rue de Shinato et tout le reste
+                    ShinatoActivity::class.java   // le jeu Rudy Style : la rue de Shinato et tout le reste
                 )
                 startActivity(Intent(this, ecrans[i]))
         }
@@ -688,6 +688,94 @@ class ChambreActivity : ComponentActivity() {
         try { lecteur?.release() } catch (_: Throwable) {}
         try { lecteurPret?.release() } catch (_: Throwable) {}
         son.liberer()
+        super.onDestroy()
+    }
+}
+
+/**
+ * « Sortir à Shinato » : le jeu Rudy Style (la rue, la plage, la moto, le Pixel Bar,
+ * le Dragon d'Or, la ville délabrée, Vaviel et leurs mini-jeux), dans une WebView.
+ * Rangée ici, dans le même fichier que la chambre, pour être toujours compilée avec elle.
+ *
+ * Chaque lieu et chaque mini-jeu est un fichier à part dans assets/shinato :
+ *   index.html   la rue de Shinato (point de départ)
+ *   lieux/       les autres cartes, chargées seulement quand on y va
+ *   jeux/        les mini-jeux, chargés seulement quand on les lance
+ */
+class ShinatoActivity : androidx.activity.ComponentActivity() {
+    private lateinit var web: android.webkit.WebView
+
+    @android.annotation.SuppressLint("SetJavaScriptEnabled")
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        super.onCreate(savedInstanceState)
+        requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, false)
+        pleinEcran()
+
+        val serveur = androidx.webkit.WebViewAssetLoader.Builder()
+            .addPathHandler("/assets/", androidx.webkit.WebViewAssetLoader.AssetsPathHandler(this))
+            .build()
+
+        web = android.webkit.WebView(this)
+        web.setBackgroundColor(android.graphics.Color.BLACK)
+        web.settings.javaScriptEnabled = true
+        web.settings.domStorageEnabled = true
+        web.settings.mediaPlaybackRequiresUserGesture = false      // la musique de la ville démarre sans attendre
+        web.settings.setSupportZoom(false)
+        web.settings.builtInZoomControls = false
+        web.setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
+        web.overScrollMode = android.view.View.OVER_SCROLL_NEVER
+        web.isLongClickable = false
+        web.setOnLongClickListener { true }                          // pas de menu d'appui long
+        web.webViewClient = object : android.webkit.WebViewClient() {
+            override fun shouldInterceptRequest(
+                v: android.webkit.WebView,
+                r: android.webkit.WebResourceRequest
+            ): android.webkit.WebResourceResponse? = serveur.shouldInterceptRequest(r.url)
+        }
+        web.webChromeClient = android.webkit.WebChromeClient()
+
+        val cadre = android.widget.FrameLayout(this)
+        cadre.setBackgroundColor(android.graphics.Color.BLACK)
+        cadre.addView(web, android.widget.FrameLayout.LayoutParams(-1, -1))
+        setContentView(cadre)
+
+        // la musique de la chambre laisse la place à celle de Shinato
+        try { SonPartage.volume(0f) } catch (_: Throwable) { }
+        web.loadUrl("https://appassets.androidplatform.net/assets/shinato/index.html")
+    }
+
+    private fun pleinEcran() {
+        val c = androidx.core.view.WindowInsetsControllerCompat(window, window.decorView)
+        c.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+        c.systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) pleinEcran()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        web.onResume()
+        web.resumeTimers()
+    }
+
+    override fun onPause() {
+        web.onPause()                                               // plus de son quand l'appli passe derrière
+        web.pauseTimers()
+        super.onPause()
+    }
+
+    @Deprecated("Le retour Android revient dans la chambre.")
+    override fun onBackPressed() {
+        finish()
+    }
+
+    override fun onDestroy() {
+        try { web.stopLoading(); web.loadUrl("about:blank"); web.destroy() } catch (_: Throwable) { }
+        try { Ambiance.rendreLaMusique() } catch (_: Throwable) { }
         super.onDestroy()
     }
 }
