@@ -634,6 +634,47 @@ else carte.addEventListener("load",demarre);
 })();
 </script>
 <style>
+#flecheInfi{position:absolute;z-index:7;pointer-events:none;display:none;width:0;height:0}
+#flecheInfi svg{position:absolute;left:-7vmin;top:-4vmin;width:14vmin;height:17vmin;will-change:transform;
+ filter:drop-shadow(0 0 1.2vmin rgba(255,225,40,1)) drop-shadow(0 0 3vmin rgba(255,200,0,.8));animation:sauteK .7s ease-in-out infinite alternate}
+#btnInfi{display:none;box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 16px rgba(255,214,60,.55);border-color:rgba(255,226,122,.95)}
+#lieuInfi{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:70;background:#000;display:none}
+</style>
+<script>
+/* ---------- devant l'hôpital : flèche jaune + ENTRER -> l'accueil de l'infirmerie ---------- */
+(function(){
+ var monde=document.getElementById("monde");
+ var fl=document.createElement("div"); fl.id="flecheInfi";
+ fl.innerHTML='<svg viewBox="0 0 100 120"><path d="M50 4 L94 52 L66 52 L66 116 L34 116 L34 52 L6 52 Z" fill="#ffe400" stroke="#fff7b0" stroke-width="5" stroke-linejoin="round"/></svg>';
+ monde.appendChild(fl);
+ var btn=document.createElement("div"); btn.className="btn"; btn.id="btnInfi"; btn.textContent="ENTRER";
+ var act=document.getElementById("actions"); act.insertBefore(btn,act.firstChild);
+ var G=695/2172, D=860/2172, dedans=false;
+ setInterval(function(){
+  if(typeof x==="undefined"||!largeurMonde||dedans) return;
+  var devant=x>=largeurMonde*G&&x<=largeurMonde*D;
+  fl.style.display=devant?"block":"none"; btn.style.display=devant?"block":"none";
+  if(devant){ var hp=hauteurScene*TAILLE; fl.style.left=x+"px"; fl.style.top=(hauteurScene*SOL-hp*1.25)+"px"; }
+ },80);
+ window.appuiSur(btn,function(){
+  dir=0; dedans=true; fl.style.display="none"; btn.style.display="none";
+  var f=document.getElementById("lieuInfi");
+  if(!f){ f=document.createElement("iframe"); f.id="lieuInfi"; document.body.appendChild(f); }
+  f.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/infirmerie.html")); f.style.display="block";
+  var v=document.getElementById("vue"); if(v) v.style.visibility="hidden";       // Vaviel ne se dessine plus pendant qu'on est dedans
+  setTimeout(function(){ try{ f.focus(); }catch(e){} },300);
+ });
+ // SORTIR : retour devant l'hôpital
+ window.addEventListener("message",function(e){
+  if(e.data&&e.data.type==="infirmerie:sortie"){
+   var f=document.getElementById("lieuInfi"); if(f){ f.style.display="none"; f.srcdoc=""; }
+   var v=document.getElementById("vue"); if(v) v.style.visibility="";
+   dedans=false; dir=0;
+  }
+ });
+})();
+</script>
+<style>
 #depart{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-family:Arial,Helvetica,sans-serif}
 #depart .carte{position:relative;min-width:62vmin;padding:5vmin 6vmin 5.5vmin;border-radius:3vmin;text-align:center;
  background:linear-gradient(rgba(14,14,18,.96),rgba(30,30,36,.96));border:2px solid rgba(255,226,122,.6);box-shadow:0 10px 40px rgba(0,0,0,.7)}
