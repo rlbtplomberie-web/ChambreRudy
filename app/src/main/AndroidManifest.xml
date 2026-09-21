@@ -152,6 +152,15 @@
             android:theme="@style/ThemeChambre"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density" />
 
+        <!-- Sortir à Shinato : le jeu Rudy Style (WebView, fichiers dans assets/shinato) -->
+        <activity
+            android:name="com.rudy.chambre.shinato.ShinatoActivity"
+            android:exported="false"
+            android:screenOrientation="fullSensor"
+            android:hardwareAccelerated="true"
+            android:theme="@style/ThemeChambre"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|density" />
+
         <!-- Les jeux, les vitrines et l'atelier, ouverts par-dessus -->
         <activity
             android:name="com.rudy.chambre.PageActivity"

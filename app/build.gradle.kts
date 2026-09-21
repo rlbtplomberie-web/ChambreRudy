@@ -96,7 +96,7 @@ android {
         // celui qu'Android fabrique lui-meme : on l'ecarte une fois pour toutes.
         ignoreAssetsPatterns += listOf("dexopt")
     }
-    androidResources { noCompress += listOf("png", "jpg", "webp", "bin", "txt", "app", "romfs", "tmd", "bcfnt", "zim", "pgf", "ini", "meta", "json") }
+    androidResources { noCompress += listOf("png", "jpg", "webp", "bin", "txt", "html", "app", "romfs", "tmd", "bcfnt", "zim", "pgf", "ini", "meta", "json") }
 }
 
 // Syntaxe Kotlin 2.x (l'ancienne kotlinOptions/jvmTarget est refusee).

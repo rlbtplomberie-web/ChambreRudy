@@ -611,14 +611,15 @@ class ChambreActivity : ComponentActivity() {
     }
 
     private fun menuDehors() {
-        panneau("À quel jeu veux-tu jouer ?", listOf("Tir au but", "Paniers", "Balle prisonnier", "PariBoxe"), 3,
+        panneau("À quel jeu veux-tu jouer ?", listOf("Tir au but", "Paniers", "Balle prisonnier", "PariBoxe", "Sortir à Shinato"), 3,
             0xF10A1435.toInt(), 0xFFFFC54E.toInt(), "RETOUR") { i ->
                 // Les jeux de plein air et PariBoxe sont integres a RetroRom.
                 val ecrans = listOf(
                     com.rudy.chambre.penalty.PenaltyActivity::class.java,
                     com.rudy.chambre.basket.BasketActivity::class.java,
                     com.rudy.chambre.balle.PartieActivity::class.java,
-                    com.rudy.chambre.pariboxe.PariBoxeActivity::class.java
+                    com.rudy.chambre.pariboxe.PariBoxeActivity::class.java,
+                    com.rudy.chambre.shinato.ShinatoActivity::class.java   // le jeu Rudy Style : la rue de Shinato et tout le reste
                 )
                 startActivity(Intent(this, ecrans[i]))
         }
