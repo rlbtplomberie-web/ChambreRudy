@@ -68,7 +68,7 @@ body{background:var(--bg);overflow:hidden;touch-action:none;overscroll-behavior:
  var DEPART={x:900,y:655};
  var R={x:DEPART.x,y:DEPART.y,dir:"haut",pas:0,bouge:false};
  var jx=0,jy=0,prec=0;
- function taille(y){ return 330+(y-500)/172*95; }
+ function taille(y){ return 265+(y-500)/172*76; }      // un peu plus petit que dans les autres intérieurs
  function sortieIci(){ return R.y>648&&R.x>600&&R.x<1250; }
  function camera(){
   var W=stage.offsetWidth, vw=innerWidth, k=W/1505;
