@@ -105,6 +105,7 @@ class ChambreActivity : ComponentActivity() {
         ecranTele = TextureView(this).apply { alpha = 0f; isOpaque = false }
 
         val racine = FrameLayout(this)
+        racineChambre = racine
         racine.addView(vue, FrameLayout.LayoutParams(-1, -1))
         racine.addView(ecranTele, FrameLayout.LayoutParams(1, 1))
         racine.addView(etiquette, FrameLayout.LayoutParams(-2, -2))
@@ -142,6 +143,7 @@ class ChambreActivity : ComponentActivity() {
 
     /** Joue une video du telephone sur l'ecran de la tele. */
     private fun jouerSurLaTele(uri: android.net.Uri) {
+        couperYoutube()
         teleAllumee = true
         ecranTele.alpha = 1f
         placerEcranTele(vue.rectangleTele())
@@ -252,11 +254,7 @@ class ChambreActivity : ComponentActivity() {
                     dire("veuillez d'abord ranger la console")
                 } else {
                     son.bruit("pose.mp3")
-                    try {
-                        choisirUneVideo.launch(arrayOf("video/*"))
-                    } catch (_: Throwable) {
-                        dire("aucune application pour choisir une vidéo")
-                    }
+                    menuTelecommande()
                 }
             }
             "porteG" -> {
@@ -286,10 +284,19 @@ class ChambreActivity : ComponentActivity() {
      */
     private fun placerEcranTele(r: android.graphics.RectF?) {
         if (!::ecranTele.isInitialized) return
-        if (r == null || !teleAllumee) { ecranTele.visibility = android.view.View.INVISIBLE; return }
+        val tw = teleWeb
+        if (r == null || !teleAllumee) {
+            ecranTele.visibility = android.view.View.INVISIBLE
+            tw?.visibility = android.view.View.INVISIBLE
+            return
+        }
         val lp = ecranTele.layoutParams as? FrameLayout.LayoutParams ?: return
         val l = r.width().toInt(); val h = r.height().toInt()
-        if (l <= 0 || h <= 0) { ecranTele.visibility = android.view.View.INVISIBLE; return }
+        if (l <= 0 || h <= 0) {
+            ecranTele.visibility = android.view.View.INVISIBLE
+            tw?.visibility = android.view.View.INVISIBLE
+            return
+        }
         if (lp.width != l || lp.height != h || lp.leftMargin != r.left.toInt()
             || lp.topMargin != r.top.toInt()) {
             lp.width = l; lp.height = h
@@ -297,6 +304,176 @@ class ChambreActivity : ComponentActivity() {
             ecranTele.layoutParams = lp
         }
         ecranTele.visibility = android.view.View.VISIBLE
+        if (tw != null) {
+            if (youtubeAllume) {
+                val lw = tw.layoutParams as? FrameLayout.LayoutParams
+                if (lw != null && (lw.width != l || lw.height != h || lw.leftMargin != r.left.toInt()
+                        || lw.topMargin != r.top.toInt())) {
+                    lw.width = l; lw.height = h
+                    lw.leftMargin = r.left.toInt(); lw.topMargin = r.top.toInt()
+                    tw.layoutParams = lw
+                }
+                tw.visibility = android.view.View.VISIBLE
+            } else tw.visibility = android.view.View.INVISIBLE
+        }
+    }
+
+    // ==================== YouTube sur la télé ====================
+    private lateinit var racineChambre: FrameLayout
+    private var teleWeb: android.webkit.WebView? = null      // la vidéo YouTube, posée sur l'écran de la télé
+    private var youtubeAllume = false
+    private var choixYoutube: FrameLayout? = null             // YouTube en plein écran, le temps de choisir
+    private var webChoix: android.webkit.WebView? = null
+
+    /** La télécommande : une vidéo du téléphone, ou YouTube. */
+    private fun menuTelecommande() {
+        val choix = if (teleAllumee) listOf("Mes vidéos", "YouTube", "Éteindre") else listOf("Mes vidéos", "YouTube")
+        panneau("Que veux-tu regarder ?", choix, 1,
+            0xF10A1435.toInt(), 0xFFFFC54E.toInt(), "RETOUR") { i ->
+            when (i) {
+                0 -> try {
+                    choisirUneVideo.launch(arrayOf("video/*"))
+                } catch (_: Throwable) {
+                    dire("aucune application pour choisir une vidéo")
+                }
+                1 -> ouvrirYoutube()
+                else -> eteindreLaTele()
+            }
+        }
+    }
+
+    /** L'identifiant d'une vidéo YouTube dans une adresse (watch, shorts, youtu.be), ou null. */
+    private fun idYoutube(url: String?): String? {
+        if (url == null) return null
+        val m = Regex("(?:[?&]v=|/shorts/|youtu\\.be/|/embed/)([A-Za-z0-9_-]{11})").find(url) ?: return null
+        return m.groupValues[1]
+    }
+
+    /** YouTube s'ouvre en grand : on choisit une vidéo, puis « Mettre sur la télé ». */
+    @android.annotation.SuppressLint("SetJavaScriptEnabled")
+    private fun ouvrirYoutube() {
+        if (choixYoutube != null) return
+        val dens = resources.displayMetrics.density
+        fun dp(v: Float) = (v * dens).toInt()
+        val bloc = FrameLayout(this)
+        bloc.setBackgroundColor(Color.BLACK)
+        val web = android.webkit.WebView(this)
+        web.settings.javaScriptEnabled = true
+        web.settings.domStorageEnabled = true
+        web.settings.mediaPlaybackRequiresUserGesture = true
+        bloc.addView(web, FrameLayout.LayoutParams(-1, -1))
+
+        val barre = LinearLayout(this)
+        barre.orientation = LinearLayout.HORIZONTAL
+        barre.gravity = Gravity.CENTER
+        barre.setPadding(dp(10f), dp(8f), dp(10f), dp(10f))
+        barre.setBackgroundColor(0xE6101018.toInt())
+        val fermer = Button(this)
+        fermer.text = "✕ FERMER"
+        fermer.setOnClickListener { fermerYoutube() }
+        val mettre = Button(this)
+        mettre.text = "▶ METTRE SUR LA TÉLÉ"
+        mettre.setTextColor(0xFF2A1C06.toInt())
+        mettre.background = GradientDrawable().apply { cornerRadius = dp(14f).toFloat(); setColor(0xFFFFC54E.toInt()) }
+        mettre.visibility = android.view.View.GONE
+        barre.addView(fermer)
+        barre.addView(mettre, LinearLayout.LayoutParams(-2, -2).apply { leftMargin = dp(12f) })
+        bloc.addView(barre, FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM))
+
+        var videoChoisie: String? = null
+        fun suivre(url: String?) {
+            videoChoisie = idYoutube(url)
+            mettre.visibility = if (videoChoisie != null) android.view.View.VISIBLE else android.view.View.GONE
+        }
+        web.webViewClient = object : android.webkit.WebViewClient() {
+            override fun doUpdateVisitedHistory(v: android.webkit.WebView, url: String?, isReload: Boolean) {
+                super.doUpdateVisitedHistory(v, url, isReload)
+                suivre(url)                              // YouTube change d'adresse sans recharger la page
+            }
+            override fun onPageFinished(v: android.webkit.WebView, url: String?) {
+                super.onPageFinished(v, url)
+                suivre(url)
+            }
+        }
+        web.webChromeClient = android.webkit.WebChromeClient()
+        mettre.setOnClickListener {
+            val id = videoChoisie
+            if (id != null) {
+                fermerYoutube()
+                jouerYoutubeSurLaTele(id)
+            }
+        }
+        racineChambre.addView(bloc, FrameLayout.LayoutParams(-1, -1))
+        choixYoutube = bloc
+        webChoix = web
+        son.enPause(true)                                // la radio se tait pendant qu'on cherche
+        web.loadUrl("https://m.youtube.com/")
+    }
+
+    private fun fermerYoutube() {
+        val bloc = choixYoutube ?: return
+        choixYoutube = null
+        val w = webChoix
+        webChoix = null
+        try { w?.stopLoading(); w?.loadUrl("about:blank"); w?.destroy() } catch (_: Throwable) { }
+        racineChambre.removeView(bloc)
+        if (!teleAllumee) son.enPause(false)
+    }
+
+    /** La vidéo choisie se joue dans l'écran de la télé. */
+    @android.annotation.SuppressLint("SetJavaScriptEnabled")
+    private fun jouerYoutubeSurLaTele(id: String) {
+        try { lecteur?.stop() } catch (_: Throwable) {}
+        try { lecteur?.release() } catch (_: Throwable) {}
+        lecteur = null
+        ecranTele.alpha = 0f
+        var w = teleWeb
+        if (w == null) {
+            w = android.webkit.WebView(this)
+            w.setBackgroundColor(Color.BLACK)
+            w.settings.javaScriptEnabled = true
+            w.settings.domStorageEnabled = true
+            w.settings.mediaPlaybackRequiresUserGesture = false   // elle démarre toute seule
+            w.webChromeClient = android.webkit.WebChromeClient()
+            w.isVerticalScrollBarEnabled = false
+            w.isHorizontalScrollBarEnabled = false
+            racineChambre.addView(w, racineChambre.indexOfChild(ecranTele) + 1, FrameLayout.LayoutParams(1, 1))
+            teleWeb = w
+        }
+        val page = "<!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'>" +
+            "<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}" +
+            "iframe{position:fixed;left:0;top:0;width:100%;height:100%;border:0}</style></head><body>" +
+            "<iframe src='https://www.youtube-nocookie.com/embed/" + id +
+            "?autoplay=1&playsinline=1&rel=0&modestbranding=1&origin=https://www.youtube-nocookie.com' " +
+            "allow='autoplay; encrypted-media; picture-in-picture; fullscreen' allowfullscreen " +
+            "referrerpolicy='strict-origin-when-cross-origin'></iframe></body></html>"
+        w.loadDataWithBaseURL("https://www.youtube-nocookie.com/", page, "text/html", "utf-8", null)
+        youtubeAllume = true
+        teleAllumee = true
+        placerEcranTele(vue.rectangleTele())
+        son.enPause(true)                                // la radio se tait pendant la vidéo
+        dire("YouTube sur la télé")
+    }
+
+    /** YouTube s'arrête (télé éteinte, console posée, autre vidéo). */
+    private fun couperYoutube() {
+        if (!youtubeAllume) return
+        youtubeAllume = false
+        val w = teleWeb
+        try { w?.loadUrl("about:blank") } catch (_: Throwable) { }
+        w?.visibility = android.view.View.INVISIBLE
+    }
+
+    /** Le retour Android : dans YouTube, on revient en arrière, puis on ferme. */
+    @Deprecated("Retour Android")
+    override fun onBackPressed() {
+        val w = webChoix
+        if (choixYoutube != null) {
+            if (w != null && w.canGoBack()) w.goBack() else fermerYoutube()
+            return
+        }
+        @Suppress("DEPRECATION")
+        super.onBackPressed()
     }
 
     private var teleAllumee = false
@@ -344,6 +521,7 @@ class ChambreActivity : ComponentActivity() {
     /** La tele s'allume et joue la sequence de demarrage de cette console. */
     /** La tele s'eteint : la video s'arrete et l'ecran s'efface en douceur. */
     private fun eteindreLaTele() {
+        couperYoutube()
         teleAllumee = false
         try { lecteur?.stop() } catch (_: Throwable) {}
         try { lecteur?.release() } catch (_: Throwable) {}
@@ -353,6 +531,7 @@ class ChambreActivity : ComponentActivity() {
     }
 
     private fun allumerLaTele(console: Decor.ConsolePosee) {
+        couperYoutube()                             // la console reprend la télé
         teleAllumee = true
         ecranTele.alpha = 1f
         placerEcranTele(vue.rectangleTele())
@@ -649,6 +828,7 @@ class ChambreActivity : ComponentActivity() {
     }
 
     override fun onResume() {
+        try { teleWeb?.onResume(); webChoix?.onResume() } catch (_: Throwable) { }
         super.onResume()
         // si une console vient de partir, la chambre ne fait que passer :
         // sa musique reste muette, celle du jeu prend le relais
@@ -659,6 +839,7 @@ class ChambreActivity : ComponentActivity() {
     }
 
     override fun onPause() {
+        try { teleWeb?.onPause(); webChoix?.onPause() } catch (_: Throwable) { }
         super.onPause()
         // On ouvre un jeu ou une vitrine : la chambre passe derriere, mais
         // elle reste a l'ecran de l'application. La radio continue donc de
@@ -677,6 +858,7 @@ class ChambreActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        try { teleWeb?.destroy(); webChoix?.destroy() } catch (_: Throwable) { }
         try { lecteur?.release() } catch (_: Throwable) {}
         try { lecteurPret?.release() } catch (_: Throwable) {}
         son.liberer()

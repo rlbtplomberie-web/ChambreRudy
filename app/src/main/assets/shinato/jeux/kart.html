@@ -885,20 +885,27 @@ function ahead(k){ var o=ranking(),i=o.indexOf(k); return i>0?o[i-1]:null; }
 function behindK(k){ var o=ranking(),i=o.indexOf(k); return i<o.length-1?o[i+1]:null; }
 
 /* ===================== OBJETS EN JEU ===================== */
+var CM_DERNIER=-1e9, CM_ATTENTE=15;          // 15 s sans cœur ni muscle après chaque utilisation
+function coeurMuscleTenu(){                  // quelqu'un a déjà un cœur ou un muscle en main ?
+  for(var q=0;q<karts.length;q++){ var it=karts[q].item; if(it==='heart'||it==='muscle') return true; }
+  return false;
+}
 function rollItem(k){
   var pl=placeOf(k), n=karts.length, f=(pl-1)/(n-1), pool;
   if(pl===n)       pool=['tp','tp','tp','blue','blue','candy','candy','red','green','oil','hand','bolt','bolt'];
   else if(f>0.72)  pool=['red','red','red','green','green','oil','oil','candy','candy','blue','hand','hand','bolt','bolt'];
   else if(pl===1)  pool=['green','green','oil','oil','oil','red','hand','bolt'];
   else             pool=['red','red','red','green','green','oil','oil','candy','hand','bolt','bolt'];
-  // coeur / muscle : 16e 70 %, 15e 60 %, 14e 25 %, jamais ailleurs
+  // coeur / muscle : 16e 70 %, 15e 60 %, 14e 25 %, jamais ailleurs.
+  // Un seul pilote à la fois peut en avoir un, et pas juste après que quelqu'un s'en est servi.
   var hp=pl===n?0.70:(pl===n-1?0.60:(pl===n-2?0.25:0));
-  if(Math.random()<hp) return GIRLS[k.name]?'heart':'muscle';
+  if(hp>0 && !coeurMuscleTenu() && performance.now()/1000-CM_DERNIER>CM_ATTENTE && Math.random()<hp) return GIRLS[k.name]?'heart':'muscle';
   return pool[(Math.random()*pool.length)|0];
 }
 function useItem(k){
   if(!k.item||k.roll>0||k.finished) return;
   var t=k.item; k.item=null;
+  if(t==='heart'||t==='muscle') CM_DERNIER=performance.now()/1000;   // le délai d'attente commence
   showFace(k,2,false);
   var fx=Math.cos(k.angle),fz=Math.sin(k.angle);
   if(t==='red'||t==='green'){

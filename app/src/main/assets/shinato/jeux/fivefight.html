@@ -102,7 +102,7 @@ body.rot #start{font-size:clamp(24px,7vw,46px)}
 <script>
 // ================== SCÈNE : un toit de zinc la nuit ==================
 const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(Math.min(2,devicePixelRatio||1));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.setPixelRatio(Math.min(1.25,devicePixelRatio||1));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;
 const SCREEN=document.getElementById('screen');SCREEN.prepend(renderer.domElement);
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x141a30);scene.fog=new THREE.Fog(0x141a30,14,48);
 const camera=new THREE.PerspectiveCamera(42,1,0.1,200);
@@ -264,24 +264,37 @@ const sfx={whoosh:k=>noise(k?.22:.14,k?900:1400,1.2,.18),hit:b=>{noise(.12,b?500
 const keys={};addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key===' ')e.preventDefault();
   const k=e.key.toLowerCase();if(!e.repeat){if(k==='a'||k==='j')press('poing');if(k==='z'||k==='k')press('pied')}});
 addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-const joy=document.getElementById('joy'),knob=document.getElementById('knob');let jid=null,jx=0,jy=0;
-// zone tactile invisible, beaucoup plus large que le rond (toute la partie gauche en bas) : on attrape toujours le stick
-const jzone=document.createElement('div');jzone.id='jzone';joy.parentNode.insertBefore(jzone,joy);   // dans l'écran de la borne, sous le rond : tourne avec elle
-let jorig=null;   // si on pose le doigt à côté du rond, le centre du stick se met sous le doigt
-function jmove(e){const r=joy.getBoundingClientRect(),R=joy.offsetWidth/2;const cx=jorig?jorig.x:r.left+r.width/2,cy=jorig?jorig.y:r.top+r.height/2;const sx=e.clientX-cx,sy=e.clientY-cy;let dx=ROT?sy:sx,dy=ROT?-sx:sy;const d=Math.hypot(dx,dy),m=R-14;if(d>m){dx*=m/d;dy*=m/d}jx=dx/m;jy=dy/m;knob.style.transform=`translate(${dx}px,${dy}px)`}
+const joy=document.getElementById('joy'),knob=document.getElementById('knob');let jid=null,jx=0,jy=0,jorig=null;
+// Commandes au doigt (événements tactiles : les plus fiables dans l'appli). Zone du stick élargie à toute la partie gauche en bas.
+const jzone=document.createElement('div');jzone.id='jzone';joy.parentNode.insertBefore(jzone,joy);
+function jmove(X,Y){const r=joy.getBoundingClientRect(),R=joy.offsetWidth/2;const cx=jorig?jorig.x:r.left+r.width/2,cy=jorig?jorig.y:r.top+r.height/2;
+  const sx=X-cx,sy=Y-cy;let dx=ROT?sy:sx,dy=ROT?-sx:sy;const d=Math.hypot(dx,dy),m=R-14;if(d>m){dx*=m/d;dy*=m/d}jx=dx/m;jy=dy/m;knob.style.transform=`translate(${dx}px,${dy}px)`}
 function jrelache(){jid=null;jorig=null;jx=jy=0;knob.style.transform=''}
-function jdown(e){if(e.cancelable)e.preventDefault();jid=e.pointerId;jorig=(e.currentTarget===jzone)?{x:e.clientX,y:e.clientY}:null;try{e.currentTarget.setPointerCapture(jid)}catch(err){}jmove(e)}
-function jmv(e){if(e.pointerId===jid){if(e.cancelable)e.preventDefault();jmove(e)}}
-function jend(e){if(e.pointerId===jid)jrelache()}
-[joy,jzone].forEach(el=>{el.addEventListener('pointerdown',jdown);el.addEventListener('pointermove',jmv);
- el.addEventListener('pointerup',jend);el.addEventListener('pointercancel',jend);el.addEventListener('lostpointercapture',jend)});
+[joy,jzone].forEach(el=>{
+  el.addEventListener('touchstart',e=>{if(e.cancelable)e.preventDefault();const t=e.changedTouches[0];jid=t.identifier;
+    jorig=(el===jzone)?{x:t.clientX,y:t.clientY}:null;jmove(t.clientX,t.clientY)},{passive:false});
+  el.addEventListener('touchmove',e=>{for(const t of e.changedTouches)if(t.identifier===jid){if(e.cancelable)e.preventDefault();jmove(t.clientX,t.clientY)}},{passive:false});
+  const fin=e=>{for(const t of e.changedTouches)if(t.identifier===jid)jrelache()};
+  el.addEventListener('touchend',fin);el.addEventListener('touchcancel',fin);
+  el.addEventListener('mousedown',e=>{jid='souris';jorig=(el===jzone)?{x:e.clientX,y:e.clientY}:null;jmove(e.clientX,e.clientY);
+    const mv=ev=>jmove(ev.clientX,ev.clientY),up=()=>{jrelache();removeEventListener('mousemove',mv);removeEventListener('mouseup',up)};
+    addEventListener('mousemove',mv);addEventListener('mouseup',up)})});
 addEventListener('blur',jrelache);document.addEventListener('visibilitychange',jrelache);
 const held={garde:false,saut:false};
-function btn(id,fn,hold){const b=document.getElementById(id);let pid=null;
-  b.addEventListener('pointerdown',e=>{if(e.cancelable)e.preventDefault();pid=e.pointerId;b.classList.add('on');try{b.setPointerCapture(e.pointerId)}catch(err){}fn?fn():held[hold]=true});
-  const up=e=>{if(e&&e.pointerId!=null&&pid!=null&&e.pointerId!==pid)return;pid=null;b.classList.remove('on');if(hold)held[hold]=false};
-  b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);b.addEventListener('lostpointercapture',up);
-  addEventListener('blur',()=>up())}
+var TOUS_BOUTONS=window.TOUS_BOUTONS||[];window.TOUS_BOUTONS=TOUS_BOUTONS;
+function btn(id,fn,hold){const b=document.getElementById(id);let tid=null;
+  const lache=()=>{tid=null;b.classList.remove('on');if(hold)held[hold]=false};
+  b.addEventListener('touchstart',e=>{if(e.cancelable)e.preventDefault();e.stopPropagation();if(tid!==null)return;
+    tid=e.changedTouches[0].identifier;b.classList.add('on');fn?fn():held[hold]=true},{passive:false});
+  const fin=e=>{for(const t of e.changedTouches)if(t.identifier===tid)lache()};
+  b.addEventListener('touchend',fin);b.addEventListener('touchcancel',fin);
+  b.addEventListener('mousedown',e=>{e.preventDefault();tid='souris';b.classList.add('on');fn?fn():held[hold]=true;
+    const up=()=>{lache();removeEventListener('mouseup',up)};addEventListener('mouseup',up)});
+  addEventListener('blur',lache);document.addEventListener('visibilitychange',lache);
+  TOUS_BOUTONS.push(lache)}
+// plus aucun doigt sur l'écran : tout est relâché (rien ne reste coincé)
+document.addEventListener('touchend',e=>{if(!e.touches.length){jrelache();TOUS_BOUTONS.forEach(f=>f())}},{capture:true});
+document.addEventListener('touchcancel',e=>{if(!e.touches.length){jrelache();TOUS_BOUTONS.forEach(f=>f())}},{capture:true});
 btn('bPoing',()=>press('poing'));btn('bPied',()=>press('pied'));btn('bGarde',null,'garde');btn('bSaut',null,'saut');
 let tampon=null,tamponT=0;   // un coup demandé pendant que le personnage finit un geste est gardé un instant
 function peutFrapper(k){return P1.can()||(P1.y>0&&k==='pied'&&P1.st==='saut')}
