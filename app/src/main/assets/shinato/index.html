@@ -60,7 +60,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  background:radial-gradient(closest-side,rgba(0,0,0,.6),rgba(0,0,0,.24) 60%,transparent 100%);
  filter:blur(.4vmin)}
 #rudy{position:absolute;z-index:5;width:auto;transform-origin:50% 100%;
- filter:brightness(.97) contrast(1.04) saturate(1.02) drop-shadow(0 4px 4px rgba(0,0,0,.5));
+ filter:brightness(.97) contrast(1.04) saturate(1.02);
  will-change:left,transform}
 
 .feuillage{position:absolute;transform-origin:50% 92%;pointer-events:none;will-change:transform;z-index:1}
@@ -149,7 +149,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  var boite=document.createElement("div");
  boite.style.cssText="position:absolute;z-index:4;left:14.34%;bottom:34%;height:34.2%;"+
   "transform:translateX(-"+PIED_X+"%);pointer-events:none;"+
-  "filter:brightness(.8) contrast(1.02) saturate(.92) drop-shadow(0 3px 3px rgba(0,0,0,.45))";
+  "filter:brightness(.8) contrast(1.02) saturate(.92)";
  var respire=document.createElement("div");
  respire.style.cssText="position:relative;height:100%;transform-origin:"+PIED_X+"% 100%;will-change:transform";
  boite.appendChild(respire);
@@ -228,7 +228,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  var boite=document.createElement("div");
  boite.style.cssText="position:absolute;z-index:4;left:25.37%;bottom:33.2%;height:35.60%;"+
   "transform:translateX(-"+ANCRE_X+"%);pointer-events:none;"+
-  "filter:brightness(.8) contrast(1.02) saturate(.92) drop-shadow(0 3px 3px rgba(0,0,0,.4))";
+  "filter:brightness(.8) contrast(1.02) saturate(.92)";
  function calque(){
   var i=new Image(); i.alt="";
   i.style.cssText="display:block;height:100%;width:auto";
@@ -296,7 +296,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  var boite=document.createElement("div");
  boite.style.cssText="position:absolute;z-index:4;left:59.79%;bottom:37.09%;height:22.31%;"+
   "transform:translateX(-"+ANCRE_X+"%);pointer-events:none;"+
-  "filter:brightness(.78) contrast(1.02) saturate(.9) drop-shadow(0 2px 3px rgba(0,0,0,.4))";
+  "filter:brightness(.78) contrast(1.02) saturate(.9)";
  function calque(){ var i=new Image(); i.alt=""; i.style.cssText="display:block;height:100%;width:auto"; return i; }
  var A=calque(), B=calque();             // A garde la pose, B sert au fondu
  B.style.position="absolute"; B.style.left="0"; B.style.top="0"; B.style.opacity="0";
@@ -350,7 +350,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  var boite=document.createElement("div");
  boite.style.cssText="position:absolute;z-index:4;left:92.78%;bottom:28.06%;height:23.44%;"+
   "transform:translateX(-50%);pointer-events:none;"+
-  "filter:brightness(.78) contrast(1.02) saturate(.9) drop-shadow(0 2px 3px rgba(0,0,0,.4))";
+  "filter:brightness(.78) contrast(1.02) saturate(.9)";
  function calque(){ var i=new Image(); i.alt=""; i.style.cssText="display:block;height:100%;width:auto"; return i; }
  var A=calque(), B=calque();             // A garde la vignette, B sert au fondu
  B.style.position="absolute"; B.style.left="0"; B.style.top="0"; B.style.opacity="0";
@@ -391,7 +391,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  var boite=document.createElement("div");
  boite.style.cssText="position:absolute;z-index:4;left:95.51%;bottom:35.1%;height:16.35%;"+
   "transform:translateX(-"+ANCRE_X+"%);pointer-events:none;"+
-  "filter:brightness(.8) contrast(1.02) saturate(.92) drop-shadow(0 2px 2px rgba(0,0,0,.4))";
+  "filter:brightness(.8) contrast(1.02) saturate(.92)";
  function calque(){ var i=new Image(); i.alt=""; i.style.cssText="display:block;height:100%;width:auto"; return i; }
  var A=calque(), B=calque();             // A garde la pose, B sert au fondu
  B.style.position="absolute"; B.style.left="0"; B.style.top="0"; B.style.opacity="0";
@@ -436,7 +436,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
   var boite=document.createElement("div");
   boite.style.cssText="position:absolute;z-index:4;left:"+gauche+"%;bottom:32.88%;height:"+hauteur+"%;"+
    "transform:translateX(-"+ancre+"%);pointer-events:none;"+
-   "filter:brightness(.8) contrast(1.02) saturate(.92) drop-shadow(0 3px 3px rgba(0,0,0,.4))";
+   "filter:brightness(.8) contrast(1.02) saturate(.92)";
   function calque(){ var i=new Image(); i.alt=""; i.style.cssText="display:block;height:100%;width:auto"; return i; }
   var A=calque(), B=calque();           // A garde la pose, B sert au fondu
   B.style.position="absolute"; B.style.left="0"; B.style.top="0"; B.style.opacity="0";
@@ -474,7 +474,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  var boite=document.createElement("div");
  boite.style.cssText="position:absolute;z-index:4;left:90.42%;bottom:28.94%;height:25.30%;"+
   "transform:translateX(-50.00%);pointer-events:none;"+
-  "filter:brightness(.8) contrast(1.02) saturate(.92) drop-shadow(0 2px 2px rgba(0,0,0,.4))";
+  "filter:brightness(.8) contrast(1.02) saturate(.92)";
  function calque(){ var i=new Image(); i.alt=""; i.style.cssText="display:block;height:100%;width:auto"; return i; }
  var A=calque(), B=calque();             // A garde la pose, B sert au fondu
  B.style.position="absolute"; B.style.left="0"; B.style.top="0"; B.style.opacity="0";
@@ -518,7 +518,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  var boite=document.createElement("div");
  boite.style.cssText="position:absolute;z-index:4;left:49.2%;bottom:37.74%;height:15.00%;"+
   "transform:translateX(-70.00%);pointer-events:none;"+
-  "filter:brightness(.72) contrast(1.02) saturate(.9) drop-shadow(0 2px 2px rgba(0,0,0,.4))";
+  "filter:brightness(.72) contrast(1.02) saturate(.9)";
  function calque(abs){ var i=new Image(); i.alt="";
   i.style.cssText="display:block;height:100%;width:auto"+(abs?";position:absolute;left:0;top:0":""); return i; }
  var bA=calque(false), bB=calque(true), vA=calque(true), vB=calque(true);
@@ -570,7 +570,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  var boite=document.createElement("div");
  boite.style.cssText="position:absolute;z-index:4;left:40.41%;bottom:32.07%;height:26.48%;"+
   "transform:translateX(-46.12%);pointer-events:none;"+
-  "filter:brightness(.82) contrast(1.02) saturate(.92) drop-shadow(0 3px 3px rgba(0,0,0,.4))";
+  "filter:brightness(.82) contrast(1.02) saturate(.92)";
  function calque(){ var i=new Image(); i.alt=""; i.style.cssText="display:block;height:100%;width:auto"; return i; }
  var A=calque(), B=calque();             // A garde la pose, B sert au fondu
  B.style.position="absolute"; B.style.left="0"; B.style.top="0"; B.style.opacity="0";
@@ -647,7 +647,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  var boite=document.createElement("div");
  boite.style.cssText="position:absolute;z-index:4;left:83.569%;bottom:83.536%;height:6.414%;"+
   "transform:translateX(-48.52%);pointer-events:none;"+
-  "filter:brightness(.78) contrast(1.03) saturate(.9) drop-shadow(0 1px 1px rgba(0,0,0,.5))";
+  "filter:brightness(.78) contrast(1.03) saturate(.9)";
  function calque(){ var i=new Image(); i.alt=""; i.style.cssText="display:block;height:100%;width:auto"; return i; }
  var A=calque(), B=calque();             // A garde la pose, B sert au fondu
  B.style.position="absolute"; B.style.left="0"; B.style.top="0"; B.style.opacity="0";
@@ -683,7 +683,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  var boite=document.createElement("div");
  boite.style.cssText="position:absolute;z-index:4;left:72.690%;bottom:32.678%;height:17.909%;"+
   "transform:translateX(-48.67%);pointer-events:none;"+
-  "filter:brightness(.8) contrast(1.02) saturate(.92) drop-shadow(0 2px 2px rgba(0,0,0,.45))";
+  "filter:brightness(.8) contrast(1.02) saturate(.92)";
  function calque(){ var i=new Image(); i.alt=""; i.style.cssText="display:block;height:100%;width:auto"; return i; }
  var A=calque(), B=calque();             // A garde la pose, B sert au fondu
  B.style.position="absolute"; B.style.left="0"; B.style.top="0"; B.style.opacity="0";
@@ -743,7 +743,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  var boite=document.createElement("div");
  boite.style.cssText="position:absolute;z-index:4;height:"+TAILLE+"%;transform:translateX(-"+ANCRE_X+"%);"+
   "pointer-events:none;will-change:left,bottom;"+
-  "filter:brightness(.8) contrast(1.02) saturate(.92) drop-shadow(0 3px 3px rgba(0,0,0,.4))";
+  "filter:brightness(.8) contrast(1.02) saturate(.92)";
  function calque(){ var i=new Image(); i.alt=""; i.style.cssText="display:block;height:100%;width:auto"; return i; }
  var A=calque(), B=calque();         // A garde l'image, B sert au fondu
  B.style.position="absolute"; B.style.left="0"; B.style.top="0"; B.style.opacity="0";
@@ -856,10 +856,10 @@ carte.src=DECORS;
 var SOL=0.805;      // il marche sur la route mouillée, devant les boutiques
 var TAILLE=0.385;   // hauteur du personnage par rapport à l'image
 var RAPPORT=window.RUDY_RAPPORT;
-var largeurMonde=0, hauteurScene=0;
+var largeurMonde=0, hauteurScene=0, largeurVue=0;
 
 function mesureMonde(){
- hauteurScene=vue.clientHeight;
+ hauteurScene=vue.clientHeight; largeurVue=vue.clientWidth;
  largeurMonde=hauteurScene*RAPPORT;
  monde.style.width=Math.ceil(largeurMonde)+"px";
  var hp=hauteurScene*TAILLE*800/660;          // la toile fait 800 de haut pour 660 de personnage
@@ -907,8 +907,8 @@ function pose(src){
  ombre.style.left=x+"px";
 }
 function cadre(direct){
- var moitie=vue.clientWidth/2;
- var cible=Math.max(0,Math.min(largeurMonde-vue.clientWidth, x-moitie));
+ var moitie=largeurVue/2;
+ var cible=Math.max(0,Math.min(largeurMonde-largeurVue, x-moitie));
  cam = direct ? cible : cam+(cible-cam)*0.16;     // la caméra suit en douceur
  monde.style.transform="translate3d("+(-cam)+"px,0,0)";
 }
@@ -1064,12 +1064,13 @@ function boucle(t){
  cree("petale","petale",14);
  cree("poussiere","poussiere",22);
 
+ var hScene=scene.clientHeight; window.addEventListener("resize",function(){ hScene=scene.clientHeight; });
  var t0=0;
  function anime(t){
   requestAnimationFrame(anime);
   if(!t0) t0=t;
   var dt=Math.min((t-t0)/1000,0.05); t0=t;
-  var h=scene.clientHeight;
+  var h=hScene;
   for(var i=0;i<grains.length;i++){
    var p=grains[i];
    p.vie+=dt;
@@ -1276,7 +1277,7 @@ else carte.addEventListener("load",demarre);
 #flecheHaut{position:absolute;z-index:6;pointer-events:none;display:none;width:0;height:0}
 #flecheHaut svg{position:absolute;left:-7vmin;top:-4vmin;width:14vmin;height:17vmin;
  filter:drop-shadow(0 0 1.2vmin rgba(255,225,40,1)) drop-shadow(0 0 3vmin rgba(255,200,0,.8));
- animation:saute .7s ease-in-out infinite alternate}
+ animation:saute .7s ease-in-out infinite alternate;will-change:transform}
 @keyframes saute{from{transform:translateY(0)}to{transform:translateY(-2.2vmin)}}
 #btnEntrer{display:none;box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 16px rgba(255,214,60,.55);border-color:rgba(255,226,122,.95)}
 #bar{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:60;background:#000;display:none}
@@ -1323,7 +1324,7 @@ else carte.addEventListener("load",demarre);
 #flecheResto{position:absolute;z-index:6;pointer-events:none;display:none;width:0;height:0}
 #flecheResto svg{position:absolute;left:-7vmin;top:-4vmin;width:14vmin;height:17vmin;
  filter:drop-shadow(0 0 1.2vmin rgba(255,225,40,1)) drop-shadow(0 0 3vmin rgba(255,200,0,.8));
- animation:saute .7s ease-in-out infinite alternate}
+ animation:saute .7s ease-in-out infinite alternate;will-change:transform}
 #btnResto{display:none;box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 16px rgba(255,214,60,.55);border-color:rgba(255,226,122,.95)}
 #resto{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:60;background:#000;display:none}
 </style>
@@ -1363,6 +1364,72 @@ else carte.addEventListener("load",demarre);
    dedans=false; dir=0; window.repriseRue();
   }
  });
+})();
+</script>
+<style>
+#flecheJeu{position:absolute;z-index:6;pointer-events:none;display:none;width:0;height:0}
+#flecheJeu svg{position:absolute;left:-7vmin;top:-4vmin;width:14vmin;height:17vmin;will-change:transform;
+ filter:drop-shadow(0 0 1.2vmin rgba(255,225,40,1)) drop-shadow(0 0 3vmin rgba(255,200,0,.8));animation:saute .7s ease-in-out infinite alternate}
+#btnJeu{display:none;box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 16px rgba(255,214,60,.55);border-color:rgba(255,226,122,.95)}
+#toastJeu{position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:80;display:none;padding:10px 16px;border-radius:12px;
+ background:rgba(10,10,14,.9);border:2px solid rgba(255,226,122,.8);color:#ffe27a;font:800 15px Arial,sans-serif}
+</style>
+<script>
+/* ---------- les jeux de plein air de la chambre, maintenant dans la rue de Shinato ----------
+   Devant chaque terrain : flèche jaune + JOUER. Le jeu est celui de l'appli (Tir au but, Paniers,
+   Balle au prisonnier, PariBoxe) ; quand il se termine, on revient ici dans la rue. */
+(function(){
+ var monde=document.getElementById("monde");
+ var JEUX=[
+  {nom:"pariboxe", de:790,  a:985},    // entre la porte éclairée et Théo, sous le mur « RUDY »
+  {nom:"paniers",  de:3290, a:3790},   // devant le terrain de basket
+  {nom:"penalty",  de:3950, a:4330},   // devant le terrain « FOOT LIFE »
+  {nom:"balle",    de:6130, a:6385}    // devant la banderole « RAPIDITÉ RÉFLEXE… »
+ ];
+ var fl=document.createElement("div"); fl.id="flecheJeu";
+ fl.innerHTML='<svg viewBox="0 0 100 120"><path d="M50 4 L94 52 L66 52 L66 116 L34 116 L34 52 L6 52 Z" fill="#ffe400" stroke="#fff7b0" stroke-width="5" stroke-linejoin="round"/></svg>';
+ monde.appendChild(fl);
+ var btn=document.createElement("div"); btn.className="btn"; btn.id="btnJeu"; btn.textContent="JOUER";
+ var act=document.getElementById("actions"); act.insertBefore(btn,act.firstChild);
+ var toast=document.createElement("div"); toast.id="toastJeu"; document.body.appendChild(toast);
+ var ici=null, parti=false;
+ setInterval(function(){
+  if(typeof x==="undefined"||!largeurMonde||window.PAUSE_RUE){ ici=null; fl.style.display="none"; btn.style.display="none"; return; }
+  var d=x/largeurMonde*7078; ici=null;
+  for(var i=0;i<JEUX.length;i++) if(d>=JEUX[i].de&&d<=JEUX[i].a){ ici=JEUX[i]; break; }
+  fl.style.display=ici?"block":"none"; btn.style.display=ici?"block":"none";
+  if(ici){ var hp=hauteurScene*TAILLE; fl.style.left=x+"px"; fl.style.top=(hauteurScene*SOL-hp*1.25)+"px"; }
+ },80);
+ window.appuiSur(btn,function(){
+  if(!ici) return; dir=0;
+  if(window.Chambre&&window.Chambre.jouer){
+   parti=true;
+   try{ if(window.RUDY_AUDIO) window.RUDY_AUDIO.pause(); }catch(e){}   // le jeu a sa propre musique
+   window.Chambre.jouer(ici.nom);
+  }else{ toast.textContent="Ce jeu se lance depuis l'appli"; toast.style.display="block"; setTimeout(function(){ toast.style.display="none"; },1800); }
+ });
+ // retour du jeu : la rue reprend, sa musique aussi
+ document.addEventListener("visibilitychange",function(){
+  if(!document.hidden&&parti){ parti=false; try{ if(window.RUDY_AUDIO){ var p=window.RUDY_AUDIO.play(); if(p&&p.catch)p.catch(function(){}); } }catch(e){} }
+ });
+})();
+
+/* ---------- garde-fous de la promenade : le stick et les boutons ne restent jamais bloqués ---------- */
+(function(){
+ function relache(){ dir=0; var s=document.getElementById("stick"); if(s) s.style.transform="translate(0,0)"; }
+ // la rue ne reste jamais en pause si aucun autre lieu n'est ouvert
+ window.minuterieLibre(function veille(){
+  try{
+   if(window.PAUSE_RUE){
+    var ouvert=["bar","resto","moto"].some(function(id){ var f=document.getElementById(id); return f&&getComputedStyle(f).display!=="none"; });
+    if(!ouvert){ window.repriseRue(); relache(); }
+   }
+  }catch(e){}
+  window.minuterieLibre(veille,1000);
+ },1000);
+ // retour dans l'appli (appel, notification, jeu fini) : on repart propre
+ document.addEventListener("visibilitychange",function(){ if(!document.hidden) relache(); });
+ window.addEventListener("pageshow",relache);
 })();
 </script>
 </body>

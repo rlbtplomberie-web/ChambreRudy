@@ -23,7 +23,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  background:radial-gradient(closest-side,rgba(0,0,0,.6),rgba(0,0,0,.24) 60%,transparent 100%);
  filter:blur(.4vmin)}
 #rudy{position:absolute;z-index:5;width:auto;transform-origin:50% 100%;
- filter:brightness(.97) contrast(1.04) saturate(1.02) drop-shadow(0 4px 4px rgba(0,0,0,.5));
+ filter:brightness(.97) contrast(1.04) saturate(1.02);
  will-change:left,transform}
 
 .feuillage{position:absolute;transform-origin:50% 92%;pointer-events:none;will-change:transform;z-index:1}
@@ -135,10 +135,10 @@ carte.src=DECORS;
 var SOL=0.86;       // il marche sur la route, le long des maisons, vers la plage
 var TAILLE=0.385;   // hauteur du personnage par rapport à l'image
 var RAPPORT=window.RUDY_RAPPORT;
-var largeurMonde=0, hauteurScene=0;
+var largeurMonde=0, hauteurScene=0, largeurVue=0;
 
 function mesureMonde(){
- hauteurScene=vue.clientHeight;
+ hauteurScene=vue.clientHeight; largeurVue=vue.clientWidth;
  largeurMonde=hauteurScene*RAPPORT;
  monde.style.width=Math.ceil(largeurMonde)+"px";
  var hp=hauteurScene*TAILLE*800/660;          // la toile fait 800 de haut pour 660 de personnage
@@ -186,8 +186,8 @@ function pose(src){
  ombre.style.left=x+"px";
 }
 function cadre(direct){
- var moitie=vue.clientWidth/2;
- var cible=Math.max(0,Math.min(largeurMonde-vue.clientWidth, x-moitie));
+ var moitie=largeurVue/2;
+ var cible=Math.max(0,Math.min(largeurMonde-largeurVue, x-moitie));
  cam = direct ? cible : cam+(cible-cam)*0.16;     // la caméra suit en douceur
  monde.style.transform="translate3d("+(-cam)+"px,0,0)";
 }
@@ -337,12 +337,13 @@ function boucle(t){
  // pas de pétales de cerisier à la plage
  cree("poussiere","poussiere",22);
 
+ var hScene=scene.clientHeight; window.addEventListener("resize",function(){ hScene=scene.clientHeight; });
  var t0=0;
  function anime(t){
   requestAnimationFrame(anime);
   if(!t0) t0=t;
   var dt=Math.min((t-t0)/1000,0.05); t0=t;
-  var h=scene.clientHeight;
+  var h=hScene;
   for(var i=0;i<grains.length;i++){
    var p=grains[i];
    p.vie+=dt;
@@ -494,7 +495,7 @@ else carte.addEventListener("load",demarre);
   var el=new Image(); el.alt="";
   el.style.cssText="position:absolute;z-index:4;pointer-events:none;height:"+(D.H*S/HS*100)+"%;"+
    "left:"+((x-D.ax*S)/LS*100)+"%;top:"+((y-D.ay*S)/HS*100)+"%;"+
-   "filter:brightness(.72) contrast(1.03) saturate(.85) drop-shadow(0 2px 2px rgba(0,0,0,.4))";
+   "filter:brightness(.72) contrast(1.03) saturate(.85)";
   el.src=D.img[0]; monde.appendChild(el); D.el=el; D.x=x; D.y=y; return D;
  }
  var R=gamin(F.rouge,1806,381), V=gamin(F.vert,1898,381);
@@ -505,7 +506,7 @@ else carte.addEventListener("load",demarre);
   '<path d="M0,-3.4 L0,-9 M3.2,-1 L8.6,-2.8 M2,2.8 L5.3,7.3 M-2,2.8 L-5.3,7.3 M-3.2,-1 L-8.6,-2.8" stroke="#1b1b1b" stroke-width="1.1"/></svg>';
  var BT=11;    // taille du ballon dans le décor
  b.style.cssText="position:absolute;z-index:4;pointer-events:none;width:"+(BT/LS*100)+"%;height:"+(BT/HS*100)+"%;"+
-  "filter:brightness(.78) drop-shadow(0 1px 1px rgba(0,0,0,.5))";
+  "filter:brightness(.78)";
  monde.appendChild(b);
  var ob=document.createElement("div");   // ombre du ballon
  ob.style.cssText="position:absolute;z-index:3;pointer-events:none;border-radius:50%;background:rgba(0,0,0,.35);filter:blur(1px);"+
@@ -563,7 +564,7 @@ else carte.addEventListener("load",demarre);
  var boite=document.createElement("div");
  boite.style.cssText="position:absolute;z-index:4;left:66.018%;bottom:25.385%;height:21.099%;"+
   "transform:translateX(-50%);pointer-events:none;"+
-  "filter:brightness(.74) contrast(1.04) saturate(.82) drop-shadow(0 3px 3px rgba(0,0,0,.45))";
+  "filter:brightness(.74) contrast(1.04) saturate(.82)";
  function calque(){ var i=new Image(); i.alt=""; i.style.cssText="display:block;height:100%;width:auto"; return i; }
  var A=calque(), B=calque();             // A garde l'image, B sert au fondu
  B.style.position="absolute"; B.style.left="0"; B.style.top="0"; B.style.opacity="0";
@@ -610,7 +611,7 @@ else carte.addEventListener("load",demarre);
  monde.appendChild(ombre);
  var boite=document.createElement("div");
  boite.style.cssText="position:absolute;z-index:4;pointer-events:none;top:0;left:0;will-change:left;"+
-  "filter:brightness(.78) contrast(1.03) saturate(.9) drop-shadow(0 2px 3px rgba(0,0,0,.45))";
+  "filter:brightness(.78) contrast(1.03) saturate(.9)";
  function calque(abs){ var i=new Image(); i.alt=""; i.style.cssText="display:block;height:100%;width:auto"+(abs?";position:absolute;left:0;top:0":""); return i; }
  var A=calque(false), B=calque(true); B.style.opacity="0";
  boite.appendChild(A); boite.appendChild(B); monde.appendChild(boite);

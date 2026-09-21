@@ -610,18 +610,10 @@ class ChambreActivity : ComponentActivity() {
         }
     }
 
+    /** La baie vitrée : on sort à Shinato (les jeux de plein air sont maintenant dans la rue). */
     private fun menuDehors() {
-        panneau("À quel jeu veux-tu jouer ?", listOf("Tir au but", "Paniers", "Balle prisonnier", "PariBoxe", "Sortir à Shinato"), 3,
-            0xF10A1435.toInt(), 0xFFFFC54E.toInt(), "RETOUR") { i ->
-                // Les jeux de plein air et PariBoxe sont integres a RetroRom.
-                val ecrans = listOf(
-                    com.rudy.chambre.penalty.PenaltyActivity::class.java,
-                    com.rudy.chambre.basket.BasketActivity::class.java,
-                    com.rudy.chambre.balle.PartieActivity::class.java,
-                    com.rudy.chambre.pariboxe.PariBoxeActivity::class.java,
-                    ShinatoActivity::class.java   // le jeu Rudy Style : la rue de Shinato et tout le reste
-                )
-                startActivity(Intent(this, ecrans[i]))
+        confirmer("Voulez-vous sortir à Shinato ?") {
+            startActivity(Intent(this, ShinatoActivity::class.java))
         }
     }
 
@@ -734,6 +726,23 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
             ): android.webkit.WebResourceResponse? = serveur.shouldInterceptRequest(r.url)
         }
         web.webChromeClient = android.webkit.WebChromeClient()
+        // Les terrains de la rue (flèche jaune + JOUER) lancent les jeux de l'appli.
+        // Quand le jeu se termine, on revient ici, dans la rue.
+        web.addJavascriptInterface(object {
+            @android.webkit.JavascriptInterface
+            fun jouer(nom: String) {
+                val ecran: Class<*>? = when (nom) {
+                    "penalty" -> com.rudy.chambre.penalty.PenaltyActivity::class.java
+                    "paniers" -> com.rudy.chambre.basket.BasketActivity::class.java
+                    "balle" -> com.rudy.chambre.balle.PartieActivity::class.java
+                    "pariboxe" -> com.rudy.chambre.pariboxe.PariBoxeActivity::class.java
+                    else -> null
+                }
+                if (ecran != null) runOnUiThread {
+                    startActivity(android.content.Intent(this@ShinatoActivity, ecran).putExtra("depuis_shinato", true))
+                }
+            }
+        }, "Chambre")
 
         val cadre = android.widget.FrameLayout(this)
         cadre.setBackgroundColor(android.graphics.Color.BLACK)
@@ -760,6 +769,8 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
         super.onResume()
         web.onResume()
         web.resumeTimers()
+        // au retour d'un jeu, la musique de la chambre reste coupée : c'est celle de Shinato qui joue
+        try { SonPartage.volume(0f) } catch (_: Throwable) { }
     }
 
     override fun onPause() {

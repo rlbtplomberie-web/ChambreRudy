@@ -68,6 +68,8 @@ class PariBoxeActivity : ComponentActivity() {
     }
 
     private fun retourBureau() {
+        // lancée depuis un terrain de la rue de Shinato : on revient simplement dans la rue
+        if (intent.getBooleanExtra("depuis_shinato", false)) { finish(); return }
         startActivity(Intent(this, ChambreActivity::class.java)
             .putExtra("retour_bureau", true)
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP))
