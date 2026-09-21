@@ -742,6 +742,12 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
                     startActivity(android.content.Intent(this@ShinatoActivity, ecran).putExtra("depuis_shinato", true))
                 }
             }
+
+            /** Tout à gauche de la rue : « Voulez-vous rentrer ? » -> OUI : retour au bureau. */
+            @android.webkit.JavascriptInterface
+            fun rentrer() {
+                runOnUiThread { finish() }
+            }
         }, "Chambre")
 
         val cadre = android.widget.FrameLayout(this)
@@ -750,6 +756,7 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
         setContentView(cadre)
 
         // la musique de la chambre laisse la place à celle de Shinato
+        SonPartage.dansShinato = true
         try { SonPartage.volume(0f) } catch (_: Throwable) { }
         web.loadUrl("https://appassets.androidplatform.net/assets/shinato/index.html")
     }
@@ -786,6 +793,7 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
 
     override fun onDestroy() {
         try { web.stopLoading(); web.loadUrl("about:blank"); web.destroy() } catch (_: Throwable) { }
+        SonPartage.dansShinato = false
         try { Ambiance.rendreLaMusique() } catch (_: Throwable) { }
         super.onDestroy()
     }

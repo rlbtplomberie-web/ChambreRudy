@@ -1,6 +1,26 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
+<head><script>
+/* ---- images : chaque image intégrée est convertie une seule fois en fichier en mémoire ----
+   Avant, chaque changement de pose relisait une longue chaîne « data: » : au bout d'un moment
+   le téléphone saturait (ralentissements, touches qui ne répondent plus). */
+(function(){
+ var d=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,"src"); if(!d||!d.set) return;
+ var cache=new Map();
+ function versBlob(v){
+  var u=cache.get(v); if(u) return u;
+  try{ var i=v.indexOf(","), mime=v.slice(5,v.indexOf(";")), b=atob(v.slice(i+1)), a=new Uint8Array(b.length);
+   for(var k=0;k<b.length;k++) a[k]=b.charCodeAt(k);
+   u=URL.createObjectURL(new Blob([a],{type:mime})); }catch(e){ u=v; }
+  cache.set(v,u); return u; }
+ Object.defineProperty(HTMLImageElement.prototype,"src",{configurable:true,enumerable:true,
+  get:function(){ return this.__src!==undefined?this.__src:d.get.call(this); },
+  set:function(v){ if(typeof v==="string"&&v.length>4000&&v.lastIndexOf("data:",0)===0&&v.indexOf(";base64,")>0){ this.__src=v; d.set.call(this,versBlob(v)); }
+                   else { this.__src=undefined; d.set.call(this,v); } }});
+ var ga=Element.prototype.getAttribute;
+ Element.prototype.getAttribute=function(n){ if(n==="src"&&this.__src!==undefined) return this.__src; return ga.call(this,n); };
+})();
+</script>
 <meta charset="utf-8">
 <meta name="color-scheme" content="dark only">
 <style>:root{color-scheme:dark only}

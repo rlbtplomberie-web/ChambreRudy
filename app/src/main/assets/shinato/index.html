@@ -1,6 +1,26 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head><script>window.LIEU_OCTETS=function(n){var x=new XMLHttpRequest();x.open("GET",n,false);x.overrideMimeType("text/plain; charset=x-user-defined");x.send(null);var s=x.responseText,u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i)&255;return u;};</script>
+<head><script>
+/* ---- images : chaque image intégrée est convertie une seule fois en fichier en mémoire ----
+   Avant, chaque changement de pose relisait une longue chaîne « data: » : au bout d'un moment
+   le téléphone saturait (ralentissements, touches qui ne répondent plus). */
+(function(){
+ var d=Object.getOwnPropertyDescriptor(HTMLImageElement.prototype,"src"); if(!d||!d.set) return;
+ var cache=new Map();
+ function versBlob(v){
+  var u=cache.get(v); if(u) return u;
+  try{ var i=v.indexOf(","), mime=v.slice(5,v.indexOf(";")), b=atob(v.slice(i+1)), a=new Uint8Array(b.length);
+   for(var k=0;k<b.length;k++) a[k]=b.charCodeAt(k);
+   u=URL.createObjectURL(new Blob([a],{type:mime})); }catch(e){ u=v; }
+  cache.set(v,u); return u; }
+ Object.defineProperty(HTMLImageElement.prototype,"src",{configurable:true,enumerable:true,
+  get:function(){ return this.__src!==undefined?this.__src:d.get.call(this); },
+  set:function(v){ if(typeof v==="string"&&v.length>4000&&v.lastIndexOf("data:",0)===0&&v.indexOf(";base64,")>0){ this.__src=v; d.set.call(this,versBlob(v)); }
+                   else { this.__src=undefined; d.set.call(this,v); } }});
+ var ga=Element.prototype.getAttribute;
+ Element.prototype.getAttribute=function(n){ if(n==="src"&&this.__src!==undefined) return this.__src; return ga.call(this,n); };
+})();
+</script><script>window.LIEU_OCTETS=function(n){var x=new XMLHttpRequest();x.open("GET",n,false);x.overrideMimeType("text/plain; charset=x-user-defined");x.send(null);var s=x.responseText,u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i)&255;return u;};</script>
 <meta charset="utf-8">
 <meta name="color-scheme" content="dark only">
 <style>:root{color-scheme:dark only}
@@ -1061,8 +1081,8 @@ function boucle(t){
   p.el.style.width=p.taille+"px";
   p.el.style.height=(p.type==="petale"?p.taille*0.72:p.taille)+"px";
  }
- cree("petale","petale",14);
- cree("poussiere","poussiere",22);
+ cree("petale","petale",8);
+ cree("poussiere","poussiere",10);
 
  var hScene=scene.clientHeight; window.addEventListener("resize",function(){ hScene=scene.clientHeight; });
  var t0=0;
@@ -1430,6 +1450,36 @@ else carte.addEventListener("load",demarre);
  // retour dans l'appli (appel, notification, jeu fini) : on repart propre
  document.addEventListener("visibilitychange",function(){ if(!document.hidden) relache(); });
  window.addEventListener("pageshow",relache);
+})();
+</script>
+<style>
+#rentrer{position:fixed;inset:0;z-index:55;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-family:Arial,Helvetica,sans-serif}
+#rentrer .carte{min-width:62vmin;padding:5vmin 6vmin;border-radius:3vmin;text-align:center;background:linear-gradient(rgba(14,14,18,.96),rgba(30,30,36,.96));border:2px solid rgba(255,226,122,.6);box-shadow:0 10px 40px rgba(0,0,0,.7)}
+#rentrer h2{margin:0 0 4vmin;color:#fff;font:900 clamp(16px,4.2vmin,34px)/1.2 Arial,sans-serif;letter-spacing:2px;text-shadow:0 3px 0 #000}
+#rentrer .ch{display:flex;gap:3vmin;justify-content:center}
+#rentrer .choix{min-width:24vmin;padding:3vmin 4vmin;border-radius:2.4vmin;cursor:pointer;font:900 clamp(15px,3.8vmin,30px)/1 Arial,sans-serif;letter-spacing:2px;color:#ffe27a;background:linear-gradient(rgba(12,12,14,.9),rgba(40,40,46,.9));border:2px solid rgba(255,226,122,.7)}
+</style>
+<div id="rentrer"><div class="carte"><h2>VOULEZ-VOUS RENTRER&nbsp;?</h2><div class="ch"><div class="choix" id="rentrerOui">OUI</div><div class="choix" id="rentrerNon">NON</div></div></div></div>
+<script>
+/* ---------- tout à gauche de la rue de Shinato : rentrer dans la chambre ---------- */
+(function(){
+ var boite=document.getElementById("rentrer"), ouvert=false, arme=false;
+ function montre(){ ouvert=true; arme=false; dir=0; boite.style.display="flex"; }
+ function cache(){ ouvert=false; boite.style.display="none"; }
+ window.appuiSur(document.getElementById("rentrerNon"),cache);                     // NON : on reste à Shinato
+ window.appuiSur(document.getElementById("rentrerOui"),function(){                  // OUI : retour au bureau
+  cache(); try{ if(window.Chambre&&window.Chambre.rentrer) window.Chambre.rentrer(); }catch(e){}
+ });
+ window.minuterieLibre(function veille(){
+  try{
+   if(typeof x!=="undefined"&&largeurMonde&&!window.PAUSE_RUE){
+    var hp=hauteurScene*TAILLE, bout=hp*0.5;
+    if(!ouvert&&arme&&x<=bout+2) montre();
+    if(x>bout+hp*0.6) arme=true;                 // il faut s'être un peu éloigné du bord pour que la question revienne
+   }
+  }catch(e){}
+  window.minuterieLibre(veille,120);
+ },500);
 })();
 </script>
 </body>

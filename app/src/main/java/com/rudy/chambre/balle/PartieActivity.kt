@@ -116,7 +116,7 @@ class PartieActivity : ComponentActivity() {
     }
 
     private fun retour() = Button(this).apply {
-        text = "← Bureau"; textSize = 12f
+        text = "← Partir"; textSize = 12f
         setTextColor(Color.WHITE)
         setBackgroundColor(0xCC150F24.toInt())
         setOnClickListener { finish() }
@@ -130,7 +130,7 @@ class PartieActivity : ComponentActivity() {
             AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
                 .setTitle(titre)
                 .setPositiveButton("Recommencer") { _, _ -> vue.rejouer() }
-                .setNegativeButton("Retour au bureau") { _, _ -> finish() }
+                .setNegativeButton("Partir") { _, _ -> finish() }
                 .setCancelable(false)
                 .show()
         }

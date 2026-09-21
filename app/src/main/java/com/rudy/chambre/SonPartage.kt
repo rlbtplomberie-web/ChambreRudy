@@ -10,6 +10,9 @@ object SonPartage {
 
     var radio: SonChambre? = null
 
+    /** Vrai tant que la rue de Shinato est ouverte : la radio de la chambre doit alors rester muette. */
+    @Volatile var dansShinato = false
+
     /**
      * L'instant ou une console vient d'etre lancee.
      *

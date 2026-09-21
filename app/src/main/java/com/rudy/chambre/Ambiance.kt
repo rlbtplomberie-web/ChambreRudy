@@ -51,7 +51,8 @@ object Ambiance {
     /** En sortant du jeu : sa musique s'arrete, la radio revient. */
     fun rendreLaMusique() {
         arreterLaMusique()
-        SonPartage.volume(1.0f)
+        // de retour dans la rue de Shinato : c'est sa musique qui joue, pas la radio de la chambre
+        SonPartage.volume(if (SonPartage.dansShinato) 0f else 1.0f)
     }
 
     /**
@@ -101,7 +102,7 @@ object Ambiance {
             setOnClickListener { racine.removeView(bloc); recommencer() }
         })
         rangee.addView(Button(activite).apply {
-            text = "← BUREAU"; textSize = 14f
+            text = "← PARTIR"; textSize = 14f
             setTextColor(0xFFFFFFFF.toInt())
             setBackgroundColor(0x33FFFFFF)
             setOnClickListener { activite.finish() }
