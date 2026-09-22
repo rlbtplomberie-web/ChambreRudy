@@ -1080,6 +1080,7 @@ function endRace(){
   $('resTable').innerHTML='<tr><th>Place</th><th>Coureur</th><th>Temps</th></tr>'+
     res.map((r,i)=>`<tr${r===P?' class="me"':''}><td>${i+1}e</td><td>${r.name}</td><td>${r.done?r.time.toFixed(2)+' s':'—'}</td></tr>`).join('');
   const mine=res.findIndex(r=>r===P)+1;
+  try{window.parent.postMessage({type:'foot:fin',gagne:mine===1},'*')}catch(e){}   // l'argent de la course
   $('resTitle').textContent=mine===1?'Victoire !':mine+'e place';
   const win=res[0],WINS=window.__WINS||(window.__WINS=JSON.parse(document.getElementById('wins').textContent));
   const wv=$('winView');

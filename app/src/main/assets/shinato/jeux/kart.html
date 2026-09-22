@@ -1563,6 +1563,7 @@ function finish(){
   state='done';
   if(engG) engG.gain.value=0;
   var o=ranking(), me=o.indexOf(karts[0])+1,i;
+  try{window.parent.postMessage({type:'kart:fin',gagne:me===1},'*')}catch(e){}   // l'argent de la course
   document.getElementById('rtitle').textContent=
     me===1?'GAGNÉ !':(me===2?'2e place':(me===3?'3e place':'ARRIVÉE'));
   var tb=document.getElementById('rtable'); tb.innerHTML='';
