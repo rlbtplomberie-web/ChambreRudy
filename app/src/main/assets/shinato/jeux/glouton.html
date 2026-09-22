@@ -118,7 +118,7 @@ addEventListener('keydown',e=>{if(e.code==='Space'||e.key==='Enter'){e.preventDe
 const $=id=>document.getElementById(id);
 function begin(){initAudio();reset();state='play';$('start').classList.add('hide');$('end').classList.add('hide');$('hud').classList.remove('hide');bb.classList.remove('hide')}
 $('go').onclick=begin;$('again').onclick=begin;
-function finish(win){endWin=win;state='end';$('hud').classList.add('hide');bb.classList.add('hide');$('combo').style.opacity=0;
+function finish(win){endWin=win;state='end';try{window.parent.postMessage({type:'glouton:fin',gagne:!!win},'*')}catch(e){}$('hud').classList.add('hide');bb.classList.add('hide');$('combo').style.opacity=0;
   $('endT').textContent=win?'Rassasié !':'Encore faim…';
   $('endP').textContent=win?`Ventre plein en ${t.toFixed(1)} secondes. Bravo !`:`Ventre rempli à ${Math.round(fill)} %. Il faut le remplir avant la fin du temps.`;
   $('end').classList.remove('hide');win?sfx.win():sfx.lose()}

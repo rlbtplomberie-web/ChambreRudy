@@ -126,6 +126,8 @@ class PartieActivity : ComponentActivity() {
     }
 
     private fun finDePartie(titre: String) {
+        // la balle au prisonnier : +100 € si on gagne, -70 € sinon
+        com.rudy.chambre.Argent.ajouter(this, if (titre.contains("VICTOIRE")) 100 else -70)
         runOnUiThread {
             AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
                 .setTitle(titre)

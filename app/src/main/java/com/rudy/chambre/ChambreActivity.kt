@@ -106,6 +106,7 @@ class ChambreActivity : ComponentActivity() {
 
         val racine = FrameLayout(this)
         racineChambre = racine
+        posePorteMonnaie(racine)
         racine.addView(vue, FrameLayout.LayoutParams(-1, -1))
         racine.addView(ecranTele, FrameLayout.LayoutParams(1, 1))
         racine.addView(etiquette, FrameLayout.LayoutParams(-2, -2))
@@ -316,6 +317,46 @@ class ChambreActivity : ComponentActivity() {
                 tw.visibility = android.view.View.VISIBLE
             } else tw.visibility = android.view.View.INVISIBLE
         }
+    }
+
+    // ==================== L'argent, en haut a droite ====================
+    private var montantArgent: TextView? = null
+
+    /** Le petit bandeau « billets + montant », tout en haut a droite de la chambre. */
+    private fun posePorteMonnaie(racine: FrameLayout) {
+        val dens = resources.displayMetrics.density
+        fun dp(v: Float) = (v * dens).toInt()
+        val bande = LinearLayout(this)
+        bande.orientation = LinearLayout.HORIZONTAL
+        bande.gravity = Gravity.CENTER_VERTICAL
+        bande.setPadding(dp(4f), dp(3f), dp(9f), dp(3f))
+        bande.background = GradientDrawable().apply {
+            cornerRadius = dp(20f).toFloat()
+            setColor(0x9E0A0A0E.toInt())
+            setStroke(dp(1f), 0x8CFFE27A.toInt())
+        }
+        val logo = android.widget.ImageView(this)
+        try {
+            assets.open("argent.webp").use { logo.setImageBitmap(android.graphics.BitmapFactory.decodeStream(it)) }
+        } catch (_: Throwable) { }
+        bande.addView(logo, LinearLayout.LayoutParams(dp(24f), dp(23f)))
+        val t = TextView(this)
+        t.setTextColor(0xFFFFE27A.toInt())
+        t.textSize = 13f
+        t.setTypeface(t.typeface, android.graphics.Typeface.BOLD)
+        t.setPadding(dp(5f), 0, 0, 0)
+        bande.addView(t, LinearLayout.LayoutParams(-2, -2))
+        montantArgent = t
+        val lp = FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.END)
+        lp.topMargin = dp(6f); lp.rightMargin = dp(8f)
+        racine.addView(bande, lp)
+        majArgent()
+    }
+
+    /** Remet le montant a jour (au retour d'un jeu, d'une console ou de Shinato). */
+    private fun majArgent() {
+        montantArgent?.text = String.format(java.util.Locale.FRANCE, "%,d €", Argent.lire(this))
+            .replace('\u00A0', ' ')
     }
 
     // ==================== YouTube sur la télé ====================
@@ -828,6 +869,7 @@ class ChambreActivity : ComponentActivity() {
     }
 
     override fun onResume() {
+        majArgent()                              // l'argent peut avoir change dans un jeu ou a Shinato
         try { teleWeb?.onResume(); webChoix?.onResume() } catch (_: Throwable) { }
         super.onResume()
         // si une console vient de partir, la chambre ne fait que passer :
@@ -925,6 +967,14 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
                 }
             }
 
+            /** L'argent de Rudy, affiche en haut a droite des rues. */
+            @android.webkit.JavascriptInterface
+            fun argent(): Int = Argent.lire(this@ShinatoActivity)
+
+            /** Gagner ou depenser (pour plus tard : gains des jeux, achats). */
+            @android.webkit.JavascriptInterface
+            fun ajouterArgent(n: Int) { Argent.ajouter(this@ShinatoActivity, n) }
+
             /** Tout à gauche de la rue : « Voulez-vous rentrer ? » -> OUI : retour au bureau. */
             @android.webkit.JavascriptInterface
             fun rentrer() {
@@ -979,4 +1029,20 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
         try { Ambiance.rendreLaMusique() } catch (_: Throwable) { }
         super.onDestroy()
     }
+}
+
+/**
+ * L'argent de Rudy. Une seule valeur, gardée dans le téléphone, partagée par la chambre
+ * et par les rues de Shinato (la page web le lit par le pont « Chambre »).
+ */
+object Argent {
+    private const val FICHIER = "rudy_argent"
+    private const val CLE = "argent"
+    fun lire(ctx: android.content.Context): Int =
+        ctx.getSharedPreferences(FICHIER, android.content.Context.MODE_PRIVATE).getInt(CLE, 1000)          // on commence le jeu avec 1000 €
+    fun ecrire(ctx: android.content.Context, n: Int) {
+        ctx.getSharedPreferences(FICHIER, android.content.Context.MODE_PRIVATE)
+            .edit().putInt(CLE, maxOf(0, n)).apply()
+    }
+    fun ajouter(ctx: android.content.Context, n: Int) = ecrire(ctx, lire(ctx) + n)
 }

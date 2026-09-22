@@ -203,6 +203,7 @@ class BasketActivity : ComponentActivity() {
     /** Sa fin de partie : gagne a sept paniers, avec son ecran et son bruit. */
     private fun finDePartie() {
         val gagne = regles.paniers >= 7
+        com.rudy.chambre.Argent.ajouter(this, if (gagne) 50 else -30)   // les paniers : +50 € si on gagne, -30 € sinon
         son?.jouer(if (gagne) "panier" else "rate")
         com.rudy.chambre.Ambiance.ecranDeFin(this, racine,
             if (gagne) "basket/gagne.webp" else "basket/perdu.webp",

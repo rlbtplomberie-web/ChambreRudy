@@ -178,6 +178,7 @@ class PenaltyActivity : ComponentActivity() {
      */
     private fun finDePartie(titre: String, texte: String) {
         val gagne = titre.contains("RUDY")
+        com.rudy.chambre.Argent.ajouter(this, if (gagne) 50 else -30)   // le tir au but : +50 € si on gagne, -30 € sinon
         son?.jouer(if (gagne) "applaudissements" else "hue")
         com.rudy.chambre.Ambiance.ecranDeFin(this, racine,
             if (gagne) "penalty/gagne.webp" else "penalty/perdu.webp",

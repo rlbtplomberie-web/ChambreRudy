@@ -631,8 +631,13 @@ class VuePariBoxe(ctx: Context, private val son: SonPariBoxe) : View(ctx) {
         if (affiche) return
         if (ready) combatCommence = true
         if (!combatCommence) return
-        if (cpuHP < 1) ecranFin(when (cpuJeu) { "V" -> "rudy_valor"; "MO" -> "rudy_mody"; else -> "rudy_theo" })
-        else if (rudyHP < 1) ecranFin(when (cpuJeu) { "V" -> "valor"; "MO" -> "mody"; else -> "theo" })
+        if (cpuHP < 1) {
+            com.rudy.chambre.Argent.ajouter(context, 100)        // PariBoxe : +100 € quand Rudy gagne
+            ecranFin(when (cpuJeu) { "V" -> "rudy_valor"; "MO" -> "rudy_mody"; else -> "rudy_theo" })
+        } else if (rudyHP < 1) {
+            com.rudy.chambre.Argent.ajouter(context, -70)        // PariBoxe : -70 € quand Rudy perd
+            ecranFin(when (cpuJeu) { "V" -> "valor"; "MO" -> "mody"; else -> "theo" })
+        }
     }
 
     private fun doAttack() {
