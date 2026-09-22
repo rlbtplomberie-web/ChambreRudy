@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr"><head><script>window.LIEU_OCTETS=function(n){var x=new XMLHttpRequest();x.open("GET",n,false);x.overrideMimeType("text/plain; charset=x-user-defined");x.send(null);var s=x.responseText,u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i)&255;return u;};</script><meta charset="utf-8"><style>*{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}html,body{touch-action:none;overscroll-behavior:none}</style><script>document.addEventListener("contextmenu",function(e){e.preventDefault()},{capture:true});</script><meta name="color-scheme" content="dark only"><style>:root{color-scheme:dark only}@media (prefers-color-scheme:dark){html,body{background:#120604}}@media (prefers-color-scheme:light){html,body{background:#120604}}</style>
+<html lang="fr"><head><script>window.vieLire=function(){try{var v=localStorage.getItem("rudy_vie");var n=v===null?100:parseInt(v,10);return Math.max(0,Math.min(100,isNaN(n)?100:n))}catch(e){return 100}};window.vieEcrire=function(n){try{localStorage.setItem("rudy_vie",String(Math.max(0,Math.min(100,Math.round(n)))))}catch(e){}};</script><script>window.LIEU_OCTETS=function(n){var x=new XMLHttpRequest();x.open("GET",n,false);x.overrideMimeType("text/plain; charset=x-user-defined");x.send(null);var s=x.responseText,u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i)&255;return u;};</script><meta charset="utf-8"><style>*{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}html,body{touch-action:none;overscroll-behavior:none}</style><script>document.addEventListener("contextmenu",function(e){e.preventDefault()},{capture:true});</script><meta name="color-scheme" content="dark only"><style>:root{color-scheme:dark only}@media (prefers-color-scheme:dark){html,body{background:#120604}}@media (prefers-color-scheme:light){html,body{background:#120604}}</style>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Dragon d'Or</title>
 <style>html,body{margin:0;height:100%;background:#120604;overflow:hidden}canvas{display:block;width:100vw;height:100vh}</style>
@@ -139,7 +139,7 @@ const bS=document.getElementById('btnSortir'),bJ=document.getElementById('btnJou
   setTimeout(()=>{try{f.focus()}catch(err){}},300)};
  bJ.addEventListener('pointerdown',go);bJ.addEventListener('touchstart',go,{passive:false});bJ.addEventListener('click',go)})();
 addEventListener('message',e=>{
- if(e.data&&e.data.type==='glouton:fin'&&e.data.gagne) window.argentGain(50);   // ventre plein : +50 €
+ if(e.data&&e.data.type==='glouton:fin'&&e.data.gagne){ window.argentGain(50); window.vieEcrire(window.vieLire()+50); }   // ventre plein : +50 € et +50 points de vie
  if(e.data&&e.data.type==='glouton:retour'){
  const f=document.getElementById('jeu');if(f){f.style.display='none';f.srcdoc=''}
  Object.assign(RUDY,{x:205,y:560,dir:'haut',bouge:false});joyX=joyY=0;

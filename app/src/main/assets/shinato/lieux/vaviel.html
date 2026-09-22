@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head><script>
+<head><script>window.vieLire=function(){try{var v=localStorage.getItem("rudy_vie");var n=v===null?100:parseInt(v,10);return Math.max(0,Math.min(100,isNaN(n)?100:n))}catch(e){return 100}};window.vieEcrire=function(n){try{localStorage.setItem("rudy_vie",String(Math.max(0,Math.min(100,Math.round(n)))))}catch(e){}};</script><script>
 /* ---- images : chaque image intégrée est convertie une seule fois en fichier en mémoire ----
    Avant, chaque changement de pose relisait une longue chaîne « data: » : au bout d'un moment
    le téléphone saturait (ralentissements, touches qui ne répondent plus). */

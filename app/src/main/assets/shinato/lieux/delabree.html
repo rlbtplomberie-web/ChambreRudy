@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="color-scheme" content="dark only"><style>:root{color-scheme:dark only}@media (prefers-color-scheme:dark){html,body{background:#05060d}}</style>
+<html lang="fr"><head><script>window.vieLire=function(){try{var v=localStorage.getItem("rudy_vie");var n=v===null?100:parseInt(v,10);return Math.max(0,Math.min(100,isNaN(n)?100:n))}catch(e){return 100}};window.vieEcrire=function(n){try{localStorage.setItem("rudy_vie",String(Math.max(0,Math.min(100,Math.round(n)))))}catch(e){}};</script><meta charset="utf-8"><meta name="color-scheme" content="dark only"><style>:root{color-scheme:dark only}@media (prefers-color-scheme:dark){html,body{background:#05060d}}</style>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>La ville de nuit</title>
 <style>
@@ -163,12 +163,16 @@ const SCENES={
       if(p.y<575&&Math.abs(p.x-662)<78)return{label:'JOUER',arrow:'up',play:'aura'};
       if(p.y<575&&Math.abs(p.x-836)<78)return{label:'JOUER',arrow:'up',play:'smash'};
       return null}},
+  /* la boîte : Carlos fume sur la banquette de gauche */
+  desir_carlos:true,
   desir:{fitH:true,w:1672,h:941,speed:4.4,vspeed:.6,rain:false,refl:.3,
     draw(camX,viewW,now){if(CLUB.complete)ctx.drawImage(CLUB,0,0);drawDancer(now);drawClients(now);drawFumeur(now)},
     // le sol libre : devant la scène, entre les banquettes (gauche) et le bar (droite), jusqu'au tapis
     clamp(p){p.y=Math.max(428,Math.min(905,p.y));const back=p.y<600;p.x=Math.max(back?478:505,Math.min(back?1225:1180,p.x))},
     size(y){return 230+(y-428)/(905-428)*290},
-    zone(p){return p.y>838&&p.x>545&&p.x<1130?{label:'Sortir',arrow:'down',go:'rue',door:3195}:null}},
+    zone(p){
+      if(p.x<620&&p.y<660)return{label:'Parler',arrow:'up',carlos:true};        // Carlos, sur la banquette de gauche
+      return p.y>838&&p.x>545&&p.x<1130?{label:'Sortir',arrow:'down',go:'rue',door:3195}:null}},
   prison:{w:1671,h:941,speed:3.2,vspeed:.6,rain:false,refl:.2,
     draw(){if(CELLULE.complete)ctx.drawImage(CELLULE,0,0)},
     // le sol de la cellule, entre le lit, la table et la grille
@@ -204,7 +208,7 @@ rb.addEventListener('pointerdown',e=>{e.preventDefault();runHeld=true;rb.classLi
 const act=document.getElementById('act'),fade=document.getElementById('fade');let zoneNow=null,busy=false;
 const GAMES={aura:'jeux/aura.html',smash:'jeux/smash.html'};
 GAMES.infiltration='jeux/infiltration.html';   // l'évasion de la prison
-GAMES.premier='jeux/premier.html';   // Premier verre (jeu de drague)
+GAMES.premier='jeux/premier.html';GAMES.brasdefer='jeux/brasdefer.html';   // le bras de fer, chez Carlos   // Premier verre (jeu de drague)
 const gameBox=document.getElementById('game');let gameFrame=null,gameUrl=null;
 function openGame(id){
   var prix=({aura:5,smash:5,premier:200})[id]||0;                       // bornes : 5 € ; jeu de drague : 200 €
@@ -225,25 +229,34 @@ const stB=document.createElement('style');stB.textContent=`
 #bulleAcc .ch{display:flex;gap:10px;justify-content:center;margin-top:10px}
 #bulleAcc .ch div{padding:8px 20px;border:3px solid #000;border-radius:12px;background:#ffd23f;color:#1b1400;box-shadow:0 4px 0 #000;touch-action:none;cursor:pointer}
 #bulleAcc .ch div:active{transform:translateY(3px);box-shadow:0 1px 0 #000}`;document.head.appendChild(stB);
-function placeBulle(){if(bulleAcc.style.display==='none')return;const bw=bulleAcc.offsetWidth/2+8;bulleAcc.style.left=Math.round(Math.max(bw,Math.min(innerWidth-bw,(ACC_X-camX)*S)))+'px';bulleAcc.style.top=Math.round(Math.max(bulleAcc.offsetHeight+30,(ACC_TOP-8-camY)*S))+'px'}
+let BULLE_X=ACC_X, BULLE_TOP=ACC_TOP;      // à qui appartient la bulle (le monsieur de l'accueil, ou Carlos)
+function placeBulle(){if(bulleAcc.style.display==='none')return;const bw=bulleAcc.offsetWidth/2+8;bulleAcc.style.left=Math.round(Math.max(bw,Math.min(innerWidth-bw,(BULLE_X-camX)*S)))+'px';bulleAcc.style.top=Math.round(Math.max(bulleAcc.offsetHeight+30,(BULLE_TOP-8-camY)*S))+'px'}
 function dit(txt,choix){bulleAcc.innerHTML='<div>'+txt+'</div>'+(choix?'<div class="ch">'+choix.map((c,i)=>'<div data-i="'+i+'">'+c.t+'</div>').join('')+'</div>':'');
   bulleAcc.style.display='block';placeBulle();
   if(choix)bulleAcc.querySelectorAll('.ch div').forEach(b=>{let t=0;const go=e=>{if(e.cancelable)e.preventDefault();const n=Date.now();if(n-t<400)return;t=n;choix[+b.dataset.i].f()};
     b.addEventListener('pointerdown',go);b.addEventListener('touchstart',go,{passive:false});b.addEventListener('click',go)})}
 function tais(){bulleAcc.style.display='none';bulleAcc.innerHTML='';window.FOCUS_X=null}
-function parler(){busy=true;P.speed=0;jx=jy=0;P.dir4='h';window.FOCUS_X=(ACC_X+P.x)/2;   // la caméra montre le monsieur et Rudy
+function parler(){busy=true;P.speed=0;jx=jy=0;P.dir4='h';BULLE_X=ACC_X;BULLE_TOP=ACC_TOP;window.FOCUS_X=(ACC_X+P.x)/2;   // la caméra montre le monsieur et Rudy
   dit('Bonsoir ! Voulez-vous rencontrer quelqu\'un ?',[
    {t:'Oui',f:()=>{dit('Choisissez l\'une de ces filles !');setTimeout(()=>{tais();quit.textContent='✕ Partir';musiqueVille(false);openGame('premier')},1700)}},
    {t:'Non',f:()=>{dit('Très bien, revenez quand vous voulez !');setTimeout(()=>{tais();busy=false},1500)}}])}
+function parlerCarlos(){busy=true;P.speed=0;jx=jy=0;P.dir4='g';
+  const f=FUMEUR.fr[FUMEUR.idx]||FUMEUR.fr[0];
+  BULLE_X=FUMEUR.x+40; BULLE_TOP=FUMEUR.y-(f&&f.ay?f.ay*FUMEUR.k:150)-6;      // la bulle au-dessus de sa tête
+  window.FOCUS_X=(FUMEUR.x+P.x)/2;
+  dit('Alors Rudy, tu viens pour participer<br>au bras de fer&nbsp;?',[
+   {t:'Oui',f:()=>{tais();quit.textContent='✕ Partir';musiqueVille(false);openGame('brasdefer')}},
+   {t:'Non',f:()=>{dit('Comme tu veux, assieds-toi alors.');setTimeout(()=>{tais();busy=false},1500)}}])}
 const quit=document.getElementById('quit');const QUIT_TXT=quit.textContent;
 // la musique de la ville se coupe pendant Premier verre (le jeu a la sienne) et revient quand on en sort
 let premierOuvert=false;
 function musiqueVille(on){premierOuvert=!on;try{window.parent.postMessage({type:on?'musique:reprise':'musique:pause'},'*')}catch(e){}}
 // « Partir » dans le jeu : retour devant le monsieur, au comptoir
-addEventListener('message',e=>{if(e.data&&e.data.type==='premierVerre:partir'){P.x=640;P.y=600;P.dir4='h';snap=true;closeGame();if(premierOuvert)musiqueVille(true);setTimeout(()=>{quit.textContent=QUIT_TXT},700)}});
+addEventListener('message',e=>{if(e.data&&e.data.type==='brasdefer:sortie'){closeGame();if(premierOuvert)musiqueVille(true);setTimeout(()=>{quit.textContent=QUIT_TXT;busy=false},600)}
+ if(e.data&&e.data.type==='premierVerre:partir'){P.x=640;P.y=600;P.dir4='h';snap=true;closeGame();if(premierOuvert)musiqueVille(true);setTimeout(()=>{quit.textContent=QUIT_TXT},700)}});
 quit.addEventListener('click',()=>{if(evasionEnCours)return;if(premierOuvert)musiqueVille(true);if(scene===SCENES.rencontre){P.x=640;P.y=600;P.dir4='h';snap=true}setTimeout(()=>{quit.textContent=QUIT_TXT},700)});
 
-function doAction(){if(busy||!zoneNow)return;if(zoneNow.evasion){evasion();return}if(zoneNow.talk){parler();return}if(zoneNow.play){openGame(zoneNow.play);return}busy=true;fade.style.opacity=1;
+function doAction(){if(busy||!zoneNow)return;if(zoneNow.carlos){parlerCarlos();return}if(zoneNow.evasion){evasion();return}if(zoneNow.talk){parler();return}if(zoneNow.play){openGame(zoneNow.play);return}busy=true;fade.style.opacity=1;
   const z=zoneNow;setTimeout(()=>{if(z.go!=='rue'){scene=SCENES[z.go];P.x=836;P.y=872;P.face=1;P.dir4='h'}else{scene=SCENES.rue;P.x=z.door;P.y=ROAD_TOP+3;P.face=1}
     P.speed=0;snap=true;fade.style.opacity=0;setTimeout(()=>busy=false,300)},320)}
 act.addEventListener('click',doAction);
