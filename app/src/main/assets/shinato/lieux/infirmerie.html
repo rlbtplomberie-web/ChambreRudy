@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr"><head><script>window.LIEU_OCTETS=window.LIEU_OCTETS||function(n){var x=new XMLHttpRequest();x.open("GET",n,false);x.overrideMimeType("text/plain; charset=x-user-defined");x.send(null);var s=x.responseText,u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i)&255;return u;};</script><meta charset="utf-8"><meta name="color-scheme" content="dark only">
+<html lang="fr"><head><script>window.vieLire=function(){try{var v=localStorage.getItem("rudy_vie");var n=v===null?100:parseInt(v,10);return Math.max(0,Math.min(100,isNaN(n)?100:n))}catch(e){return 100}};window.vieEcrire=function(n){try{localStorage.setItem("rudy_vie",String(Math.max(0,Math.min(100,Math.round(n)))))}catch(e){}};</script><script>window.LIEU_OCTETS=window.LIEU_OCTETS||function(n){var x=new XMLHttpRequest();x.open("GET",n,false);x.overrideMimeType("text/plain; charset=x-user-defined");x.send(null);var s=x.responseText,u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i)&255;return u;};</script><meta charset="utf-8"><meta name="color-scheme" content="dark only">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Accueil de l'infirmerie</title>
 <style>
@@ -107,10 +107,12 @@ body{background:var(--bg);overflow:hidden;touch-action:none;overscroll-behavior:
   var lignes=bulle.split("\n"), t=22;
   ctx.save(); ctx.font="800 "+t+"px system-ui,sans-serif";
   var w=0; lignes.forEach(function(l){ w=Math.max(w,ctx.measureText(l).width); });
-  w+=t*1.3; var h=lignes.length*t*1.3+t*.8, x=INF.x, y=INF.y-h-t;
+  w+=t*1.3; var h=lignes.length*t*1.3+t*.8;
+  // la bulle se met à droite de l'infirmière : elle ne cache ni son visage ni Rudy
+  var x=INF.x+120+w/2, y=INF.y-h-60;
   ctx.fillStyle="#fffdf7"; ctx.strokeStyle="#1c2622"; ctx.lineWidth=4;
   ctx.beginPath(); ctx.roundRect(x-w/2,y,w,h,14); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(x-9,y+h-1); ctx.lineTo(x+4,y+h+16); ctx.lineTo(x+11,y+h-1); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x-w/2+6,y+h-16); ctx.lineTo(x-w/2-22,y+h+14); ctx.lineTo(x-w/2+26,y+h-2); ctx.fill(); ctx.stroke();
   ctx.fillStyle="#1c2622"; ctx.textAlign="center"; ctx.textBaseline="top";
   lignes.forEach(function(l,i){ ctx.fillText(l,x,y+t*.4+i*t*1.3); });
   ctx.restore();
