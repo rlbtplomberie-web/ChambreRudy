@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="color-scheme" content="dark only">
+<html lang="fr"><head><script>window.LIEU_OCTETS=window.LIEU_OCTETS||function(n){var x=new XMLHttpRequest();x.open("GET",n,false);x.overrideMimeType("text/plain; charset=x-user-defined");x.send(null);var s=x.responseText,u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i)&255;return u;};</script><meta charset="utf-8"><meta name="color-scheme" content="dark only">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Accueil de l'infirmerie</title>
 <style>
@@ -57,7 +57,8 @@ body{background:var(--bg);overflow:hidden;touch-action:none;overscroll-behavior:
 </style>
 <div id="zoneJoy"></div>
 <div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="btnSortir">SORTIR</div></div>
+<div id="actions"><div class="btn" id="btnParler">PARLER</div><div class="btn" id="btnOui">OUI</div><div class="btn" id="btnNon">NON</div><div class="btn" id="btnSortir">SORTIR</div></div>
+<iframe id="jeuSoin" style="position:fixed;inset:0;width:100%;height:100%;border:0;z-index:70;background:#dff0ea;display:none"></iframe>
 <script>
 /* ================= Rudy dans l'accueil de l'infirmerie (même planche qu'au Pixel Bar et au Dragon d'Or) ================= */
 (function(){
@@ -94,7 +95,38 @@ body{background:var(--bg);overflow:hidden;touch-action:none;overscroll-behavior:
   ctx.save(); ctx.shadowColor="rgba(255,220,40,1)"; ctx.shadowBlur=28; ctx.fillStyle="#ffe400"; ctx.strokeStyle="#fff6a8"; ctx.lineWidth=4;
   ctx.beginPath(); ctx.moveTo(x-18,y-40); ctx.lineTo(x+18,y-40); ctx.lineTo(x+18,y); ctx.lineTo(x+42,y); ctx.lineTo(x,y+46); ctx.lineTo(x-42,y); ctx.lineTo(x-18,y); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
  }
- var bS=document.getElementById("btnSortir");
+ var bS=document.getElementById("btnSortir"), bP=document.getElementById("btnParler"),
+     bO=document.getElementById("btnOui"), bN=document.getElementById("btnNon");
+ var INF={x:300,y:470};                                  // l'infirmière, derrière son comptoir
+ var bulle=null, bulleFin=0, question=false, enSoin=false;
+ function pres(){ return R.x<680&&R.y<600; }             // devant le comptoir d'accueil
+ function dit(txt,duree){ bulle=txt; bulleFin=duree?performance.now()/1000+duree:0; }
+ function bulleDessin(){
+  if(!bulle) return;
+  if(bulleFin&&performance.now()/1000>bulleFin){ bulle=null; return; }
+  var lignes=bulle.split("\n"), t=22;
+  ctx.save(); ctx.font="800 "+t+"px system-ui,sans-serif";
+  var w=0; lignes.forEach(function(l){ w=Math.max(w,ctx.measureText(l).width); });
+  w+=t*1.3; var h=lignes.length*t*1.3+t*.8, x=INF.x, y=INF.y-h-t;
+  ctx.fillStyle="#fffdf7"; ctx.strokeStyle="#1c2622"; ctx.lineWidth=4;
+  ctx.beginPath(); ctx.roundRect(x-w/2,y,w,h,14); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x-9,y+h-1); ctx.lineTo(x+4,y+h+16); ctx.lineTo(x+11,y+h-1); ctx.fill(); ctx.stroke();
+  ctx.fillStyle="#1c2622"; ctx.textAlign="center"; ctx.textBaseline="top";
+  lignes.forEach(function(l,i){ ctx.fillText(l,x,y+t*.4+i*t*1.3); });
+  ctx.restore();
+ }
+ function soigner(note){
+  var v=window.vieLire();
+  if(note==="bisou"||note==="bien"){ window.vieEcrire(100); dit("Te voilà tout neuf ! 100 %",3.5); }
+  else if(note==="rale"){ window.vieEcrire(v+(100-v)/2); dit("À moitié remis…\n"+Math.round(window.vieLire())+" %",3.5); }
+  else dit("Tu as trop gigoté.\nJe n'ai rien pu faire.",3.5);
+ }
+ window.addEventListener("message",function(e){
+  if(!e.data) return;
+  if(e.data.type==="soin:fin"){ soigner(e.data.note); }
+  if(e.data.type==="soin:partir"||e.data.type==="soin:fin"&&false){}
+  if(e.data.type==="soin:partir"){ var f=document.getElementById("jeuSoin"); f.style.display="none"; f.srcdoc=""; enSoin=false; }
+ });
  function boucle(now){
   requestAnimationFrame(boucle);
   var t=now/1000, dt=prec?Math.min(.05,t-prec):0; prec=t;
@@ -108,14 +140,27 @@ body{background:var(--bg);overflow:hidden;touch-action:none;overscroll-behavior:
   var h=taille(R.y);
   dessine(R.dir,R.bouge?Math.floor(R.pas/(h*.13)):0,R.x,R.y,R.bouge?R.pas/(h*.34):null);
   var ici=sortieIci(); if(ici) fleche(t);
+  bulleDessin();
   bS.style.display=ici?"block":"none";
+  bP.style.display=(!question&&!enSoin&&pres())?"block":"none";
+  bO.style.display=bN.style.display=(question&&!enSoin)?"block":"none";
   camera();
  }
  requestAnimationFrame(boucle);
  // SORTIR : retour devant l'hôpital
- (function(){ var t0=0; function go(e){ if(e.cancelable)e.preventDefault(); var n=Date.now(); if(n-t0<400)return; t0=n; jx=jy=0;
-   try{ window.parent.postMessage({type:"infirmerie:sortie"},"*"); }catch(err){} }
-  bS.addEventListener("pointerdown",go); bS.addEventListener("touchstart",go,{passive:false}); bS.addEventListener("click",go); })();
+ function appui(el,f){ var t0=0; function go(e){ if(e.cancelable)e.preventDefault(); e.stopPropagation(); var n=Date.now(); if(n-t0<400)return; t0=n; f(); }
+  el.addEventListener("pointerdown",go); el.addEventListener("touchstart",go,{passive:false}); el.addEventListener("click",go); }
+ appui(bS,function(){ jx=jy=0; try{ window.parent.postMessage({type:"infirmerie:sortie"},"*"); }catch(err){} });
+ appui(bP,function(){ jx=jy=0; question=true; dit("Voulez-vous que je vous soigne ?\n(10 €)"); });
+ appui(bN,function(){ question=false; dit("Comme tu veux.",2); });
+ appui(bO,function(){
+  question=false;
+  if(!window.argentPayer(10,"les soins")) return;        // les soins coûtent 10 €
+  dit(null); enSoin=true;
+  var f=document.getElementById("jeuSoin");
+  f.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS("jeux/soin.html"));
+  f.style.display="block"; setTimeout(function(){ try{ f.focus(); }catch(e){} },300);
+ });
  addEventListener("message",function(e){ if(e.data&&e.data.type==="infirmerie:entree"){ R.x=DEPART.x; R.y=DEPART.y; R.dir="haut"; jx=jy=0; } });
  // le stick : le rond, ou n'importe où dans la partie gauche du bas (le centre se met sous le doigt)
  var joy=document.getElementById("joy"), st=document.getElementById("stick"), zone=document.getElementById("zoneJoy");
@@ -174,6 +219,10 @@ body{background:var(--bg);overflow:hidden;touch-action:none;overscroll-behavior:
    document.body.appendChild(t); }
   t.textContent=txt; t.style.opacity="1"; clearTimeout(t.__t); t.__t=setTimeout(function(){ t.style.opacity="0"; },1700);
  }
+
+ /** La vie de Rudy (0 à 100). Elle ne se remplit plus toute seule : il faut l'infirmerie. */
+ window.vieLire=function(){ try{ var v=localStorage.getItem("rudy_vie"); var n=v===null?100:parseInt(v,10); return Math.max(0,Math.min(100,isNaN(n)?100:n)); }catch(e){ return 100; } };
+ window.vieEcrire=function(n){ try{ localStorage.setItem("rudy_vie",String(Math.max(0,Math.min(100,Math.round(n))))); }catch(e){} };
  window.argentLire=lire;
  window.argentMessage=toast;
  /** Payer un jeu : renvoie false et prévient s'il n'y a pas assez d'argent. */
