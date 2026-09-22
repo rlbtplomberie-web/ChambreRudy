@@ -287,13 +287,13 @@ function attaque(){if(!CB.on||CB.ko||ARREST)return;if(!CB.atk){CB.atk='poing';CB
 atkBtn.addEventListener('pointerdown',e=>{e.preventDefault();atkBtn.classList.add('on');attaque()});
 ['pointerup','pointercancel'].forEach(ev=>atkBtn.addEventListener(ev,()=>atkBtn.classList.remove('on')));
 addEventListener('keydown',e=>{if((e.key==='a'||e.key===' ')&&CB.on){e.preventDefault();attaque()}});
-function startCombat(){const L=LOUBARD;L.cx=L.x;L.cy=L.y;L.ea=null;L.et=0;L.cd=.8;L.phase=0;L.stun=0;L.recul=0;CB.on=true;CB.hpR=100;CB.hpE=E_MAX;CB.atk=null;CB.queued=false;CB.ko=0;fightUI.classList.add('show');atkBtn.classList.add('show');rb.style.display='none';majBarres()}
+function startCombat(){const L=LOUBARD;L.cx=L.x;L.cy=L.y;L.ea=null;L.et=0;L.cd=.8;L.phase=0;L.stun=0;L.recul=0;CB.on=true;CB.hpR=window.vieLire();CB.hpE=E_MAX;   /* il repart avec la vie qui lui reste */ CB.atk=null;CB.queued=false;CB.ko=0;fightUI.classList.add('show');atkBtn.classList.add('show');rb.style.display='none';majBarres()}
 function stopCombat(){CB.on=false;CB.atk=null;fightUI.classList.remove('show');atkBtn.classList.remove('show');rb.style.display=''}
 function majBarres(){document.querySelector('#hpR i').style.width=Math.max(0,CB.hpR)+'%';document.querySelector('#hpE i').style.width=Math.max(0,CB.hpE/E_MAX*100)+'%'}
 function combatUpdate(dt){const L=LOUBARD;if(ARREST)return;
   if(!CB.on){const v=VOYOUS.find(v=>v.state==='regarde'&&!v.ko&&!v.arrete);if(scene===SCENES.rue&&v){LOUBARD=v;startCombat()}return}
   if(scene!==SCENES.rue||Math.abs(P.x-L.cx)>420){stopCombat();retourMur();return}   // Rudy s'est enfui
-  if(CB.rko){CB.rko-=dt;if(CB.rko<=0){CB.rko=0;koUI.style.opacity=0;koUI.textContent='K.O. !';stopCombat();retourMur();CB.hpR=100;busy=true;fade.style.opacity=1;   // combat perdu : direction l'hôpital
+  if(CB.rko){CB.rko-=dt;if(CB.rko<=0){CB.rko=0;koUI.style.opacity=0;koUI.textContent='K.O. !';stopCombat();retourMur();CB.hpR=10;window.vieEcrire(10);busy=true;fade.style.opacity=1;/* sonné : à soigner à l'infirmerie */   // combat perdu : direction l'hôpital
     setTimeout(()=>{try{window.parent.postMessage({type:'delabree:hopital'},'*')}catch(e){}},500)}return}
   iaVoyou(dt);
   if(CB.atk){const a=ATK[CB.atk];CB.t+=dt;const fi=Math.floor(CB.t*a.fps);
@@ -320,7 +320,7 @@ function iaVoyou(dt){const L=LOUBARD;if(L.ko)return;
   if(L.stun>0){L.stun-=dt;L.mv=0;return}
   if(L.ea){const a=E_ATK[L.ea];L.et+=dt;const fi=Math.floor(L.et*a.fps);
     if(!L.ehit&&fi>=a.hit[0]&&fi<=a.hit[1]){L.ehit=true;
-      if(dist<a.reach&&Math.abs(P.y-L.cy)<30){CB.hpR-=a.dmg;CB.rHit=.34;majBarres();SON.coup();vuParLeFlic('voyou');
+      if(dist<a.reach&&Math.abs(P.y-L.cy)<30){CB.hpR-=a.dmg;window.vieEcrire(CB.hpR);CB.rHit=.34;majBarres();SON.coup();vuParLeFlic('voyou');
         if(CB.hpR<=0){CB.rko=2.2;CB.atk=null;koUI.textContent='Rudy est K.O.';koUI.style.opacity=1;SON.ko();window.argentGain(-10)/* le voyou lui prend 10 € */}}}
     if(fi>=8){L.ea=null;L.cd=.8+Math.random()*.9;if(Math.random()<.35)L.recul=.45}L.mv=0;return}
   L.cd-=dt;
@@ -445,7 +445,7 @@ function finArrestation(){const A_=ARREST;
     setTimeout(()=>{L.arrete=false;L.ko=false;L.fadeOut=0;L.state='attente';L.near=0},60000);   // il revient à son mur une minute plus tard
     FLIC.etat='marche';nouvelleCibleFlic();return}
   // Rudy part en cellule
-  fade.style.opacity=1;setTimeout(()=>{stopCombat();retourMur();CB.hpR=100;ARREST=null;
+  fade.style.opacity=1;setTimeout(()=>{stopCombat();retourMur();CB.hpR=window.vieLire();ARREST=null;
     scene=SCENES.prison;P.x=820;P.y=800;P.dir4='b';P.face=1;P.speed=0;snap=true;PEINE=30;prisonUI.classList.add('show');
     FLIC.etat='marche';nouvelleCibleFlic();SON.porte();fade.style.opacity=0;setTimeout(()=>busy=false,300)},450)}
 let PEINE=0;

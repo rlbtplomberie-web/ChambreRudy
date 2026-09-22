@@ -765,6 +765,10 @@ else carte.addEventListener("load",demarre);
    document.body.appendChild(t); }
   t.textContent=txt; t.style.opacity="1"; clearTimeout(t.__t); t.__t=setTimeout(function(){ t.style.opacity="0"; },1700);
  }
+
+ /** La vie de Rudy (0 à 100). Elle ne se remplit plus toute seule : il faut l'infirmerie. */
+ window.vieLire=function(){ try{ var v=localStorage.getItem("rudy_vie"); var n=v===null?100:parseInt(v,10); return Math.max(0,Math.min(100,isNaN(n)?100:n)); }catch(e){ return 100; } };
+ window.vieEcrire=function(n){ try{ localStorage.setItem("rudy_vie",String(Math.max(0,Math.min(100,Math.round(n))))); }catch(e){} };
  window.argentLire=lire;
  window.argentMessage=toast;
  /** Payer un jeu : renvoie false et prévient s'il n'y a pas assez d'argent. */
