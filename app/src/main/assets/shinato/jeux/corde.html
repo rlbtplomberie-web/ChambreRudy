@@ -82,6 +82,7 @@ h1{font-family:Bungee,Impact,sans-serif;font-weight:400;margin:0;font-size:clamp
 #winBox,#wWinBox{position:relative;flex:none;width:min(100vw,calc(100vh*var(--ar,1.305)));aspect-ratio:var(--ar,1.305)}
 #winImg,#wWinImg{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transform:scale(1.05);transition:opacity .7s ease,transform 2.4s ease-out}
 #over.on #winImg,#wOver.on #wWinImg{opacity:1;transform:none}
+#winVid{position:absolute;inset:0;width:100%;height:100%;display:none;object-fit:cover;background:#000}
 #overBar,#wOverBar{position:absolute;left:0;right:0;bottom:calc(1.2% + env(safe-area-inset-bottom,0px));display:flex;justify-content:space-between;align-items:center;padding:0 1.5%;gap:6px;opacity:0;transition:opacity .5s ease 1.2s;pointer-events:none}
 #over.on #overBar,#wOver.on #wOverBar{opacity:1;pointer-events:auto}
 .wbtn{font:400 clamp(10px,1.7vw,16px) Bungee,Impact,sans-serif;border:0;border-radius:999px;padding:clamp(4px,.8vw,8px) clamp(10px,1.6vw,18px);cursor:pointer;white-space:nowrap;color:#fff;background:rgba(6,14,44,.55);box-shadow:0 0 0 1.5px rgba(255,255,255,.55);text-shadow:0 1px 3px rgba(0,0,0,.8);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
@@ -210,6 +211,7 @@ h1{font-family:Bungee,Impact,sans-serif;font-weight:400;margin:0;font-size:clamp
   <div id="over" class="ov full hide">
     <div id="winBox">
       <img id="winImg" alt="">
+      <video id="winVid" playsinline preload="auto"></video>
       <div id="overBar">
         <button class="wbtn" id="again">Revanche</button>
         <button class="wbtn" id="menu2">Changer d'adversaire</button>
@@ -503,13 +505,36 @@ function after(){
 function showOver(){
   st='over'; const win=wins[0]>wins[1];
   const im=$('winImg'), key='win_'+(win?'rudy':opp);
-  im.onload=()=>{ if(im.naturalWidth) $('winBox').style.setProperty('--ar',im.naturalWidth/im.naturalHeight); };
+  im.onload=()=>{ if(im.naturalWidth&&im.style.display!=='none') $('winBox').style.setProperty('--ar',im.naturalWidth/im.naturalHeight); };
   im.src=ASSETS[key];
   im.alt=win?`Rudy bat ${NAMES[opp]} ${wins[0]} – ${wins[1]}`:`${NAMES[opp]} bat Rudy ${wins[1]} – ${wins[0]}`;
+  const vsrc=!win&&WIN_VIDEOS[opp];                  // certaines victoires des filles sont une petite vidéo
   $('over').classList.remove('on'); show('over'); $('hud').classList.add('hide');
   requestAnimationFrame(()=>requestAnimationFrame(()=>$('over').classList.add('on')));
-  win?SFX.cheer():SFX.sad();
+  if(vsrc){ $('winBox').style.setProperty('--ar',vsrc[2]); joueVideo(choixVideo(vsrc),vsrc[3]!==false); } else { stopVideo(); win?SFX.cheer():SFX.sad(); }
 }
+// ---------- vidéos de victoire (Faty) ----------
+const WIN_VIDEOS={faty:['/assets/shinato/m/c051385d62899df7.mp4','/assets/shinato/m/1f5e61f216058cc9.webm',16/9],mifa:['/assets/shinato/m/ea00ee6e2147720a.mp4','/assets/shinato/m/6aa9506df86d3b85.webm',1104/848],karine:['/assets/shinato/m/32f182e8d7fb9e8b.mp4','/assets/shinato/m/be98e0b7d09c075b.webm',1104/848],ameline:['/assets/shinato/m/d1e34f1699ca7fc7.mp4','/assets/shinato/m/58168d986d9e9426.webm',960/720,false],gisele:['/assets/shinato/m/bd8b751ea2723ae5.mp4','/assets/shinato/m/f3a1b4bed585f6e8.webm',960/720,false],katila:['/assets/shinato/m/bfdbb35ebc75666e.mp4','/assets/shinato/m/9f187ddd13f8dcbc.webm',960/720,false],sophie:['/assets/shinato/m/adc66e02f095a00d.mp4','/assets/shinato/m/314c8b67459ca5f5.webm',960/720],rose:['/assets/shinato/m/a98bb30658433a0d.mp4','/assets/shinato/m/309aaa0da74282a2.webm',960/720,false]};
+function choixVideo(l){ const v=document.createElement('video');                // mp4 sur le téléphone, webm sinon
+  return v.canPlayType('video/mp4; codecs="avc1.4D401F, mp4a.40.2"')?l[0]:l[1]; }
+function joueVideo(src,sonore){
+  const v=$('winVid'), im=$('winImg');
+  im.style.display='none'; v.style.display='block';
+
+  if(v.getAttribute('src')!==src) v.src=src;
+  try{ v.currentTime=0; }catch(e){}
+  v.muted=false;
+  try{ MUSIC.volume=sonore?.07:.32; }catch(e){}                 // la musique du jeu se fait discrète pendant la vidéo
+  const p=v.play();
+  if(p&&p.catch) p.catch(()=>{ v.muted=true; v.play().catch(()=>{}); });   // sans le son si le navigateur refuse
+}
+function stopVideo(){
+  const v=$('winVid'); if(!v) return;
+  try{ v.pause(); }catch(e){}
+  v.style.display='none'; $('winImg').style.display='';
+  try{ MUSIC.volume=.32; }catch(e){}
+}
+document.getElementById('winVid').addEventListener('ended',()=>{ try{ MUSIC.volume=.32; }catch(e){} });  // elle reste sur la dernière image
 function setPads(on){ ['bPull','bHold','bSuper'].forEach(i=>$(i).style.visibility=on?'visible':'hidden'); }
 
 function say(t,c='#fff',d=1.3){msg=t;msgCol=c;msgT=d;}
@@ -856,7 +881,7 @@ function loop(now){
 requestAnimationFrame(loop);
 
 // ---------- menus ----------
-function show(id){ ['title','select','pause','over','wmenu','wsel'].forEach(k=>$(k).classList.toggle('hide',k!==id)); if(id!==null&&id!=='pause')$('hud').classList.add('hide'); }
+function show(id){ if(id!=='over'&&typeof stopVideo==='function')stopVideo(); ['title','select','pause','over','wmenu','wsel'].forEach(k=>$(k).classList.toggle('hide',k!==id)); if(id!==null&&id!=='pause')$('hud').classList.add('hide'); }
 function buildGrid(){
   const g=$('grid'); g.innerHTML='';
   ORDER.forEach(id=>{ const G=GLOW[id], im=document.createElement('img'); im.className='glow'; im.dataset.id=id; im.alt=''; im.src=ASSETS['glow_'+id];
