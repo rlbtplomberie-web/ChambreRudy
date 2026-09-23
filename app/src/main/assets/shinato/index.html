@@ -1212,6 +1212,24 @@ else carte.addEventListener("load",demarre);
 
  // arrivée de la moto : c'est ici qu'on enchaînera sur la plage (fichier à venir)
  window.addEventListener("message",function(e){
+  // plage -> la plage de Gisèle (même cadre que la plage : la plage est déchargée, la musique de la rue continue)
+  if(e.data && e.data.type==="plage:gisele"){
+   var cg=document.getElementById("moto"); if(!cg) return;
+   var og=LIEU_OCTETS("lieux/gisele.html");
+   cg.srcdoc=new TextDecoder("utf-8").decode(og);
+   window.minuterieLibre(function(){ try{ cg.focus(); }catch(err){} },300);
+   return;
+  }
+  // SORTIR sur la plage de Gisèle : retour à la plage, entre les deux petits garçons
+  if(e.data && e.data.type==="gisele:sortie"){
+   var cp=document.getElementById("moto"); if(!cp) return;
+   var op=LIEU_OCTETS("lieux/plage.html");
+   var hp=new TextDecoder("utf-8").decode(op);
+   hp=hp.replace("</body>","<script>addEventListener('load',function(){setTimeout(function(){x=largeurMonde*1852/2115;sens=-1;if(typeof cadre==='function')cadre(true)},60)});<\/script></body>");
+   cp.srcdoc=hp;
+   window.minuterieLibre(function(){ try{ cp.focus(); }catch(err){} },300);
+   return;
+  }
   // combat perdu dans la ville délabrée : la chambre d'hôpital, puis devant l'hôpital de Vaviel
   if(e.data && e.data.type==="delabree:hopital"){
    var ch=document.getElementById("moto"); if(!ch) return;
