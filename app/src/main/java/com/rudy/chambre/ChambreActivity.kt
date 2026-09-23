@@ -920,6 +920,7 @@ class ChambreActivity : ComponentActivity() {
  */
 class ShinatoActivity : androidx.activity.ComponentActivity() {
     private lateinit var web: android.webkit.WebView
+    private var vueDetruite = false          // l'affichage a été arrêté par Android (voir onRenderProcessGone)
 
     @android.annotation.SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
@@ -948,6 +949,19 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
                 v: android.webkit.WebView,
                 r: android.webkit.WebResourceRequest
             ): android.webkit.WebResourceResponse? = serveur.shouldInterceptRequest(r.url)
+
+            // Si l'affichage de Shinato manque de mémoire, Android l'arrête. Sans ceci, l'écran
+            // se fige ou l'appli se ferme : on relance Shinato proprement à la place.
+            override fun onRenderProcessGone(
+                v: android.webkit.WebView,
+                d: android.webkit.RenderProcessGoneDetail
+            ): Boolean {
+                try { (v.parent as? android.view.ViewGroup)?.removeView(v) } catch (_: Throwable) { }
+                try { v.destroy() } catch (_: Throwable) { }
+                vueDetruite = true
+                runOnUiThread { recreate() }
+                return true
+            }
         }
         web.webChromeClient = android.webkit.WebChromeClient()
         // Les terrains de la rue (flèche jaune + JOUER) lancent les jeux de l'appli.
@@ -1006,15 +1020,13 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        web.onResume()
-        web.resumeTimers()
+        if (!vueDetruite) { web.onResume(); web.resumeTimers() }
         // au retour d'un jeu, la musique de la chambre reste coupée : c'est celle de Shinato qui joue
         try { SonPartage.volume(0f) } catch (_: Throwable) { }
     }
 
     override fun onPause() {
-        web.onPause()                                               // plus de son quand l'appli passe derrière
-        web.pauseTimers()
+        if (!vueDetruite) { web.onPause(); web.pauseTimers() }   // plus de son quand l'appli passe derrière
         super.onPause()
     }
 
@@ -1024,7 +1036,7 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
     }
 
     override fun onDestroy() {
-        try { web.stopLoading(); web.loadUrl("about:blank"); web.destroy() } catch (_: Throwable) { }
+        if (!vueDetruite) try { web.stopLoading(); web.loadUrl("about:blank"); web.destroy() } catch (_: Throwable) { }
         SonPartage.dansShinato = false
         try { Ambiance.rendreLaMusique() } catch (_: Throwable) { }
         super.onDestroy()
