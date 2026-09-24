@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RUDY STYLE · BAR LE RELAIS</title>
+<style>
+:root{--fond:#0a0604;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--fond:#0a0604}}
+:root[data-theme="dark"]{--fond:#0a0604}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--fond)}
+canvas{position:fixed;inset:0;width:100vw;height:100vh;display:block}
+</style>
+</head>
+<body>
+<canvas id="c" aria-label="Quatre clients assis au comptoir du bar"></canvas>
+<script>
+const A={"bg": "/assets/shinato/m/d3ab97c0b082a7f0.webp", "p": {"0": [{"src": "/assets/shinato/m/073cf1f029e1c9ac.webp", "w": 149, "h": 225, "ax": 74.3, "ay": 166}, {"src": "/assets/shinato/m/041ce909dc90bbd6.webp", "w": 152, "h": 224, "ax": 75.9, "ay": 164}, {"src": "/assets/shinato/m/a7e114c944904f11.webp", "w": 156, "h": 224, "ax": 76.7, "ay": 166}, {"src": "/assets/shinato/m/e8846326689dcaa0.webp", "w": 159, "h": 224, "ax": 79.6, "ay": 164}, {"src": "/assets/shinato/m/5a864b61c95a8f67.webp", "w": 163, "h": 224, "ax": 81.2, "ay": 166}, {"src": "/assets/shinato/m/87afc90a6c8eea29.webp", "w": 159, "h": 224, "ax": 79.4, "ay": 162}], "1": [{"src": "/assets/shinato/m/fdd9bf1a624d6312.webp", "w": 138, "h": 243, "ax": 54.7, "ay": 169}, {"src": "/assets/shinato/m/8006c3c32553af59.webp", "w": 143, "h": 241, "ax": 56.7, "ay": 168}, {"src": "/assets/shinato/m/dfaf8ec6f6b7c480.webp", "w": 128, "h": 242, "ax": 50.2, "ay": 170}, {"src": "/assets/shinato/m/de1f0d20729be403.webp", "w": 144, "h": 241, "ax": 57.5, "ay": 170}, {"src": "/assets/shinato/m/49c775ebee36aa89.webp", "w": 158, "h": 241, "ax": 74.0, "ay": 169}, {"src": "/assets/shinato/m/a5641eedddfd3c5b.webp", "w": 130, "h": 241, "ax": 51.2, "ay": 167}], "2": [{"src": "/assets/shinato/m/ee85aeb2b29d3b6f.webp", "w": 187, "h": 231, "ax": 93.1, "ay": 172}, {"src": "/assets/shinato/m/03a857d582dac292.webp", "w": 187, "h": 231, "ax": 92.7, "ay": 174}, {"src": "/assets/shinato/m/7ebed7966264e187.webp", "w": 192, "h": 233, "ax": 94.8, "ay": 175}, {"src": "/assets/shinato/m/78b437872969e98d.webp", "w": 191, "h": 231, "ax": 95.0, "ay": 172}, {"src": "/assets/shinato/m/747e34e2c66b5643.webp", "w": 191, "h": 231, "ax": 95.1, "ay": 172}, {"src": "/assets/shinato/m/7f195fa9567f5b45.webp", "w": 187, "h": 231, "ax": 92.8, "ay": 173}], "3": [{"src": "/assets/shinato/m/5a8cf8e825e7bcb2.webp", "w": 152, "h": 251, "ax": 66.7, "ay": 189}, {"src": "/assets/shinato/m/9565f9de80e6f630.webp", "w": 155, "h": 251, "ax": 68.6, "ay": 189}, {"src": "/assets/shinato/m/54c2cd542ba1eb38.webp", "w": 142, "h": 253, "ax": 68.1, "ay": 191}, {"src": "/assets/shinato/m/f1a456fc98014e3a.webp", "w": 149, "h": 259, "ax": 70.8, "ay": 196}, {"src": "/assets/shinato/m/a6745fb198a58719.webp", "w": 162, "h": 253, "ax": 75.2, "ay": 191}, {"src": "/assets/shinato/m/aeaf1117eaf30f52.webp", "w": 144, "h": 256, "ax": 68.3, "ay": 194}]}, "bm": [{"src": "/assets/shinato/m/1579ed19f068966d.webp", "w": 125, "h": 308, "ax": 63.0, "ay": 0, "k": 1.0}, {"src": "/assets/shinato/m/097f6b764c65084a.webp", "w": 117, "h": 310, "ax": 53.0, "ay": 0, "k": 1.0}, {"src": "/assets/shinato/m/a5a39adc1d81894c.webp", "w": 110, "h": 307, "ax": 53.0, "ay": 0, "k": 1.0}, {"src": "/assets/shinato/m/a557497d91b7f915.webp", "w": 118, "h": 307, "ax": 58.0, "ay": 0, "k": 1.0}, {"src": "/assets/shinato/m/341423b4b670faaf.webp", "w": 132, "h": 311, "ax": 69.0, "ay": 0, "k": 1.0}, {"src": "/assets/shinato/m/e85710a363eaad2b.webp", "w": 130, "h": 315, "ax": 60.0, "ay": 0, "k": 1.0}, {"src": "/assets/shinato/m/a468e782c33e4668.webp", "w": 136, "h": 321, "ax": 76.0, "ay": 0, "k": 1.0}, {"src": "/assets/shinato/m/c18132a9dcb27e63.webp", "w": 135, "h": 321, "ax": 68.5, "ay": 0, "k": 1.0}, {"src": "/assets/shinato/m/bb8cfee8935023cd.webp", "w": 130, "h": 321, "ax": 59.5, "ay": 0, "k": 1.0}, {"src": "/assets/shinato/m/474e31c92bc90226.webp", "w": 149, "h": 271, "ax": 73.5, "ay": 0, "k": 0.87}, {"src": "/assets/shinato/m/78b52465e953d65c.webp", "w": 152, "h": 270, "ax": 74.5, "ay": 0, "k": 0.87}, {"src": "/assets/shinato/m/1fca14007f90dafa.webp", "w": 177, "h": 251, "ax": 77.5, "ay": 0, "k": 0.87}, {"src": "/assets/shinato/m/8670e98a74211a60.webp", "w": 196, "h": 284, "ax": 107.5, "ay": 59, "k": 0.87}, {"src": "/assets/shinato/m/c91e0dde2e393c62.webp", "w": 187, "h": 260, "ax": 121.5, "ay": 11, "k": 0.87}, {"src": "/assets/shinato/m/5dbe888d0b90ae3d.webp", "w": 149, "h": 258, "ax": 78.5, "ay": 0, "k": 0.87}, {"src": "/assets/shinato/m/d8619e08cfc81fdb.webp", "w": 149, "h": 205, "ax": 75.0, "ay": 0, "k": 0.87}, {"src": "/assets/shinato/m/da896df2036e3a71.webp", "w": 161, "h": 206, "ax": 86.0, "ay": 0, "k": 0.87}, {"src": "/assets/shinato/m/e0a1673cb451943b.webp", "w": 223, "h": 331, "ax": 79.5, "ay": 0, "k": 0.87}, {"src": "/assets/shinato/m/a10b058664c2fb73.webp", "w": 138, "h": 339, "ax": 73.0, "ay": 0, "k": 0.87}, {"src": "/assets/shinato/m/df72bb4183443531.webp", "w": 189, "h": 339, "ax": 80.0, "ay": 0, "k": 0.87}, {"src": "/assets/shinato/m/059b930cb2e09f2f.webp", "w": 136, "h": 334, "ax": 74.0, "ay": 0, "k": 0.87}, {"src": "/assets/shinato/m/c8c3f6ad751ef962.webp", "w": 163, "h": 323, "ax": 74.5, "ay": 0, "k": 0.87}, {"src": "/assets/shinato/m/d66fc3e9978dd372.webp", "w": 157, "h": 342, "ax": 75.5, "ay": 5, "k": 0.87}, {"src": "/assets/shinato/m/d873682d80cf3e3d.webp", "w": 198, "h": 352, "ax": 129.0, "ay": 0, "k": 0.87}]};
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+const load=s=>{const i=new Image();i.src=s;return i};
+const BG=load(A.bg), SW=1912, SH=823;
+// les quatre tabourets bien en face du bar (on laisse libre celui tout à gauche) : point d'assise
+const SIEGES=[{x:764,y:449,r:1},{x:938,y:454,r:0},{x:1116,y:459,r:3},{x:1295,y:464,r:2}];
+const CLIENTS=SIEGES.map((s,i)=>({...s,fr:A.p[s.r].map(f=>({...f,img:load(f.src)})),
+  k:0.93+(s.x-764)/531*0.05, idx:0, next:0, t0:performance.now()/1000-Math.random()*1.5, hold:1.4+Math.random()}));
+const FONDU=0.45;
+/* ---------- le barman : derrière le comptoir, en face des tabourets vides à droite ---------- */
+const BM=A.bm.map(f=>({...f,img:load(f.src)}));
+const COMPTOIR=379;                 // bord arrière du comptoir : tout ce qui est plus bas passe derrière
+const TETE=256, ECH=0.84;            // hauteur de sa tête, taille
+const ZONE_G=1465, ZONE_D=1570;     // il reste dans ce coin (avant la caisse)
+const GESTES={
+  repos:[[0,2.2]],
+  verre:[[5,1.2],[6,1.1],[7,1.2],[8,1.1],[6,1.1]],
+  torchon:[[9,1.6],[14,1.4]],
+  cocktail:[[10,0.9],[11,0.45],[10,0.45],[11,0.45],[13,1.3],[16,1.2],[15,1.2],[18,1.4]],
+  bouteille:[[12,1.5],[13,1.3],[20,1.4]],
+  servir:[[18,1.3],[17,1.6],[0,1]],
+  etagere:[[3,0.9],[4,1.6],[2,0.9]],
+  citron:[[14,1.3],[22,1.5],[18,1.2]]
+};
+const TIRAGE=['repos','verre','verre','torchon','cocktail','cocktail','bouteille','servir','etagere','citron'];
+const barman={x:1510,dx:0,seq:null,pas:0,t0:0,cur:0,prev:0,fondu:1,marche:null};
+function nouveauGeste(now){
+  if(Math.random()<0.28){                              // il se déplace un peu le long du comptoir
+    let cible=ZONE_G+Math.random()*(ZONE_D-ZONE_G); if(Math.abs(cible-barman.x)<40) cible=barman.x<(ZONE_G+ZONE_D)/2?ZONE_D:ZONE_G;
+    barman.marche={de:barman.x,a:cible,t0:now,d:Math.abs(cible-barman.x)/55};
+    barman.seq=[[1,barman.marche.d]]; barman.dx=cible>barman.x?1:-1;
+  }else{ barman.seq=GESTES[TIRAGE[Math.floor(Math.random()*TIRAGE.length)]]; barman.dx=0; }
+  barman.pas=0; barman.t0=now; change(barman.seq[0][0],now);
+}
+function change(i,now){ if(i===barman.cur) return; barman.prev=barman.cur; barman.cur=i; barman.tf=now; }
+function unBarman(f,al,miroir,bob){
+  if(!f||!f.img.complete||al<=0) return;
+  const k=ECH*f.k;
+  ctx.save();ctx.globalAlpha=al;ctx.translate(barman.x,TETE+bob);ctx.scale(miroir?-k:k,k);
+  ctx.filter='brightness(.8) saturate(.92) sepia(.14)';
+  ctx.drawImage(f.img,-f.ax,-f.ay,f.w,f.h);ctx.restore();
+}
+function dessineBarman(now){
+  if(!barman.seq) nouveauGeste(now);
+  const [idx,d]=barman.seq[barman.pas];
+  if(barman.marche){
+    const m=barman.marche,p=Math.min(1,(now-m.t0)/m.d),e=p*p*(3-2*p); barman.x=m.de+(m.a-m.de)*e;
+    if(p>=1){ barman.marche=null; barman.seq=null; change(0,now); }
+  }else if(now-barman.t0>d){
+    barman.pas++; barman.t0=now;
+    if(barman.pas>=barman.seq.length){ barman.seq=null; change(0,now); return dessineBarman(now); }
+    change(barman.seq[barman.pas][0],now);
+  }
+  const bob=barman.marche?-Math.abs(Math.sin((now-barman.marche.t0)*7))*3:0;
+  const mi=barman.dx<0;                                // de profil : il regarde là où il va
+  let t=Math.min(1,(now-(barman.tf||0))/0.3); t=t*t*(3-2*t);
+  unBarman(BM[barman.prev],1-t,false,0); unBarman(BM[barman.cur],t<1?Math.min(1,t*1.6):1,barman.cur===1&&mi,bob);
+  // le comptoir repasse devant lui
+  if(BG.complete) ctx.drawImage(BG,1360,COMPTOIR,420,SH-COMPTOIR,1360,COMPTOIR,420,SH-COMPTOIR);
+}
+// chacun choisit son geste suivant au hasard (le repos revient plus souvent)
+function suivant(c){let n;do{n=Math.random()<0.35?0:Math.floor(Math.random()*c.fr.length)}while(n===c.idx);return n}
+CLIENTS.forEach(c=>{c.idx=Math.floor(Math.random()*c.fr.length);c.next=suivant(c)});
+let W,H,S,OX,OY;
+let CAMX=null;
+function resize(){const d=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0);
+  S=Math.max(W/SW,H/SH);CAMX=null;
+  OX=Math.max(W-SW*S,Math.min(0,W/2-1150*S));       // les clients et le barman restent au centre de l'écran
+  OY=Math.max(H-SH*S,Math.min(0,H*0.55-430*S));}
+addEventListener('resize',resize);resize();
+function dessine(c,f,al,now){
+  if(!f.img.complete||al<=0)return;
+  const k=c.k, br=1+0.006*Math.sin(now*1.7+c.x);          // respiration
+  ctx.save();ctx.globalAlpha=al;ctx.translate(c.x,c.y);ctx.scale(k,k*br);
+  ctx.filter='brightness(.84) saturate(.95) sepia(.12)';     // dans la lumière chaude du bar
+  ctx.drawImage(f.img,-f.ax,-f.ay,f.w,f.h);ctx.restore();
+}
+// petites lumières qui vivent : bougies, lampes, néon
+const BOUGIES=[[238,698,60],[1498,752,70],[1682,752,70]];
+const LAMPES=[[860,145,120],[1121,145,120],[1386,145,120],[1658,145,120]];
+function frame(){
+  const now=performance.now()/1000;
+  ctx.fillStyle='#0a0604';ctx.fillRect(0,0,W,H);
+  if(typeof RUDY!=='undefined'){const rx=RUDY.chaise?RUDY.chaise.x:RUDY.x, cible=Math.max(W-SW*S,Math.min(0,W/2-rx*S));
+    CAMX=CAMX===null?cible:CAMX+(cible-CAMX)*0.12;OX=CAMX;OY=Math.max(H-SH*S,Math.min(0,H*0.6-(RUDY.chaise?RUDY.chaise.pied:RUDY.y)*S));}
+  ctx.save();ctx.translate(OX,OY);ctx.scale(S,S);
+  if(BG.complete)ctx.drawImage(BG,0,0);
+  dessineBarman(now);
+  for(const c of CLIENTS){
+    let el=now-c.t0;
+    if(el>c.hold+FONDU){c.idx=c.next;c.next=suivant(c);c.t0=now;c.hold=1.2+Math.random()*1.8;el=0}
+    let t=el>c.hold?(el-c.hold)/FONDU:0;t=t*t*(3-2*t);
+    // fondu sans creux : la pose suivante apparaît, puis l'ancienne s'efface
+    dessine(c,c.fr[c.idx],t<0.5?1:2-2*t,now);dessine(c,c.fr[c.next],t<0.5?2*t:1,now);
+  }
+  if(typeof dessineRudy==='function') dessineRudy(now);
+  ctx.globalCompositeOperation='lighter';
+  for(const [x,y,r] of BOUGIES){const fl=0.55+0.25*Math.sin(now*9+x)+0.15*Math.sin(now*23+y);
+    const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(255,170,70,${0.26*fl})`);g.addColorStop(1,'rgba(255,120,40,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill()}
+  for(const [x,y,r] of LAMPES){const fl=0.9+0.1*Math.sin(now*1.3+x);
+    const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(255,190,110,${0.16*fl})`);g.addColorStop(1,'rgba(255,150,60,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill()}
+  const ne=0.75+0.25*Math.sin(now*2.2)+(Math.random()<0.01?-0.4:0);
+  const g=ctx.createRadialGradient(757,170,0,757,170,150);g.addColorStop(0,`rgba(255,60,230,${0.15*ne})`);g.addColorStop(1,'rgba(255,60,230,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(757,170,150,0,7);ctx.fill();
+  ctx.globalCompositeOperation='source-over';ctx.restore();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+<style>
+#joy{position:fixed;left:4.5vmin;bottom:calc(5vmin + env(safe-area-inset-bottom,0px));width:30vmin;height:30vmin;border-radius:50%;z-index:20;touch-action:none;
+ background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.10),rgba(0,0,0,.34));border:2px solid rgba(255,226,122,.45);box-shadow:0 6px 18px rgba(0,0,0,.5)}
+#stick{position:absolute;left:50%;top:50%;width:13vmin;height:13vmin;margin:-6.5vmin 0 0 -6.5vmin;border-radius:50%;
+ background:radial-gradient(circle at 42% 36%,#fbf0c6,#c9a33c 60%,#7d6118);box-shadow:0 4px 12px rgba(0,0,0,.6)}
+#actions{position:fixed;right:4.5vmin;bottom:calc(6vmin + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:2.6vmin;z-index:20}
+.btn{min-width:28vmin;padding:3vmin 3.4vmin;border-radius:3vmin;text-align:center;display:none;touch-action:none;user-select:none;-webkit-user-select:none;
+ font:900 clamp(13px,3.1vmin,26px)/1 Arial,sans-serif;letter-spacing:2px;color:#ffe27a;
+ background:linear-gradient(rgba(12,12,14,.9),rgba(30,30,34,.9));border:2px solid rgba(255,226,122,.7);
+ box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 14px rgba(255,214,60,.35)}
+.btn:active{transform:scale(.94)}
+#titreBar{position:fixed;top:calc(2vmin + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:20;color:#fff;pointer-events:none;white-space:nowrap;
+ font:900 clamp(14px,3vmin,26px)/1.15 Arial,sans-serif;letter-spacing:3px;text-shadow:0 3px 0 #000,0 0 14px rgba(0,0,0,.9)}
+*{-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}html,body{touch-action:none;overscroll-behavior:none}
+</style>
+<div id="titreBar">BAR LE RELAIS</div>
+<div id="joy"><div id="stick"></div></div>
+<div id="actions">
+ <div class="btn" id="btnAssis">S'ASSEOIR</div>
+ <div class="btn" id="btnLever">SE LEVER</div>
+ <div class="btn" id="btnSortir">SORTIR</div>
+</div>
+<script>
+/* ================= Rudy au Relais (même planche que dans le Pixel Bar) ================= */
+const RB={"droite": {"img": ["/assets/shinato/m/ef1f0b8c2cc9473b.webp", "/assets/shinato/m/8f16b04582ccd18f.webp", "/assets/shinato/m/b76af52210dcf554.webp", "/assets/shinato/m/335b72042ef27bbc.webp", "/assets/shinato/m/50c8697489c2c907.webp", "/assets/shinato/m/cbd0a1ad22fab3ba.webp", "/assets/shinato/m/680d616f4c29d575.webp", "/assets/shinato/m/3316119779970e96.webp", "/assets/shinato/m/47efa18c2f9698a9.webp"], "w": 134, "h": 206, "ax": 63.612575574365174, "ay": 203.0}, "gauche": {"img": ["/assets/shinato/m/6f1bf8da705a8911.webp", "/assets/shinato/m/f02a3a5feed4f7c4.webp", "/assets/shinato/m/ede9f664436f25f2.webp", "/assets/shinato/m/51aa1ca8a5dd4922.webp", "/assets/shinato/m/9600fe3909581e0b.webp", "/assets/shinato/m/037ddbda857ff35b.webp", "/assets/shinato/m/946210da6e0395a1.webp", "/assets/shinato/m/ba4398dc080de701.webp", "/assets/shinato/m/70e4515f71136159.webp"], "w": 130, "h": 197, "ax": 63.97493036211699, "ay": 195.0}, "haut": {"img": ["/assets/shinato/m/8a8dcc61508e73cc.webp", "/assets/shinato/m/0625bc5499c17775.webp", "/assets/shinato/m/d130e78bd96cbf58.webp", "/assets/shinato/m/85e77196dae0a364.webp", "/assets/shinato/m/f112a083b3eac8ab.webp", "/assets/shinato/m/fe5eff60eeb2ac4d.webp", "/assets/shinato/m/6be13897791b903d.webp", "/assets/shinato/m/dd80719f53df96e6.webp", "/assets/shinato/m/38e6d2bce0ca6363.webp"], "w": 89, "h": 218, "ax": 44.04040242733951, "ay": 215.0}, "bas": {"img": ["/assets/shinato/m/d67456269af20e2b.webp", "/assets/shinato/m/d227cf6f358b0526.webp", "/assets/shinato/m/0f7f9a1e518986f4.webp", "/assets/shinato/m/0a266f69d86aa01d.webp", "/assets/shinato/m/d513893fbe84847c.webp", "/assets/shinato/m/6f705304ece6820d.webp", "/assets/shinato/m/ff9a36731da1dafd.webp", "/assets/shinato/m/4d7a4f90f39f828c.webp", "/assets/shinato/m/3e7f67122e98fbfb.webp"], "w": 100, "h": 241, "ax": 50.24630667345899, "ay": 238.0}, "assis": {"img": ["/assets/shinato/m/c2897267725b6fce.webp", "/assets/shinato/m/6c16b182b2297475.webp", "/assets/shinato/m/3806d22560147fe0.webp", "/assets/shinato/m/755e4485bb1d4aa7.webp", "/assets/shinato/m/03dd25cd32a0c056.webp", "/assets/shinato/m/21671642476137e5.webp", "/assets/shinato/m/b3ef0833a4cca78d.webp", "/assets/shinato/m/fcca5a1cab60305a.webp", "/assets/shinato/m/818ec2f65015b80f.webp", "/assets/shinato/m/b8e35166f15e965c.webp", "/assets/shinato/m/d16ab3e5c6706fcf.webp", "/assets/shinato/m/80e9b128b6dfee36.webp", "/assets/shinato/m/ec15122f13294a6c.webp", "/assets/shinato/m/80b6b61289cc8f29.webp", "/assets/shinato/m/e96ec3ea688d7a5f.webp", "/assets/shinato/m/b84c4bcfc3a3401c.webp", "/assets/shinato/m/b6df68a3bbd962e6.webp", "/assets/shinato/m/edfd0fdf96e499eb.webp"], "w": 185, "h": 337, "ax": 87.21307961733494, "ay": 334.0}};
+for(const k in RB) RB[k].fr=RB[k].img.map(load);
+// le sol où il peut marcher : le passage devant les tabourets, l'allée du milieu, le coin devant le rideau
+const ZONES=[{x0:70,x1:1885,y0:602,y1:642},{x0:655,x1:1150,y0:602,y1:812},{x0:175,x1:640,y0:545,y1:642}];
+function libre(x,y){return ZONES.some(z=>x>=z.x0&&x<=z.x1&&y>=z.y0&&y<=z.y1)}
+// les tabourets libres : les deux à droite, celui près du rideau, celui de la petite table
+const LIBRES=[{x:1480,haut:437,pied:600},{x:1660,haut:442,pied:605},{x:607,haut:401,pied:530},{x:120,haut:442,pied:565}];
+const SORTIE_X=1835;
+const RUDY={x:1770,y:622,dir:'gauche',pas:0,etat:'debout',chaise:null,t0:0,idx:0,bouge:false};
+let joyX=0,joyY=0;
+function taille(y){return 300+(y-600)*0.55}                 // plus grand quand il s'approche (en bas)
+function prof(y){return 1+(y-600)*0.002}                    // les tabourets du fond sont un peu plus petits
+function dessineDebout(set,i,x,y,al,phase){
+ const R=RB[set],im=R.fr[i%R.fr.length]; if(!im.complete||al<=0) return;
+ const h=taille(y),k=h/R.h;
+ ctx.save();ctx.globalAlpha=al;
+ ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(x,y,h*0.17,h*0.035,0,0,7);ctx.fill();
+ ctx.filter='brightness(.86) saturate(.95) sepia(.1)';
+ const X=x-R.ax*k,Y=y-R.ay*k;
+ if((set==='droite'||set==='gauche')&&phase!=null){
+  // comme au Pixel Bar : les jambes de profil se referment puis s'écartent à chaque enjambée
+  const ouv=0.30+0.70*Math.abs(Math.cos(phase*Math.PI)), bob=-Math.abs(Math.sin(phase*Math.PI))*h*0.018;
+  const hanche=Math.round(R.h*0.50),N=14,bas=R.h-hanche;
+  ctx.drawImage(im,0,0,R.w,hanche,X,Y+bob,R.w*k,hanche*k);
+  for(let n=0;n<N;n++){const s0=hanche+bas*n/N,s1=hanche+bas*(n+1)/N,f=(n+0.5)/N,sx=1-(1-ouv)*f;
+   ctx.drawImage(im,0,s0,R.w,s1-s0+0.6,X+R.ax*k-R.ax*k*sx,Y+s0*k+bob*(1-f),R.w*k*sx,(s1-s0)*k+0.6)}
+ }else ctx.drawImage(im,X,Y,R.w*k,R.h*k);
+ ctx.restore();
+}
+function dessineAssis(i,al,now){
+ const R=RB.assis,im=R.fr[i%R.fr.length],c=RUDY.chaise; if(!im.complete||al<=0||!c) return;
+ const h=255*prof(c.pied),k=h/R.h,br=1+0.005*Math.sin(now*1.6);
+ ctx.save();ctx.globalAlpha=al;ctx.translate(c.x,c.haut+14);ctx.scale(1,br);
+ ctx.filter='brightness(.86) saturate(.95) sepia(.1)';
+ ctx.drawImage(im,-R.ax*k,-(R.h*0.63)*k,R.w*k,R.h*k);ctx.restore();
+}
+let dernier=performance.now()/1000;
+function avance(now){
+ const dt=Math.min(0.05,now-dernier);dernier=now;
+ if(RUDY.etat!=='debout'){RUDY.bouge=false;return}
+ const m=Math.hypot(joyX,joyY);
+ if(m>0.18){
+  const v=280*Math.min(1,m);
+  let nx=RUDY.x+joyX/m*v*dt, ny=RUDY.y+joyY/m*v*dt*0.7;
+  if(!libre(nx,ny)){ if(libre(nx,RUDY.y)) ny=RUDY.y; else if(libre(RUDY.x,ny)) nx=RUDY.x; else {nx=RUDY.x;ny=RUDY.y} }
+  RUDY.pas+=Math.hypot(nx-RUDY.x,ny-RUDY.y);RUDY.x=nx;RUDY.y=ny;
+  RUDY.dir=Math.abs(joyX)>Math.abs(joyY)?(joyX>0?'droite':'gauche'):(joyY>0?'bas':'haut');RUDY.bouge=true;
+ }else RUDY.bouge=false;
+}
+function chaiseProche(){
+ if(RUDY.etat!=='debout') return null;
+ let best=null;
+ for(const c of LIBRES){const dx=Math.abs(c.x-RUDY.x),dy=RUDY.y-c.pied;
+  if(dx<80&&dy>-8&&dy<75&&(!best||dx<Math.abs(best.x-RUDY.x))) best=c;}
+ return best;
+}
+function procheSortie(){return RUDY.etat==='debout'&&RUDY.x>=SORTIE_X}
+function fleche(now){
+ if(!procheSortie()) return;
+ // flèche jaune brillante vers la droite, au-dessus de sa tête
+ const x=RUDY.x-10+Math.sin(now*6)*10, y=RUDY.y-taille(RUDY.y)-60;
+ ctx.save();ctx.shadowColor='rgba(255,220,40,1)';ctx.shadowBlur=28;ctx.fillStyle='#ffe400';ctx.strokeStyle='#fff6a8';ctx.lineWidth=4;
+ ctx.beginPath();ctx.moveTo(x-40,y-18);ctx.lineTo(x,y-18);ctx.lineTo(x,y-42);ctx.lineTo(x+48,y);ctx.lineTo(x,y+42);ctx.lineTo(x,y+18);ctx.lineTo(x-40,y+18);
+ ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+}
+// dessiné après le décor, les clients et le barman : Rudy est toujours devant eux
+function dessineRudy(now){
+ avance(now);
+ if(RUDY.etat==='debout'){
+  const h=taille(RUDY.y);
+  dessineDebout(RUDY.dir,RUDY.bouge?Math.floor(RUDY.pas/(h*0.13)):0,RUDY.x,RUDY.y,1,RUDY.bouge?RUDY.pas/(h*0.34):null);
+ }else if(RUDY.etat==='assis'){
+  const hold=1.25,F=0.4;let el=now-RUDY.t0;
+  if(el>hold+F){RUDY.idx=(RUDY.idx+1)%RB.assis.fr.length;RUDY.t0=now;el=0}
+  let t=el>hold?(el-hold)/F:0;t=t*t*(3-2*t);
+  dessineAssis(RUDY.idx,t<0.5?1:2-2*t,now);dessineAssis(RUDY.idx+1,t<0.5?2*t:1,now);
+ }else{
+  // il s'assoit / se lève : fondu entre Rudy debout (de dos) et Rudy assis
+  const t=Math.min(1,(now-RUDY.t0)/0.5),a=RUDY.etat==='sassoit'?1-t:t, c=RUDY.chaise, y=c.pied+22;
+  dessineDebout(RUDY.etat==='sassoit'?'haut':'bas',0,c.x,y,a);dessineAssis(0,1-a,now);
+  if(t>=1){ if(RUDY.etat==='sassoit'){RUDY.etat='assis';RUDY.t0=now;RUDY.idx=0}
+   else{RUDY.etat='debout';RUDY.x=c.x;RUDY.y=Math.max(y,605);RUDY.dir='bas';RUDY.chaise=null;
+    if(!libre(RUDY.x,RUDY.y)){RUDY.y=622}} }
+ }
+ fleche(now);
+ majBoutons();
+}
+const bA=document.getElementById('btnAssis'),bL=document.getElementById('btnLever'),bS=document.getElementById('btnSortir');
+function majBoutons(){
+ bA.style.display=chaiseProche()?'block':'none';
+ bL.style.display=RUDY.etat==='assis'?'block':'none';
+ bS.style.display=procheSortie()?'block':'none';
+}
+function appuie(el,f){let t=0;const go=e=>{if(e.cancelable)e.preventDefault();e.stopPropagation();const n=performance.now();if(n-t<400)return;t=n;f()};
+ el.addEventListener('pointerdown',go);el.addEventListener('touchstart',go,{passive:false});el.addEventListener('click',go)}
+appuie(bA,()=>{const c=chaiseProche();if(!c)return;joyX=joyY=0;RUDY.chaise=c;RUDY.etat='sassoit';RUDY.t0=performance.now()/1000});
+appuie(bL,()=>{if(RUDY.etat!=='assis')return;RUDY.etat='seleve';RUDY.t0=performance.now()/1000});
+// SORTIR : retour dans la ville délabrée, devant le Relais
+appuie(bS,()=>{joyX=joyY=0;try{window.parent.postMessage({type:'relais:sortie'},'*')}catch(e){}});
+addEventListener('message',e=>{if(e.data&&e.data.type==='relais:entree'){
+ Object.assign(RUDY,{x:1770,y:622,dir:'gauche',pas:0,etat:'debout',chaise:null,bouge:false});joyX=joyY=0}});
+// joystick (dans tous les sens) + zone élargie à gauche de l'écran
+(function(){const joy=document.getElementById('joy'),st=document.getElementById('stick');let id=null,cx=0,cy=0,R=0;
+ function prend(e){const t=e.changedTouches?e.changedTouches[0]:e;const r=joy.getBoundingClientRect();cx=r.left+r.width/2;cy=r.top+r.height/2;R=r.width/2;id=e.changedTouches?t.identifier:'s';bouge(e)}
+ function bouge(e){if(id===null)return;const t=e.changedTouches?[...e.changedTouches].find(u=>u.identifier===id):e;if(!t)return;
+  const dx=t.clientX-cx,dy=t.clientY-cy,d=Math.min(Math.hypot(dx,dy),R*0.62),a=Math.atan2(dy,dx);
+  st.style.transform=`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`;joyX=Math.cos(a)*d/(R*0.62);joyY=Math.sin(a)*d/(R*0.62);if(e.cancelable)e.preventDefault()}
+ function lache(){id=null;joyX=joyY=0;st.style.transform='translate(0,0)'}
+ joy.addEventListener('touchstart',prend,{passive:false});joy.addEventListener('touchmove',bouge,{passive:false});
+ joy.addEventListener('touchend',lache);joy.addEventListener('touchcancel',lache);
+ joy.addEventListener('mousedown',e=>{prend(e);const mv=ev=>bouge(ev),up=()=>{lache();removeEventListener('mousemove',mv);removeEventListener('mouseup',up)};addEventListener('mousemove',mv);addEventListener('mouseup',up)});
+ const K={};addEventListener('keydown',e=>{K[e.key]=1;maj()});addEventListener('keyup',e=>{K[e.key]=0;maj()});
+ function maj(){joyX=(K.ArrowRight?1:0)-(K.ArrowLeft?1:0);joyY=(K.ArrowDown?1:0)-(K.ArrowUp?1:0)}
+ const z=document.createElement('div');z.style.cssText='position:fixed;left:0;bottom:0;width:44vw;height:62vh;z-index:19;touch-action:none';document.body.appendChild(z);
+ let act=null,ox=0,oy=0;const pos=e=>[...e.changedTouches].find(t=>t.identifier===act);
+ z.addEventListener('touchstart',e=>{const t=e.changedTouches[0];act=t.identifier;R=joy.getBoundingClientRect().width/2;ox=t.clientX;oy=t.clientY;if(e.cancelable)e.preventDefault()},{passive:false});
+ z.addEventListener('touchmove',e=>{const t=pos(e);if(!t)return;const dx=t.clientX-ox,dy=t.clientY-oy,d=Math.min(Math.hypot(dx,dy),R*0.62),a=Math.atan2(dy,dx);
+  st.style.transform=`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`;joyX=Math.cos(a)*d/(R*0.62);joyY=Math.sin(a)*d/(R*0.62);if(e.cancelable)e.preventDefault()},{passive:false});
+ const fin=e=>{if(pos(e)){act=null;joyX=joyY=0;st.style.transform='translate(0,0)'}};z.addEventListener('touchend',fin);z.addEventListener('touchcancel',fin);
+ const r0=()=>{joyX=joyY=0;st.style.transform='translate(0,0)'};
+ document.addEventListener('touchend',e=>{if(!e.touches.length)r0()},{capture:true});addEventListener('blur',r0);document.addEventListener('visibilitychange',r0);
+ document.addEventListener('contextmenu',e=>e.preventDefault(),{capture:true});
+})();
+</script>
+<script>
+/* ---------- l'argent : en haut à droite, dans la chambre et dans toutes les rues ----------
+   (il ne s'affiche pas dans les mini-jeux ni dans les émulateurs) */
+(function(){
+ if(window.__argentPose) return; window.__argentPose=true;
+ var css=document.createElement("style");
+ css.textContent="#argentHUD{position:fixed;top:max(6px,env(safe-area-inset-top,0px));right:8px;z-index:25;display:flex;align-items:center;gap:5px;"+
+  "padding:3px 8px 3px 4px;border-radius:999px;background:rgba(10,10,14,.62);border:1px solid rgba(255,226,122,.55);"+
+  "pointer-events:none;font:800 13px/1 Arial,Helvetica,sans-serif;color:#ffe27a;text-shadow:0 1px 2px #000}"+
+  "#argentHUD img{width:22px;height:21px;display:block}";
+ document.head.appendChild(css);
+ var d=document.createElement("div"); d.id="argentHUD";
+ d.innerHTML='<img alt="" src="/assets/shinato/m/f4b8c806f85db77a.webp"><span>0 €</span>';
+ var txt=d.querySelector("span");
+ function pose(){ if(document.body){ document.body.appendChild(d); } else setTimeout(pose,50); }
+ pose();
+ function lire(){
+  try{ if(window.Chambre&&window.Chambre.argent) return parseInt(window.Chambre.argent(),10)||0; }catch(e){}
+  try{ var v=localStorage.getItem("rudy_argent"); return v===null?1000:(parseInt(v,10)||0); }catch(e){}
+  return 1000;
+ }
+ function maj(){ var n=lire(); txt.textContent=n.toLocaleString("fr-FR")+" €"; }
+ maj(); setInterval(maj,1000);
+ window.addEventListener("pageshow",maj);
+ document.addEventListener("visibilitychange",function(){ if(!document.hidden) maj(); });
+
+ function toast(txt){
+  var t=document.getElementById("argentMsg");
+  if(!t){ t=document.createElement("div"); t.id="argentMsg";
+   t.style.cssText="position:fixed;top:44px;right:8px;z-index:26;padding:7px 12px;border-radius:12px;background:rgba(10,10,14,.9);"+
+    "border:2px solid rgba(255,226,122,.8);color:#ffe27a;font:800 13px Arial,sans-serif;pointer-events:none;opacity:0;transition:opacity .25s";
+   document.body.appendChild(t); }
+  t.textContent=txt; t.style.opacity="1"; clearTimeout(t.__t); t.__t=setTimeout(function(){ t.style.opacity="0"; },1700);
+ }
+
+ /** La vie de Rudy (0 à 100). Elle ne se remplit plus toute seule : il faut l'infirmerie. */
+ window.vieLire=function(){ try{ var v=localStorage.getItem("rudy_vie"); var n=v===null?100:parseInt(v,10); return Math.max(0,Math.min(100,isNaN(n)?100:n)); }catch(e){ return 100; } };
+ window.vieEcrire=function(n){ try{ localStorage.setItem("rudy_vie",String(Math.max(0,Math.min(100,Math.round(n))))); }catch(e){} };
+ window.argentLire=lire;
+ window.argentMessage=toast;
+ /** Payer un jeu : renvoie false et prévient s'il n'y a pas assez d'argent. */
+ window.argentPayer=function(n,quoi){
+  if(lire()<n){ toast("Pas assez d'argent ("+n+" €)"); return false; }
+  window.argentAjouter(-n); toast("-"+n+" €"+(quoi?" · "+quoi:"")); return true;
+ };
+ /** Gagner ou perdre à la fin d'un jeu. */
+ window.argentGain=function(n){ if(!n) return; window.argentAjouter(n); toast((n>0?"+":"")+n+" €"); };
+ // pour plus tard : gagner ou dépenser depuis le jeu
+ window.argentAjouter=function(n){
+  try{ if(window.Chambre&&window.Chambre.ajouterArgent){ window.Chambre.ajouterArgent(n); maj(); return; } }catch(e){}
+  try{ localStorage.setItem("rudy_argent",String(Math.max(0,lire()+n))); }catch(e){}
+  maj();
+ };
+})();
+</script>
+</body>
+</html>
