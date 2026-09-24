@@ -318,9 +318,10 @@ addEventListener('message',e=>{if(e.data&&e.data.type==='relais:entree'){
        txt=document.getElementById('bulleTxt'), rep=document.getElementById('bulleRep');
  window.bP=document.getElementById('btnParler');
  let vu=false;
- // devant le comptoir, près du barman (il reste dans son coin, entre 1465 et 1570)
+ // près du barman : debout devant le comptoir, ou assis sur un des deux tabourets en face de lui
  window.barmanProche=function(){
-  const ok=RUDY.etat==='debout'&&RUDY.y<660&&Math.abs(RUDY.x-barman.x)<(vu?210:170);
+  const assis=RUDY.etat==='assis'&&RUDY.chaise, x=assis?RUDY.chaise.x:RUDY.x;
+  const ok=(assis||(RUDY.etat==='debout'&&RUDY.y<665))&&Math.abs(x-barman.x)<(vu?300:260);
   vu=ok; return ok;
  };
  // la bulle au-dessus de sa tête ; s'il n'y a pas la place (petit écran), à côté de sa tête
@@ -353,7 +354,7 @@ addEventListener('message',e=>{if(e.data&&e.data.type==='relais:entree'){
  corps.addEventListener('pointerdown',e=>{ if(finTape&&e.target===txt) finTape(); });   // un appui sur le texte l'affiche en entier
  function ouvre(){
   if(window.DIALOGUE||!window.barmanProche()) return;
-  window.DIALOGUE=true; window.CAM_DOUX=40; joyX=joyY=0; RUDY.bouge=false; RUDY.dir='haut'; majBoutons();
+  window.DIALOGUE=true; window.CAM_DOUX=40; joyX=joyY=0; RUDY.bouge=false; if(RUDY.etat==='debout') RUDY.dir='haut'; majBoutons();
   rep.hidden=true; bulle.classList.remove('pop'); void bulle.offsetWidth; bulle.classList.add('on','pop'); pop();
   ecrit("Tu veux participer au concours d'ivresse ?",()=>{ rep.hidden=false; });
  }
@@ -366,8 +367,9 @@ addEventListener('message',e=>{if(e.data&&e.data.type==='relais:entree'){
 
  // la musique de la ville est dans la page principale (deux cadres au-dessus)
  function musique(on){ try{ window.top.postMessage({type:on?'musique:reprise':'musique:pause'},'*'); }catch(e){} }
+ let siege=null;
  function lance(){
-  joyX=joyY=0;
+  joyX=joyY=0; siege=RUDY.etat==='assis'?RUDY.chaise:null;   // s'il était assis, il retrouve son tabouret après
   let f=document.getElementById('jeuDD');
   if(!f){ f=document.createElement('iframe'); f.id='jeuDD'; f.setAttribute('allow','autoplay; fullscreen'); document.body.appendChild(f); }
   f.src='/assets/shinato/jeux/dernierdebout.html'; f.style.display='block';
@@ -379,7 +381,9 @@ addEventListener('message',e=>{if(e.data&&e.data.type==='relais:entree'){
   const f=document.getElementById('jeuDD'); if(f){ f.style.display='none'; f.src='about:blank'; }
   window.PAUSE_BAR=false; if(barEnAttente){ barEnAttente=false; dernier=performance.now()/1000; requestAnimationFrame(frame); }
   musique(true);
-  Object.assign(RUDY,{x:barman.x,y:622,dir:'haut',etat:'debout',chaise:null,bouge:false}); CAMX=null;
+  if(siege) Object.assign(RUDY,{etat:'assis',chaise:siege,t0:performance.now()/1000,idx:0,bouge:false});
+  else Object.assign(RUDY,{x:barman.x,y:622,dir:'haut',etat:'debout',chaise:null,bouge:false});
+  CAMX=null;
   joyX=joyY=0; majBoutons();
  });
 })();
