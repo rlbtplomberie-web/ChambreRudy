@@ -1303,10 +1303,10 @@ function readMove(){
 function bindInputs(){
   addEventListener('keydown',keyDown); addEventListener('keyup',keyUp);
   const jz=$('wJoy'), base=$('wBase'), knob=$('wKnob');
-  jz.addEventListener('pointerdown',e=>{ if(typeof audio==='function')audio(); joy.id=e.pointerId; jz.setPointerCapture(e.pointerId); const r=jz.getBoundingClientRect(); joy.bx=e.clientX-r.left; joy.by=e.clientY-r.top; base.style.left=joy.bx+'px'; base.style.top=joy.by+'px'; base.style.display='block'; joy.x=joy.y=0; knob.style.transform='translate(-50%,-50%)'; });
+  jz.addEventListener('pointerdown',e=>{ if(typeof audio==='function')audio(); joy.id=e.pointerId; try{jz.setPointerCapture(e.pointerId);}catch(_){} const r=jz.getBoundingClientRect(); joy.bx=e.clientX-r.left; joy.by=e.clientY-r.top; base.style.left=joy.bx+'px'; base.style.top=joy.by+'px'; base.style.display='block'; joy.x=joy.y=0; knob.style.transform='translate(-50%,-50%)'; });
   jz.addEventListener('pointermove',e=>{ if(e.pointerId!==joy.id)return; const r=jz.getBoundingClientRect(); let dx=e.clientX-r.left-joy.bx, dy=e.clientY-r.top-joy.by; const L=Math.hypot(dx,dy),M=55; if(L>M){dx*=M/L;dy*=M/L;} joy.x=dx/M; joy.y=dy/M; knob.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`; });
   const end=e=>{ if(e.pointerId!==joy.id)return; joy.id=null; joy.x=joy.y=0; base.style.display='none'; };
-  jz.addEventListener('pointerup',end); jz.addEventListener('pointercancel',end);
+  jz.addEventListener('pointerup',end); jz.addEventListener('pointercancel',end); jz.addEventListener('lostpointercapture',end);
   const fb=$('wFire'); fb.addEventListener('pointerdown',e=>{ if(typeof audio==='function')audio(); e.preventDefault(); fireHeld=true; fb.classList.add('dn'); try{fb.setPointerCapture(e.pointerId);}catch(_){} });
   const fu=()=>{fireHeld=false; fb.classList.remove('dn');}; fb.addEventListener('pointerup',fu); fb.addEventListener('pointercancel',fu); fb.addEventListener('lostpointercapture',fu);
   $('wDash').addEventListener('pointerdown',e=>{ e.preventDefault(); dash(); });
@@ -1653,6 +1653,56 @@ function frame(now){
   var r=document.createElement('button'); r.id='quitterRot'; r.textContent='Retour à la plage';
   r.style.cssText="padding:14px 22px;border-radius:14px;cursor:pointer;border:2px solid rgba(255,226,122,.8);background:rgba(10,8,24,.72);color:#ffe27a;font:900 16px/1 Arial,sans-serif;letter-spacing:1px";
   r.addEventListener('click',quitter); r.addEventListener('touchstart',quitter,{passive:false}); rot.appendChild(r); }
+})();
+</script>
+<script>
+/* ---------- toucher fiable (WebView Android) ----------
+   1) Boutons d'action : si l'appui « pointer » n'arrive pas, on le rattrape avec l'appui « touch »
+      (avant, il fallait parfois appuyer avec deux doigts).
+   2) Boutons des menus : si un petit appui ne donne pas de « click », on le déclenche nous-mêmes.
+   3) Rien ne reste bloqué quand l'appli passe derrière ou qu'un doigt « se perd ». */
+(function(){
+ const PADS=['bPull','bHold','bSuper','wFire','wDash','wWall'];
+ function evt(type,t,id){ try{ return new PointerEvent(type,{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',isPrimary:true,clientX:t.clientX,clientY:t.clientY}); }catch(e){ return null; } }
+ function secours(el){
+  if(!el||el.__secours) return; el.__secours=true;
+  let pd=-1e9, synth=null;
+  el.addEventListener('pointerdown',e=>{ if(e.isTrusted) pd=performance.now(); },true);
+  el.addEventListener('touchstart',e=>{
+   if(e.cancelable) e.preventDefault();
+   if(performance.now()-pd>150){                         // le pointerdown ne s'est pas produit : on le fait
+    const t=e.changedTouches[0], id=90000+t.identifier, ev=evt('pointerdown',t,id);
+    if(ev){ synth={id,t}; el.dispatchEvent(ev); }
+   }
+  },{passive:false});
+  const fin=e=>{ if(!synth) return; const ev=evt('pointerup',(e.changedTouches&&e.changedTouches[0])||synth.t,synth.id); synth=null; if(ev) el.dispatchEvent(ev); };
+  el.addEventListener('touchend',fin); el.addEventListener('touchcancel',fin);
+ }
+ function arme(){ PADS.forEach(id=>secours(document.getElementById(id))); }
+ arme(); setInterval(arme,1500);                          // les boutons du pistolet à eau arrivent plus tard
+
+ // 2) les menus
+ const SEL='button,.hot,.girl,.wbtn,.btn,[data-vs],[role="button"]';
+ let tap=null;
+ document.addEventListener('touchstart',e=>{
+  const t=e.changedTouches[0], el=e.target&&e.target.closest?e.target.closest(SEL):null;
+  tap=(el&&!PADS.includes(el.id)&&!el.closest('#wJoy')&&e.touches.length===1)?{el,x:t.clientX,y:t.clientY,t:performance.now(),ok:false}:null;
+ },{capture:true,passive:true});
+ document.addEventListener('click',e=>{ if(tap&&(e.target===tap.el||tap.el.contains(e.target))) tap.ok=true; },true);
+ document.addEventListener('touchend',e=>{
+  const c=tap; if(!c) return; const t=e.changedTouches[0];
+  if(Math.hypot(t.clientX-c.x,t.clientY-c.y)>18||performance.now()-c.t>800){ tap=null; return; }
+  setTimeout(()=>{ if(!c.ok&&c.el.isConnected&&c.el.offsetParent!==null&&!c.el.disabled){ c.ok=true; c.el.click(); } },420);
+ },{capture:true,passive:true});
+
+ // 3) plus rien de bloqué
+ function lache(){
+  try{ holdTouch=false; }catch(e){}
+  PADS.forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.remove('dn'); });
+  ['wFire'].forEach(id=>{ const el=document.getElementById(id); if(el) el.dispatchEvent(new Event('lostpointercapture')); });
+ }
+ addEventListener('blur',lache); document.addEventListener('visibilitychange',()=>{ if(document.hidden) lache(); });
+ document.addEventListener('touchend',e=>{ if(!e.touches.length){ try{ holdTouch=false; }catch(_){} PADS.forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.remove('dn'); }); } },true);   // plus aucun doigt : rien ne reste appuyé
 })();
 </script>
 </body>

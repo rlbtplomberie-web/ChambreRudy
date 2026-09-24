@@ -83,7 +83,7 @@ body.dialogue #joy{opacity:.3}
 </div></div>
 <div id="titre">RUDY STYLE<small>LA PLAGE DE GISÈLE</small></div>
 <div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="btnParler">PARLER</div><div class="btn" id="btnSortir">SORTIR</div>
+<div id="actions"><div class="btn" id="btnParler">PARLER</div><div class="btn" id="btnSortir">RETOUR</div>
  <div class="btn choix" id="ch1"></div><div class="btn choix" id="ch2"></div></div>
 <div id="bulle"><p id="bulleTxt"></p><i id="queue"></i></div>
 <script>
@@ -197,7 +197,7 @@ const RB={"droite": {"img": ["/assets/shinato/m/ef1f0b8c2cc9473b.webp", "/assets
 for(const k in RB) RB[k].fr=RB[k].img.map(s=>{const i=new Image();i.src=s;return i});
 const rc=document.getElementById('rc'), rx=rc.getContext('2d'); rx.setTransform(2,0,0,2,0,0);
 const GIS={x:430,y:668};                        // Gisèle, sur le sable à gauche
-const SORTIE={x:990,y:775};                     // on repart par le bas de l'écran, au milieu
+const SORTIE={x:1850};                          // on repart par le bout droit de la plage (vers les deux petits garçons)
 const RUDY={x:990,y:735,dir:'haut',pas:0,bouge:false};
 let joyX=0,joyY=0;
 function taille(y){return (y-300)*0.82}         // plus grand quand il s'approche (en bas)
@@ -229,13 +229,14 @@ function dessine(set,i,x,y,phase){
  }else rx.drawImage(im,X,Y,R.w*k,R.h*k);
  rx.restore();
 }
-function procheSortie(){return RUDY.y>752&&Math.abs(RUDY.x-SORTIE.x)<300}
+function procheSortie(){return RUDY.x>=SORTIE.x}
 function fleche(now){
  if(!procheSortie()) return;
- const x=RUDY.x, y=RUDY.y-taille(RUDY.y)-40+Math.sin(now*6)*10;
+ // flèche jaune brillante vers la droite, au-dessus de sa tête (elle se balance vers la sortie)
+ const x=Math.min(RUDY.x-45,1983-150)+Math.sin(now*6)*10, y=RUDY.y-taille(RUDY.y)-55;
  rx.save();rx.shadowColor='rgba(255,220,40,1)';rx.shadowBlur=28;rx.fillStyle='#ffe400';rx.strokeStyle='#fff6a8';rx.lineWidth=4;
- rx.beginPath();rx.moveTo(x-22,y-40);rx.lineTo(x+22,y-40);rx.lineTo(x+22,y);rx.lineTo(x+46,y);
- rx.lineTo(x,y+50);rx.lineTo(x-46,y);rx.lineTo(x-22,y);rx.closePath();rx.fill();rx.stroke();rx.restore();
+ rx.beginPath();rx.moveTo(x-40,y-18);rx.lineTo(x,y-18);rx.lineTo(x,y-42);rx.lineTo(x+48,y);rx.lineTo(x,y+42);rx.lineTo(x,y+18);rx.lineTo(x-40,y+18);
+ rx.closePath();rx.fill();rx.stroke();rx.restore();
 }
 let dernier=performance.now()/1000;
 /* ---------- parler à Gisèle ---------- */
@@ -325,12 +326,20 @@ function boucleRudy(){
 }
 requestAnimationFrame(boucleRudy);
 // SORTIR : retour à la plage, entre les deux petits garçons (la musique de la rue n'a jamais coupé)
-(function(){let t=0;const go=e=>{if(e.cancelable)e.preventDefault();e.stopPropagation();const n=performance.now();if(n-t<400)return;t=n;
- joyX=joyY=0;try{window.parent.postMessage({type:'gisele:sortie'},'*')}catch(err){}};
- bS.addEventListener('pointerdown',go);bS.addEventListener('touchstart',go,{passive:false});bS.addEventListener('click',go)})();
+// Les boutons réagissent quand on RELÂCHE le doigt : l'écran suivant n'apparaît plus sous un doigt
+// encore posé (c'est ce qui bloquait parfois les boutons et le joystick juste après)
+function relache(el,f){let t=0,down=false;
+ const fin=e=>{if(e&&e.cancelable)e.preventDefault();if(e)e.stopPropagation();const n=performance.now();if(n-t<450)return;t=n;down=false;f()};
+ el.addEventListener('pointerdown',e=>{down=true;e.stopPropagation()});
+ el.addEventListener('touchstart',e=>{down=true;if(e.cancelable)e.preventDefault();e.stopPropagation()},{passive:false});
+ el.addEventListener('pointerup',e=>{if(down)fin(e)});
+ el.addEventListener('touchend',e=>{if(down)fin(e)},{passive:false});
+ el.addEventListener('pointercancel',()=>{down=false});
+ el.addEventListener('click',fin);}
+relache(bS,()=>{joyX=joyY=0;try{window.parent.postMessage({type:'gisele:sortie'},'*')}catch(err){}});
 (function(){function appuie(el,f){let t=0;const go=e=>{if(e.cancelable)e.preventDefault();e.stopPropagation();const n=performance.now();if(n-t<400)return;t=n;f()};
  el.addEventListener('pointerdown',go);el.addEventListener('touchstart',go,{passive:false});el.addEventListener('click',go)}
- appuie(bP,parler); appuie(c1,()=>c1.onpick&&c1.onpick()); appuie(c2,()=>c2.onpick&&c2.onpick());})();
+ appuie(bP,parler); relache(c1,()=>c1.onpick&&c1.onpick()); relache(c2,()=>c2.onpick&&c2.onpick());})();
 // joystick (dans tous les sens), comme au bar
 (function(){const joy=document.getElementById('joy'),st=document.getElementById('stick');let id=null,cx=0,cy=0,R=0;
  function prend(e){const t=e.changedTouches?e.changedTouches[0]:e;const r=joy.getBoundingClientRect();cx=r.left+r.width/2;cy=r.top+r.height/2;R=r.width/2;id=e.changedTouches?t.identifier:'s';bouge(e)}
