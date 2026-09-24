@@ -59,6 +59,7 @@ function unBarman(f,al,miroir,bob){
   ctx.drawImage(f.img,-f.ax,-f.ay,f.w,f.h);ctx.restore();
 }
 function dessineBarman(now){
+  if(window.DIALOGUE&&!barman.marche&&barman.cur!==0){barman.seq=[[0,999]];barman.pas=0;barman.t0=now;change(0,now)}
   if(!barman.seq) nouveauGeste(now);
   const [idx,d]=barman.seq[barman.pas];
   if(barman.marche){
@@ -96,11 +97,14 @@ function dessine(c,f,al,now){
 // petites lumières qui vivent : bougies, lampes, néon
 const BOUGIES=[[238,698,60],[1498,752,70],[1682,752,70]];
 const LAMPES=[[860,145,120],[1121,145,120],[1386,145,120],[1658,145,120]];
+window.PAUSE_BAR=false;let barEnAttente=false;
 function frame(){
+  if(window.PAUSE_BAR){barEnAttente=true;return}
   const now=performance.now()/1000;
   ctx.fillStyle='#0a0604';ctx.fillRect(0,0,W,H);
   if(typeof RUDY!=='undefined'){const rx=RUDY.chaise?RUDY.chaise.x:RUDY.x, cible=Math.max(W-SW*S,Math.min(0,W/2-rx*S));
-    CAMX=CAMX===null?cible:CAMX+(cible-CAMX)*0.12;OX=CAMX;OY=Math.max(H-SH*S,Math.min(0,H*0.6-(RUDY.chaise?RUDY.chaise.pied:RUDY.y)*S));}
+    CAMX=CAMX===null?cible:CAMX+(cible-CAMX)*0.12;OX=CAMX;const cy=window.DIALOGUE?Math.min(RUDY.y,430):(RUDY.chaise?RUDY.chaise.pied:RUDY.y), oy=Math.max(H-SH*S,Math.min(0,H*0.6-cy*S));
+    OY=window.DIALOGUE||window.CAM_DOUX>0?OY+(oy-OY)*0.12:oy; if(!window.DIALOGUE&&window.CAM_DOUX>0)window.CAM_DOUX--;}
   ctx.save();ctx.translate(OX,OY);ctx.scale(S,S);
   if(BG.complete)ctx.drawImage(BG,0,0);
   dessineBarman(now);
@@ -123,6 +127,7 @@ function frame(){
   const g=ctx.createRadialGradient(757,170,0,757,170,150);g.addColorStop(0,`rgba(255,60,230,${0.15*ne})`);g.addColorStop(1,'rgba(255,60,230,0)');
   ctx.fillStyle=g;ctx.beginPath();ctx.arc(757,170,150,0,7);ctx.fill();
   ctx.globalCompositeOperation='source-over';ctx.restore();
+  if(window.placeBulle)window.placeBulle();
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
@@ -138,15 +143,42 @@ requestAnimationFrame(frame);
  background:linear-gradient(rgba(12,12,14,.9),rgba(30,30,34,.9));border:2px solid rgba(255,226,122,.7);
  box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 14px rgba(255,214,60,.35)}
 .btn:active{transform:scale(.94)}
+
+#jeuDD{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:100;background:#000;display:none}
+#bulle{position:fixed;left:0;top:0;z-index:30;display:none;pointer-events:none;--queue:50%}
+#bulle.on{display:block}
+#bulle .corps{position:relative;pointer-events:auto;width:min(60vmin,330px);box-sizing:border-box;
+ padding:2.4vmin 3vmin 2.2vmin;background:#fff;color:#111;border:0.7vmin solid #111;border-radius:5vmin;
+ box-shadow:1vmin 1vmin 0 rgba(0,0,0,.55);text-align:center}
+/* queue de la bulle : vers le bas (au-dessus de la tête) ou vers la droite (à côté de la tête) */
+#bulle .corps::after,#bulle .corps::before{content:"";position:absolute;width:0;height:0}
+#bulle:not(.cote) .corps::after{left:calc(var(--queue) - 2.4vmin);bottom:-4.3vmin;border-left:1.5vmin solid transparent;border-right:3.4vmin solid transparent;border-top:4.2vmin solid #111;transform:skewX(-14deg)}
+#bulle:not(.cote) .corps::before{left:calc(var(--queue) - 1.7vmin);bottom:-3vmin;z-index:1;border-left:0.9vmin solid transparent;border-right:2.4vmin solid transparent;border-top:3.2vmin solid #fff;transform:skewX(-14deg)}
+#bulle.cote .corps::after{right:-4.3vmin;top:calc(var(--queue) - 2vmin);border-top:1.4vmin solid transparent;border-bottom:3vmin solid transparent;border-left:4.2vmin solid #111}
+#bulle.cote .corps::before{right:-3vmin;top:calc(var(--queue) - 1.3vmin);z-index:1;border-top:0.9vmin solid transparent;border-bottom:2vmin solid transparent;border-left:3.2vmin solid #fff}
+#bulle .txt{font:900 clamp(13px,3.5vmin,23px)/1.18 "Comic Sans MS","Chalkboard SE","Marker Felt","Arial Black",Arial,sans-serif;min-height:2.36em}
+#bulle .rep{display:flex;gap:2.4vmin;justify-content:center;margin-top:1.8vmin}
+#bulle .rep[hidden]{display:none}
+#bulle .rep div{min-width:16vmin;padding:1.5vmin 2.6vmin;border:0.6vmin solid #111;border-radius:2.4vmin;touch-action:none;
+ font:900 clamp(13px,3.3vmin,22px)/1 "Arial Black",Arial,sans-serif;letter-spacing:1px;box-shadow:0 0.8vmin 0 #111}
+#bulle .rep div:active{transform:translateY(0.6vmin);box-shadow:0 0.2vmin 0 #111}
+#bulle #oui{background:#ffd23a;color:#111}
+#bulle #non{background:#fff;color:#111}
+#bulle.pop .corps{animation:bullePop .42s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes bullePop{0%{transform:scale(.2) rotate(-6deg);opacity:0}100%{transform:none;opacity:1}}
+#bulle .choc{position:absolute;left:-2.4vmin;top:-4.2vmin;font:900 clamp(18px,6vmin,40px)/1 "Arial Black",Arial,sans-serif;
+ color:#ffd23a;-webkit-text-stroke:0.45vmin #111;transform:rotate(-12deg)}
 #titreBar{position:fixed;top:calc(2vmin + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:20;color:#fff;pointer-events:none;white-space:nowrap;
  font:900 clamp(14px,3vmin,26px)/1.15 Arial,sans-serif;letter-spacing:3px;text-shadow:0 3px 0 #000,0 0 14px rgba(0,0,0,.9)}
 *{-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}html,body{touch-action:none;overscroll-behavior:none}
 </style>
 <div id="titreBar">BAR LE RELAIS</div>
+<div id="bulle"><div class="corps"><span class="choc">!</span><div class="txt" id="bulleTxt"></div><div class="rep" id="bulleRep"><div id="oui">OUI</div><div id="non">NON</div></div></div></div>
 <div id="joy"><div id="stick"></div></div>
 <div id="actions">
  <div class="btn" id="btnAssis">S'ASSEOIR</div>
  <div class="btn" id="btnLever">SE LEVER</div>
+ <div class="btn" id="btnParler">PARLER</div>
  <div class="btn" id="btnSortir">SORTIR</div>
 </div>
 <script>
@@ -190,7 +222,7 @@ function dessineAssis(i,al,now){
 let dernier=performance.now()/1000;
 function avance(now){
  const dt=Math.min(0.05,now-dernier);dernier=now;
- if(RUDY.etat!=='debout'){RUDY.bouge=false;return}
+ if(RUDY.etat!=='debout'||window.DIALOGUE){RUDY.bouge=false;return}
  const m=Math.hypot(joyX,joyY);
  if(m>0.18){
   const v=280*Math.min(1,m);
@@ -240,6 +272,8 @@ function dessineRudy(now){
 }
 const bA=document.getElementById('btnAssis'),bL=document.getElementById('btnLever'),bS=document.getElementById('btnSortir');
 function majBoutons(){
+ if(window.DIALOGUE){bA.style.display=bL.style.display=bS.style.display='none';if(window.bP)window.bP.style.display='none';return}
+ if(window.bP)window.bP.style.display=(window.barmanProche&&window.barmanProche())?'block':'none';
  bA.style.display=chaiseProche()?'block':'none';
  bL.style.display=RUDY.etat==='assis'?'block':'none';
  bS.style.display=procheSortie()?'block':'none';
@@ -273,6 +307,81 @@ addEventListener('message',e=>{if(e.data&&e.data.type==='relais:entree'){
  const r0=()=>{joyX=joyY=0;st.style.transform='translate(0,0)'};
  document.addEventListener('touchend',e=>{if(!e.touches.length)r0()},{capture:true});addEventListener('blur',r0);document.addEventListener('visibilitychange',r0);
  document.addEventListener('contextmenu',e=>e.preventDefault(),{capture:true});
+})();
+</script>
+<script>
+/* ================= le barman du Relais : « Tu veux participer au concours d'ivresse ? » =================
+   OUI -> le jeu « Dernier debout » ; NON -> on reste dans le bar */
+(function(){
+ window.DIALOGUE=false; window.CAM_DOUX=0;
+ const bulle=document.getElementById('bulle'), corps=bulle.querySelector('.corps'),
+       txt=document.getElementById('bulleTxt'), rep=document.getElementById('bulleRep');
+ window.bP=document.getElementById('btnParler');
+ let vu=false;
+ // devant le comptoir, près du barman (il reste dans son coin, entre 1465 et 1570)
+ window.barmanProche=function(){
+  const ok=RUDY.etat==='debout'&&RUDY.y<660&&Math.abs(RUDY.x-barman.x)<(vu?210:170);
+  vu=ok; return ok;
+ };
+ // la bulle au-dessus de sa tête ; s'il n'y a pas la place (petit écran), à côté de sa tête
+ window.placeBulle=function(){
+  if(!window.DIALOGUE) return;
+  const hx=OX+barman.x*S, hy=OY+(TETE-40)*S;
+  const bw=corps.offsetWidth, bh=corps.offsetHeight, m=8, q=Math.min(W,H)*0.05;
+  if(hy-bh-q>=m){
+   bulle.classList.remove('cote');
+   let left=Math.max(m,Math.min(W-bw-m,hx-bw*0.42));
+   bulle.style.left=left+'px'; bulle.style.top=(hy-bh-q)+'px';
+   bulle.style.setProperty('--queue',Math.max(28,Math.min(bw-40,hx-left))+'px');
+  }else{
+   bulle.classList.add('cote');
+   const cy=OY+(TETE+20)*S;
+   let left=Math.max(m,hx-40*S-bw-q), top=Math.max(m,Math.min(H-bh-m,cy-bh*0.45));
+   bulle.style.left=left+'px'; bulle.style.top=top+'px';
+   bulle.style.setProperty('--queue',Math.max(20,Math.min(bh-30,cy-top))+'px');
+  }
+ };
+ let ac=null;
+ function pop(){ try{ ac=ac||new (window.AudioContext||window.webkitAudioContext)(); const t=ac.currentTime;
+  const o=ac.createOscillator(), g=ac.createGain(); o.type='triangle'; o.frequency.setValueAtTime(520,t); o.frequency.exponentialRampToValueAtTime(980,t+0.09);
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.25,t+0.015); g.gain.exponentialRampToValueAtTime(0.0001,t+0.2);
+  o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t+0.25); }catch(e){} }
+ let tape=0;
+ let finTape=null;
+ function ecrit(s,fin){ clearInterval(tape); txt.textContent=''; const t0=performance.now(); finTape=()=>{ clearInterval(tape); txt.textContent=s; finTape=null; if(fin) fin(); };
+  tape=setInterval(()=>{ const i=Math.floor((performance.now()-t0)/28); txt.textContent=s.slice(0,i); if(i>=s.length&&finTape) finTape(); },30); }
+ corps.addEventListener('pointerdown',e=>{ if(finTape&&e.target===txt) finTape(); });   // un appui sur le texte l'affiche en entier
+ function ouvre(){
+  if(window.DIALOGUE||!window.barmanProche()) return;
+  window.DIALOGUE=true; window.CAM_DOUX=40; joyX=joyY=0; RUDY.bouge=false; RUDY.dir='haut'; majBoutons();
+  rep.hidden=true; bulle.classList.remove('pop'); void bulle.offsetWidth; bulle.classList.add('on','pop'); pop();
+  ecrit("Tu veux participer au concours d'ivresse ?",()=>{ rep.hidden=false; });
+ }
+ function ferme(){ clearInterval(tape); bulle.classList.remove('on','pop'); window.DIALOGUE=false; window.CAM_DOUX=40; majBoutons(); }
+ appuie(window.bP,ouvre);
+ appuie(document.getElementById('non'),()=>{ if(rep.hidden) return; rep.hidden=true;
+  ecrit("Comme tu veux. Le comptoir reste ouvert !",()=>setTimeout(ferme,1300)); });
+ appuie(document.getElementById('oui'),()=>{ if(rep.hidden) return; rep.hidden=true;
+  ecrit("Ha ha ! Que le meilleur reste debout !",()=>setTimeout(()=>{ ferme(); lance(); },700)); });
+
+ // la musique de la ville est dans la page principale (deux cadres au-dessus)
+ function musique(on){ try{ window.top.postMessage({type:on?'musique:reprise':'musique:pause'},'*'); }catch(e){} }
+ function lance(){
+  joyX=joyY=0;
+  let f=document.getElementById('jeuDD');
+  if(!f){ f=document.createElement('iframe'); f.id='jeuDD'; f.setAttribute('allow','autoplay; fullscreen'); document.body.appendChild(f); }
+  f.src='/assets/shinato/jeux/dernierdebout.html'; f.style.display='block';
+  window.PAUSE_BAR=true; musique(false);
+  setTimeout(()=>{ try{ f.focus(); }catch(e){} },300);
+ }
+ // « Retour au bar » dans le jeu : Rudy revient debout devant le barman
+ addEventListener('message',e=>{ if(!(e.data&&e.data.type==='dernierDebout:arret')) return;
+  const f=document.getElementById('jeuDD'); if(f){ f.style.display='none'; f.src='about:blank'; }
+  window.PAUSE_BAR=false; if(barEnAttente){ barEnAttente=false; dernier=performance.now()/1000; requestAnimationFrame(frame); }
+  musique(true);
+  Object.assign(RUDY,{x:barman.x,y:622,dir:'haut',etat:'debout',chaise:null,bouge:false}); CAMX=null;
+  joyX=joyY=0; majBoutons();
+ });
 })();
 </script>
 <script>
