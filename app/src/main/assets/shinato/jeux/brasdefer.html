@@ -185,7 +185,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 #err{display:none;position:fixed;left:10px;right:10px;bottom:10px;z-index:50;background:#7a1216;color:#fff;padding:10px 12px;border-radius:8px;font-size:15px}
 @media (prefers-reduced-motion:reduce){ #spec.ready span{animation:none} #banner.show{animation:none;opacity:1} }
 </style>
-</head>
+<script>/* anti-touche bloquée */(()=>{let a={};addEventListener('pointerdown',e=>a[e.pointerId]=e.target,true);let f=e=>delete a[e.pointerId];addEventListener('pointerup',f,true);addEventListener('pointercancel',f,true);let r=()=>{Object.keys(a).forEach(i=>{try{a[i].dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,pointerId:+i}))}catch(_){}});a={}};addEventListener('blur',r);document.addEventListener('visibilitychange',()=>document.hidden&&r())})();</script></head>
 <body>
 <canvas id="c"></canvas>
 

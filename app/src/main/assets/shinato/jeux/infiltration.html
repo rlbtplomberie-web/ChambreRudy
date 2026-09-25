@@ -98,7 +98,7 @@ body.touch #joy,body.touch .btns{display:grid}
 }
 @media (prefers-reduced-motion:reduce){#lockpick .lp-scene.shake{animation:none}#lockpick{transition:none}}
 </style>
-</head>
+<script>/* anti-touche bloquée */(()=>{let a={};addEventListener('pointerdown',e=>a[e.pointerId]=e.target,true);let f=e=>delete a[e.pointerId];addEventListener('pointerup',f,true);addEventListener('pointercancel',f,true);let r=()=>{Object.keys(a).forEach(i=>{try{a[i].dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,pointerId:+i}))}catch(_){}});a={}};addEventListener('blur',r);document.addEventListener('visibilitychange',()=>document.hidden&&r())})();</script></head>
 <body>
 <div id="stage">
   <canvas id="c"></canvas>

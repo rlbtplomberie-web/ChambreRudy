@@ -83,7 +83,7 @@ button:focus-visible{outline:3px solid var(--rose);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){#wBreath.breath{animation:none}#wSpriteOld{transition:none}}
 @media (max-width:520px){.gauges{gap:8px}.text{font-size:16px}}
 </style>
-</head>
+<script>/* anti-touche bloquée */(()=>{let a={};addEventListener('pointerdown',e=>a[e.pointerId]=e.target,true);let f=e=>delete a[e.pointerId];addEventListener('pointerup',f,true);addEventListener('pointercancel',f,true);let r=()=>{Object.keys(a).forEach(i=>{try{a[i].dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,pointerId:+i}))}catch(_){}});a={}};addEventListener('blur',r);document.addEventListener('visibilitychange',()=>document.hidden&&r())})();</script></head>
 <body>
 <div class="wrap">
   <header>

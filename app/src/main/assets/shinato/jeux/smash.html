@@ -133,7 +133,7 @@ body.touch.playing #touch{ display:block; }
 #bHaut{ width:70px; height:70px; right:14px; bottom:114px; border-color:var(--gold); font-size:17px; }
 body{ background:radial-gradient(ellipse at 50% 115%, #1f4a8a 0%, #0d1a3a 45%, #04060d 80%); }
 </style>
-</head>
+<script>/* anti-touche bloquée */(()=>{let a={};addEventListener('pointerdown',e=>a[e.pointerId]=e.target,true);let f=e=>delete a[e.pointerId];addEventListener('pointerup',f,true);addEventListener('pointercancel',f,true);let r=()=>{Object.keys(a).forEach(i=>{try{a[i].dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,pointerId:+i}))}catch(_){}});a={}};addEventListener('blur',r);document.addEventListener('visibilitychange',()=>document.hidden&&r())})();</script></head>
 <body>
 <div id="wrap">
   <div id="cab">

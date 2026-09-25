@@ -160,7 +160,7 @@ h1{font-family:Bungee,Impact,sans-serif;font-weight:400;margin:0;font-size:clamp
 @media (orientation:portrait) and (max-width:700px){#rot{display:flex}}
 .stat{font-size:clamp(13px,2vw,16px);opacity:.9;text-align:center;line-height:1.5}
 </style>
-</head>
+<script>/* anti-touche bloquée */(()=>{let a={};addEventListener('pointerdown',e=>a[e.pointerId]=e.target,true);let f=e=>delete a[e.pointerId];addEventListener('pointerup',f,true);addEventListener('pointercancel',f,true);let r=()=>{Object.keys(a).forEach(i=>{try{a[i].dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,pointerId:+i}))}catch(_){}});a={}};addEventListener('blur',r);document.addEventListener('visibilitychange',()=>document.hidden&&r())})();</script></head>
 <body>
 <div id="wrap">
   <canvas id="c" width="1600" height="900"></canvas>
