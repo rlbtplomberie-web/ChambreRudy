@@ -38,6 +38,26 @@ h1{font-family:"Yeseva One",Georgia,"Times New Roman",serif;font-weight:400;font
 button:focus-visible{outline:3px solid var(--rose);outline-offset:2px}
 .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(20,8,20,.74);text-align:center;padding:14px;color:#fff}
 .overlay[hidden]{display:none}
+/* correctif : la fenêtre « Commencer / Choisir / Partir » est toujours dans l'écran, même téléphone couché */
+.overlay{position:fixed;z-index:50}
+.overlay .card{max-height:calc(100vh - 28px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+/* correctif : téléphone couché — tout tient dans l'écran (avant, « Confirmer » et les réponses étaient sous l'écran) */
+@media (orientation:landscape) and (max-height:700px){
+  .wrap{max-width:none;padding:6px 10px}
+  header h1{font-size:22px;margin:0}
+  .selWrap{width:min(100%,calc((100vh - 70px) * 1.675));margin:0 auto}
+  .selHint{margin:2px 0 0;font-size:13px}
+  #game{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr);column-gap:12px;
+        grid-template-areas:"stage gauges" "stage dialog" "stage choices";height:calc(100vh - 52px)}
+  #game .gauges{grid-area:gauges;margin:0 0 4px}
+  #game .stage{grid-area:stage;height:calc(100vh - 52px);width:calc((100vh - 52px) * 1343 / 1171);max-width:52vw}
+  #game .stage svg{height:100%;width:100%}
+  #game .dialog{grid-area:dialog;margin-top:4px;min-height:0;padding:8px 10px}
+  #game .text{font-size:15px}
+  #game .choices{grid-area:choices;margin-top:6px;overflow-y:auto;align-content:start;gap:6px}
+  #game .choices button{font-size:14px;padding:8px 10px}
+}
+#game[hidden],#select[hidden]{display:none!important}
 .card{max-width:440px}
 .card h2{font-family:"Yeseva One",Georgia,serif;font-weight:400;font-size:clamp(26px,6vw,44px);margin:0 0 6px;color:#ff9db4}
 .card p{margin:0 0 12px;font-size:clamp(14px,2.6vw,17px);line-height:1.4}
@@ -931,7 +951,7 @@ openSelect();
 <script>/* remise à zéro sûre des contrôles tactiles */(()=>{let on={};addEventListener('pointerdown',e=>on[e.pointerId]=e.target,true);let off=e=>delete on[e.pointerId];addEventListener('pointerup',off,true);addEventListener('pointercancel',off,true);addEventListener('touchend',e=>{if(!e.touches.length){for(const i in on)try{on[i].dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,pointerId:+i}))}catch(_){};on={}}},true);addEventListener('blur',()=>on={});})();</script>
 <script>/* commandes tactiles de secours : seulement si PointerEvent manque réellement */
 (function(){
- if(window.__rudyTouchBridge)return; window.__rudyTouchBridge=true;
+ if(window.PointerEvent||window.__rudyTouchBridge)return; window.__rudyTouchBridge=true;   /* WebView récente : les vrais appuis suffisent, ne rien doubler */
  var selector='canvas,.pad,[id*="joy" i],[id*="stick" i],[id*="boost" i],[id*="bite" i],[id*="push" i],[id*="drink" i],[id*="pick" i]';
  var last=new WeakMap(), active={};
  document.addEventListener('pointerdown',function(e){last.set(e.target,performance.now());},true);

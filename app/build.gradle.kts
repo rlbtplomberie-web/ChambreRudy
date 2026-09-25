@@ -163,3 +163,44 @@ dependencies {
     // assez petite pour etre deposee depuis le telephone, sans retirer une
     // seule animation du combat.
 }
+
+/*
+ * Shinato : le moteur 3D (three.js r128) du Bras de fer, de Five Fight et du
+ * pistolet a eau de Gisele. Avant, ces jeux le telechargeaient sur Internet a
+ * chaque lancement : sans connexion, ecran noir. On le recupere une seule fois
+ * ici, pendant la compilation sur GitHub, et il est range dans l'APK
+ * (assets/shinato/lib/three.min.js). Si le telechargement echoue, la
+ * compilation continue : les jeux essaieront alors Internet, comme avant.
+ */
+val cibleThreeShinato = file("src/main/assets/shinato/lib/three.min.js")
+val moteur3dShinato = tasks.register("moteur3dShinato") {
+    doLast {
+        if (cibleThreeShinato.isFile && cibleThreeShinato.length() > 100000L) {
+            logger.lifecycle("three.js deja present pour Shinato")
+            return@doLast
+        }
+        cibleThreeShinato.parentFile.mkdirs()
+        val adresses = listOf(
+            "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js",
+            "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js",
+            "https://unpkg.com/three@0.128.0/build/three.min.js"
+        )
+        for (adresse in adresses) {
+            try {
+                val connexion = java.net.URI(adresse).toURL().openConnection()
+                connexion.connectTimeout = 20000
+                connexion.readTimeout = 60000
+                val octets = connexion.getInputStream().use { it.readBytes() }
+                if (octets.size > 100000) {
+                    cibleThreeShinato.writeBytes(octets)
+                    logger.lifecycle("three.js recupere pour Shinato : $adresse")
+                    return@doLast
+                }
+            } catch (e: Exception) {
+                logger.warn("three.js : echec depuis $adresse (${e.message})")
+            }
+        }
+        logger.warn("three.js non recupere : les jeux 3D de Shinato passeront par Internet")
+    }
+}
+tasks.matching { it.name == "preBuild" }.configureEach { dependsOn(moteur3dShinato) }

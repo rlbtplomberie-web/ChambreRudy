@@ -1,24 +1,28 @@
-version 140 — uniquement la Nintendo 64
+version 141 — Shinato soigné (uniquement les mini-jeux de la rue, le bureau n'est pas touché)
 
-  La fenetre venait des AUTORISATIONS DECLAREES, pas du code.
+  1. Joysticks et boutons « fous » dans les 12 mini-jeux
+     Un script de secours tactile renvoyait un DEUXIEME appui, avec un faux
+     numéro de doigt, 90 ms après chaque vrai appui (son test de temps était
+     toujours faux). Le joystick suivait alors ce faux doigt, et certains
+     boutons se déclenchaient deux fois. Il ne s'active plus sur les
+     téléphones actuels. Même correction dans le Beach-volley de Gisèle, qui
+     avait son propre pont caché.
 
-  Le bilan l'a montre : l'outil a bien repondu « oui » dans SplashActivity,
-  ScanRomsActivity et LegacyFilePicker — mais la fenetre restait. Elle ne
-  venait donc pas d'une verification, mais du fait meme que ces autorisations
-  soient declarees sans limite : Android les propose, et depuis la version 11
-  elles ne peuvent mener a rien.
+  2. Écran noir des Jeux de Gisèle (corde.html)
+     Le code du volley contenait « </script » en clair : le navigateur coupait
+     le programme en deux. Corrigé.
 
-  Deux corrections :
-    - dans le manifeste de la Chambre, READ et WRITE_EXTERNAL_STORAGE sont
-      bornees a Android 10. Au-dela, Android ne les propose plus du tout ;
-    - l'adaptateur borne les siennes de la meme facon lors de la fusion, et
-      retire MANAGE_EXTERNAL_STORAGE — celle qui ouvre une page de reglages
-      entiere. Verifie sur son vrai manifeste.
+  3. Écran noir du Bras de fer, de Five Fight et du pistolet à eau
+     Leur moteur 3D (three.js) venait d'Internet à chaque lancement. Il est
+     maintenant récupéré pendant la compilation (tâche moteur3dShinato dans
+     app/build.gradle.kts) et rangé dans assets/shinato/lib/. Internet ne sert
+     plus qu'en secours.
 
-  Rien n'est perdu : chaque emulateur ecrit dans le dossier externe de
-  l'application, qui n'exige aucune autorisation, et que la Chambre cree au
-  demarrage.
-
-  A propos de « Unable to make path » : ce message est sans consequence. Le
-  dossier existe — la cartouche y a bien ete posee, 16384 Ko — et leur
-  creation renvoie « faux » simplement parce qu'il est deja la.
+  4. Boutons hors de l'écran, téléphone couché
+     - FuryKart : « Prendre le départ » / « Refaire une course » restent en bas ;
+       gaz, frein et direction ne se relâchent plus au moindre glissement.
+     - Foot Course : « Commencer la course » reste visible ; QUITTER ne cache
+       plus le chrono.
+     - Infiltration : le bouton « Crocheter » tient dans l'écran.
+     - Premier verre : « Confirmer », « Commencer » et les réponses tiennent
+       dans l'écran (image à gauche, dialogue à droite).

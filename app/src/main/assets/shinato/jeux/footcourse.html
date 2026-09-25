@@ -80,6 +80,8 @@ tr.me td{color:var(--accent);font-weight:700}
 #select h2 em{color:#e23b30;font-style:normal}
 #select .sub{color:var(--dim);font-size:clamp(13px,2.4vw,16px);text-align:center;margin:0}
 #grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;width:100%;max-width:900px}
+/* correctif : la barre « Au hasard / Commencer » reste toujours visible en bas, même sur un écran bas */
+#selBar{position:sticky;bottom:0;z-index:2;background:rgba(10,15,22,.94);padding:8px 12px;border-radius:12px;box-shadow:0 -6px 16px rgba(0,0,0,.5)}
 @media (max-width:620px){#grid{grid-template-columns:repeat(3,1fr)}}
 #grid button{position:relative;padding:0;border:2px solid #2b3a48;border-radius:6px;overflow:hidden;background:#000;cursor:pointer;aspect-ratio:256/224}
 #grid button img{display:block;width:100%;height:100%;object-fit:cover}
@@ -1200,7 +1202,7 @@ window.addEventListener('DOMContentLoaded',function(){
   });
 });
 </script>
-<style>#quitSprint{position:fixed;top:8px;left:8px;z-index:2147483647;padding:9px 14px;border-radius:10px;cursor:pointer;
+<style>#quitSprint{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:2147483647;padding:9px 14px;border-radius:10px;cursor:pointer;
  font:900 15px/1 Arial,Helvetica,sans-serif;letter-spacing:2px;color:#ffe27a;background:rgba(10,10,14,.88);
  border:2px solid rgba(255,226,122,.85);box-shadow:0 4px 12px rgba(0,0,0,.6);touch-action:none;user-select:none;-webkit-user-select:none}</style>
 <script>
@@ -1215,7 +1217,7 @@ window.addEventListener('DOMContentLoaded',function(){
 <script>/* remise à zéro sûre des contrôles tactiles */(()=>{let on={};addEventListener('pointerdown',e=>on[e.pointerId]=e.target,true);let off=e=>delete on[e.pointerId];addEventListener('pointerup',off,true);addEventListener('pointercancel',off,true);addEventListener('touchend',e=>{if(!e.touches.length){for(const i in on)try{on[i].dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,pointerId:+i}))}catch(_){};on={}}},true);addEventListener('blur',()=>on={});})();</script>
 <script>/* commandes tactiles de secours : seulement si PointerEvent manque réellement */
 (function(){
- if(window.__rudyTouchBridge)return; window.__rudyTouchBridge=true;
+ if(window.PointerEvent||window.__rudyTouchBridge)return; window.__rudyTouchBridge=true;   /* WebView récente : les vrais appuis suffisent, ne rien doubler */
  var selector='canvas,.pad,[id*="joy" i],[id*="stick" i],[id*="boost" i],[id*="bite" i],[id*="push" i],[id*="drink" i],[id*="pick" i]';
  var last=new WeakMap(), active={};
  document.addEventListener('pointerdown',function(e){last.set(e.target,performance.now());},true);

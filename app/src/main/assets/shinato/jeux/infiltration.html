@@ -86,6 +86,14 @@ body.touch #joy,body.touch .btns{display:grid}
 #lockpick .lp-intro p{margin:0;max-width:44ch;color:var(--ldim);font-size:clamp(17px,2.6vw,20px);line-height:1.45}
 #lockpick .lp-intro button{font:inherit;font-weight:700;font-size:21px;padding:12px 30px;border-radius:8px;border:0;background:var(--brass);color:#16110a;cursor:pointer}
 #lockpick .lp-intro.gone{display:none}
+/* correctif : téléphone en paysage (écran bas) — le cadran rétrécit pour que « Crocheter » reste visible */
+@media (min-aspect-ratio:1/1) and (max-height:620px){
+  #lockpick .lp-game{grid-template-rows:auto minmax(0,1fr)}
+  #lockpick .lp-dial{gap:8px;height:100%;min-height:0;justify-content:center}
+  #lockpick .lp-dial canvas{width:auto;height:calc(100vh - 110px);max-height:380px;max-width:100%}
+  #lockpick .lp-pick{padding:10px;font-size:19px;flex-shrink:0}
+  #lockpick .lp-hint{display:none}
+}
 @media (max-aspect-ratio:1/1){
   #lockpick .lp-game{grid-template-columns:1fr 1fr;grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"face pins" "scene scene" "dial dial";gap:10px}
   #lockpick{padding:calc(10px + env(safe-area-inset-top,0px)) 10px calc(10px + env(safe-area-inset-bottom,0px))}
@@ -1009,7 +1017,7 @@ reset();resize();requestAnimationFrame(loop);
 <script>/* remise à zéro sûre des contrôles tactiles */(()=>{let on={};addEventListener('pointerdown',e=>on[e.pointerId]=e.target,true);let off=e=>delete on[e.pointerId];addEventListener('pointerup',off,true);addEventListener('pointercancel',off,true);addEventListener('touchend',e=>{if(!e.touches.length){for(const i in on)try{on[i].dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,pointerId:+i}))}catch(_){};on={}}},true);addEventListener('blur',()=>on={});})();</script>
 <script>/* commandes tactiles de secours : seulement si PointerEvent manque réellement */
 (function(){
- if(window.__rudyTouchBridge)return; window.__rudyTouchBridge=true;
+ if(window.PointerEvent||window.__rudyTouchBridge)return; window.__rudyTouchBridge=true;   /* WebView récente : les vrais appuis suffisent, ne rien doubler */
  var selector='canvas,.pad,[id*="joy" i],[id*="stick" i],[id*="boost" i],[id*="bite" i],[id*="push" i],[id*="drink" i],[id*="pick" i]';
  var last=new WeakMap(), active={};
  document.addEventListener('pointerdown',function(e){last.set(e.target,performance.now());},true);
