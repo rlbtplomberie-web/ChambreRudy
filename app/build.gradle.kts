@@ -1,4 +1,7 @@
 import java.io.File
+import java.net.URI
+import java.net.URLConnection
+import java.io.InputStream
 
 plugins {
     id("com.android.application")
@@ -187,10 +190,13 @@ val moteur3dShinato = tasks.register("moteur3dShinato") {
         )
         for (adresse in adresses) {
             try {
-                val connexion = java.net.URI(adresse).toURL().openConnection()
-                connexion.connectTimeout = 20000
-                connexion.readTimeout = 60000
-                val octets = connexion.getInputStream().use { it.readBytes() }
+                // « java.net... » ecrit en entier est pris ici pour le reglage Java de
+                // Gradle : on passe donc par les imports, en haut du fichier.
+                val connexion: URLConnection = URI(adresse).toURL().openConnection()
+                connexion.setConnectTimeout(20000)
+                connexion.setReadTimeout(60000)
+                val flux: InputStream = connexion.getInputStream()
+                val octets: ByteArray = flux.use { f -> f.readBytes() }
                 if (octets.size > 100000) {
                     cibleThreeShinato.writeBytes(octets)
                     logger.lifecycle("three.js recupere pour Shinato : $adresse")
