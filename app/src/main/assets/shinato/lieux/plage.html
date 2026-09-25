@@ -749,15 +749,18 @@ else carte.addEventListener("load",demarre);
  var btn=document.createElement("div"); btn.className="btn"; btn.id="btnGisele"; btn.textContent="ENTRER";
  var act=document.getElementById("actions"); act.insertBefore(btn,act.firstChild);
  var G=1790/2115, D=1915/2115;          // du petit garçon en rouge (1806) au petit garçon à droite (1898), dans le décor
- var parti=false;
+ // Empêche seulement un double appui immédiat. Le passage reste réutilisable
+ // après chaque retour depuis la plage de Gisèle.
+ var dernierPassage=0;
  setInterval(function(){
-  if(typeof x==="undefined"||!largeurMonde||parti) return;
+  if(typeof x==="undefined"||!largeurMonde) return;
   var devant = x>=largeurMonde*G && x<=largeurMonde*D && (etat==="repos"||etat==="marche");
   fl.style.display=devant?"block":"none"; btn.style.display=devant?"block":"none";
   if(devant){ var hp=hauteurScene*TAILLE; fl.style.left=x+"px"; fl.style.top=(hauteurScene*SOL-hp*1.25)+"px"; }
  },60);
  window.appuiSur(btn,function(){
-  if(parti) return; parti=true; dir=0;
+  var maintenant=Date.now(); if(maintenant-dernierPassage<900) return;
+  dernierPassage=maintenant; dir=0;
   fl.style.display="none"; btn.style.display="none";
   try{ window.parent.postMessage({type:"plage:gisele"},"*"); }catch(e){}
  });
