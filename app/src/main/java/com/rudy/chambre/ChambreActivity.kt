@@ -944,6 +944,11 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
         web.overScrollMode = android.view.View.OVER_SCROLL_NEVER
         web.isLongClickable = false
         web.setOnLongClickListener { true }                          // pas de menu d'appui long
+        // Après le retour d'un mini-jeu Android, certains téléphones gardent
+        // le focus tactile sur l'activité qui vient de se fermer. La rue doit
+        // redevenir immédiatement la cible des doigts.
+        web.isFocusable = true
+        web.isFocusableInTouchMode = true
         web.webViewClient = object : android.webkit.WebViewClient() {
             override fun shouldInterceptRequest(
                 v: android.webkit.WebView,
@@ -1015,12 +1020,18 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) pleinEcran()
+        if (hasFocus) {
+            pleinEcran()
+            if (!vueDetruite) web.post { web.requestFocus() }
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        if (!vueDetruite) { web.onResume(); web.resumeTimers() }
+        if (!vueDetruite) {
+            web.onResume(); web.resumeTimers()
+            web.post { web.requestFocus() }
+        }
         // au retour d'un jeu, la musique de la chambre reste coupée : c'est celle de Shinato qui joue
         try { SonPartage.volume(0f) } catch (_: Throwable) { }
     }

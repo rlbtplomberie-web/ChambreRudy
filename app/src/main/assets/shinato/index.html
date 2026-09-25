@@ -64,6 +64,21 @@ window.appuiSur=function(el,f){                       // réagit au doigt, au po
  function go(e){ if(e.cancelable) e.preventDefault(); e.stopPropagation(); var n=Date.now(); if(n-t<350) return; t=n; f(e); }
  el.addEventListener("pointerdown",go); el.addEventListener("touchstart",go,{passive:false}); el.addEventListener("click",go);
 };
+/* Un retour depuis une activité Android ou un iframe peut laisser le dernier
+   doigt "capturé" par l'ancien écran dans certaines WebView Samsung.  On
+   libère toujours les commandes et on redonne le focus à la page visible. */
+window.reveilleTactile=function(){
+ try{
+  if(typeof dir!=="undefined") dir=0;
+  var s=document.getElementById("stick"); if(s) s.style.transform="translate(0,0)";
+  var actif=document.querySelector('iframe[style*="display: block"]');
+  if(!actif){ if(document.activeElement&&document.activeElement.blur) document.activeElement.blur(); window.focus(); }
+ }catch(_){}
+};
+window.addEventListener("focus",window.reveilleTactile);
+window.addEventListener("pointercancel",window.reveilleTactile,true);
+window.addEventListener("touchcancel",window.reveilleTactile,true);
+document.addEventListener("visibilitychange",function(){ if(!document.hidden) setTimeout(window.reveilleTactile,80); });
 </script>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>RUDY STYLE &middot; LA RUE</title>
@@ -1203,7 +1218,7 @@ else carte.addEventListener("load",demarre);
    cadre.setAttribute("allow","autoplay; fullscreen");
    document.body.appendChild(cadre);
   }
-  cadre.srcdoc=html; cadre.style.display="block";
+  cadre.style.pointerEvents="auto"; cadre.srcdoc=html; cadre.style.display="block";
   window.minuterieLibre(function(){ try{ cadre.focus(); }catch(e){} },300);
  }
  window.appuiSur(document.getElementById("versPlage"),function(){ partEnMoto("plage"); });
@@ -1269,7 +1284,7 @@ else carte.addEventListener("load",demarre);
   if(e.data && e.data.type==="rudyMoto:arrivee" && window.DESTINATION_MOTO==="ville"){
    // « Arrivé » : retour dans la ville, tout à droite, tourné vers la gauche
    window.minuterieLibre(function(){
-    var cm=document.getElementById("moto"); if(cm){ cm.style.display="none"; cm.srcdoc=""; }
+    var cm=document.getElementById("moto"); if(cm){ cm.style.pointerEvents="none"; cm.blur(); cm.style.display="none"; cm.srcdoc=""; }
     window.DESTINATION_MOTO="plage";
     var hp=hauteurScene*TAILLE; x=largeurMonde-hp*0.5-hp*0.75; sens=-1; dir=0;
     window.repriseRue(); if(typeof cadre==="function") cadre(true);
@@ -1343,6 +1358,7 @@ else carte.addEventListener("load",demarre);
   var cadre=document.getElementById("bar");
   if(!cadre){ cadre=document.createElement("iframe"); cadre.id="bar"; cadre.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(cadre); }
   // le bar n'est chargé qu'une fois : ensuite on entre et on sort instantanément, autant de fois qu'on veut
+  cadre.style.pointerEvents="auto";
   if(!cadre.getAttribute("data-charge")){ cadre.srcdoc=new TextDecoder("utf-8").decode(o); cadre.setAttribute("data-charge","1"); }
   else { try{ cadre.contentWindow.postMessage({type:"pixelBar:entree"},"*"); }catch(e){} }
   cadre.style.display="block"; dedans=true; window.pauseRue();
@@ -1352,7 +1368,7 @@ else carte.addEventListener("load",demarre);
  // SORTIR dans le bar : retour dans la rue, devant le bar (la musique n'a jamais coupé)
  window.addEventListener("message",function(e){
   if(e.data && e.data.type==="pixelBar:sortie"){
-   var fb=document.getElementById("bar"); if(fb){ fb.style.display="none"; fb.removeAttribute("data-charge"); fb.srcdoc=""; }
+   var fb=document.getElementById("bar"); if(fb){ fb.style.pointerEvents="none"; fb.blur(); fb.style.display="none"; fb.removeAttribute("data-charge"); fb.srcdoc=""; }
    dedans=false; dir=0; sens=1; window.repriseRue();          // Rudy ressort devant le bar, prêt à repartir ou à rentrer
   }
  });
@@ -1391,14 +1407,14 @@ else carte.addEventListener("load",demarre);
    var o=LIEU_OCTETS("lieux/dragon.html");
    f.srcdoc=new TextDecoder("utf-8").decode(o); f.setAttribute("data-charge","1");
   } else { try{ f.contentWindow.postMessage({type:"dragon:entree"},"*"); }catch(err){} }
-  f.style.display="block"; dedans=true; window.pauseRue(); fl.style.display="none"; btn.style.display="none";
+  f.style.pointerEvents="auto"; f.style.display="block"; dedans=true; window.pauseRue(); fl.style.display="none"; btn.style.display="none";
   window.minuterieLibre(function(){ try{ f.focus(); }catch(err){} },300);
  }
  btn.addEventListener("pointerdown",entre); btn.addEventListener("touchstart",entre,{passive:false}); btn.addEventListener("click",entre);
  // SORTIR (tout à droite dans le restaurant) : retour dans la rue, en face du restaurant
  window.addEventListener("message",function(e){
   if(e.data && e.data.type==="dragon:sortie"){
-   var f=document.getElementById("resto"); if(f){ f.style.display="none"; f.removeAttribute("data-charge"); f.srcdoc=""; }
+   var f=document.getElementById("resto"); if(f){ f.style.pointerEvents="none"; f.blur(); f.style.display="none"; f.removeAttribute("data-charge"); f.srcdoc=""; }
    dedans=false; dir=0; window.repriseRue();
   }
  });
