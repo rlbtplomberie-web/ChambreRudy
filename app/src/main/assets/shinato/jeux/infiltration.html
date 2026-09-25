@@ -1006,5 +1006,5 @@ reset();resize();requestAnimationFrame(loop);
    var pris=false; new MutationObserver(function(){ if(!over.classList.contains("hidden")&&!pris){ pris=true; setTimeout(function(){envoie("infiltration:echec")},3000); } }).observe(over,{attributes:true,attributeFilter:["class"]}); }
 })();
 </script>
-</body>
+<script>addEventListener('touchstart',e=>{let t=e.changedTouches[0];e.target.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:99000+t.identifier,pointerType:'touch',clientX:t.clientX,clientY:t.clientY}))},{capture:true,passive:true});</script></body>
 </html>

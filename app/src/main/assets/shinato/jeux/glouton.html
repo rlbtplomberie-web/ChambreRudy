@@ -216,5 +216,5 @@ requestAnimationFrame(loop);
  function go(e){if(e.cancelable)e.preventDefault();var n=Date.now();if(n-t<500)return;t=n;if(action)action(e)}
  b.addEventListener("pointerdown",go);b.addEventListener("touchstart",go,{passive:false});b.addEventListener("click",go);});})();
 </script>
-</body>
+<script>addEventListener('touchstart',e=>{let t=e.changedTouches[0];e.target.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:99000+t.identifier,pointerType:'touch',clientX:t.clientX,clientY:t.clientY}))},{capture:true,passive:true});</script></body>
 </html>

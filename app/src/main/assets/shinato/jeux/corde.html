@@ -1705,5 +1705,5 @@ function frame(now){
  document.addEventListener('touchend',e=>{ if(!e.touches.length){ try{ holdTouch=false; }catch(_){} PADS.forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.remove('dn'); }); } },true);   // plus aucun doigt : rien ne reste appuyé
 })();
 </script>
-</body>
+<script>addEventListener('touchstart',e=>{if(!e.target.closest('canvas'))return;let t=e.changedTouches[0];e.target.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:99000+t.identifier,pointerType:'touch',clientX:t.clientX,clientY:t.clientY}))},{capture:true,passive:true});addEventListener('touchend',e=>{let t=e.changedTouches[0];document.elementFromPoint(t.clientX,t.clientY)?.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:99000+t.identifier,pointerType:'touch',clientX:t.clientX,clientY:t.clientY}))},{capture:true,passive:true});</script></body>
 </html>

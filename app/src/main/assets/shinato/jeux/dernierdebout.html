@@ -866,5 +866,5 @@ syncSnd();
 again.onclick=again2.onclick=startDuel;
 back.onclick=back2.onclick=quit.onclick=()=>{ SND.stopAmb(); stopVid(); finale.classList.remove('on','ready'); game.classList.remove('ending'); clearTimers(); cancelAnimationFrame(raf); phase='idle'; release(); game.classList.remove('on'); menu.classList.add('on'); end.classList.remove('on'); };
 </script>
-</body>
+<script>addEventListener('touchstart',e=>{let t=e.changedTouches[0];e.target.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:99000+t.identifier,pointerType:'touch',clientX:t.clientX,clientY:t.clientY}))},{capture:true,passive:true});</script></body>
 </html>

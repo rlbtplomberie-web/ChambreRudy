@@ -861,5 +861,5 @@ requestAnimationFrame(tick);
 const __dbg = { get P(){ return P; }, get C(){ return C; }, ball, get phase(){ return phase; }, get pts(){ return pts; }, get games(){ return games; } };
 })();
 </script>
-</body>
+<script>addEventListener('touchstart',e=>{let t=e.changedTouches[0];e.target.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:99000+t.identifier,pointerType:'touch',clientX:t.clientX,clientY:t.clientY}))},{capture:true,passive:true});</script></body>
 </html>
