@@ -1722,5 +1722,6 @@ requestAnimationFrame(frame);
   try{window.parent.postMessage({type:"kart:quitter"},"*")}catch(err){}}
  b.addEventListener("pointerdown",go);b.addEventListener("touchstart",go,{passive:false});b.addEventListener("click",go);})();
 </script>
-<script>addEventListener('touchstart',e=>{let t=e.changedTouches[0];e.target.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:99000+t.identifier,pointerType:'touch',clientX:t.clientX,clientY:t.clientY}))},{capture:true,passive:true});</script></body>
+<script>/* remise à zéro sûre des contrôles tactiles */(()=>{let on={};addEventListener('pointerdown',e=>on[e.pointerId]=e.target,true);let off=e=>delete on[e.pointerId];addEventListener('pointerup',off,true);addEventListener('pointercancel',off,true);addEventListener('touchend',e=>{if(!e.touches.length){for(const i in on)try{on[i].dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,pointerId:+i}))}catch(_){};on={}}},true);addEventListener('blur',()=>on={});})();</script>
+</body>
 </html>

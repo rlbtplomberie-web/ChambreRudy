@@ -1705,5 +1705,42 @@ function frame(now){
  document.addEventListener('touchend',e=>{ if(!e.touches.length){ try{ holdTouch=false; }catch(_){} PADS.forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.remove('dn'); }); } },true);   // plus aucun doigt : rien ne reste appuyé
 })();
 </script>
-<script>addEventListener('touchstart',e=>{if(!e.target.closest('canvas'))return;let t=e.changedTouches[0];e.target.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:99000+t.identifier,pointerType:'touch',clientX:t.clientX,clientY:t.clientY}))},{capture:true,passive:true});addEventListener('touchend',e=>{let t=e.changedTouches[0];document.elementFromPoint(t.clientX,t.clientY)?.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:99000+t.identifier,pointerType:'touch',clientX:t.clientX,clientY:t.clientY}))},{capture:true,passive:true});</script></body>
+<script>
+/* Volley : secours tactile isolé dans l'iframe.
+   Il ne fabrique un événement Pointer que si Android n'en a réellement pas envoyé. */
+(function(){
+ function installVolleyTouch(frame){
+  var d; try{ d=frame.contentDocument; }catch(_){ return; }
+  if(!d||d.__rudyVolleyTouch) return; d.__rudyVolleyTouch=true;
+  var lastPointer=0, active={};
+  d.addEventListener('pointerdown',function(){ lastPointer=performance.now(); },true);
+  function point(type,t,id,target){
+   try{ target.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,pointerId:id,pointerType:'touch',isPrimary:true,clientX:t.clientX,clientY:t.clientY})); }catch(_){}
+  }
+  function targetFor(t){ return d.elementFromPoint(t.clientX,t.clientY); }
+  d.addEventListener('touchstart',function(e){
+   var t=e.changedTouches[0], el=targetFor(t); if(!el) return;
+   var allowed=el.closest&&el.closest('#joy,#bA,#bB'); if(!allowed) return;
+   var id=70000+t.identifier, rec=active[id]={t:t,el:allowed,synthetic:false};
+   setTimeout(function(){
+    if(active[id]!==rec || performance.now()-lastPointer<90) return;
+    rec.synthetic=true; point('pointerdown',rec.t,id,rec.el);
+   },90);
+  },{capture:true,passive:true});
+  d.addEventListener('touchmove',function(e){ Array.prototype.forEach.call(e.changedTouches,function(t){ var r=active[70000+t.identifier]; if(r&&r.synthetic){r.t=t;point('pointermove',t,70000+t.identifier,r.el);} }); },{capture:true,passive:true});
+  function end(e,type){ Array.prototype.forEach.call(e.changedTouches,function(t){ var id=70000+t.identifier,r=active[id]; if(!r) return; if(r.synthetic) point(type,t,id,r.el); delete active[id]; }); }
+  d.addEventListener('touchend',function(e){end(e,'pointerup');},{capture:true,passive:true});
+  d.addEventListener('touchcancel',function(e){end(e,'pointercancel');},{capture:true,passive:true});
+  function release(){
+   active={}; var base=d.getElementById('base'),knob=d.getElementById('knob');
+   if(base) base.style.display='none'; if(knob) knob.style.transform='translate(-50%,-50%)';
+  }
+  d.addEventListener('visibilitychange',function(){ if(d.hidden) release(); });
+  window.addEventListener('blur',release);
+ }
+ function watch(){ var f=document.querySelector('#volley iframe'); if(!f||f.__rudyVolleyWatch) return; f.__rudyVolleyWatch=true; f.addEventListener('load',function(){installVolleyTouch(f);}); if(f.contentDocument&&f.contentDocument.readyState!=='loading') installVolleyTouch(f); }
+ watch(); setInterval(watch,800);
+})();
+</script>
+</body>
 </html>
