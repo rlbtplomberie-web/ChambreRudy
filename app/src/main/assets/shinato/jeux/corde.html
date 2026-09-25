@@ -1510,12 +1510,26 @@ function endGame(win){
   setTimeout(()=>{
     const im=$('wWinImg'); im.onload=()=>{ if(im.naturalWidth) $('wWinBox').style.setProperty('--ar',im.naturalWidth/im.naturalHeight); };
     im.src=ASSETS[win?'wwin_rudy':'wwin_girls']; im.alt=win?'Rudy gagne':'Équipe féminine gagne';
-    // 1 contre 1 perdu contre Gisèle : c'est sa vidéo de victoire qui passe
+    // Rudy perdu en 1 contre 1, 1 contre 3, 1 contre 6 ou Royal : la vidéo de victoire de la fille
+    // qui l'a trempé (celle qui a tiré la dernière goutte) passe à la place de l'image. 1 contre 8 : image.
+    const WWIN_VIDS={
+      gisele:['/assets/shinato/m/a4da8e9ac34ef5fb.mp4','/assets/shinato/m/63b30d90754bf271.webm',1280/732],
+      faty:['/assets/shinato/m/effe82d1c4e2346f.mp4','/assets/shinato/m/e811f9939b28732b.webm',1024/576],
+      mifa:['/assets/shinato/m/a8ca1c40168f8cda.mp4','/assets/shinato/m/0ab08b0da37c24ca.webm',1344/768],
+      karine:['/assets/shinato/m/5b18e8aaab2daa3e.mp4','/assets/shinato/m/fcc28be17cb8cf8a.webm',1344/768],
+      ameline:['/assets/shinato/m/d3520a84fa2c7b8f.mp4','/assets/shinato/m/b98e6135e4e88b47.webm',1344/768],
+      katila:['/assets/shinato/m/b0c16295cf09dd30.mp4','/assets/shinato/m/458add0cd85f48fa.webm',1344/768],
+      sophie:['/assets/shinato/m/28a62983edca9db4.mp4','/assets/shinato/m/12fac7bfadfa4107.webm',1344/768],
+      rose:['/assets/shinato/m/478a3dbd63437bd3.mp4','/assets/shinato/m/9ed38717ff07c91e.webm',1344/768],
+    };
     const seules=G.cfg.girls||(G.cfg.opp?[G.cfg.opp]:[]);
-    if(!win&&seules.length===1&&seules[0]==='gisele'&&G.cfg.mode!=='royal'){
-      const v=$('wWinVid'), l=['/assets/shinato/m/a4da8e9ac34ef5fb.mp4','/assets/shinato/m/63b30d90754bf271.webm'];
+    const tireuse=G.rudy&&G.rudy.lastHitBy&&!G.rudy.lastHitBy.human?G.rudy.lastHitBy.id:(seules.length===1?seules[0]:null);
+    const vid=!win&&['1v1','1v3','1v6','royal'].includes(G.cfg.mode)&&tireuse&&WWIN_VIDS[tireuse];
+    if(vid){
+      const v=$('wWinVid'), l=vid;
       const src=v.canPlayType('video/mp4; codecs="avc1.4D401F, mp4a.40.2"')?l[0]:l[1];
-      $('wWinBox').style.setProperty('--ar',1280/732); im.style.display='none'; v.style.display='block';
+      $('wWinBox').style.setProperty('--ar',l[2]); im.style.display='none'; v.style.display='block';
+      im.alt=WNAMES[tireuse]+' gagne';
       if(v.getAttribute('src')!==src) v.src=src;
       try{ v.currentTime=0; }catch(e){}
       v.muted=false; try{ MUSIC.volume=.07; }catch(e){}

@@ -1,27 +1,8 @@
-version 142 — Shinato : toucher fiable partout (le bureau et les jeux natifs ne sont pas touchés)
+version 143 — Pistolet à eau : vidéos de victoire des filles
 
-  Cette mise à jour contient TOUT le travail sur Shinato (elle remplace la 6 et la 7).
-
-  1. La cause des joysticks morts et des boutons qui marchent une fois sur dix
-     Les jeux tournent dans des cadres empilés (rue > lieu > jeu > parfois volley),
-     rechargés à chaque trajet. A cette profondeur, Android livre mal les
-     événements « pointer ». Les événements tactiles, eux, arrivent toujours.
-     - Volley, pistolet à eau, ville délabrée, moto : commandes au toucher direct.
-     - Les 10 autres jeux : un « pont tactile » unique fabrique les appuis à partir
-       du toucher (un appui = un appui, jamais de double, jamais de perdu).
-     - L'ancien pont, qui doublait chaque appui avec un faux doigt, est coupé.
-     - Joysticks du volley et du pistolet à eau visibles en permanence.
-
-  2. Écrans noirs
-     - Jeux de Gisèle : « </script » dans le code du volley coupait tout. Corrigé.
-     - Bras de fer, Five Fight, pistolet à eau : moteur 3D (three.js) récupéré
-       pendant la compilation (app/build.gradle.kts), Internet seulement en secours.
-     - Polices Internet : ne bloquent plus l'affichage quand la connexion est lente.
-
-  3. Boutons hors de l'écran ou cachés
-     FuryKart (départ, gaz qui se relâchait), Foot Course (Commencer, Quitter sur le
-     chrono), Infiltration (Crocheter), Premier verre (Confirmer, réponses, mise en
-     page téléphone couché), Soins (Partir sur le titre).
-
-  4. Compilation : la tâche three.js passe par des imports (« java.net » écrit en
-     entier était pris pour le réglage Java de Gradle).
+  Quand Rudy est trempé en 1 contre 1, 1 contre 3, 1 contre 6 ou en Royal, la
+  vidéo de victoire de la fille qui a tiré la dernière goutte passe à la place
+  de l'image. En 1 contre 8, rien ne change (l'image habituelle).
+  Vidéos : Faty, Mifa, Karine, Ameline, Katila, Sophie, Rose (nouvelles) et
+  Gisèle (sa vidéo du 1 contre 1 sert maintenant aussi en 1v3, 1v6 et Royal).
+  Chaque vidéo existe en .mp4 (téléphone) et .webm (secours), dans shinato/m/.
