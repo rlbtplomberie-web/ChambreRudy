@@ -13,7 +13,7 @@ canvas{display:block;width:100vw;height:100vh}
 #lap{font-size:13px;margin-top:3px;color:#ffc46b;text-shadow:0 1px 0 #000}
 #side{display:flex;gap:8px}
 #side canvas{width:78px;height:78px;border-radius:50%;background:var(--pad);border:2px solid #ffffff30}
-#joy{position:fixed;left:20px;bottom:20px;width:104px;height:104px;border-radius:50%;background:var(--pad);border:2px solid #ffffff35}
+#joy{position:fixed;left:20px;bottom:20px;width:104px;height:104px;border-radius:50%;background:var(--pad);border:2px solid #ffffff35;touch-action:none}
 #knob{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:#e9e4da;box-shadow:0 4px 0 #0008 inset,0 3px 8px #000a}
 #gas{position:fixed;right:22px;bottom:26px;width:86px;height:86px;border-radius:50%;border:none;background:var(--accent);color:#fff;font:900 12px "Trebuchet MS",sans-serif;box-shadow:0 5px 0 #7c140d,0 10px 18px #000a;touch-action:none}
 #gas.on{transform:translateY(5px);box-shadow:0 2px 0 #7c140d,0 4px 10px #000a}
@@ -51,11 +51,11 @@ const inp={x:0,y:0,gas:false};const keys={};
 addEventListener('keydown',e=>{keys[e.key]=1;if(e.key==' ')e.preventDefault()});addEventListener('keyup',e=>keys[e.key]=0);
 const joy=document.getElementById('joy'),knob=document.getElementById('knob');let jid=null,jx=0,jy=0;
 function jmove(e){const r=joy.getBoundingClientRect(),R=r.width/2;let dx=e.clientX-r.left-R,dy=e.clientY-r.top-R;const d=Math.hypot(dx,dy),m=R-15;if(d>m){dx*=m/d;dy*=m/d}jx=dx/m;jy=dy/m;knob.style.transform=`translate(${dx}px,${dy}px)`}
-joy.addEventListener('pointerdown',e=>{jid=e.pointerId;joy.setPointerCapture(jid);jmove(e)});
+joy.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')return;jid=e.pointerId;try{joy.setPointerCapture(jid)}catch(_){}jmove(e)});
 joy.addEventListener('pointermove',e=>{if(e.pointerId===jid)jmove(e)});
 const jend=e=>{if(e.pointerId===jid){jid=null;jx=jy=0;knob.style.transform=''}};joy.addEventListener('pointerup',jend);joy.addEventListener('pointercancel',jend);
 const gas=document.getElementById('gas');let gasOn=false;
-gas.addEventListener('pointerdown',e=>{gasOn=true;gas.setPointerCapture(e.pointerId);gas.classList.add('on')});
+gas.addEventListener('pointerdown',e=>{gasOn=true;try{gas.setPointerCapture(e.pointerId)}catch(_){}gas.classList.add('on')});
 const gend=()=>{gasOn=false;gas.classList.remove('on')};gas.addEventListener('pointerup',gend);gas.addEventListener('pointercancel',gend);
 
 // ---- circuit côtier de nuit ----
@@ -310,10 +310,22 @@ document.getElementById('snd').addEventListener('click',e=>{initAudio();muted=!m
  var pid=null, ox=0, oy=0;
  function bouge(e){ var R=joy.getBoundingClientRect().width/2, m=R-15; var dx=e.clientX-ox, dy=e.clientY-oy, d=Math.hypot(dx,dy);
   if(d>m){ dx*=m/d; dy*=m/d; } jx=dx/m; jy=dy/m; knob.style.transform="translate("+dx+"px,"+dy+"px)"; }
- z.addEventListener("pointerdown",function(e){ if(e.cancelable)e.preventDefault(); pid=e.pointerId; ox=e.clientX; oy=e.clientY;
+ /* au doigt : événements tactiles directs (Android les livre toujours, même quand ce cadre a été rechargé plusieurs fois) */
+ function tStart(e,cible){ if(e.cancelable)e.preventDefault(); if(pid!==null)return; var t=e.changedTouches[0]; pid="t"+t.identifier;
+  if(cible===z){ ox=t.clientX; oy=t.clientY; } else { var r=joy.getBoundingClientRect(); ox=r.left+r.width/2; oy=r.top+r.height/2; } bouge(t); }
+ function tMove(e){ for(var i=0;i<e.changedTouches.length;i++){ var t=e.changedTouches[i]; if("t"+t.identifier===pid){ if(e.cancelable)e.preventDefault(); bouge(t); } } }
+ function tFin(e){ for(var i=0;i<e.changedTouches.length;i++){ if("t"+e.changedTouches[i].identifier===pid){ pid=null; jx=jy=0; knob.style.transform=""; } } }
+ [z,joy].forEach(function(el){
+  el.addEventListener("touchstart",function(e){ tStart(e,el); },{passive:false});
+  el.addEventListener("touchmove",tMove,{passive:false});
+  el.addEventListener("touchend",tFin); el.addEventListener("touchcancel",tFin);
+ });
+ document.addEventListener("touchend",function(e){ if(!e.touches.length && pid!==null){ pid=null; jx=jy=0; knob.style.transform=""; } },true);
+ /* à la souris (ordinateur) */
+ z.addEventListener("pointerdown",function(e){ if(e.pointerType!=="mouse")return; if(e.cancelable)e.preventDefault(); pid=e.pointerId; ox=e.clientX; oy=e.clientY;
   try{ z.setPointerCapture(pid); }catch(err){} bouge(e); });
- z.addEventListener("pointermove",function(e){ if(e.pointerId===pid){ if(e.cancelable)e.preventDefault(); bouge(e); } });
- function fin(e){ if(e.pointerId===pid){ pid=null; jx=jy=0; knob.style.transform=""; } }
+ z.addEventListener("pointermove",function(e){ if(e.pointerType==="mouse"&&e.pointerId===pid){ if(e.cancelable)e.preventDefault(); bouge(e); } });
+ function fin(e){ if(e.pointerType==="mouse"&&e.pointerId===pid){ pid=null; jx=jy=0; knob.style.transform=""; } }
  ["pointerup","pointercancel","lostpointercapture"].forEach(function(t){ z.addEventListener(t,fin); });
  joy.addEventListener("lostpointercapture",function(e){ if(e.pointerId===jid){ jid=null; jx=jy=0; knob.style.transform=""; } });
  function tout(){ pid=null; jid=null; jx=jy=0; knob.style.transform=""; }

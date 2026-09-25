@@ -2,11 +2,47 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<script>
+/* ---------- toucher fiable dans l'appli (version 142) ----------
+   Dans l'appli Android, ce jeu tourne dans un cadre dans un cadre, rechargé à chaque trajet. À cette profondeur,
+   les événements « pointer » du doigt arrivent mal (joystick mort, boutons une fois sur dix), alors que les
+   événements tactiles arrivent toujours. Ici on fabrique donc TOUS les appuis du doigt à partir des événements
+   tactiles, d'une seule source : jamais d'appui en double, jamais d'appui perdu. La souris n'est pas touchée. */
+(function(){
+ if(window.__toucherFiable||!window.PointerEvent||!('ontouchstart' in window))return; window.__toucherFiable=true;
+ var suivi={}, BASE=500, capt={}, premier=null;
+ ['pointerdown','pointermove','pointerup','pointercancel','pointerover','pointerout','pointerenter','pointerleave','gotpointercapture','lostpointercapture'].forEach(function(t){
+  window.addEventListener(t,function(e){ if(e.isTrusted&&e.pointerType==='touch') e.stopImmediatePropagation(); },true);
+ });
+ function envoie(type,t,cible,id){
+  try{ cible.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,composed:true,pointerId:id,pointerType:'touch',isPrimary:id===premier,
+   clientX:t.clientX,clientY:t.clientY,screenX:t.screenX,screenY:t.screenY,pageX:t.pageX,pageY:t.pageY,
+   width:(t.radiusX||12)*2,height:(t.radiusY||12)*2,pressure:type==='pointerup'||type==='pointercancel'?0:.5,button:type==='pointermove'?-1:0,buttons:type==='pointerup'||type==='pointercancel'?0:1})); }catch(_){}
+ }
+ function cibleDe(id,t){ var c=capt[id]||suivi[id]; return (c&&c.isConnected)?c:(t.target&&t.target.isConnected?t.target:document.elementFromPoint(t.clientX,t.clientY)||document.body); }
+ window.addEventListener('touchstart',function(e){ for(var i=0;i<e.changedTouches.length;i++){ var t=e.changedTouches[i], id=BASE+t.identifier;
+  var c=t.target&&t.target.nodeType===1?t.target:(t.target&&t.target.parentElement)||document.body; suivi[id]=c; delete capt[id];
+  if(premier===null) premier=id; envoie('pointerdown',t,c,id); } },{capture:true,passive:true});
+ window.addEventListener('touchmove',function(e){ for(var i=0;i<e.changedTouches.length;i++){ var t=e.changedTouches[i], id=BASE+t.identifier;
+  if(suivi[id]) envoie('pointermove',t,cibleDe(id,t),id); } },{capture:true,passive:true});
+ function fin(type){ return function(e){ for(var i=0;i<e.changedTouches.length;i++){ var t=e.changedTouches[i], id=BASE+t.identifier;
+  if(!suivi[id]) continue; var c=cibleDe(id,t); delete suivi[id]; delete capt[id]; envoie(type,t,c,id); }
+  if(!e.touches||!e.touches.length) premier=null; }; }
+ window.addEventListener('touchend',fin('pointerup'),{capture:true,passive:true});
+ window.addEventListener('touchcancel',fin('pointercancel'),{capture:true,passive:true});
+ /* les jeux « capturent » le doigt : pour nos appuis fabriqués, on le fait nous-mêmes, sans erreur */
+ var sp=Element.prototype.setPointerCapture, rp=Element.prototype.releasePointerCapture, hp=Element.prototype.hasPointerCapture;
+ Element.prototype.setPointerCapture=function(id){ if(id>=BASE&&id<BASE+1000){ capt[id]=this; return; } try{ return sp.call(this,id); }catch(_){} };
+ Element.prototype.releasePointerCapture=function(id){ if(id>=BASE&&id<BASE+1000){ if(capt[id]===this) delete capt[id]; return; } try{ return rp.call(this,id); }catch(_){} };
+ Element.prototype.hasPointerCapture=function(id){ if(id>=BASE&&id<BASE+1000) return capt[id]===this; try{ return hp.call(this,id); }catch(_){ return false; } };
+})();
+</script>
+
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Smash Court</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Rubik:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Rubik:wght@500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"><!-- police Internet : ne bloque plus l'affichage sans connexion -->
 <style>
 :root{
   --bg:#140c22; --ink:#fff7ea; --gold:#ffd23f; --flame:#ff5a1f; --shadow:#2a1206; --veil:rgba(20,10,34,.78);

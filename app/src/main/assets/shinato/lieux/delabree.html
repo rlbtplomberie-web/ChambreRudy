@@ -5,7 +5,8 @@
 <style>
 html,body{margin:0;height:100%;overflow:hidden;background:#05060d;touch-action:none;user-select:none;-webkit-user-select:none;font-family:system-ui,sans-serif}
 canvas{display:block;width:100vw;height:100vh}
-#joy{position:fixed;left:18px;bottom:18px;width:104px;height:104px;border-radius:50%;background:#0a0e1c99;border:2px solid #ffffff30}
+#joy{position:fixed;left:18px;bottom:18px;width:104px;height:104px;border-radius:50%;background:#0a0e1c99;border:2px solid #ffffff30;touch-action:none}
+#knob{pointer-events:none}
 #knob{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:#f4efe6;box-shadow:0 3px 8px #000a}
 #run{position:fixed;right:18px;bottom:22px;width:84px;height:84px;border-radius:50%;border:3px solid #000;background:#e0762e;color:#fff;font:700 15px system-ui,sans-serif;box-shadow:0 5px 0 #000;touch-action:none}
 #run.on{background:#ff9a3c;transform:translateY(3px);box-shadow:0 2px 0 #000}
@@ -200,11 +201,21 @@ addEventListener('resize',resize);resize();
 const keys={};addEventListener('keydown',e=>{keys[e.key]=true;if(e.key.startsWith('Arrow'))e.preventDefault();if((e.key==='Enter'||e.key==='e')&&zoneNow)doAction()});addEventListener('keyup',e=>keys[e.key]=false);
 const joy=document.getElementById('joy'),knob=document.getElementById('knob');let jid=null,jx=0,jy=0;
 function jmove(e){const r=joy.getBoundingClientRect(),R=r.width/2;let dx=e.clientX-r.left-R,dy=e.clientY-r.top-R;const d=Math.hypot(dx,dy),m=R-14;if(d>m){dx*=m/d;dy*=m/d}jx=dx/m;jy=dy/m;knob.style.transform=`translate(${dx}px,${dy}px)`}
-joy.addEventListener('pointerdown',e=>{jid=e.pointerId;joy.setPointerCapture(jid);jmove(e)});joy.addEventListener('pointermove',e=>{if(e.pointerId===jid)jmove(e)});
-const jend=e=>{if(e.pointerId===jid){jid=null;jx=0;jy=0;knob.style.transform=''}};joy.addEventListener('pointerup',jend);joy.addEventListener('pointercancel',jend);
-const rb=document.getElementById('run');let runHeld=false;
-rb.addEventListener('pointerdown',e=>{e.preventDefault();runHeld=true;rb.classList.add('on');rb.setPointerCapture(e.pointerId)});
-['pointerup','pointercancel'].forEach(ev=>rb.addEventListener(ev,()=>{runHeld=false;rb.classList.remove('on')}));
+/* Commandes au toucher DIRECT, comme la rue, la plage et Vaviel. Avant, la ville délabrée était la seule à passer
+   par les événements « pointer » : après un passage par la plage ou Vaviel (même cadre rechargé), Android ne les
+   livrait plus bien → impossible d'avancer, de courir ou de frapper. La souris garde les événements pointer. */
+function jstop(){jid=null;jx=0;jy=0;knob.style.transform=''}
+joy.addEventListener('touchstart',e=>{if(e.cancelable)e.preventDefault();if(jid!==null)return;const t=e.changedTouches[0];jid='t'+t.identifier;jmove(t)},{passive:false});
+joy.addEventListener('touchmove',e=>{for(const t of e.changedTouches)if('t'+t.identifier===jid){if(e.cancelable)e.preventDefault();jmove(t)}},{passive:false});
+const jendT=e=>{for(const t of e.changedTouches)if('t'+t.identifier===jid)jstop()};joy.addEventListener('touchend',jendT);joy.addEventListener('touchcancel',jendT);
+joy.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')return;jid='m';try{joy.setPointerCapture(e.pointerId)}catch(_){}jmove(e)});joy.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&jid==='m')jmove(e)});
+const jend=e=>{if(e.pointerType==='mouse'&&jid==='m')jstop()};joy.addEventListener('pointerup',jend);joy.addEventListener('pointercancel',jend);
+const rb=document.getElementById('run');let runHeld=false,runT=null;
+function runOn(){runHeld=true;rb.classList.add('on')}function runOff(){runT=null;runHeld=false;rb.classList.remove('on')}
+rb.addEventListener('touchstart',e=>{if(e.cancelable)e.preventDefault();e.stopPropagation();if(runT!==null)return;runT=e.changedTouches[0].identifier;runOn()},{passive:false});
+const runFin=e=>{for(const t of e.changedTouches)if(t.identifier===runT)runOff()};rb.addEventListener('touchend',runFin);rb.addEventListener('touchcancel',runFin);
+rb.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')return;e.preventDefault();runT='m';runOn()});
+['pointerup','pointercancel','pointerleave'].forEach(ev=>rb.addEventListener(ev,e=>{if(e.pointerType==='mouse'&&runT==='m')runOff()}));
 // ---------- entrer / sortir ----------
 const act=document.getElementById('act'),fade=document.getElementById('fade');let zoneNow=null,busy=false;
 const GAMES={aura:'jeux/aura.html',smash:'jeux/smash.html'};
@@ -305,8 +316,14 @@ const ATK={poing:{fps:20,hit:[3,5],reach:62,dmg:8},upper:{fps:18,hit:[3,5],reach
 const ORDRE=['poing','upper','pied'];   // 1er appui : poing · 2e : uppercut · 3e : coup de pied
 const atkBtn=document.getElementById('atk'),fightUI=document.getElementById('fight'),koUI=document.getElementById('ko');
 function attaque(){if(!CB.on||CB.ko||ARREST)return;if(!CB.atk){CB.atk='poing';CB.stage=0;CB.t=0;CB.hit=false;SON.souffle()}else if(CB.stage<2)CB.queued=true}
-atkBtn.addEventListener('pointerdown',e=>{e.preventDefault();atkBtn.classList.add('on');attaque()});
-['pointerup','pointercancel'].forEach(ev=>atkBtn.addEventListener(ev,()=>atkBtn.classList.remove('on')));
+let atkT=null;   /* attaque : chaque appui du doigt = un coup (toucher direct) */
+atkBtn.addEventListener('touchstart',e=>{if(e.cancelable)e.preventDefault();e.stopPropagation();for(const t of e.changedTouches){if(atkT===null){atkT=t.identifier;atkBtn.classList.add('on');attaque()}}},{passive:false});
+const atkFin=e=>{for(const t of e.changedTouches)if(t.identifier===atkT){atkT=null;atkBtn.classList.remove('on')}};atkBtn.addEventListener('touchend',atkFin);atkBtn.addEventListener('touchcancel',atkFin);
+atkBtn.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse')return;e.preventDefault();atkBtn.classList.add('on');attaque()});
+['pointerup','pointercancel'].forEach(ev=>atkBtn.addEventListener(ev,e=>{if(e.pointerType==='mouse')atkBtn.classList.remove('on')}));
+/* plus aucun doigt sur l'écran : rien ne reste appuyé */
+document.addEventListener('touchend',e=>{if(!e.touches.length){jstop();runOff();atkT=null;atkBtn.classList.remove('on')}},true);
+document.addEventListener('touchcancel',e=>{if(!e.touches.length){jstop();runOff();atkT=null;atkBtn.classList.remove('on')}},true);
 addEventListener('keydown',e=>{if((e.key==='a'||e.key===' ')&&CB.on){e.preventDefault();attaque()}});
 function startCombat(){const L=LOUBARD;L.cx=L.x;L.cy=L.y;L.ea=null;L.et=0;L.cd=.8;L.phase=0;L.stun=0;L.recul=0;CB.on=true;CB.hpR=window.vieLire();CB.hpE=E_MAX;   /* il repart avec la vie qui lui reste */ CB.atk=null;CB.queued=false;CB.ko=0;fightUI.classList.add('show');atkBtn.classList.add('show');rb.style.display='none';majBarres()}
 function stopCombat(){CB.on=false;CB.atk=null;fightUI.classList.remove('show');atkBtn.classList.remove('show');rb.style.display=''}
