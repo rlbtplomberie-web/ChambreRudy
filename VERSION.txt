@@ -1,13 +1,14 @@
-version 146 — Le téléphone de Rudy (MAP + vidéos débloquées)
+version 147 — Le téléphone de Rudy partout (MAP + vidéos débloquées + musique)
 
   Téléphone (assets/web/telephone.html) :
-  - Chambre : bouton « 📱 Téléphone » en haut à gauche, le téléphone s'ouvre
-    avec la chambre derrière.
-  - Rue de Shinato : bouton « 📱 TÉLÉPHONE » en haut à gauche, le téléphone
-    s'ouvre avec la rue derrière (« ✕ FERMER » pour le refermer).
-  - MAP : après l'animation du trajet, Rudy arrive directement à l'endroit
-    choisi : Shinato, Vaviel, la plage, la ville délabrée, ou chez lui.
-  - Vidéos : chaque vidéo de victoire vue une fois (bras de fer, tir à la
-    corde, pistolet à eau, dernier debout) apparaît dans les vidéos du téléphone.
-  Dernier debout : ses vidéos de fin sont aussi copiées en fichiers
-  (shinato/m/dd_*_victoire.mp4) pour que le téléphone puisse les lire.
+  - Toujours en haut à gauche : dans la chambre, dans la rue de Shinato, à Vaviel,
+    dans la ville délabrée, à la plage, dans les bars, le restaurant, l'hôpital…
+    Il se cache seulement pendant un mini-jeu (et le trajet en moto), puis revient.
+  - Chambre : il s'ouvre avec la chambre derrière, la musique de la chambre continue.
+  - Shinato et les autres villes : il s'ouvre avec la rue derrière, la musique de la
+    ville continue.
+  - MAP : après l'animation du trajet, Rudy arrive directement à l'endroit choisi
+    (Shinato, Vaviel, la plage, la ville délabrée, chez lui). La musique de l'endroit
+    où il arrive prend le relais, l'autre se coupe.
+  - Vidéos : chaque vidéo de victoire vue une fois (bras de fer, tir à la corde,
+    pistolet à eau, dernier debout) apparaît dans les vidéos du téléphone.

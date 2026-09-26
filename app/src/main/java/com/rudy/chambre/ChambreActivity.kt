@@ -375,7 +375,7 @@ class ChambreActivity : ComponentActivity() {
             setStroke(dp(1.5f), 0x80FFE1A0.toInt())
         }
         b.visibility = View.GONE                  // caché pendant l'ouverture du carton
-        b.setOnClickListener { page("telephone.html?dec=room", "Chambre") }
+        b.setOnClickListener { page("telephone.html?dec=room", "Chambre", garderMusique = true) }
         boutonTelephone = b
         val lp = FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.START)
         lp.topMargin = dp(6f); lp.leftMargin = dp(8f)
@@ -888,9 +888,10 @@ class ChambreActivity : ComponentActivity() {
         if (vue.porteD > 0.5f) { son.bruit("porte_ferme.mp3"); vue.bougerPorte(false, false) }
     }
 
-    /** Ouvre une page par-dessus la chambre, et coupe la musique le temps du jeu. */
-    private fun page(chemin: String, titre: String, paysage: Boolean = false) {
-        son.enPause(true)
+    /** Ouvre une page par-dessus la chambre, et coupe la musique le temps du jeu
+     *  (sauf pour le téléphone : la musique de la chambre reste en fond). */
+    private fun page(chemin: String, titre: String, paysage: Boolean = false, garderMusique: Boolean = false) {
+        if (!garderMusique) son.enPause(true)
         startActivity(Intent(this, PageActivity::class.java)
             .putExtra("page", chemin)
             .putExtra("titre", titre)

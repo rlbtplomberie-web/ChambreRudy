@@ -1622,47 +1622,73 @@ else carte.addEventListener("load",demarre);
  };
 })();
 </script><style>
-#telBtn{position:fixed;z-index:24;display:none;left:calc(8px + env(safe-area-inset-left,0px));top:max(6px,env(safe-area-inset-top,0px));
- padding:6px 12px;border-radius:999px;background:rgba(10,10,14,.62);border:1px solid rgba(255,226,122,.55);
+#telBtn{position:fixed;z-index:65;display:none;left:calc(8px + env(safe-area-inset-left,0px));top:max(6px,env(safe-area-inset-top,0px));
+ padding:6px 12px;border-radius:999px;background:rgba(10,10,14,.72);border:1px solid rgba(255,226,122,.6);
  color:#ffe27a;font:800 13px/1 Arial,Helvetica,sans-serif;text-shadow:0 1px 2px #000;cursor:pointer}
-#telFrame{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:60;background:#000;display:none}
-#telFermer{position:fixed;z-index:61;display:none;left:calc(8px + env(safe-area-inset-left,0px));top:calc(8px + env(safe-area-inset-top,0px));
+#telFrame{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:70;background:#000;display:none}
+#telFermer{position:fixed;z-index:71;display:none;left:calc(8px + env(safe-area-inset-left,0px));top:calc(8px + env(safe-area-inset-top,0px));
  padding:7px 12px;border-radius:999px;background:rgba(10,10,14,.75);border:2px solid rgba(255,226,122,.8);color:#ffe27a;font:900 13px/1 Arial,sans-serif;letter-spacing:1px;cursor:pointer}
 </style>
 <div id="telBtn">📱 TÉLÉPHONE</div>
 <div id="telFermer">&#10005; FERMER</div>
 <script>
-/* ---------- Téléphone de Rudy : bouton en haut à gauche de la rue, ouvre le téléphone côté rue ---------- */
+/* ---------- Téléphone de Rudy : toujours en haut à gauche (rue, Vaviel, ville délabrée, plage, bars…),
+   sauf pendant un mini-jeu. Il s'ouvre avec la rue derrière, et la musique de la ville continue. ---------- */
 (function(){
- var btn=document.getElementById("telBtn"), fermer=document.getElementById("telFermer"), ouvert=false;
- function visible(){ btn.style.display=(!ouvert&&!window.PAUSE_RUE)?"block":"none"; }
- (function boucle(){ visible(); window.minuterieLibre(boucle,400); })();   // tourne aussi quand la rue est en pause
+ var btn=document.getElementById("telBtn"), fermer=document.getElementById("telFermer"), ouvert=false, pauseParMoi=false;
+ var LIEUX={bar:1,resto:1,moto:1,lieuInfi:1};          // cadres qui contiennent un lieu (et pas un jeu)
+ function visibleCadre(f){ try{ if(!f.offsetWidth&&!f.offsetHeight) return false; var c=getComputedStyle(f); return c.display!=="none"&&c.visibility!=="hidden"; }catch(e){ return false; } }
+ // un mini-jeu est-il ouvert, dans la rue ou dans un lieu (à n'importe quelle profondeur) ?
+ function enJeu(doc,prof){
+  if(!doc||prof>5) return false;
+  var cadres=doc.getElementsByTagName("iframe");
+  for(var i=0;i<cadres.length;i++){
+   var f=cadres[i]; if(f.id==="telFrame"||!visibleCadre(f)) continue;
+   var w=null,d=null,href=""; try{ w=f.contentWindow; d=f.contentDocument; href=String(w.location.href); }catch(e){}
+   if(href.indexOf("/jeux/")>=0) return true;
+   if(href.indexOf("/lieux/")>=0){ if(enJeu(d,prof+1)) return true; continue; }
+   if(href==="about:blank"&&!f.getAttribute("srcdoc")) continue;
+   if(LIEUX[f.id]){
+    try{ if(d&&/^Rudy Moto/.test(d.title||"")) return true; }catch(e){}   // le trajet en moto : c'est un jeu
+    if(enJeu(d,prof+1)) return true; continue;
+   }
+   return true;                                        // tout autre cadre ouvert : un mini-jeu
+  }
+  return false;
+ }
+ function visible(){ var v=!ouvert&&!enJeu(document,0); btn.style.display=v?"block":"none"; }
+ (function boucle(){ try{ visible(); }catch(e){} window.minuterieLibre(boucle,400); })();   // tourne aussi quand la rue est en pause
  window.appuiSur(btn,function(){
   dir=0;
   var f=document.getElementById("telFrame");
   if(!f){ f=document.createElement("iframe"); f.id="telFrame"; f.setAttribute("allow","autoplay; camera; microphone"); document.body.appendChild(f); }
-  window.pauseRue(); ouvert=true; visible();
+  pauseParMoi=!window.PAUSE_RUE; if(pauseParMoi) window.pauseRue();   // la musique de la ville, elle, continue
+  ouvert=true; visible();
   f.src="/assets/web/telephone.html?dec=street"; f.style.display="block"; fermer.style.display="block";
   window.minuterieLibre(function(){ try{ f.focus(); }catch(e){} },300);
  });
  function fermeTel(){
   var f=document.getElementById("telFrame"); if(f){ f.style.display="none"; f.src="about:blank"; }
-  fermer.style.display="none"; ouvert=false; dir=0; window.repriseRue(); visible();
+  fermer.style.display="none"; ouvert=false; dir=0;
+  if(pauseParMoi){ pauseParMoi=false; window.repriseRue(); }
+  try{ if(window.reveilleTactile) window.reveilleTactile(); }catch(e){}
+  visible();
  }
  window.appuiSur(fermer,fermeTel);
 
- /* MAP du téléphone : Rudy est téléporté là où il a choisi d'aller */
+ /* MAP du téléphone : Rudy est téléporté là où il a choisi d'aller (la musique de la ville continue) */
  window.teleporteVers=function(lieu){
   var dest={plage:"plage",vaviel:"vaviel",ville:"delabree",delabree:"delabree"}[lieu];
   if(lieu==="home"){ try{ if(window.Chambre&&window.Chambre.rentrer) window.Chambre.rentrer(); }catch(e){} return; }
+  try{ if(window.RUDY_AUDIO&&window.RUDY_AUDIO.paused){ var pr=window.RUDY_AUDIO.play(); if(pr&&pr.catch) pr.catch(function(){}); } }catch(e){}
   var cm=document.getElementById("moto");
-  if(!dest){                                   // Shinato : on est (ou on revient) dans la rue
-   if(cm&&cm.style.display!=="none"){ cm.style.pointerEvents="none"; cm.style.display="none"; cm.srcdoc=""; }
+  window.libereLieux();                                  // on quitte le bar ou le restaurant s'il y était
+  if(!dest){                                             // Shinato : retour dans la rue
+   if(cm){ cm.style.pointerEvents="none"; cm.style.display="none"; cm.srcdoc=""; }
    window.DESTINATION_MOTO="plage"; dir=0; window.repriseRue(); if(typeof cadre==="function") cadre(true);
    return;
   }
-  window.DESTINATION_MOTO=dest; dir=0;
-  window.libereLieux(); window.pauseRue();
+  window.DESTINATION_MOTO=dest; dir=0; window.pauseRue();
   if(!cm){ cm=document.createElement("iframe"); cm.id="moto"; cm.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(cm); }
   cm.style.pointerEvents="auto"; cm.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/"+dest+".html")); cm.style.display="block";
   window.minuterieLibre(function(){ try{ cm.focus(); }catch(e){} },300);
