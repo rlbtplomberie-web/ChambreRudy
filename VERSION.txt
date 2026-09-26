@@ -1,11 +1,3 @@
-version 149 — Téléphone : 13 photos, fonds d'écran au choix, plage de Gisèle plus fluide
-
-  - 13 nouvelles photos dans la galerie du téléphone (web/photos/).
-  - Toutes les photos peuvent devenir le fond d'écran : dans « Fonds d'écran »
-    (rubriques Fonds et Photos), ou avec « Définir comme fond d'écran » sur une
-    photo ouverte dans la galerie.
-  - Le téléphone est beaucoup plus léger (0,3 Mo au lieu de 26 Mo) : ses images
-    et vidéos sont rangées à part dans web/tel/. Il s'ouvre plus vite et n'occupe
-    plus la mémoire quand il est fermé depuis 20 secondes.
-  - La vérification « un mini-jeu est-il ouvert ? » est plus légère (moins de
-    ralentissements dans les lieux animés comme la plage de Gisèle).
+version 151 — Téléphone : nouvelle photo et nouvelle vidéo
+  - Photo web/photos/ph_14.jpg dans la galerie (elle peut aussi devenir le fond d'écran).
+  - Vidéo web/vid/tel_video_11.mp4 dans l'appli Vidéos.
