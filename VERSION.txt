@@ -1,7 +1,8 @@
-version 145 — Bras de fer : vidéo de victoire de Karine
+version 145 — Bras de fer : vidéos de victoire des filles
 
-  Quand Karine remporte le match de bras de fer, sa vidéo de victoire passe
-  à la place de l'image (boutons Rejouer / Sortir par-dessus). Les autres
-  personnages gardent leur image. Si la vidéo ne peut pas se lire, l'image
-  habituelle reste affichée.
-  Vidéo : shinato/m/bdf_karine_victoire.mp4 (+ .webm de secours).
+  Quand une de ces filles remporte le match de bras de fer, sa vidéo de
+  victoire passe à la place de l'image (boutons Rejouer / Sortir par-dessus) :
+  Karine, Rose, Mifa, Sophie, Katila, Ameline et Faty.
+  Shanna et les garçons gardent leur image. Si une vidéo ne peut pas se lire,
+  l'image habituelle reste affichée.
+  Vidéos : shinato/m/bdf_<prénom>_victoire.mp4 (+ .webm de secours).
