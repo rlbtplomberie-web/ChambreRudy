@@ -543,6 +543,15 @@ class PageActivity : ComponentActivity() {
         @JavascriptInterface
         fun retourChambre() { runOnUiThread { finish() } }
 
+        /** La MAP du téléphone : Rudy part à Shinato (la page a noté où il va). */
+        @JavascriptInterface
+        fun allerShinato() {
+            runOnUiThread {
+                try { startActivity(Intent(this@PageActivity, ShinatoActivity::class.java)) } catch (_: Throwable) {}
+                finish()
+            }
+        }
+
         @JavascriptInterface
         fun ouvrirConsole(console: String) {
             runOnUiThread {

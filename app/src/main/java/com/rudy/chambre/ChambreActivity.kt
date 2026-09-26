@@ -97,6 +97,7 @@ class ChambreActivity : ComponentActivity() {
                 "chambre" -> {
                     son.bruit("pose.mp3")
                     vue.cadrerSurLaTele()
+                    boutonTelephone?.visibility = View.VISIBLE   // le téléphone apparaît avec la chambre
                 }
             }
         }
@@ -110,11 +111,13 @@ class ChambreActivity : ComponentActivity() {
         racine.addView(vue, FrameLayout.LayoutParams(-1, -1))
         racine.addView(ecranTele, FrameLayout.LayoutParams(1, 1))
         racine.addView(etiquette, FrameLayout.LayoutParams(-2, -2))
+        poseTelephone(racine)
         setContentView(racine)
 
         // « Bureau » depuis un emulateur doit revenir immediatement a la
         // chambre utile (TV, tiroirs et consoles), jamais a l'introduction.
         val retourBureau = intent.getBooleanExtra("retour_bureau", false)
+        if (retourBureau || etat != null) boutonTelephone?.visibility = View.VISIBLE
         if (retourBureau) {
             vue.post { vue.cadrerSurLaTele() }
         } else if (etat == null) {
@@ -351,6 +354,32 @@ class ChambreActivity : ComponentActivity() {
         lp.topMargin = dp(6f); lp.rightMargin = dp(8f)
         racine.addView(bande, lp)
         majArgent()
+    }
+
+    // ==================== Le téléphone de Rudy ====================
+    private var boutonTelephone: TextView? = null
+
+    /** En haut à gauche de la chambre : ouvre le téléphone, avec la chambre derrière. */
+    private fun poseTelephone(racine: FrameLayout) {
+        val dens = resources.displayMetrics.density
+        fun dp(v: Float) = (v * dens).toInt()
+        val b = TextView(this)
+        b.text = "📱 Téléphone"
+        b.setTextColor(0xFFFFEEC2.toInt())
+        b.textSize = 13f
+        b.setTypeface(b.typeface, android.graphics.Typeface.BOLD)
+        b.setPadding(dp(12f), dp(7f), dp(12f), dp(7f))
+        b.background = GradientDrawable().apply {
+            cornerRadius = dp(20f).toFloat()
+            setColor(0xD10C0818.toInt())
+            setStroke(dp(1.5f), 0x80FFE1A0.toInt())
+        }
+        b.visibility = View.GONE                  // caché pendant l'ouverture du carton
+        b.setOnClickListener { page("telephone.html?dec=room", "Chambre") }
+        boutonTelephone = b
+        val lp = FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.START)
+        lp.topMargin = dp(6f); lp.leftMargin = dp(8f)
+        racine.addView(b, lp)
     }
 
     /** Remet le montant a jour (au retour d'un jeu, d'une console ou de Shinato). */

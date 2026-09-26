@@ -1,8 +1,13 @@
-version 145 — Bras de fer : vidéos de victoire des filles
+version 146 — Le téléphone de Rudy (MAP + vidéos débloquées)
 
-  Quand une de ces filles remporte le match de bras de fer, sa vidéo de
-  victoire passe à la place de l'image (boutons Rejouer / Sortir par-dessus) :
-  Karine, Rose, Mifa, Sophie, Katila, Ameline et Faty.
-  Shanna et les garçons gardent leur image. Si une vidéo ne peut pas se lire,
-  l'image habituelle reste affichée.
-  Vidéos : shinato/m/bdf_<prénom>_victoire.mp4 (+ .webm de secours).
+  Téléphone (assets/web/telephone.html) :
+  - Chambre : bouton « 📱 Téléphone » en haut à gauche, le téléphone s'ouvre
+    avec la chambre derrière.
+  - Rue de Shinato : bouton « 📱 TÉLÉPHONE » en haut à gauche, le téléphone
+    s'ouvre avec la rue derrière (« ✕ FERMER » pour le refermer).
+  - MAP : après l'animation du trajet, Rudy arrive directement à l'endroit
+    choisi : Shinato, Vaviel, la plage, la ville délabrée, ou chez lui.
+  - Vidéos : chaque vidéo de victoire vue une fois (bras de fer, tir à la
+    corde, pistolet à eau, dernier debout) apparaît dans les vidéos du téléphone.
+  Dernier debout : ses vidéos de fin sont aussi copiées en fichiers
+  (shinato/m/dd_*_victoire.mp4) pour que le téléphone puisse les lire.

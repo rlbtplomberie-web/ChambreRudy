@@ -1484,7 +1484,7 @@ else carte.addEventListener("load",demarre);
  window.minuterieLibre(function veille(){
   try{
    if(window.PAUSE_RUE){
-    var ouvert=["bar","resto","moto","soccer"].some(function(id){ var f=document.getElementById(id); return f&&getComputedStyle(f).display!=="none"; });
+    var ouvert=["bar","resto","moto","soccer","telFrame"].some(function(id){ var f=document.getElementById(id); return f&&getComputedStyle(f).display!=="none"; });
     if(!ouvert){ window.repriseRue(); relache(); }
    }
   }catch(e){}
@@ -1621,5 +1621,63 @@ else carte.addEventListener("load",demarre);
   maj();
  };
 })();
-</script></body>
+</script><style>
+#telBtn{position:fixed;z-index:24;display:none;left:calc(8px + env(safe-area-inset-left,0px));top:max(6px,env(safe-area-inset-top,0px));
+ padding:6px 12px;border-radius:999px;background:rgba(10,10,14,.62);border:1px solid rgba(255,226,122,.55);
+ color:#ffe27a;font:800 13px/1 Arial,Helvetica,sans-serif;text-shadow:0 1px 2px #000;cursor:pointer}
+#telFrame{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:60;background:#000;display:none}
+#telFermer{position:fixed;z-index:61;display:none;left:calc(8px + env(safe-area-inset-left,0px));top:calc(8px + env(safe-area-inset-top,0px));
+ padding:7px 12px;border-radius:999px;background:rgba(10,10,14,.75);border:2px solid rgba(255,226,122,.8);color:#ffe27a;font:900 13px/1 Arial,sans-serif;letter-spacing:1px;cursor:pointer}
+</style>
+<div id="telBtn">📱 TÉLÉPHONE</div>
+<div id="telFermer">&#10005; FERMER</div>
+<script>
+/* ---------- Téléphone de Rudy : bouton en haut à gauche de la rue, ouvre le téléphone côté rue ---------- */
+(function(){
+ var btn=document.getElementById("telBtn"), fermer=document.getElementById("telFermer"), ouvert=false;
+ function visible(){ btn.style.display=(!ouvert&&!window.PAUSE_RUE)?"block":"none"; }
+ (function boucle(){ visible(); window.minuterieLibre(boucle,400); })();   // tourne aussi quand la rue est en pause
+ window.appuiSur(btn,function(){
+  dir=0;
+  var f=document.getElementById("telFrame");
+  if(!f){ f=document.createElement("iframe"); f.id="telFrame"; f.setAttribute("allow","autoplay; camera; microphone"); document.body.appendChild(f); }
+  window.pauseRue(); ouvert=true; visible();
+  f.src="/assets/web/telephone.html?dec=street"; f.style.display="block"; fermer.style.display="block";
+  window.minuterieLibre(function(){ try{ f.focus(); }catch(e){} },300);
+ });
+ function fermeTel(){
+  var f=document.getElementById("telFrame"); if(f){ f.style.display="none"; f.src="about:blank"; }
+  fermer.style.display="none"; ouvert=false; dir=0; window.repriseRue(); visible();
+ }
+ window.appuiSur(fermer,fermeTel);
+
+ /* MAP du téléphone : Rudy est téléporté là où il a choisi d'aller */
+ window.teleporteVers=function(lieu){
+  var dest={plage:"plage",vaviel:"vaviel",ville:"delabree",delabree:"delabree"}[lieu];
+  if(lieu==="home"){ try{ if(window.Chambre&&window.Chambre.rentrer) window.Chambre.rentrer(); }catch(e){} return; }
+  var cm=document.getElementById("moto");
+  if(!dest){                                   // Shinato : on est (ou on revient) dans la rue
+   if(cm&&cm.style.display!=="none"){ cm.style.pointerEvents="none"; cm.style.display="none"; cm.srcdoc=""; }
+   window.DESTINATION_MOTO="plage"; dir=0; window.repriseRue(); if(typeof cadre==="function") cadre(true);
+   return;
+  }
+  window.DESTINATION_MOTO=dest; dir=0;
+  window.libereLieux(); window.pauseRue();
+  if(!cm){ cm=document.createElement("iframe"); cm.id="moto"; cm.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(cm); }
+  cm.style.pointerEvents="auto"; cm.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/"+dest+".html")); cm.style.display="block";
+  window.minuterieLibre(function(){ try{ cm.focus(); }catch(e){} },300);
+ };
+ window.addEventListener("message",function(e){
+  if(!e.data||e.data.type!=="telephone:aller") return;
+  fermeTel();
+  window.minuterieLibre(function(){ window.teleporteVers(e.data.lieu); },60);
+ });
+ // arrivée depuis le téléphone de la chambre : la destination a été notée avant de sortir
+ try{
+  var t=localStorage.getItem("rudy_teleport");
+  if(t){ localStorage.removeItem("rudy_teleport"); window.minuterieLibre(function(){ window.teleporteVers(t); },900); }
+ }catch(e){}
+})();
+</script>
+</body>
 </html>

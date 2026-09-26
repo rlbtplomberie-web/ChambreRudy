@@ -1175,5 +1175,33 @@ resize(); loop();
  function release(){Object.keys(active).forEach(function(id){var r=active[id];if(r&&r.synthetic)send('pointercancel',r.t,+id,r.el);});active={};document.querySelectorAll('.dn,.on').forEach(function(el){if(el.matches('.pad,[id*="joy" i],[id*="stick" i]'))el.classList.remove('dn');});}
  addEventListener('blur',release);document.addEventListener('visibilitychange',function(){if(document.hidden)release();});
 })();</script>
+<script>
+window.__videoVictoire=function(v){
+ if(v.id!=="winVid") return null;
+ var m=/bdf_([a-z]+)_victoire\./.exec(v.currentSrc||v.src||""); if(!m) return null;
+ return {src:"/assets/shinato/m/bdf_"+m[1]+"_victoire.mp4", titre:"Bras de fer — "+m[1].charAt(0).toUpperCase()+m[1].slice(1)};
+};
+</script>
+<script>
+/* ---------- vidéos de victoire : dès qu'elle est vue une fois, elle se débloque dans le téléphone de Rudy ---------- */
+(function(){
+ function note(v){
+  var info=null; try{ info=window.__videoVictoire(v); }catch(e){}
+  if(!info) return;
+  function liste(){ try{ return JSON.parse(localStorage.getItem("rudy_videos")||"[]")||[]; }catch(e){ return []; } }
+  if(liste().some(function(o){ return o.src===info.src; })) return;
+  setTimeout(function(){
+   var poster="";
+   try{ var w=220, h=Math.round(w*(v.videoHeight||9)/(v.videoWidth||16)); var c=document.createElement("canvas"); c.width=w; c.height=h;
+        c.getContext("2d").drawImage(v,0,0,w,h); poster=c.toDataURL("image/jpeg",0.7); }catch(e){}
+   var s=Math.round(v.duration||0), dur=(isFinite(s)&&s>0)?(Math.floor(s/60)+":"+("0"+(s%60)).slice(-2)):"";
+   var l=liste(); if(l.some(function(o){ return o.src===info.src; })) return;
+   l.push({src:info.src,titre:info.titre,poster:poster,dur:dur,t:Date.now()});
+   try{ localStorage.setItem("rudy_videos",JSON.stringify(l)); }catch(e){}
+  },700);
+ }
+ document.addEventListener("playing",function(e){ var v=e.target; if(v&&v.tagName==="VIDEO") note(v); },true);
+})();
+</script>
 </body>
 </html>

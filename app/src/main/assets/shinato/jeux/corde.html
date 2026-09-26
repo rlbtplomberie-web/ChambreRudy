@@ -1751,5 +1751,34 @@ function frame(now){
  function release(){Object.keys(active).forEach(function(id){var r=active[id];if(r&&r.synthetic)send('pointercancel',r.t,+id,r.el);});active={};document.querySelectorAll('.dn,.on').forEach(function(el){if(el.matches('.pad,[id*="joy" i],[id*="stick" i]'))el.classList.remove('dn');});}
  addEventListener('blur',release);document.addEventListener('visibilitychange',function(){if(document.hidden)release();});
 })();</script>
+<script>
+window.__videoVictoire=function(v){
+ var T={winVid:["Tir à la corde",{"c051385d62899df7.mp4": ["/assets/shinato/m/c051385d62899df7.mp4", "Faty"], "1f5e61f216058cc9.webm": ["/assets/shinato/m/c051385d62899df7.mp4", "Faty"], "ea00ee6e2147720a.mp4": ["/assets/shinato/m/ea00ee6e2147720a.mp4", "Mifa"], "6aa9506df86d3b85.webm": ["/assets/shinato/m/ea00ee6e2147720a.mp4", "Mifa"], "32f182e8d7fb9e8b.mp4": ["/assets/shinato/m/32f182e8d7fb9e8b.mp4", "Karine"], "be98e0b7d09c075b.webm": ["/assets/shinato/m/32f182e8d7fb9e8b.mp4", "Karine"], "d1e34f1699ca7fc7.mp4": ["/assets/shinato/m/d1e34f1699ca7fc7.mp4", "Ameline"], "58168d986d9e9426.webm": ["/assets/shinato/m/d1e34f1699ca7fc7.mp4", "Ameline"], "bd8b751ea2723ae5.mp4": ["/assets/shinato/m/bd8b751ea2723ae5.mp4", "Gisèle"], "f3a1b4bed585f6e8.webm": ["/assets/shinato/m/bd8b751ea2723ae5.mp4", "Gisèle"], "bfdbb35ebc75666e.mp4": ["/assets/shinato/m/bfdbb35ebc75666e.mp4", "Katila"], "9f187ddd13f8dcbc.webm": ["/assets/shinato/m/bfdbb35ebc75666e.mp4", "Katila"], "adc66e02f095a00d.mp4": ["/assets/shinato/m/adc66e02f095a00d.mp4", "Sophie"], "314c8b67459ca5f5.webm": ["/assets/shinato/m/adc66e02f095a00d.mp4", "Sophie"], "93984b1eb743be63.mp4": ["/assets/shinato/m/93984b1eb743be63.mp4", "Rose"], "52e4c355b038e07f.webm": ["/assets/shinato/m/93984b1eb743be63.mp4", "Rose"]}],wWinVid:["Pistolet à eau",{"a4da8e9ac34ef5fb.mp4": ["/assets/shinato/m/a4da8e9ac34ef5fb.mp4", "Gisèle"], "63b30d90754bf271.webm": ["/assets/shinato/m/a4da8e9ac34ef5fb.mp4", "Gisèle"], "effe82d1c4e2346f.mp4": ["/assets/shinato/m/effe82d1c4e2346f.mp4", "Faty"], "e811f9939b28732b.webm": ["/assets/shinato/m/effe82d1c4e2346f.mp4", "Faty"], "a8ca1c40168f8cda.mp4": ["/assets/shinato/m/a8ca1c40168f8cda.mp4", "Mifa"], "0ab08b0da37c24ca.webm": ["/assets/shinato/m/a8ca1c40168f8cda.mp4", "Mifa"], "5b18e8aaab2daa3e.mp4": ["/assets/shinato/m/5b18e8aaab2daa3e.mp4", "Karine"], "fcc28be17cb8cf8a.webm": ["/assets/shinato/m/5b18e8aaab2daa3e.mp4", "Karine"], "d3520a84fa2c7b8f.mp4": ["/assets/shinato/m/d3520a84fa2c7b8f.mp4", "Ameline"], "b98e6135e4e88b47.webm": ["/assets/shinato/m/d3520a84fa2c7b8f.mp4", "Ameline"], "b0c16295cf09dd30.mp4": ["/assets/shinato/m/b0c16295cf09dd30.mp4", "Katila"], "458add0cd85f48fa.webm": ["/assets/shinato/m/b0c16295cf09dd30.mp4", "Katila"], "28a62983edca9db4.mp4": ["/assets/shinato/m/28a62983edca9db4.mp4", "Sophie"], "12fac7bfadfa4107.webm": ["/assets/shinato/m/28a62983edca9db4.mp4", "Sophie"], "478a3dbd63437bd3.mp4": ["/assets/shinato/m/478a3dbd63437bd3.mp4", "Rose"], "9ed38717ff07c91e.webm": ["/assets/shinato/m/478a3dbd63437bd3.mp4", "Rose"]}]}[v.id];
+ if(!T) return null;
+ var f=(v.currentSrc||v.src||"").split("/").pop().split("?")[0], e=T[1][f]; if(!e) return null;
+ return {src:e[0], titre:T[0]+" — "+e[1]};
+};
+</script>
+<script>
+/* ---------- vidéos de victoire : dès qu'elle est vue une fois, elle se débloque dans le téléphone de Rudy ---------- */
+(function(){
+ function note(v){
+  var info=null; try{ info=window.__videoVictoire(v); }catch(e){}
+  if(!info) return;
+  function liste(){ try{ return JSON.parse(localStorage.getItem("rudy_videos")||"[]")||[]; }catch(e){ return []; } }
+  if(liste().some(function(o){ return o.src===info.src; })) return;
+  setTimeout(function(){
+   var poster="";
+   try{ var w=220, h=Math.round(w*(v.videoHeight||9)/(v.videoWidth||16)); var c=document.createElement("canvas"); c.width=w; c.height=h;
+        c.getContext("2d").drawImage(v,0,0,w,h); poster=c.toDataURL("image/jpeg",0.7); }catch(e){}
+   var s=Math.round(v.duration||0), dur=(isFinite(s)&&s>0)?(Math.floor(s/60)+":"+("0"+(s%60)).slice(-2)):"";
+   var l=liste(); if(l.some(function(o){ return o.src===info.src; })) return;
+   l.push({src:info.src,titre:info.titre,poster:poster,dur:dur,t:Date.now()});
+   try{ localStorage.setItem("rudy_videos",JSON.stringify(l)); }catch(e){}
+  },700);
+ }
+ document.addEventListener("playing",function(e){ var v=e.target; if(v&&v.tagName==="VIDEO") note(v); },true);
+})();
+</script>
 </body>
 </html>
