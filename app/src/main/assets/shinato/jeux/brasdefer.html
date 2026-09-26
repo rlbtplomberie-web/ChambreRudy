@@ -201,6 +201,10 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
   background:#07060a var(--winimg) center/contain no-repeat}
 #end.win::before{content:"";position:absolute;left:0;right:0;bottom:0;height:42%;background:linear-gradient(transparent,rgba(7,6,10,.92));pointer-events:none}
 #end.win > *{position:relative}
+#winVid{display:none;position:absolute !important;inset:0;width:100%;height:100%;object-fit:contain;background:#07060a;z-index:0}
+#end.vid #winVid{display:block}
+#end.vid::before{z-index:1}
+#end.vid .row{z-index:2}
 #end.win h2, #end.win p{display:none}   /* victory picture: nothing written, just the buttons */
 #end.win h2{font-size:clamp(22px,4vw,40px)}
 #end.win p{color:#f2e6d8;text-shadow:0 2px 4px #000}
@@ -291,6 +295,7 @@ button:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
 <button id="soutien" aria-label="Soutien">📣</button>
 
 <section id="end">
+  <video id="winVid" playsinline preload="auto"></video>
   <h2 id="endTitle"></h2>
   <p id="endSub"></p>
   <div class="row">
@@ -589,6 +594,20 @@ const $ = id => document.getElementById(id);
 const SCREENS = {"home": "/assets/shinato/m/3ff352c3be758d59.webp", "sel": "/assets/shinato/m/5cfe7a95dd987b82.webp", "bet": "/assets/shinato/m/9f239d7d739d0846.webp", "vs": "/assets/shinato/m/d5fedfca7f465b4d.webp"};
 const WINPICS = {"shana": "/assets/shinato/m/492e02d44762e291.webp", "theo": "/assets/shinato/m/04624cd4b6aae5a8.webp", "rudy": "/assets/shinato/m/69241c00b637b756.webp", "carlos": "/assets/shinato/m/e15a47b27134a4a7.webp", "valor": "/assets/shinato/m/6c2ab3e3b1dc544f.webp", "mathis": "/assets/shinato/m/402761f41875ed36.webp", "katila": "/assets/shinato/m/0c9155063d9d6258.webp", "karine": "/assets/shinato/m/21635028e17a5376.webp", "rose": "/assets/shinato/m/f22743930a928d17.webp", "faty": "/assets/shinato/m/121f4498e754d331.webp", "mifa": "/assets/shinato/m/fb000508d7e07787.webp", "sophie": "/assets/shinato/m/727052a2d34dea36.webp", "commissaire": "/assets/shinato/m/af634469c2ae74c2.webp", "mody": "/assets/shinato/m/14cfdbe3042b8a49.webp", "limon": "/assets/shinato/m/da211411d1751774.webp", "ameline": "/assets/shinato/m/673ec719ed801c71.webp"};
 // game music: starts with the first tap (browsers forbid sound before that), loops, follows the mute button
+// vidéos de victoire (à la place de l'image) : .mp4 sur le téléphone, .webm en secours
+const WINVIDS = {"karine": ["/assets/shinato/m/bdf_karine_victoire.mp4", "/assets/shinato/m/bdf_karine_victoire.webm"]};
+function stopVictoire(){ const v=$('winVid'); if(!v) return; try{ v.pause(); }catch(e){} v.onerror=null; v.removeAttribute('src'); try{ v.load(); }catch(e){} $('end').classList.remove('vid'); }
+function joueVictoire(who){
+  const v=$('winVid'), l=WINVIDS[who]; stopVictoire(); if(!v||!l) return;
+  const src = v.canPlayType('video/mp4') ? l[0] : l[1];
+  let secours = src===l[0];
+  v.onerror=()=>{ if(secours){ secours=false; v.src=l[1]; v.play().catch(()=>{}); } else $('end').classList.remove('vid'); };   // sinon l'image reste
+  v.muted = typeof muted!=='undefined' && muted; v.loop=false; v.src=src;
+  $('end').classList.add('vid'); try{ v.currentTime=0; }catch(e){}
+  v.play().catch(()=>{ v.muted=true; v.play().catch(()=>{}); });
+}
+// l'écran de fin se ferme (Rejouer, Sortir…) : la vidéo s'arrête
+new MutationObserver(()=>{ if($('end').style.display==='none') stopVictoire(); }).observe(document.getElementById('end'),{attributes:true,attributeFilter:['style']});
 const music = new Audio("/assets/shinato/m/247e3141dbd11025.webm"); music.loop = true; music.volume = .45;
 function startMusic(){ if(!muted && music.paused){ music.play().catch(()=>{}); } }
 addEventListener('pointerdown', startMusic, {capture:true}); addEventListener('keydown', startMusic, {capture:true});   // full-screen picture shown when a fighter wins the whole match
@@ -1057,6 +1076,7 @@ function loop(){
       const pic = WINPICS[S.winner];
       $('end').classList.toggle('win', !!pic);
       $('end').style.setProperty('--winimg', pic ? `url(${pic})` : 'none');
+      joueVictoire(S.winner);
       $('end').style.display='flex'; $('ctrl').style.display='none';
     } else { S.round++; newRound(); }
   }

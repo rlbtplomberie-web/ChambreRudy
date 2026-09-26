@@ -1,7 +1,7 @@
-version 144 — Terrain FOOT LIFE : menu Tir au but / Shinato Soccer
+version 145 — Bras de fer : vidéo de victoire de Karine
 
-  Devant le terrain FOOT LIFE, JOUER ouvre maintenant un menu :
-  - TIR AU BUT : lance le tir au but de l'appli, comme avant.
-  - SHINATO SOCCER : lance le jeu de foot 3D (shinato/jeux/soccer.html).
-    Le bouton « ✕ RUE » en haut à gauche ramène Rudy dans la rue.
-  Les autres terrains (PariBoxe, Paniers, Balle au prisonnier) ne changent pas.
+  Quand Karine remporte le match de bras de fer, sa vidéo de victoire passe
+  à la place de l'image (boutons Rejouer / Sortir par-dessus). Les autres
+  personnages gardent leur image. Si la vidéo ne peut pas se lire, l'image
+  habituelle reste affichée.
+  Vidéo : shinato/m/bdf_karine_victoire.mp4 (+ .webm de secours).
