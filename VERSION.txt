@@ -1,14 +1,8 @@
-version 147 — Le téléphone de Rudy partout (MAP + vidéos débloquées + musique)
+version 148 — Téléphone : nouvelle vidéo + tactile réparé dans les lieux
 
-  Téléphone (assets/web/telephone.html) :
-  - Toujours en haut à gauche : dans la chambre, dans la rue de Shinato, à Vaviel,
-    dans la ville délabrée, à la plage, dans les bars, le restaurant, l'hôpital…
-    Il se cache seulement pendant un mini-jeu (et le trajet en moto), puis revient.
-  - Chambre : il s'ouvre avec la chambre derrière, la musique de la chambre continue.
-  - Shinato et les autres villes : il s'ouvre avec la rue derrière, la musique de la
-    ville continue.
-  - MAP : après l'animation du trajet, Rudy arrive directement à l'endroit choisi
-    (Shinato, Vaviel, la plage, la ville délabrée, chez lui). La musique de l'endroit
-    où il arrive prend le relais, l'autre se coupe.
-  - Vidéos : chaque vidéo de victoire vue une fois (bras de fer, tir à la corde,
-    pistolet à eau, dernier debout) apparaît dans les vidéos du téléphone.
+  - Une nouvelle vidéo dans l'appli Vidéos du téléphone (web/vid/tel_video_09.mp4).
+  - Tactile : quand le téléphone est ouvert à la plage, à Vaviel, dans la ville
+    délabrée ou dans un bar, le lieu derrière est mis de côté (il ne capte plus le
+    doigt et ne se dessine plus) puis revient tel quel à la fermeture.
+    Le téléphone n'est plus rechargé à chaque ouverture : il se rouvre tout de
+    suite, là où on l'avait laissé.

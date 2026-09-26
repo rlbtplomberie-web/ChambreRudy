@@ -1658,18 +1658,47 @@ else carte.addEventListener("load",demarre);
  }
  function visible(){ var v=!ouvert&&!enJeu(document,0); btn.style.display=v?"block":"none"; }
  (function boucle(){ try{ visible(); }catch(e){} window.minuterieLibre(boucle,400); })();   // tourne aussi quand la rue est en pause
+ // Pendant que le téléphone est ouvert, le lieu derrière (plage, Vaviel…) est mis de côté :
+ // il ne capte plus le doigt et ne se dessine plus, sinon le tactile du téléphone devient mauvais
+ // (surtout après un mini-jeu). Il revient tel quel à la fermeture.
+ var CADRES_LIEUX=["moto","bar","resto"], misDeCote=[];
+ function metDeCote(){
+  misDeCote=[];
+  CADRES_LIEUX.forEach(function(id){
+   var c=document.getElementById(id); if(!c||getComputedStyle(c).display==="none") return;
+   misDeCote.push({c:c,pe:c.style.pointerEvents,vi:c.style.visibility});
+   try{ var a=c.contentDocument&&c.contentDocument.activeElement; if(a&&a.blur) a.blur(); }catch(e){}
+   try{ c.blur(); }catch(e){}
+   c.style.pointerEvents="none"; c.style.visibility="hidden";
+  });
+ }
+ function remetEnPlace(){
+  misDeCote.forEach(function(o){ o.c.style.pointerEvents=o.pe; o.c.style.visibility=o.vi; });
+  var der=misDeCote.length?misDeCote[misDeCote.length-1].c:null; misDeCote=[];
+  if(der) window.minuterieLibre(function(){ try{ der.focus(); }catch(e){} },120);
+ }
  window.appuiSur(btn,function(){
   dir=0;
+  try{ if(document.activeElement&&document.activeElement.blur) document.activeElement.blur(); }catch(e){}
   var f=document.getElementById("telFrame");
-  if(!f){ f=document.createElement("iframe"); f.id="telFrame"; f.setAttribute("allow","autoplay; camera; microphone"); document.body.appendChild(f); }
+  // le téléphone est chargé une seule fois, puis gardé : il se rouvre tout de suite
+  if(!f){ f=document.createElement("iframe"); f.id="telFrame"; f.setAttribute("allow","autoplay; camera; microphone");
+          f.src="/assets/web/telephone.html?dec=street"; document.body.appendChild(f); }
   pauseParMoi=!window.PAUSE_RUE; if(pauseParMoi) window.pauseRue();   // la musique de la ville, elle, continue
+  metDeCote();
   ouvert=true; visible();
-  f.src="/assets/web/telephone.html?dec=street"; f.style.display="block"; fermer.style.display="block";
-  window.minuterieLibre(function(){ try{ f.focus(); }catch(e){} },300);
+  f.style.pointerEvents="auto"; f.style.display="block"; fermer.style.display="block";
+  window.minuterieLibre(function(){ try{ f.focus(); f.contentWindow.focus(); }catch(e){} },150);
  });
  function fermeTel(){
-  var f=document.getElementById("telFrame"); if(f){ f.style.display="none"; f.src="about:blank"; }
+  var f=document.getElementById("telFrame");
+  if(f){
+   try{ f.contentDocument.querySelectorAll("video,audio").forEach(function(m){ m.pause(); }); }catch(e){}   // une vidéo du téléphone s'arrête
+   try{ f.blur(); }catch(e){}
+   f.style.display="none";
+  }
   fermer.style.display="none"; ouvert=false; dir=0;
+  remetEnPlace();
   if(pauseParMoi){ pauseParMoi=false; window.repriseRue(); }
   try{ if(window.reveilleTactile) window.reveilleTactile(); }catch(e){}
   visible();
