@@ -1,3 +1,3 @@
-version 151 — Téléphone : nouvelle photo et nouvelle vidéo
-  - Photo web/photos/ph_14.jpg dans la galerie (elle peut aussi devenir le fond d'écran).
-  - Vidéo web/vid/tel_video_11.mp4 dans l'appli Vidéos.
+version 152 — Téléphone : 3 nouvelles photos et une nouvelle vidéo
+  - Photos web/photos/ph_15 à ph_17 dans la galerie (elles peuvent devenir le fond d'écran).
+  - Vidéo web/vid/tel_video_12.mp4 dans l'appli Vidéos.
