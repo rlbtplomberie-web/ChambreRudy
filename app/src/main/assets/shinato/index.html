@@ -1637,7 +1637,14 @@ else carte.addEventListener("load",demarre);
 (function(){
  var btn=document.getElementById("telBtn"), fermer=document.getElementById("telFermer"), ouvert=false, pauseParMoi=false;
  var LIEUX={bar:1,resto:1,moto:1,lieuInfi:1};          // cadres qui contiennent un lieu (et pas un jeu)
- function visibleCadre(f){ try{ if(!f.offsetWidth&&!f.offsetHeight) return false; var c=getComputedStyle(f); return c.display!=="none"&&c.visibility!=="hidden"; }catch(e){ return false; } }
+ function visibleCadre(f){
+  try{
+   var d=f.style.display, v=f.style.visibility;
+   if(d==="none"||v==="hidden") return false;
+   if(d) return true;                                   // affiché par le jeu ou le lieu
+   var c=getComputedStyle(f); return c.display!=="none"&&c.visibility!=="hidden";
+  }catch(e){ return false; }
+ }
  // un mini-jeu est-il ouvert, dans la rue ou dans un lieu (à n'importe quelle profondeur) ?
  function enJeu(doc,prof){
   if(!doc||prof>5) return false;
@@ -1657,7 +1664,7 @@ else carte.addEventListener("load",demarre);
   return false;
  }
  function visible(){ var v=!ouvert&&!enJeu(document,0); btn.style.display=v?"block":"none"; }
- (function boucle(){ try{ visible(); }catch(e){} window.minuterieLibre(boucle,400); })();   // tourne aussi quand la rue est en pause
+ (function boucle(){ try{ visible(); }catch(e){} window.minuterieLibre(boucle,700); })();   // tourne aussi quand la rue est en pause
  // Pendant que le téléphone est ouvert, le lieu derrière (plage, Vaviel…) est mis de côté :
  // il ne capte plus le doigt et ne se dessine plus, sinon le tactile du téléphone devient mauvais
  // (surtout après un mini-jeu). Il revient tel quel à la fermeture.
@@ -1677,13 +1684,14 @@ else carte.addEventListener("load",demarre);
   var der=misDeCote.length?misDeCote[misDeCote.length-1].c:null; misDeCote=[];
   if(der) window.minuterieLibre(function(){ try{ der.focus(); }catch(e){} },120);
  }
+ var dechargeT=null;
  window.appuiSur(btn,function(){
-  dir=0;
+  dir=0; if(dechargeT){ clearTimeout(dechargeT); dechargeT=null; }
   try{ if(document.activeElement&&document.activeElement.blur) document.activeElement.blur(); }catch(e){}
   var f=document.getElementById("telFrame");
   // le téléphone est chargé une seule fois, puis gardé : il se rouvre tout de suite
-  if(!f){ f=document.createElement("iframe"); f.id="telFrame"; f.setAttribute("allow","autoplay; camera; microphone");
-          f.src="/assets/web/telephone.html?dec=street"; document.body.appendChild(f); }
+  if(!f){ f=document.createElement("iframe"); f.id="telFrame"; f.setAttribute("allow","autoplay; camera; microphone"); document.body.appendChild(f); }
+  if(!f.getAttribute("data-charge")){ f.src="/assets/web/telephone.html?dec=street"; f.setAttribute("data-charge","1"); }
   pauseParMoi=!window.PAUSE_RUE; if(pauseParMoi) window.pauseRue();   // la musique de la ville, elle, continue
   metDeCote();
   ouvert=true; visible();
@@ -1696,6 +1704,8 @@ else carte.addEventListener("load",demarre);
    try{ f.contentDocument.querySelectorAll("video,audio").forEach(function(m){ m.pause(); }); }catch(e){}   // une vidéo du téléphone s'arrête
    try{ f.blur(); }catch(e){}
    f.style.display="none";
+   if(dechargeT) clearTimeout(dechargeT);
+   dechargeT=window.minuterieLibre(function(){ dechargeT=null; if(!ouvert){ f.src="about:blank"; f.removeAttribute("data-charge"); } },20000);
   }
   fermer.style.display="none"; ouvert=false; dir=0;
   remetEnPlace();
