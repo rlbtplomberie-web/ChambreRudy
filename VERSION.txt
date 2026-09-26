@@ -1,8 +1,7 @@
-version 143 — Pistolet à eau : vidéos de victoire des filles
+version 144 — Terrain FOOT LIFE : menu Tir au but / Shinato Soccer
 
-  Quand Rudy est trempé en 1 contre 1, 1 contre 3, 1 contre 6 ou en Royal, la
-  vidéo de victoire de la fille qui a tiré la dernière goutte passe à la place
-  de l'image. En 1 contre 8, rien ne change (l'image habituelle).
-  Vidéos : Faty, Mifa, Karine, Ameline, Katila, Sophie, Rose (nouvelles) et
-  Gisèle (sa vidéo du 1 contre 1 sert maintenant aussi en 1v3, 1v6 et Royal).
-  Chaque vidéo existe en .mp4 (téléphone) et .webm (secours), dans shinato/m/.
+  Devant le terrain FOOT LIFE, JOUER ouvre maintenant un menu :
+  - TIR AU BUT : lance le tir au but de l'appli, comme avant.
+  - SHINATO SOCCER : lance le jeu de foot 3D (shinato/jeux/soccer.html).
+    Le bouton « ✕ RUE » en haut à gauche ramène Rudy dans la rue.
+  Les autres terrains (PariBoxe, Paniers, Balle au prisonnier) ne changent pas.

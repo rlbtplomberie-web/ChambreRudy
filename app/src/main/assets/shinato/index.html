@@ -1456,12 +1456,21 @@ else carte.addEventListener("load",demarre);
  },80);
  window.appuiSur(btn,function(){
   if(!ici) return; dir=0;
+  if(ici.nom==="penalty"){ window.ouvreMenuFoot(); return; }   // terrain FOOT LIFE : menu Tir au but / Shinato Soccer
   if(window.Chambre&&window.Chambre.jouer){
    parti=true;
    try{ if(window.RUDY_AUDIO) window.RUDY_AUDIO.pause(); }catch(e){}   // le jeu a sa propre musique
    window.Chambre.jouer(ici.nom);
   }else{ toast.textContent="Ce jeu se lance depuis l'appli"; toast.style.display="block"; setTimeout(function(){ toast.style.display="none"; },1800); }
  });
+ window.lanceJeuRue=function(nom){
+  dir=0;
+  if(window.Chambre&&window.Chambre.jouer){
+   parti=true;
+   try{ if(window.RUDY_AUDIO) window.RUDY_AUDIO.pause(); }catch(e){}
+   window.Chambre.jouer(nom);
+  }else{ toast.textContent="Ce jeu se lance depuis l'appli"; toast.style.display="block"; setTimeout(function(){ toast.style.display="none"; },1800); }
+ };
  // retour du jeu : la rue reprend, sa musique aussi
  document.addEventListener("visibilitychange",function(){
   if(!document.hidden&&parti){ parti=false; try{ if(window.RUDY_AUDIO){ var p=window.RUDY_AUDIO.play(); if(p&&p.catch)p.catch(function(){}); } }catch(e){} }
@@ -1475,7 +1484,7 @@ else carte.addEventListener("load",demarre);
  window.minuterieLibre(function veille(){
   try{
    if(window.PAUSE_RUE){
-    var ouvert=["bar","resto","moto"].some(function(id){ var f=document.getElementById(id); return f&&getComputedStyle(f).display!=="none"; });
+    var ouvert=["bar","resto","moto","soccer"].some(function(id){ var f=document.getElementById(id); return f&&getComputedStyle(f).display!=="none"; });
     if(!ouvert){ window.repriseRue(); relache(); }
    }
   }catch(e){}
@@ -1484,6 +1493,48 @@ else carte.addEventListener("load",demarre);
  // retour dans l'appli (appel, notification, jeu fini) : on repart propre
  document.addEventListener("visibilitychange",function(){ if(!document.hidden) relache(); });
  window.addEventListener("pageshow",relache);
+})();
+</script>
+<style>
+#menuFoot{position:fixed;inset:0;z-index:55;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-family:Arial,Helvetica,sans-serif}
+#menuFoot .carte{min-width:62vmin;padding:5vmin 6vmin;border-radius:3vmin;text-align:center;background:linear-gradient(rgba(14,14,18,.96),rgba(30,30,36,.96));border:2px solid rgba(255,226,122,.6);box-shadow:0 10px 40px rgba(0,0,0,.7)}
+#menuFoot h2{margin:0 0 4vmin;color:#fff;font:900 clamp(16px,4.2vmin,34px)/1.2 Arial,sans-serif;letter-spacing:2px;text-shadow:0 3px 0 #000}
+#menuFoot .ch{display:flex;flex-direction:column;gap:3vmin;align-items:stretch}
+#menuFoot .choix{padding:3vmin 4vmin;border-radius:2.4vmin;cursor:pointer;font:900 clamp(15px,3.8vmin,30px)/1 Arial,sans-serif;letter-spacing:2px;color:#ffe27a;background:linear-gradient(rgba(12,12,14,.9),rgba(40,40,46,.9));border:2px solid rgba(255,226,122,.7)}
+#menuFoot .annuler{margin-top:1vmin;color:#bbb;font:700 clamp(12px,3vmin,22px)/1 Arial,sans-serif;letter-spacing:2px;cursor:pointer;padding:2vmin}
+#soccer{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:60;background:#000;display:none}
+#soccerQuitter{position:fixed;z-index:61;display:none;left:calc(8px + env(safe-area-inset-left,0px));top:calc(8px + env(safe-area-inset-top,0px));
+ padding:7px 12px;border-radius:999px;background:rgba(10,10,14,.75);border:2px solid rgba(255,226,122,.8);color:#ffe27a;font:900 13px/1 Arial,sans-serif;letter-spacing:1px;cursor:pointer}
+</style>
+<div id="menuFoot"><div class="carte"><h2>TERRAIN FOOT LIFE</h2><div class="ch">
+ <div class="choix" id="choixTir">TIR AU BUT</div>
+ <div class="choix" id="choixSoccer">SHINATO SOCCER</div>
+ <div class="annuler" id="choixAnnuler">ANNULER</div>
+</div></div></div>
+<div id="soccerQuitter">&#10005; RUE</div>
+<script>
+/* ---------- terrain FOOT LIFE : JOUER ouvre un menu -> Tir au but (jeu de l'appli) ou Shinato Soccer (jeu HTML) ---------- */
+(function(){
+ var menu=document.getElementById("menuFoot"), quit=document.getElementById("soccerQuitter");
+ function ferme(){ menu.style.display="none"; }
+ window.ouvreMenuFoot=function(){ dir=0; menu.style.display="flex"; };
+ window.appuiSur(document.getElementById("choixAnnuler"),ferme);
+ window.appuiSur(document.getElementById("choixTir"),function(){ ferme(); window.lanceJeuRue("penalty"); });
+ window.appuiSur(document.getElementById("choixSoccer"),function(){
+  ferme(); dir=0;
+  var f=document.getElementById("soccer");
+  if(!f){ f=document.createElement("iframe"); f.id="soccer"; f.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(f); }
+  try{ if(window.RUDY_AUDIO) window.RUDY_AUDIO.pause(); }catch(e){}   // le jeu a sa propre musique
+  window.pauseRue();
+  f.src="/assets/shinato/jeux/soccer.html"; f.style.display="block"; quit.style.display="block";
+  window.minuterieLibre(function(){ try{ f.focus(); }catch(e){} },300);
+ });
+ // « ✕ RUE » : on quitte Shinato Soccer, Rudy est de retour devant le terrain
+ window.appuiSur(quit,function(){
+  var f=document.getElementById("soccer"); if(f){ f.style.display="none"; f.src="about:blank"; }
+  quit.style.display="none"; dir=0; window.repriseRue();
+  try{ if(window.RUDY_AUDIO){ var p=window.RUDY_AUDIO.play(); if(p&&p.catch)p.catch(function(){}); } }catch(e){}
+ });
 })();
 </script>
 <style>
