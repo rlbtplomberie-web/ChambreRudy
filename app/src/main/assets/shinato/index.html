@@ -1744,7 +1744,7 @@ else carte.addEventListener("load",demarre);
 
  /* MAP du téléphone : Rudy est téléporté là où il a choisi d'aller (la musique de la ville continue) */
  window.teleporteVers=function(lieu){
-  var dest={plage:"plage",vaviel:"vaviel",ville:"delabree",delabree:"delabree"}[lieu];
+  var dest={plage:"plage",vaviel:"vaviel",ville:"delabree",delabree:"delabree",boulevard:"boulevard"}[lieu];
   if(lieu==="home"){ try{ if(window.Chambre&&window.Chambre.rentrer) window.Chambre.rentrer(); }catch(e){} return; }
   try{ if(window.RUDY_AUDIO&&window.RUDY_AUDIO.paused){ var pr=window.RUDY_AUDIO.play(); if(pr&&pr.catch) pr.catch(function(){}); } }catch(e){}
   var cm=document.getElementById("moto");

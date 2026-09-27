@@ -1,10 +1,10 @@
-version 161 — Appels : seulement de chez soi, et aucun blocage
+version 162 — Le boulevard dans la MAP
 
-  - Dehors (rue de Shinato, plage, Vaviel…), appeler une fille sonne « occupé »
-    (tonalité occupé) : on ne peut l'appeler que de chez soi. Les messages, eux,
-    marchent partout.
-  - Plus aucun refus d'appel : on peut rappeler une fille autant qu'on veut, même
-    fâchée (elle reste fâchée dans ses phrases, mais elle répond).
-  - Enchaîner les visites sans souci : appeler une autre fille pendant qu'une est
-    là (jalousie puis arrivée de la nouvelle), plusieurs fois de suite ; un appel
-    passé pendant une balade attend le retour à la chambre.
+  Téléphone > MAP : nouvelle destination « Le boulevard ». Rudy y va seul,
+  téléporté comme pour la plage ou Vaviel (depuis la chambre ou depuis la rue).
+  Il s'y promène avec la même planche que dans la rue de Shinato : il marche,
+  fume (bouton Fumer), marche la cigarette à la main, et la jette (bouton Jeter).
+  Stick : gauche/droite, et un peu vers le haut ou le bas sur la route.
+  Musique jazz du boulevard. Seul, pas d'accès au RestoChic (il faut venir avec
+  une fille, depuis la chambre). On repart par la MAP.
+  Toujours bloqué pendant qu'une fille est chez Rudy.
