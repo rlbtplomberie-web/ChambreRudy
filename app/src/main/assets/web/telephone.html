@@ -1623,9 +1623,12 @@ paintWall();applyDec();paintLast();tick();
      toast("Tu ne peux l'appeler que de chez toi. Écris-lui un message !"); },1200));
    callT.push(setTimeout(()=>{ if(tok===jeton) hangUp(); },5600));
  }
+ // Valia : elle répond toujours (même dehors), mais elle travaille : « viens au Valia Club »
+ const APPELS_VALIA=[{"q": [{"d": "Rudy ? Pourquoi tu m'appelles ? Je suis en plein service, là.", "c": [["Je voulais juste entendre ta voix", "…T'es mignon. Mais j'ai trente clients qui m'attendent."], ["Viens chez moi ce soir", "Chez toi ? Rudy, je travaille tous les soirs. Le club ne tourne pas sans moi."]]}, {"d": "Tout le monde me réclame, la salle est pleine.", "c": [["Tu travailles trop", "Je sais… mais c'est mon club. Je peux pas le lâcher."], ["Ils ont de la chance", "Hihi… Toi aussi, tu pourrais en avoir."]]}], "fin": "Si tu veux me voir, viens au Valia Club. Je t'y attends."}, {"q": [{"d": "Allô ? Parle vite, j'ai des clients VIP qui arrivent.", "c": [["Tu me manques", "Toi aussi, un peu… Ne le répète à personne."], ["Tu as une minute pour moi ?", "Une minute. Pas plus. Vas-y."]]}, {"d": "Je t'aime bien, tu sais. Mais je ne peux pas quitter le club comme ça.", "c": [["Je comprends", "Merci… c'est rare, les hommes qui comprennent."], ["Juste une heure ?", "Même une heure, c'est impossible. Ils me réclament sans arrêt."]]}], "fin": "Viens au Valia Club si tu veux me voir. Je te garde une place."}, {"q": [{"d": "Rudy… tu sais que j'ai une danseuse qui attend son signal ?", "c": [["Désolé, je raccroche vite", "Non, reste… trente secondes."], ["Elle peut attendre, non ?", "Rien n'attend au Valia. Sauf moi, parfois… pour toi."]]}, {"d": "Tout le monde veut me parler ce soir. Tu fais la queue, toi aussi, hihi.", "c": [["Je suis le premier de la file", "Tu as toujours su doubler tout le monde."], ["Je peux attendre", "Ne dis pas ça, sinon je vais te faire attendre."]]}], "fin": "Passe au Valia Club. C'est là que tu me trouveras."}, {"q": [{"d": "Qu'est-ce que tu veux, beau gosse ? Je compte la caisse.", "c": [["Te proposer une soirée", "Une soirée ? Toutes mes soirées sont au club."], ["Savoir comment tu vas", "Épuisée… mais contente que tu appelles."]]}, {"d": "Si je pars, qui s'occupe de mes clients ? Et de mes danseuses ?", "c": [["Tu as raison", "Voilà. Tu es raisonnable, pour une fois."], ["Moi, je peux m'en occuper", "Toi ? Haha ! Tu ferais fuir tout le monde."]]}], "fin": "Si tu veux me voir, c'est au Valia Club. Pas ailleurs."}, {"q": [{"d": "Encore toi ? Tu m'appelles à chaque fois que je suis débordée.", "c": [["Je sais choisir mon moment", "Tu le fais exprès, j'en suis sûre."], ["Tu es toujours débordée", "C'est vrai… le Valia ne dort jamais."]]}, {"d": "Un client me fait signe. Je dois y aller.", "c": [["Vas-y, je te laisse", "Merci, tu es un amour."], ["Il peut attendre, lui", "Non, lui paie. Toi, tu flirtes. Hihi."]]}], "fin": "Viens au Valia Club, et je te fais passer devant tout le monde."}];
  openCall=function(){
-   const g=gg(); if(LIEU!=='room'){ occupe(g); return; }
-   const A=APPELS_VISITE[g.id]; if(!A){ ancienAppel(); return; }
+   const g=gg(); const valia=g.id==='valia';
+   if(!valia&&LIEU!=='room'){ occupe(g); return; }
+   const A=valia?{scripts:APPELS_VALIA}:APPELS_VISITE[g.id]; if(!A){ ancienAppel(); return; }
    hangUp(true); const tok=++jeton;
    $('clav').style.backgroundImage=`url(${FACES[g.id]})`; $('clname').textContent=g.name;
    $('cstat').textContent='Appel en cours…'; $('csay').innerHTML=''; $('cchoix').innerHTML=''; $('c-call').classList.add('ring'); showCV('call');
@@ -1643,6 +1646,7 @@ paintWall();applyDec();paintLast();tick();
      const L=A.scripts; let k=Math.floor(Math.random()*L.length); if(L.length>1&&k===dernier[g.id]) k=(k+1)%L.length; dernier[g.id]=k; const C=L[k];
      for(const q of C.q){ await elle(q.d); const i=await choix(q.c.map(x=>({t:x[0]}))); await attend(350); await elle(q.c[i][1]); }
      await elle(C.fin);
+     if(valia){ await attend(1800); hangUp(); return; }      // elle raccroche : on la voit au club
      const oui=(await choix([{t:'Oui',k:'oui'},{t:'Non',k:'non'}]))===0;
      await attend(300); await elle(oui?"D'accord, j'arrive tout de suite !":C.non); await attend(1400);
      hangUp(); if(oui) demandeVisite(g.id);

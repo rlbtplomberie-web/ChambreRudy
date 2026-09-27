@@ -281,6 +281,7 @@ function boucle(now){
     }
   }else if(etat==='marche'||etat==='repart'){ etat='arret'; montre(3); }
   place();
+  if(bu.style.display==='block'){ const hb=taille(); bu.style.left=(x/2172*100)+'%'; bu.style.top=((y-hb*1.18)/528*100)+'%'; }   // la bulle suit le couple
   // devant l'entrée du RestoChic : la flèche jaune et le bouton « Inviter »
   const devantResto=x>1105&&x<1325&&etat!=='resto';
   const fr=document.getElementById('flecheR'), ib=document.getElementById('inviterB');
@@ -297,6 +298,12 @@ document.getElementById('rentrerB').addEventListener('click',()=>{ try{ parent.p
 addEventListener('message',e=>{ if(e.data&&e.data.type==='parle'){ parle(e.data.t); etat='arret'; montre(3); joue(); } });
 addEventListener('message',e=>{ if(e.data&&e.data.type==='coeur') document.getElementById('coeurBt').textContent=NOM+' '+e.data.v+' %'; });
 setTimeout(()=>parle(MOTS.arrive),900);
+// elle parle tout le long de la balade : une phrase toutes les 2 à 5 secondes
+(function(){ const L=MOTS.balade||[]; let dernier=-1;
+  function suivante(){ setTimeout(()=>{ if(L.length&&etat!=='bisou'&&etat!=='approche'&&etat!=='resto'&&bu.style.display!=='block'){
+      let i=Math.floor(Math.random()*L.length); if(L.length>1&&i===dernier) i=(i+1)%L.length; dernier=i; parle(L[i]); }
+    suivante(); }, 2000+Math.random()*3000); }
+  setTimeout(suivante,3600); })();
 // la musique du boulevard (elle démarre tout de suite, ou au premier toucher si le navigateur l'exige)
 const mus=document.getElementById('musiqueB'); mus.volume=.45;
 function joue(){ const q=mus.play(); if(q&&q.catch) q.catch(()=>{}); }

@@ -1,6 +1,11 @@
-version 164 — Valia Club : « Réserver » + 2 photos
+version 165 — Valia au téléphone, resto et balades plus bavards
 
-  - Au Valia Club, face à la danseuse : à côté de « Regarder », un bouton
-    « Réserver » lance la nouvelle vidéo (plein écran, Fermer ou fin de vidéo).
-  - Téléphone > Photos : 2 nouvelles images du Valia Club (ph_19, ph_20),
-    utilisables aussi en fond d'écran.
+  - Appeler Valia (Contacts) : elle répond toujours, même dehors, mais elle
+    travaille (clients, danseuses, caisse…). 5 conversations différentes, avec
+    des choix. Elle ne vient jamais chez Rudy et finit toujours par
+    « si tu veux me voir, viens au Valia Club ».
+  - Table pour deux (le RestoChic avec une fille) : 16 questions de plus, un
+    repas plus long (14 moments au lieu de 10) et des réactions plus variées.
+  - Balade sur le boulevard avec une fille : elle parle tout le temps, une
+    bulle toutes les 2 à 5 secondes (14 phrases par fille, jamais deux fois
+    de suite la même), et la bulle suit le couple quand il marche.
