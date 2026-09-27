@@ -1759,6 +1759,13 @@ else carte.addEventListener("load",demarre);
   cm.style.pointerEvents="auto"; cm.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/"+dest+".html")); cm.style.display="block";
   window.minuterieLibre(function(){ try{ cm.focus(); }catch(e){} },300);
  };
+ // le téléphone : une fille a dit « oui » -> Rudy rentre chez lui, elle arrive
+ window.addEventListener("message",function(e){
+  if(!e.data||e.data.type!=="telephone:visite") return;
+  fermeTel();
+  try{ if(window.Chambre&&window.Chambre.visite){ window.Chambre.visite(e.data.fille); return; } }catch(er){}
+  var t=document.getElementById("toastJeu"); if(t){ t.textContent="Elle t'attend chez toi (dans l'appli)"; t.style.display="block"; window.minuterieLibre(function(){ t.style.display="none"; },2200); }
+ });
  window.addEventListener("message",function(e){
   if(!e.data||e.data.type!=="telephone:aller") return;
   fermeTel();

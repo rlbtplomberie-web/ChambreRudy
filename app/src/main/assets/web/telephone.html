@@ -176,8 +176,12 @@ html,body{height:100%;margin:0;background:#07080c;overflow:hidden;font-family:So
 @keyframes ring{0%{box-shadow:0 0 0 0 rgba(79,209,127,.6)}100%{box-shadow:0 0 0 26px rgba(79,209,127,0)}}
 #c-call h2{margin:0;font-size:27px;font-weight:600}
 #cstat{margin-top:6px;font-size:14px;color:rgba(255,255,255,.65)}
-#csay{margin:34px 26px 0;min-height:90px}
-#csay .bub{margin:8px auto;max-width:90%;display:inline-block}
+#csay{position:absolute;left:18px;right:18px;top:335px;bottom:230px;overflow:auto;display:flex;flex-direction:column;gap:2px;margin:0}
+#cchoix{position:absolute;left:18px;right:18px;bottom:150px;display:flex;flex-direction:column;gap:7px}
+.cch{padding:10px 12px;border-radius:14px;border:1.5px solid rgba(120,150,255,.55);background:rgba(59,108,240,.18);font-weight:600;font-size:14px;cursor:pointer}
+.cch.oui{border-color:#4fd17f;background:rgba(79,209,127,.18)}.cch.non{border-color:#e5383b;background:rgba(229,56,59,.16)}
+#csay .bub{margin:4px 0;max-width:86%;display:inline-block;text-align:left}
+#csay .bub.her{align-self:flex-start}#csay .bub.me{align-self:flex-end}
 #hang{position:absolute;left:50%;bottom:70px;margin-left:-34px;width:68px;height:68px;border-radius:50%;background:#e5383b;display:grid;place-items:center}
 /* plans */
 #app-map{background:#141a28}
@@ -225,6 +229,7 @@ html,body{height:100%;margin:0;background:#07080c;overflow:hidden;font-family:So
 @media (max-width:600px){#help{display:none}}
 @media (prefers-reduced-motion:reduce){.layer{transition:none}#vf{animation:none}}
 </style>
+<script src="/assets/web/visite/appels.js"></script>
 </head>
 <body>
 <div id="backdrop"></div>
@@ -284,7 +289,7 @@ html,body{height:100%;margin:0;background:#07080c;overflow:hidden;font-family:So
         <div class="cbtns"><div class="cbtn call" data-act="ccall"><i><svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg></i>Appeler</div>
         <div class="cbtn msg" data-act="cmsg"><i><svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-5 4v-4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg></i>Message</div></div></div>
       <div class="cv" id="c-chat"><div class="cback" data-act="cback">‹</div><div id="chead"><div class="av" id="chav"></div><div><b id="chname"></b><span>en ligne</span></div><div class="hrt" id="chhrt"><svg viewBox="0 0 24 22" width="100%" height="100%"><path d="M12 21.2l-1.5-1.3C5.2 15.1 1.8 12 1.8 8.1 1.8 4.9 4.3 2.5 7.4 2.5c1.8 0 3.5.8 4.6 2.1 1.1-1.3 2.8-2.1 4.6-2.1 3.1 0 5.6 2.4 5.6 5.6 0 3.9-3.4 7-8.7 11.8z"/></svg><em></em></div></div><div id="msgs"></div><div id="cbar"></div></div>
-      <div class="cv" id="c-call"><div class="av" id="clav"></div><h2 id="clname"></h2><div id="cstat"></div><div id="csay"></div>
+      <div class="cv" id="c-call"><div class="av" id="clav"></div><h2 id="clname"></h2><div id="cstat"></div><div id="csay"></div><div id="cchoix"></div>
         <div id="hang" data-act="hang"><svg width="30" height="30" viewBox="0 0 24 24" fill="#fff" style="transform:rotate(135deg)"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg></div></div>
     </div>
 
@@ -360,7 +365,8 @@ let S={dec:'room',wall:0,photos:[]};
 try{const s=JSON.parse(localStorage.getItem('rudyphone')||'null');if(s)S=Object.assign(S,s)}catch(e){}
 // décor imposé par la page qui ouvre le téléphone : ?dec=room (chambre) ou ?dec=street (rue)
 try{const q=new URLSearchParams(location.search).get('dec');if(q==='room'||q==='street')S.dec=q}catch(e){}
-function save(){try{localStorage.setItem('rudyphone',JSON.stringify(S))}catch(e){}}
+const loveTouche={};
+function save(){try{const cur=JSON.parse(localStorage.getItem('rudyphone')||'{}');if(cur&&cur.love){S.love=S.love||{};for(const k in cur.love){if(!loveTouche[k])S.love[k]=cur.love[k]}}localStorage.setItem('rudyphone',JSON.stringify(S))}catch(e){}}
 let view='lock',app=null,cur=0,pending=null,backT=null;
 
 /* ---------- mise en scène ---------- */
@@ -468,7 +474,7 @@ function act(a){
   else if(k==='mstop'||k==='mdone')MP.list();
   else if(k==='copen')openCard(p);
   else if(k==='cback')cBack();
-  else if(k==='ccall')toast('Appels bientôt disponibles');
+  else if(k==='ccall')openCall();
   else if(k==='cmsg')openChat();
   else if(k==='hang')hangUp();
   else if(k==='tone')pickTone(p);
@@ -1417,7 +1423,7 @@ if(!S.love)S.love={};
 function fmtL(v){return (Math.round(v*10)/10).toString().replace('.',',')}
 function paintHeart(el,v){el.classList.toggle('on',v>0);el.querySelector('em').textContent=fmtL(v)}
 function paintHearts(){document.querySelectorAll('.hrt[data-h]').forEach(el=>paintHeart(el,S.love[el.dataset.h]||0));if(cur_g)paintHeart($('chhrt'),S.love[cur_g]||0)}
-function addLove(g,d){const v=Math.max(0,Math.min(100,Math.round(((S.love[g.id]||0)+d)*10)/10));const real=Math.round((v-(S.love[g.id]||0))*10)/10;S.love[g.id]=v;save();paintHearts();
+function addLove(g,d){loveTouche[g.id]=1;const v=Math.max(0,Math.min(100,Math.round(((S.love[g.id]||0)+d)*10)/10));const real=Math.round((v-(S.love[g.id]||0))*10)/10;S.love[g.id]=v;save();paintHearts();
   if(cview==='chat'&&cur_g===g.id){const c=document.createElement('div');c.className='lchip '+(d>0?'up':'dn');c.textContent=d>0?'❤️ +'+fmtL(real)+' %':(real<0?'💔 '+fmtL(real)+' %':'💔 elle n\'a pas aimé');$('msgs').appendChild(c);scrollChat();
     const h=$('chhrt');h.classList.remove('pulse');void h.offsetWidth;h.classList.add('pulse')}}
 function renderList(){const L=$('clist');L.innerHTML='';$('csub').textContent=GIRLS.length+' contacts';
@@ -1579,6 +1585,48 @@ addEventListener('resize',layout);
 // précharge les frames
 ['room','street'].forEach(d=>M[d].forEach((_,i)=>{const im=new Image();im.src=A[d+i]}));
 paintWall();applyDec();paintLast();tick();
+</script>
+<script>
+/* ---------- appels : la fille répond, on discute (2 choix à chaque fois), puis « tu veux que je vienne ? » ---------- */
+(function(){
+ if(!window.APPELS_VISITE) return;
+ const dernier={}; let jeton=0; let choixEnCours=null;
+ const actAvant=act; act=function(k){ if(k&&String(k).indexOf('vch:')===0){ if(choixEnCours) choixEnCours(+String(k).slice(4)); return; } return actAvant.apply(this,arguments); };
+ function fache(id){ try{ const f=JSON.parse(localStorage.getItem('rudy_fache')||'{}'); return !!f[id]&&Date.now()-f[id]<30*60*1000; }catch(e){ return false; } }
+ function chez(){ try{ return localStorage.getItem('rudy_visite_ici')||''; }catch(e){ return ''; } }
+ function demandeVisite(id){
+   try{ if(window.parent&&window.parent!==window){ window.parent.postMessage({type:'telephone:visite',fille:id},'*'); return; } }catch(e){}
+   if(typeof Android!=='undefined'&&Android.ouvrirVisite){ Android.ouvrirVisite(id); return; }
+   toast("Elle arrive… (dans l'appli)");
+ }
+ const ancienAppel=openCall, ancienRaccroche=hangUp;
+ hangUp=function(silent){ jeton++; try{ $('cchoix').innerHTML=''; }catch(e){} ancienRaccroche(silent); };
+ openCall=function(){
+   const g=gg(); const A=APPELS_VISITE[g.id]; if(!A){ ancienAppel(); return; }
+   hangUp(true); const tok=++jeton;
+   $('clav').style.backgroundImage=`url(${FACES[g.id]})`; $('clname').textContent=g.name;
+   $('cstat').textContent='Appel en cours…'; $('csay').innerHTML=''; $('cchoix').innerHTML=''; $('c-call').classList.add('ring'); showCV('call');
+   const attend=ms=>new Promise((ok,ko)=>callT.push(setTimeout(()=>tok===jeton?ok():ko(),ms)));
+   const bulle=(qui,t)=>{ const b=document.createElement('div'); b.className='bub '+qui; b.textContent=t; $('csay').appendChild(b); $('csay').scrollTop=1e6; };
+   const elle=async t=>{ await attend(600+Math.min(t.length*14,900)); bulle('her',t); };
+   // l'écran du téléphone capte les doigts : les choix passent par data-act, comme le reste du téléphone
+   const choix=opts=>new Promise(ok=>{ const c=$('cchoix'); c.innerHTML='';
+     choixEnCours=i=>{ if(tok!==jeton) return; choixEnCours=null; c.innerHTML=''; bulle('me',opts[i].t); ok(i); };
+     opts.forEach((o,i)=>{ const b=document.createElement('div'); b.className='cch'+(o.k?' '+o.k:''); b.textContent=o.t; b.dataset.act='vch:'+i; c.appendChild(b); }); });
+   (async()=>{ try{
+     await attend(1800); $('c-call').classList.remove('ring'); let t=0; $('cstat').textContent='00:00';
+     callT.push(setInterval(()=>{ t++; $('cstat').textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0'); },1000));
+     if(chez()===g.id){ await elle("Rudy… je suis juste à côté de toi 😄 Raccroche !"); await attend(1600); hangUp(); return; }
+     if(fache(g.id)){ await elle("Tu m'appelles encore ? Après ce que tu m'as fait ? Non merci."); await attend(1600); hangUp(); return; }
+     const L=A.scripts; let k=Math.floor(Math.random()*L.length); if(L.length>1&&k===dernier[g.id]) k=(k+1)%L.length; dernier[g.id]=k; const C=L[k];
+     for(const q of C.q){ await elle(q.d); const i=await choix(q.c.map(x=>({t:x[0]}))); await attend(350); await elle(q.c[i][1]); }
+     await elle(C.fin);
+     const oui=(await choix([{t:'Oui',k:'oui'},{t:'Non',k:'non'}]))===0;
+     await attend(300); await elle(oui?"D'accord, j'arrive tout de suite !":C.non); await attend(1400);
+     hangUp(); if(oui) demandeVisite(g.id);
+   }catch(e){} })();
+ };
+})();
 </script>
 </body>
 </html>

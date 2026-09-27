@@ -1024,6 +1024,19 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
             @android.webkit.JavascriptInterface
             fun ajouterArgent(n: Int) { Argent.ajouter(this@ShinatoActivity, n) }
 
+            /** Le téléphone : une fille a dit « oui ». Rudy rentre chez lui, elle arrive. */
+            @android.webkit.JavascriptInterface
+            fun visite(id: String) {
+                runOnUiThread {
+                    try {
+                        startActivity(android.content.Intent(this@ShinatoActivity, PageActivity::class.java)
+                            .putExtra("page", "visite.html?fille=" + id.filter { it.isLetter() })
+                            .putExtra("titre", ""))
+                    } catch (_: Throwable) {}
+                    finish()
+                }
+            }
+
             /** Tout à gauche de la rue : « Voulez-vous rentrer ? » -> OUI : retour au bureau. */
             @android.webkit.JavascriptInterface
             fun rentrer() {

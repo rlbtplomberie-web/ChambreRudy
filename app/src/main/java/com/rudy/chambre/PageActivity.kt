@@ -251,9 +251,16 @@ class PageActivity : ComponentActivity() {
 
         val racine = FrameLayout(this)
         racine.addView(vue, FrameLayout.LayoutParams(-1, -1))
-        racine.addView(retour, FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.START).apply {
+        // Pendant une visite, la fille est chez Rudy : on ne quitte pas la chambre sans passer par elle.
+        val visite = page.startsWith("visite.html")
+        if (!visite) racine.addView(retour, FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.START).apply {
             topMargin = (28 * resources.displayMetrics.density).toInt()
             leftMargin = (12 * resources.displayMetrics.density).toInt()
+        })
+        if (visite) onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                try { vue.evaluateJavascript("window.retourDemande&&window.retourDemande()", null) } catch (_: Throwable) { finish() }
+            }
         })
         setContentView(racine)
     }
@@ -542,6 +549,30 @@ class PageActivity : ComponentActivity() {
         /** Le jeu demande a revenir au bureau. */
         @JavascriptInterface
         fun retourChambre() { runOnUiThread { finish() } }
+
+        /** Le téléphone : une fille a dit « oui », elle arrive chez Rudy. */
+        @JavascriptInterface
+        fun ouvrirVisite(id: String) {
+            runOnUiThread {
+                try {
+                    startActivity(Intent(this@PageActivity, PageActivity::class.java)
+                        .putExtra("page", "visite.html?fille=" + id.filter { it.isLetter() })
+                        .putExtra("titre", ""))
+                } catch (_: Throwable) {}
+                finish()
+            }
+        }
+
+        /** L'argent de Rudy (les cadeaux que les filles demandent). */
+        @JavascriptInterface
+        fun argent(): Int = Argent.lire(this@PageActivity)
+
+        @JavascriptInterface
+        fun ajouterArgent(n: Int) { Argent.ajouter(this@PageActivity, n) }
+
+        /** La radio de la chambre se tait pendant la balade (le boulevard a sa musique). */
+        @JavascriptInterface
+        fun radio(allumee: Boolean) { SonPartage.volume(if (allumee) 1f else 0f) }
 
         /** La MAP du téléphone : Rudy part à Shinato (la page a noté où il va). */
         @JavascriptInterface

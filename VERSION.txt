@@ -1,6 +1,18 @@
-version 159 — Shinato Soccer : commandes tactiles refaites
-  - Stick et boutons (Tir, Passe, Esquive, Tacle, flèches du duel) écoutent directement
-    les doigts, chacun suivi à part : on peut diriger et tirer en même temps, et un
-    appui ne se perd plus dans la WebView Android. Zone d'appui des boutons élargie.
-  - Pas de plein écran dans l'appli (il décalait le tactile).
-  - Rue : la mémoire de dessin d'un lieu est rendue quand on le quitte (plage de Gisèle).
+version 160 — Les filles viennent chez Rudy
+
+  Téléphone > Contacts > appeler une fille : elle discute (4 conversations
+  différentes chacune), puis demande « Tu veux que je vienne ? ». Si oui, Rudy
+  est chez lui et elle arrive.
+
+  Pendant qu'elle est là, on reste chez Rudy : le bureau, la baie vitrée et le
+  lit (flèches ou glisser le doigt). Pas de retour, pas de MAP.
+  - Pour sortir : lui parler > « Sortir avec elle » -> balade sur le boulevard
+    (marche main dans la main, bisou, invitation au RestoChic = Table pour deux
+    avec elle, musique jazz). « Rentrer » ramène à la chambre, avec elle.
+  - Pour retrouver la ville : lui dire de rentrer chez elle. Rudy se retrouve
+    seul dans sa chambre, et tout redevient normal.
+  Menu quand elle est debout : Discuter, Inviter à s'asseoir, Sortir, Laisser
+  rentrer. Sur le lit : Discuter, Sortir, Laisser rentrer, « Je veux que tu
+  dormes ici ce soir » (à venir).
+  Cœur d'amitié partagé avec le téléphone, argent de Rudy pour les demandes de
+  Karine, colère si on l'ignore 5 minutes.

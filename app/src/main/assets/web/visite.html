@@ -1,0 +1,1138 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Visite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --verre:rgba(16,13,44,.94);      /* fond du téléphone, bleu nuit de la chambre */
+  --trait:rgba(170,160,255,.22);
+  --texte:#f2efff;
+  --doux:#a9a3d6;
+  --elle:#2b2766;                 /* bulles de la fille */
+  --rudy:#3b6cf0;                 /* réponses de Rudy */
+  --vert:#2fcf62; --rouge:#ff4b43;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#05040f;overflow:hidden;font-family:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--texte);touch-action:manipulation}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+/* la chambre : même proportion que ta capture, centrée */
+#scene{position:relative;height:100%;aspect-ratio:1080/2340;max-width:100vw;margin:0 auto;overflow:hidden;
+  background:url(/assets/web/visite/fenetre.jpg) center/cover no-repeat}
+@supports not (aspect-ratio:1/1){#scene{width:min(100vw,calc(100vh*1080/2340))}}
+#sophie{position:absolute;transform:translateX(-50%);height:57.7%;left:63%;bottom:10.9%;display:none;
+  filter:drop-shadow(0 14px 10px rgba(0,0,20,.45));user-select:none;-webkit-user-drag:none;transition:opacity .25s}
+#sophie.arrive{animation:arrive .9s ease-out}
+@keyframes arrive{from{opacity:0;transform:translateX(-50%) translateY(3%)}to{opacity:1;transform:translateX(-50%)}}
+.lit{position:absolute;left:50%;bottom:24.5%;transform:translateX(-50%);display:none;opacity:0;transition:opacity .6s ease;filter:drop-shadow(0 10px 8px rgba(0,0,20,.4));user-select:none;-webkit-user-drag:none;z-index:1}
+#voile{position:absolute;inset:0;background:#05040f;opacity:0;pointer-events:none;transition:opacity .45s;z-index:8}
+#voile.on{opacity:1}
+#bulle{position:absolute;display:none;max-width:52%;padding:7px 12px 9px;border-radius:14px 14px 14px 4px;background:rgba(255,255,255,.96);color:#1c1740;font-weight:700;font-size:clamp(12px,3.4vw,15px);line-height:1.3;box-shadow:0 6px 18px rgba(0,0,0,.35);z-index:3}
+#bulle .qui{display:block;font-size:.78em;font-weight:800;color:#c2317a;margin-bottom:1px}
+/* cœur d'amitié */
+#coeur{position:absolute;left:50%;top:5.2%;transform:translateX(-50%);height:3.6%;display:none;align-items:center;gap:6px;padding:0 12px;border-radius:999px;background:rgba(12,8,24,.85);border:1.5px solid rgba(255,120,170,.55);font-weight:800;font-size:clamp(11px,3vw,14px);white-space:nowrap}
+#coeur i{font-style:normal;color:#ff5c8f}
+.flotte{position:absolute;font-weight:800;font-size:clamp(14px,4vw,20px);pointer-events:none;animation:flotte 1.4s ease-out forwards;text-shadow:0 2px 4px rgba(0,0,0,.6);z-index:4}
+.flotte.plus{color:#ff7aa8}.flotte.moins{color:#9aa4c8}
+@keyframes flotte{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-60px)}}
+/* menu quand on la touche, et la discussion */
+#menu,#discu{position:absolute;left:4%;right:4%;bottom:3%;display:none;flex-direction:column;gap:8px;padding:12px;border-radius:18px;background:rgba(14,11,40,.93);border:1px solid var(--trait);z-index:5}
+#menu .titre,#discu .titre{font-weight:800;font-size:15px;margin:0 2px 2px}
+#discu .question{background:#fff;color:#1c1740;border-radius:14px 14px 14px 4px;padding:8px 12px 10px;font-weight:700;font-size:15px;line-height:1.35}
+#discu .question .qui{display:block;font-size:12px;font-weight:800;color:#c2317a}
+.opt{border:1.5px solid rgba(120,150,255,.55);background:rgba(59,108,240,.16);color:var(--texte);border-radius:14px;padding:11px 12px;font:700 15px Nunito,sans-serif;text-align:left;cursor:pointer}
+.opt.doux{border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.06)}
+.cz{font-size:12px;color:#ff7aa8;font-weight:800}
+#coeur .sep{opacity:.5}
+.opt.argOui{border-color:#2fcf62;background:rgba(47,207,98,.16)}
+.opt.argNon{border-color:#ff4b43;background:rgba(255,75,67,.14)}
+.pluie{position:absolute;z-index:4;pointer-events:none;opacity:0;animation:pluie 2.4s ease-out forwards;text-shadow:0 0 8px rgba(255,90,150,.8)}
+@keyframes pluie{0%{opacity:0;transform:translateY(10px) scale(.4)}15%{opacity:1;transform:translateY(0) scale(1.1)}100%{opacity:0;transform:translateY(-120px) scale(.9) rotate(20deg)}}
+/* bouton Téléphone : posé exactement sur celui de la capture */
+#btnTel{position:absolute;left:2%;top:.8%;width:26.4%;height:3.6%;border-radius:999px;border:1.5px solid rgba(255,225,160,.55);
+  background:rgba(12,8,24,.9);color:#ffeec2;font:800 clamp(11px,3vw,15px)/1 Nunito,system-ui,sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+#btnTel:focus-visible,.contact:focus-visible,.choix:focus-visible{outline:2px solid #ffd76a;outline-offset:2px}
+/* réglage de la place de Sophie */
+#btnReglage{position:absolute;right:2%;top:.8%;height:3.6%;aspect-ratio:1;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);background:rgba(12,8,24,.7);color:#fff;font-size:clamp(12px,3.4vw,16px);cursor:pointer;display:none}
+#btnSimu{position:absolute;right:13%;top:.8%;height:3.6%;aspect-ratio:1;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);background:rgba(12,8,24,.7);color:#fff;font-size:clamp(12px,3.4vw,16px);cursor:pointer;z-index:6}
+#simu{position:absolute;right:3%;top:5.5%;width:min(80%,300px);display:none;flex-direction:column;gap:8px;padding:12px;border-radius:14px;background:rgba(12,8,30,.95);border:1px solid var(--trait);font-size:13px;z-index:7}
+#simu label{display:flex;justify-content:space-between;align-items:center;gap:8px}
+#simu select{flex:1;max-width:60%;padding:6px;border-radius:8px;background:#221d52;color:#fff;border:1px solid var(--trait);font:600 13px Nunito,sans-serif}
+#simu button{border:0;border-radius:10px;padding:9px;background:#3b6cf0;color:#fff;font:800 13px Nunito,sans-serif}
+#reglage{position:absolute;left:3%;right:3%;bottom:2%;display:none;padding:10px 12px;border-radius:14px;background:rgba(12,8,30,.9);border:1px solid var(--trait);font-size:13px}
+#reglage label{display:flex;align-items:center;gap:10px}
+#reglage input{flex:1}
+#reglage .ligne{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px}
+#reglage button{border:0;border-radius:10px;padding:7px 10px;background:#2f2a70;color:#fff;font:700 12px Nunito,sans-serif}
+
+/* ---------- le téléphone ---------- */
+#tel{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(3,2,12,.55);z-index:10}
+#tel.ouvert{display:flex}
+.coque{position:relative;width:min(88vw,370px);height:min(82vh,720px);border-radius:38px;padding:12px;background:#07061a;border:2px solid #2a2750;
+  box-shadow:0 30px 70px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.05)}
+.ecran{position:relative;width:100%;height:100%;border-radius:28px;overflow:hidden;background:var(--verre);display:flex;flex-direction:column}
+.barre{display:flex;justify-content:space-between;padding:10px 18px 4px;font-size:12px;font-weight:700;color:var(--doux)}
+.vue{position:absolute;inset:26px 0 0;display:none;flex-direction:column}
+.vue.on{display:flex}
+h2{margin:6px 18px 10px;font-size:26px;font-weight:800;letter-spacing:-.3px}
+.liste{overflow:auto;padding:0 10px 14px}
+.contact{width:100%;display:flex;align-items:center;gap:12px;padding:9px 8px;border:0;border-radius:14px;background:none;color:var(--texte);font:700 16px Nunito,sans-serif;text-align:left;cursor:pointer}
+.contact:active{background:rgba(255,255,255,.06)}
+.contact small{display:block;font-weight:500;font-size:12px;color:var(--doux)}
+.contact .appel{margin-left:auto;width:34px;height:34px;border-radius:50%;background:var(--vert);display:grid;place-items:center;font-size:16px}
+.av{width:46px;height:46px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:800;font-size:18px;background:#3a3480;background-size:cover;background-position:center}
+.fermer{position:absolute;right:14px;top:6px;border:0;background:none;color:var(--doux);font:800 14px Nunito,sans-serif;padding:6px;cursor:pointer}
+
+/* appel en cours */
+#vAppel{align-items:center}
+#vAppel .grand{width:92px;height:92px;margin-top:18px;font-size:34px;box-shadow:0 0 0 6px rgba(255,255,255,.05)}
+#nomAppel{font-size:24px;font-weight:800;margin-top:10px}
+#etat{font-size:13px;color:var(--doux);margin-top:2px;min-height:18px}
+#fil{flex:1;width:100%;overflow:auto;padding:14px 14px 6px;display:flex;flex-direction:column;gap:8px}
+.b{max-width:82%;padding:9px 13px;border-radius:18px;font-size:15px;line-height:1.35;animation:bulle .22s ease-out}
+.b.elle{align-self:flex-start;background:var(--elle);border-bottom-left-radius:6px}
+.b.rudy{align-self:flex-end;background:var(--rudy);border-bottom-right-radius:6px}
+@keyframes bulle{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.ecrit{align-self:flex-start;color:var(--doux);font-size:13px;padding:2px 6px}
+#choix{width:100%;padding:8px 14px 10px;display:flex;flex-direction:column;gap:7px}
+.choix{border:1.5px solid rgba(120,150,255,.55);background:rgba(59,108,240,.14);color:var(--texte);border-radius:14px;padding:11px 12px;font:700 15px Nunito,sans-serif;cursor:pointer}
+.choix.oui{border-color:var(--vert);background:rgba(47,207,98,.16)}
+.choix.non{border-color:var(--rouge);background:rgba(255,75,67,.14)}
+#raccrocher{width:58px;height:58px;border-radius:50%;border:0;background:var(--rouge);color:#fff;font-size:24px;margin:4px 0 16px;cursor:pointer;transform:rotate(135deg)}
+#resto{position:fixed;inset:0;width:100%;height:100%;border:0;display:none;z-index:35;background:#000;transition:opacity .45s}
+#sortie{position:fixed;inset:0;width:100%;height:100%;border:0;display:none;z-index:30;background:#000;transition:opacity .45s}
+#resto{position:fixed;inset:0;width:100%;height:100%;border:0;display:none;z-index:35;background:#000;transition:opacity .45s}
+#telV{position:fixed;inset:0;width:100%;height:100%;border:0;display:none;z-index:40;background:#000}
+#telFermer{position:fixed;z-index:41;display:none;left:calc(10px + env(safe-area-inset-left,0px));top:calc(10px + env(safe-area-inset-top,0px));padding:8px 14px;border-radius:18px;border:1.5px solid rgba(255,225,160,.6);background:rgba(12,8,24,.85);color:#ffeec2;font:800 13px Nunito,system-ui,sans-serif}
+.fl{position:absolute;top:44%;width:40px;height:64px;border:0;border-radius:14px;background:rgba(10,8,30,.45);color:#fff;font:700 34px/1 system-ui,sans-serif;display:grid;place-items:center;z-index:6;cursor:pointer}
+#flG{left:6px}#flD{right:6px}
+#toast{position:fixed;left:50%;bottom:6%;transform:translateX(-50%);padding:10px 16px;border-radius:12px;background:rgba(10,8,28,.92);border:1px solid var(--trait);font-weight:700;font-size:14px;display:none;z-index:20;max-width:90vw;text-align:center}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+#btnReglage,#btnSimu{display:none!important}
+</style>
+</head>
+<body>
+<div id="scene">
+  <img id="sophie" alt="Sophie">
+  <img id="lit1" class="lit" alt=""><img id="lit2" class="lit" alt="">
+  <div id="voile"></div>
+  <button class="fl" id="flG" aria-label="Regarder à gauche">‹</button><button class="fl" id="flD" aria-label="Regarder à droite">›</button>
+  <div id="bulle"></div>
+  <div id="coeur" aria-live="polite"><i>♥</i><span id="coeurTxt"></span><span class="sep">·</span>💶 <span id="argentTxt"></span></div>
+  <div id="menu"></div>
+  <div id="discu"></div>
+  <button id="btnTel" aria-label="Ouvrir le téléphone">📱 Téléphone</button>
+  <button id="btnSimu" aria-label="Simuler un match">🎮</button>
+  <div id="simu"><b>Test : simuler un match récent</b>
+    <label>Jeu <select id="smJeu"></select></label>
+    <label>Contre <select id="smFille"></select></label>
+    <label>Gagnant <select id="smGagne"><option value="fille">Elle a gagné</option><option value="rudy">Rudy a gagné</option></select></label>
+    <button id="smOk">Noter le match</button></div>
+  <button id="btnReglage" aria-label="Régler la place de Sophie">⚙</button>
+  <div id="reglage">
+    <b>Place de Sophie</b> — fais-la glisser avec le doigt.
+    <label>Taille <input id="taille" type="range" min="35" max="80" step="0.5"></label>
+    <div class="ligne"><span id="valeurs"></span><span><button id="reset">Remettre</button> <button id="finReglage">Terminé</button></span></div>
+  </div>
+</div>
+
+<div id="tel" role="dialog" aria-label="Téléphone">
+  <div class="coque"><div class="ecran">
+    <div class="barre"><span id="heure">22:14</span><span>5G ▮▮▮ 82 %</span></div>
+    <section class="vue on" id="vContacts">
+      <button class="fermer" id="fermerTel">Fermer</button>
+      <h2>Appels</h2>
+      <div class="liste" id="liste"></div>
+    </section>
+    <section class="vue" id="vAppel">
+      <div class="av grand" id="avAppel"></div>
+      <div id="nomAppel"></div>
+      <div id="etat">Appel…</div>
+      <div id="fil"></div>
+      <div id="choix"></div>
+      <button id="raccrocher" aria-label="Raccrocher">✆</button>
+    </section>
+  </div></div>
+</div>
+<div id="toast"></div>
+<iframe id="sortie" title="Balade sur le boulevard" allow="autoplay"></iframe>
+<iframe id="resto" title="Dîner au RestoChic" allow="autoplay"></iframe>
+<iframe id="telV" title="Téléphone" allow="autoplay; camera; microphone"></iframe>
+<button id="telFermer">✕ Fermer</button>
+
+<script>
+let BG_LIT="/assets/web/visite/lit.jpg";
+const LIT={"katila": {"src": {"r1": "/assets/web/visite/lit/katila_r1.webp", "r2": "/assets/web/visite/lit/katila_r2.webp", "r3": "/assets/web/visite/lit/katila_r3.webp", "r4": "/assets/web/visite/lit/katila_r4.webp", "r5": "/assets/web/visite/lit/katila_r5.webp", "r6": "/assets/web/visite/lit/katila_r6.webp", "r7": "/assets/web/visite/lit/katila_r7.webp", "r8": "/assets/web/visite/lit/katila_r8.webp", "p1": "/assets/web/visite/lit/katila_p1.webp", "p2": "/assets/web/visite/lit/katila_p2.webp", "p3": "/assets/web/visite/lit/katila_p3.webp"}, "d": [["r1", 586, 459], ["r2", 267, 600], ["r3", 515, 371], ["r4", 417, 579], ["r5", 423, 600], ["r6", 282, 589], ["r7", 498, 580], ["r8", 294, 572], ["p1", 481, 590], ["p2", 467, 591], ["p3", 475, 600]]}, "rose": {"src": {"r1": "/assets/web/visite/lit/rose_r1.webp", "r2": "/assets/web/visite/lit/rose_r2.webp", "r3": "/assets/web/visite/lit/rose_r3.webp", "r4": "/assets/web/visite/lit/rose_r4.webp", "r5": "/assets/web/visite/lit/rose_r5.webp", "r6": "/assets/web/visite/lit/rose_r6.webp", "r7": "/assets/web/visite/lit/rose_r7.webp", "r8": "/assets/web/visite/lit/rose_r8.webp", "p1": "/assets/web/visite/lit/rose_p1.webp", "p2": "/assets/web/visite/lit/rose_p2.webp", "p3": "/assets/web/visite/lit/rose_p3.webp"}, "d": [["r1", 491, 549], ["r2", 419, 600], ["r3", 538, 556], ["r4", 421, 593], ["r5", 442, 582], ["r6", 404, 600], ["r7", 621, 540], ["r8", 441, 547], ["p1", 412, 600], ["p2", 407, 594], ["p3", 373, 592]]}, "karine": {"src": {"r1": "/assets/web/visite/lit/karine_r1.webp", "r2": "/assets/web/visite/lit/karine_r2.webp", "r3": "/assets/web/visite/lit/karine_r3.webp", "r4": "/assets/web/visite/lit/karine_r4.webp", "r5": "/assets/web/visite/lit/karine_r5.webp", "r6": "/assets/web/visite/lit/karine_r6.webp", "r7": "/assets/web/visite/lit/karine_r7.webp", "r8": "/assets/web/visite/lit/karine_r8.webp", "p1": "/assets/web/visite/lit/karine_p1.webp", "p2": "/assets/web/visite/lit/karine_p2.webp", "p3": "/assets/web/visite/lit/karine_p3.webp"}, "d": [["r1", 470, 600], ["r2", 417, 539], ["r3", 640, 450], ["r4", 379, 594], ["r5", 461, 600], ["r6", 410, 584], ["r7", 621, 542], ["r8", 371, 581], ["p1", 430, 600], ["p2", 408, 596], ["p3", 374, 599]]}, "mifa": {"src": {"r1": "/assets/web/visite/lit/mifa_r1.webp", "r2": "/assets/web/visite/lit/mifa_r2.webp", "r3": "/assets/web/visite/lit/mifa_r3.webp", "r4": "/assets/web/visite/lit/mifa_r4.webp", "r5": "/assets/web/visite/lit/mifa_r5.webp", "r6": "/assets/web/visite/lit/mifa_r6.webp", "r7": "/assets/web/visite/lit/mifa_r7.webp", "r8": "/assets/web/visite/lit/mifa_r8.webp", "p1": "/assets/web/visite/lit/mifa_p1.webp", "p2": "/assets/web/visite/lit/mifa_p2.webp", "p3": "/assets/web/visite/lit/mifa_p3.webp"}, "d": [["r1", 475, 600], ["r2", 410, 591], ["r3", 627, 474], ["r4", 394, 493], ["r5", 463, 591], ["r6", 413, 560], ["r7", 582, 484], ["r8", 368, 600], ["p1", 431, 600], ["p2", 411, 595], ["p3", 374, 596]]}, "faty": {"src": {"r1": "/assets/web/visite/lit/faty_r1.webp", "r2": "/assets/web/visite/lit/faty_r2.webp", "r3": "/assets/web/visite/lit/faty_r3.webp", "r4": "/assets/web/visite/lit/faty_r4.webp", "r5": "/assets/web/visite/lit/faty_r5.webp", "r6": "/assets/web/visite/lit/faty_r6.webp", "r7": "/assets/web/visite/lit/faty_r7.webp", "r8": "/assets/web/visite/lit/faty_r8.webp", "p1": "/assets/web/visite/lit/faty_p1.webp", "p2": "/assets/web/visite/lit/faty_p2.webp", "p3": "/assets/web/visite/lit/faty_p3.webp"}, "d": [["r1", 383, 600], ["r2", 313, 594], ["r3", 584, 580], ["r4", 352, 576], ["r5", 450, 562], ["r6", 294, 600], ["r7", 560, 515], ["r8", 281, 596], ["p1", 426, 600], ["p2", 402, 595], ["p3", 390, 590]]}, "ameline": {"src": {"r1": "/assets/web/visite/lit/ameline_r1.webp", "r2": "/assets/web/visite/lit/ameline_r2.webp", "r3": "/assets/web/visite/lit/ameline_r3.webp", "r4": "/assets/web/visite/lit/ameline_r4.webp", "r5": "/assets/web/visite/lit/ameline_r5.webp", "r6": "/assets/web/visite/lit/ameline_r6.webp", "r7": "/assets/web/visite/lit/ameline_r7.webp", "r8": "/assets/web/visite/lit/ameline_r8.webp", "t1": "/assets/web/visite/lit/ameline_t1.webp", "t2": "/assets/web/visite/lit/ameline_t2.webp", "t3": "/assets/web/visite/lit/ameline_t3.webp", "t4": "/assets/web/visite/lit/ameline_t4.webp"}, "d": [["r1", 1220, 600], ["r2", 38, 42], ["r3", 718, 300], ["r4", 24, 21], ["r5", 382, 600], ["r6", 329, 599], ["r7", 333, 528], ["r8", 357, 559], ["t1", 345, 577], ["t2", 337, 600], ["t3", 323, 588], ["t4", 359, 596]]}, "sophie": {"src": {"r1": "/assets/web/visite/lit/sophie_r1.webp", "r2": "/assets/web/visite/lit/sophie_r2.webp", "r3": "/assets/web/visite/lit/sophie_r3.webp", "r4": "/assets/web/visite/lit/sophie_r4.webp", "r5": "/assets/web/visite/lit/sophie_r5.webp", "r6": "/assets/web/visite/lit/sophie_r6.webp", "r7": "/assets/web/visite/lit/sophie_r7.webp", "r8": "/assets/web/visite/lit/sophie_r8.webp", "p1": "/assets/web/visite/lit/sophie_p1.webp", "p2": "/assets/web/visite/lit/sophie_p2.webp", "p3": "/assets/web/visite/lit/sophie_p3.webp"}, "d": [["r1", 450, 565], ["r2", 465, 600], ["r3", 556, 544], ["r4", 417, 599], ["r5", 427, 600], ["r6", 452, 600], ["r7", 571, 597], ["r8", 415, 549], ["p1", 402, 600], ["p2", 391, 578], ["p3", 373, 578]]}, "gisele": {"src": {"r1": "/assets/web/visite/lit/gisele_r1.webp", "r2": "/assets/web/visite/lit/gisele_r2.webp", "r3": "/assets/web/visite/lit/gisele_r3.webp", "r4": "/assets/web/visite/lit/gisele_r4.webp", "r5": "/assets/web/visite/lit/gisele_r5.webp", "r6": "/assets/web/visite/lit/gisele_r6.webp", "r7": "/assets/web/visite/lit/gisele_r7.webp", "r8": "/assets/web/visite/lit/gisele_r8.webp", "p1": "/assets/web/visite/lit/gisele_p1.webp", "p2": "/assets/web/visite/lit/gisele_p2.webp", "p3": "/assets/web/visite/lit/gisele_p3.webp"}, "d": [["r1", 430, 600], ["r2", 441, 599], ["r3", 562, 578], ["r4", 423, 564], ["r5", 453, 582], ["r6", 437, 600], ["r7", 569, 512], ["r8", 439, 597], ["p1", 431, 600], ["p2", 407, 587], ["p3", 373, 590]]}};
+let RESTO="";
+let BALADE_BASE="";
+const BALADE={"sophie": {"f": ["/assets/web/visite/couple/sophie/cp_01.webp", "/assets/web/visite/couple/sophie/cp_02.webp", "/assets/web/visite/couple/sophie/cp_03.webp", "/assets/web/visite/couple/sophie/cp_04.webp", "/assets/web/visite/couple/sophie/cp_05.webp", "/assets/web/visite/couple/sophie/cp_06.webp", "/assets/web/visite/couple/sophie/cp_07.webp", "/assets/web/visite/couple/sophie/cp_08.webp", "/assets/web/visite/couple/sophie/cp_09.webp", "/assets/web/visite/couple/sophie/cp_10.webp", "/assets/web/visite/couple/sophie/cp_11.webp", "/assets/web/visite/couple/sophie/cp_12.webp", "/assets/web/visite/couple/sophie/cp_13.webp", "/assets/web/visite/couple/sophie/cp_14.webp", "/assets/web/visite/couple/sophie/cp_15.webp"], "ar": "0.8019", "mots": {"resto": "Le RestoChic ?! Rudy\u2026 personne ne m'a jamais invit\u00e9e dans un endroit aussi beau.", "arrive": "Waouh, c'est trop beau ici la nuit !", "bisou": ["Hihi\u2026 encore ?", "T'es trop mignon\u2026", "Mmh\u2026 j'adore cette soir\u00e9e.", "Tout le monde nous regarde !"]}}, "karine": {"f": ["/assets/web/visite/couple/karine/cp_01.webp", "/assets/web/visite/couple/karine/cp_02.webp", "/assets/web/visite/couple/karine/cp_03.webp", "/assets/web/visite/couple/karine/cp_04.webp", "/assets/web/visite/couple/karine/cp_05.webp", "/assets/web/visite/couple/karine/cp_06.webp", "/assets/web/visite/couple/karine/cp_07.webp", "/assets/web/visite/couple/karine/cp_08.webp", "/assets/web/visite/couple/karine/cp_09.webp", "/assets/web/visite/couple/karine/cp_10.webp", "/assets/web/visite/couple/karine/cp_11.webp", "/assets/web/visite/couple/karine/cp_12.webp", "/assets/web/visite/couple/karine/cp_13.webp", "/assets/web/visite/couple/karine/cp_14.webp", "/assets/web/visite/couple/karine/cp_15.webp"], "ar": "0.7995", "mots": {"resto": "Un resto chic avec toi ? J'esp\u00e8re qu'ils ont des frites, hein !", "arrive": "On fait la course jusqu'au bout du boulevard ?", "bisou": ["Ok\u2026 l\u00e0, t'as gagn\u00e9 la partie.", "Encore un et je te laisse gagner \u00e0 Kart Fury.", "H\u00e9, t'embrasses bien pour un geek !", "Chut, personne doit savoir."]}}, "gisele": {"f": ["/assets/web/visite/couple/gisele/cp_01.webp", "/assets/web/visite/couple/gisele/cp_02.webp", "/assets/web/visite/couple/gisele/cp_03.webp", "/assets/web/visite/couple/gisele/cp_04.webp", "/assets/web/visite/couple/gisele/cp_05.webp", "/assets/web/visite/couple/gisele/cp_06.webp", "/assets/web/visite/couple/gisele/cp_07.webp", "/assets/web/visite/couple/gisele/cp_08.webp", "/assets/web/visite/couple/gisele/cp_09.webp", "/assets/web/visite/couple/gisele/cp_10.webp", "/assets/web/visite/couple/gisele/cp_11.webp", "/assets/web/visite/couple/gisele/cp_12.webp", "/assets/web/visite/couple/gisele/cp_13.webp", "/assets/web/visite/couple/gisele/cp_14.webp", "/assets/web/visite/couple/gisele/cp_15.webp"], "ar": "0.7855", "mots": {"resto": "Oh l\u00e0 l\u00e0, le RestoChic ! Je vais \u00eatre la plus belle de la salle !", "arrive": "Ouiii, j'adore le boulevard la nuit ! \u00c9coute la musique !", "bisou": ["Mmh, on danse apr\u00e8s ?", "T'es trop chou !", "Encore, encore !", "Je vais le raconter \u00e0 toute la plage !"]}}, "faty": {"f": ["/assets/web/visite/couple/faty/cp_01.webp", "/assets/web/visite/couple/faty/cp_02.webp", "/assets/web/visite/couple/faty/cp_03.webp", "/assets/web/visite/couple/faty/cp_04.webp", "/assets/web/visite/couple/faty/cp_05.webp", "/assets/web/visite/couple/faty/cp_06.webp", "/assets/web/visite/couple/faty/cp_07.webp", "/assets/web/visite/couple/faty/cp_08.webp", "/assets/web/visite/couple/faty/cp_09.webp", "/assets/web/visite/couple/faty/cp_10.webp", "/assets/web/visite/couple/faty/cp_11.webp", "/assets/web/visite/couple/faty/cp_12.webp", "/assets/web/visite/couple/faty/cp_13.webp", "/assets/web/visite/couple/faty/cp_14.webp", "/assets/web/visite/couple/faty/cp_15.webp"], "ar": "0.8098", "mots": {"resto": "Enfin quelqu'un qui me comprend ! On commande tout le menu ?", "arrive": "\u00c7a sent bon le resto par ici\u2026 je dis \u00e7a, je dis rien.", "bisou": ["Bon\u2026 t'as marqu\u00e9 des points, l\u00e0.", "Plus doux qu'un dessert, \u00e7a.", "Encore un et je t'invite au resto.", "Arr\u00eate, je vais rougir !"]}}, "katila": {"f": ["/assets/web/visite/couple/katila/cp_01.webp", "/assets/web/visite/couple/katila/cp_02.webp", "/assets/web/visite/couple/katila/cp_03.webp", "/assets/web/visite/couple/katila/cp_04.webp", "/assets/web/visite/couple/katila/cp_05.webp", "/assets/web/visite/couple/katila/cp_06.webp", "/assets/web/visite/couple/katila/cp_07.webp", "/assets/web/visite/couple/katila/cp_08.webp", "/assets/web/visite/couple/katila/cp_09.webp", "/assets/web/visite/couple/katila/cp_10.webp"], "ar": "0.8127", "mots": {"resto": "Un vrai d\u00eener\u2026 apr\u00e8s ma garde, c'est exactement ce qu'il me fallait.", "arrive": "\u00c7a fait du bien de marcher un peu apr\u00e8s ma garde.", "bisou": ["Hmm\u2026", "Tu prends soin de moi, pour une fois.", "Encore ?", "T'es mon patient pr\u00e9f\u00e9r\u00e9."]}}, "ameline": {"f": ["/assets/web/visite/couple/ameline/cp_01.webp", "/assets/web/visite/couple/ameline/cp_02.webp", "/assets/web/visite/couple/ameline/cp_03.webp", "/assets/web/visite/couple/ameline/cp_04.webp", "/assets/web/visite/couple/ameline/cp_05.webp", "/assets/web/visite/couple/ameline/cp_06.webp", "/assets/web/visite/couple/ameline/cp_07.webp", "/assets/web/visite/couple/ameline/cp_08.webp", "/assets/web/visite/couple/ameline/cp_09.webp", "/assets/web/visite/couple/ameline/cp_10.webp", "/assets/web/visite/couple/ameline/cp_11.webp", "/assets/web/visite/couple/ameline/cp_12.webp", "/assets/web/visite/couple/ameline/cp_13.webp", "/assets/web/visite/couple/ameline/cp_14.webp", "/assets/web/visite/couple/ameline/cp_15.webp"], "ar": "0.8096", "mots": {"resto": "Un d\u00eener aux chandelles\u2026 tu sais parler \u00e0 mon c\u0153ur.", "arrive": "Les lumi\u00e8res de la ville, la nuit\u2026 c'est magnifique.", "bisou": ["C'\u00e9tait\u2026 parfait.", "Je ne m'y attendais pas.", "Encore un, s'il te pla\u00eet.", "Je me sens bien avec toi."]}}, "mifa": {"f": ["/assets/web/visite/couple/mifa/cp_01.webp", "/assets/web/visite/couple/mifa/cp_02.webp", "/assets/web/visite/couple/mifa/cp_03.webp", "/assets/web/visite/couple/mifa/cp_04.webp", "/assets/web/visite/couple/mifa/cp_05.webp", "/assets/web/visite/couple/mifa/cp_06.webp", "/assets/web/visite/couple/mifa/cp_07.webp", "/assets/web/visite/couple/mifa/cp_08.webp", "/assets/web/visite/couple/mifa/cp_09.webp", "/assets/web/visite/couple/mifa/cp_10.webp", "/assets/web/visite/couple/mifa/cp_11.webp", "/assets/web/visite/couple/mifa/cp_12.webp", "/assets/web/visite/couple/mifa/cp_13.webp", "/assets/web/visite/couple/mifa/cp_14.webp", "/assets/web/visite/couple/mifa/cp_15.webp"], "ar": "0.8098", "mots": {"resto": "Le RestoChic. Tu as du go\u00fbt, Rudy. Je suis impressionn\u00e9e.", "arrive": "Le boulevard. Bon choix, tu as du go\u00fbt.", "bisou": ["Pas mal\u2026 pas mal du tout.", "Tu viens de gagner un deuxi\u00e8me rendez-vous.", "Encore. C'est un ordre.", "Hmm, je n'avais pas pr\u00e9vu \u00e7a dans mon agenda."]}}, "rose": {"f": ["/assets/web/visite/couple/rose/cp_01.webp", "/assets/web/visite/couple/rose/cp_02.webp", "/assets/web/visite/couple/rose/cp_03.webp", "/assets/web/visite/couple/rose/cp_04.webp", "/assets/web/visite/couple/rose/cp_05.webp", "/assets/web/visite/couple/rose/cp_06.webp", "/assets/web/visite/couple/rose/cp_07.webp", "/assets/web/visite/couple/rose/cp_08.webp", "/assets/web/visite/couple/rose/cp_09.webp", "/assets/web/visite/couple/rose/cp_10.webp", "/assets/web/visite/couple/rose/cp_11.webp", "/assets/web/visite/couple/rose/cp_12.webp", "/assets/web/visite/couple/rose/cp_13.webp", "/assets/web/visite/couple/rose/cp_14.webp", "/assets/web/visite/couple/rose/cp_15.webp"], "ar": "0.7971", "mots": {"resto": "Ahhh, un resto en amoureux ! Je vais tout raconter \u00e0 mes copines !", "arrive": "Ahh, c'est trop romantique ici !", "bisou": ["Je le savais que tu m'aimais bien !", "Encore un, encore un !", "Promets-moi qu'on reviendra.", "Mes copines vont \u00eatre jalouses !"]}}};
+/* poses : 1 étirement · 2 téléphone · 3 bisou · 4 bras croisés · 5 elle pointe (fâchée) · 6 neutre · 7 cheveux/timide · 8 rire · 9 elle parle · 10 « moi ? »
+   chaque question : [question, [bonne réponse, réaction, pose, points], [mauvaise réponse, réaction, pose, points]] */
+const PERSO={
+sophie:{nom:"Sophie",caractere:"douce et romantique",
+ appel:{q:[{d:"Allô Rudy ? C'est Sophie. Je te réveille pas, j'espère ?",c:[["Non, t'inquiète","Tant mieux ! J'avais envie d'entendre ta voix."],["Presque… mais pour toi je décroche","Haha, t'es mignon quand tu veux."]]},{d:"Tu fais quoi de ta soirée ?",c:[["Je suis tranquille dans ma chambre","Tout seul ? Ça me donne une idée…"],["Rien de prévu","Parfait, moi non plus."]]}],
+  fin:"Je suis pas loin de chez toi… Tu veux que je vienne ?",non:"D'accord… Une autre fois alors. Bonne nuit, Rudy."},
+ arrive:[3,"Coucou ! Me voilà 😘"],
+ seule:[[9,"Elle est cool, ta chambre."],[2,"Attends, je réponds vite à un message…"],[7,"T'as vu la vue depuis ta fenêtre ? Trop belle."],[10,"C'est qui, le gars en armure sur ton poster ?"],[1,"Pfiou, je suis crevée de ma journée."],[8,"Je repense à la partie de pistolet à eau, haha."]],
+ froid:[[4,"…"],[4,"Je sais même pas pourquoi je suis venue."]],
+ ignore:["Hé… tu me calcules pas, là ?","Sérieux, Rudy ? Je suis venue pour rien ?","Bon, j'en ai marre. Je rentre chez moi, et m'appelle plus ce soir !"],
+ tot:"Quoi ?! Tu m'as fait venir juste pour me faire perdre mon temps ?",bye:"D'accord, j'y vais. C'était sympa, à bientôt !",
+ sortOui:"Avec plaisir ! On va où ?",sortNon:"Sortir ? On se connaît pas encore assez, toi et moi…",
+ jalouse:"Sérieux ? Tu fais venir une autre fille pendant que je suis là ?!",
+ q:[["Elle est sympa, ta chambre. C'est toi qui as mis tous ces posters ?",["Oui, les jeux vidéo, c'est ma passion","J'adore les gens passionnés !",8,6],["Bof, c'est juste pour faire joli","Ah… je pensais que ça te tenait à cœur.",4,-4]],
+  ["Tu me trouves comment, ce soir ?",["Très jolie. Ce haut te va super bien","Oh… merci, t'es adorable.",7,7],["Franchement, t'es trop bonne","Euh… un peu de classe, Rudy !",5,-8]],
+  ["Tu m'aurais appelée, même si je t'avais pas écrit ?",["Bien sûr, je pensais à toi","Menteur… mais j'aime bien 😘",3,6],["Non, j'avais personne d'autre sous la main","Sympa… Merci de me le dire.",5,-9]],
+  ["On regarde un film ou on joue à un jeu ?",["Un jeu, et je te laisse gagner","Me laisser gagner ? Tu vas voir !",8,4],["Comme tu veux, je m'en fiche","Tu pourrais faire un petit effort…",4,-5]],
+  ["Tu parles souvent aux autres filles comme ça ?",["Non, avec toi c'est différent","Hmm… je veux bien te croire.",7,5],["Ouais, à toutes","Génial. Je me sens vraiment spéciale, dis donc.",5,-8]],
+  ["C'est quoi, ton rêve, Rudy ?",["Monter ma boîte et voyager","Tu m'emmènes avec toi, alors ?",9,6],["Dormir jusqu'à midi","Haha… quelle ambition !",8,-2]],
+  ["Tu trouves pas qu'il fait un peu froid ici ?",["Tu veux mon sweat ?","Oh, t'es mignon.",7,6],["Rapproche-toi, je vais te réchauffer","Doucement, cow-boy.",10,-3]],
+  ["Tu crois au coup de foudre, toi ?",["Oui, ça arrive quand on s'y attend pas","C'est tellement romantique…",7,6],["Non, c'est pour les films","T'es pas drôle…",4,-3]]]},
+
+karine:{nom:"Karine",caractere:"gameuse, taquine et compétitive",
+ appel:{q:[{d:"Hey, c'est Karine ! Je te dérange ?",c:[["Jamais","Menteur. Mais ça me fait plaisir."],["Un peu, mais vas-y","Toujours aussi aimable, toi."]]},{d:"T'as vu comment je t'ai trempé au pistolet à eau ?",c:[["T'as triché","Même pas vrai ! T'es mauvais perdant."],["Bravo, championne","Merci ! Je suis encore toute fière."]]}],
+  fin:"J'ai des pizzas en trop… Tu veux que je vienne te les apporter ?",non:"Tant pis, je les mange toute seule !"},
+ arrive:[8,"Livraison de pizzas ! Enfin… je les ai mangées dans l'escalier 😅"],
+ seule:[[10,"C'est ta console, là ? On fait une partie ?"],[2,"Attends, j'ai une notif de mon jeu."],[8,"Je parie que je te bats à n'importe quel jeu."],[1,"Ahhh, j'ai trop joué, j'ai mal au dos."],[9,"T'as combien d'heures sur tes jeux, toi ?"],[7,"Tes figurines sont trop stylées."]],
+ froid:[[4,"Tu joues même pas avec moi…"],[4,"Game over, là."]],
+ ignore:["Allô ? Y'a quelqu'un dans cette chambre ?","Même un PNJ parle plus que toi, Rudy.","OK, j'abandonne la partie. Je me casse, t'es nul !"],
+ tot:"Quoi ?! J'ai même pas eu le temps de te mettre une raclée ! Tu m'as fait venir pour rien ?",bye:"Ok, j'y vais. Mais tu me dois une revanche !",
+ sortOui:"Grave ! On va à la salle d'arcade ?",sortNon:"Sortir avec toi ? Faut d'abord gagner quelques niveaux, mon grand.",
+ jalouse:"Attends… t'as invité une autre fille ? Pendant que JE suis là ?!",
+ q:[["T'es plutôt jeux de combat ou jeux de course ?",["Jeux de combat, je suis imbattable","Ah ouais ? On va voir ça, champion.",8,5],["Je joue pas trop, c'est pour les gamins","Pour les gamins ?! Tu viens de perdre des points, là.",5,-7]],
+  ["Si je te bats, tu fais quoi ?",["Je te paie un resto","Deal ! Prépare ton porte-monnaie.",8,6],["Tu me battras jamais","Tu vas regretter d'avoir dit ça.",4,-2]],
+  ["Tu préfères une fille qui joue aux jeux vidéo ou une qui les déteste ?",["Une qui joue, évidemment","Bonne réponse, joueur 1.",3,6],["Une qui cuisine pendant que je joue","Genre… sérieux ? Retourne en 1950.",5,-9]],
+  ["C'est quoi ton jeu préféré de tous les temps ?",["Un Zelda, sans hésiter","Classe. T'as du goût.",7,5],["Je sais plus, je joue à tout et n'importe quoi","Pas très passionné, tout ça…",4,-3]],
+  ["Tu me trouves comment avec mes couettes ?",["Ça te va trop bien, ça te donne un style","Hihi, merci. Je les ai faites juste pour toi.",7,6],["On dirait une gamine","Wow. Merci pour la gentillesse.",5,-7]],
+  ["Tu ragequit quand tu perds ?",["Jamais, je félicite le gagnant","Fair-play, j'aime bien.",9,4],["Je casse ma manette","Euh… j'espère que tu rigoles.",10,-4]],
+  ["Tu m'emmènes à la salle d'arcade un jour ?",["Quand tu veux, je t'invite","Trop bien ! J'ai hâte.",8,6],["Si tu paies tes jetons","Radin…",4,-4]],
+  ["Tu crois que je suis meilleure que toi à Kart Fury ?",["Peut-être… t'as l'air forte","Enfin quelqu'un qui me reconnaît !",8,5],["Aucune chance, les filles savent pas conduire","Répète ça pour voir ?!",5,-9]]]},
+
+gisele:{nom:"Gisèle",caractere:"solaire et fêtarde",
+ appel:{q:[{d:"Hé, c'est Gisèle ! La plage est vide ce soir.",c:[["Tu y es ?","Oui, les pieds dans le sable."],["T'as pas froid ?","Un peu… c'est pour ça que je t'appelle."]]},{d:"Il manque un peu de compagnie ici.",c:[["Je vois","T'as l'air d'y réfléchir."],["Invite tes copines","Elles dorment toutes."]]}],
+  fin:"Sinon, c'est moi qui monte. Tu veux que je vienne ?",non:"Ok… Je regarde la mer toute seule, alors."},
+ arrive:[8,"Me voilà ! J'ai encore du sable plein les chaussures, haha !"],
+ seule:[[1,"Mets un peu de musique, on se croirait à la bibliothèque !"],[9,"Tu viens à la plage demain ? Y'a une soirée."],[2,"Mes copines me demandent où je suis, hihi."],[7,"J'adore la lumière bleue de ta chambre."],[8,"Tu danses, toi ? Je suis sûre que non !"],[10,"Tu m'as vue jouer au volley ? Je suis trop forte."]],
+ froid:[[4,"Ambiance zéro, ici."],[4,"Je m'ennuie à mourir…"]],
+ ignore:["Hé ho ! Je suis pas un meuble, Rudy !","Je vais finir par m'endormir, là…","Ça suffit ! Je retourne à la plage, au moins là-bas il y a de la vie !"],
+ tot:"Hein ?! J'arrive à peine et tu me vires ? Tu m'as fait venir pour perdre mon temps ou quoi ?",bye:"Allez, bisous ! La prochaine fois, c'est toi qui viens à la plage !",
+ sortOui:"Ouiii ! On va danser ? Je connais une super soirée !",sortNon:"Sortir ? Faudrait déjà que tu me fasses rire un peu plus.",
+ jalouse:"Quoi ?! Tu fais venir une autre fille alors que je suis là ?! Mais t'es sérieux ?!",
+ q:[["Tu sais danser, toi ?",["Pas trop, mais tu vas m'apprendre","Avec plaisir ! Tu vas voir, c'est facile.",8,6],["Danser, c'est ridicule","Ridicule ?! T'as aucun rythme, voilà tout.",5,-6]],
+  ["Plage le jour ou plage la nuit ?",["La nuit, sous la lune, avec toi","Ohh, c'est trop beau ce que tu dis.",7,7],["Je déteste le sable","Mais… c'est toute ma vie, la plage !",4,-5]],
+  ["Tu trouves que mes cheveux sont trop longs ?",["Ils sont magnifiques, garde-les comme ça","Merci ! Ça me prend des heures, tu sais.",7,6],["Un peu, tu devrais couper","Personne touche à mes cheveux !",5,-7]],
+  ["On organise une fête chez toi un jour ?",["Grave, t'invites qui tu veux","Yesss ! Tu vas voir, ça va être légendaire.",8,6],["Non, j'aime pas le bruit","T'es un papi en fait…",4,-4]],
+  ["C'est quoi ta musique préférée ?",["Un bon son pour danser","On est faits pour s'entendre !",8,5],["Aucune, la musique ça me saoule","Comment on peut dire ça ?!",10,-5]],
+  ["Tu me regardes quand je joue au volley ?",["Évidemment, t'es la meilleure","Hihi, je le savais !",3,6],["Non, je regarde tes copines","Ah bah merci, hein !",5,-8]],
+  ["Tu préfères le soleil ou la pluie ?",["Le soleil, comme ton sourire","Arrête, tu vas me faire rougir !",7,6],["La pluie, je reste chez moi","T'es vraiment casanier, toi.",4,-2]],
+  ["Tu serais venu me chercher si je te l'avais demandé ?",["Même à l'autre bout de Shinato","Aww… t'es un amour.",7,7],["Si j'ai rien de mieux à faire","Super flatteur…",4,-6]]]},
+
+faty:{nom:"Faty",caractere:"cash, drôle et gourmande",
+ appel:{q:[{d:"Yo Rudy, c'est Faty !",c:[["Salut Faty","Toujours aussi chaleureux, toi."],["Qu'est-ce que tu veux ?","Oh là, doucement ! Je t'appelle gentiment."]]},{d:"J'ai un nouveau jeu, il paraît qu'il est dur.",c:[["Je vais te battre","On verra ça."],["T'as aucune chance","Tu parles beaucoup pour quelqu'un qui perd."]]}],
+  fin:"Je ramène le jeu et on y joue chez toi ? Tu veux que je vienne ?",non:"Froussard ! La prochaine fois, tu y échapperas pas."},
+ arrive:[8,"C'est moi ! Y'a quoi à manger ici ?"],
+ seule:[[9,"Sérieux, t'as rien dans ton frigo ?"],[8,"Haha, ta chambre sent le garçon, ouvre la fenêtre !"],[2,"Ma cousine m'envoie des mèmes, attends…"],[10,"Tu me regardes bizarrement, là."],[1,"Je mangerais bien un truc sucré."],[7,"Bon, t'es pas si nul comme mec, en fait."]],
+ froid:[[4,"Ouais ouais…"],[4,"Tu me gaves, là."]],
+ ignore:["Euh… tu m'as invitée pour que je regarde le mur ?","Je te préviens, ma patience a des limites.","C'est bon, je me casse ! Et oublie mon numéro !"],
+ tot:"Attends… Tu me fais venir et tu me mets dehors direct ? Tu te fous de moi ?!",bye:"Allez, je file. Et la prochaine fois, achète des gâteaux !",
+ sortOui:"Si c'est toi qui paies le resto, je dis oui !",sortNon:"Sortir avec toi ? Faudrait déjà que tu me fasses à manger.",
+ jalouse:"Pardon ?! Tu appelles une autre meuf devant moi ?! Tu veux mourir ?",
+ q:[["Sucré ou salé ?",["Sucré, comme toi","Hahaha, elle est nulle… mais elle est mignonne.",8,5],["Je mange que des légumes","Beurk. Toi et moi, ça va être compliqué.",4,-4]],
+  ["Tu cuisines, toi ?",["Un peu, je te ferai un plat","Je te prends au mot, hein !",8,6],["Non, c'est un truc de fille","Pardon ?! On est en quelle année, là ?",5,-9]],
+  ["Tu me trouves drôle ?",["T'es la fille la plus drôle que je connais","Je sais, je sais. Mais ça fait plaisir.",8,6],["Pas vraiment","Aïe. Ça pique.",4,-5]],
+  ["Tu préfères les filles qui disent ce qu'elles pensent ?",["Oui, j'aime quand c'est franc","Alors on va bien s'entendre, toi et moi.",9,6],["Non, je préfère les filles discrètes","Dommage pour toi, je parle fort.",4,-4]],
+  ["Tu m'as déjà trouvée jolie ?",["Dès la première fois que je t'ai vue","Arrête… T'es sérieux ?",7,7],["Ça dépend des jours","Wow. Merci pour l'honnêteté.",5,-7]],
+  ["Tu ferais quoi si je te battais à ton propre jeu ?",["Je t'applaudirais","Ok, t'es un vrai. Respect.",9,5],["Je dirais que tu as triché","Mauvais perdant, je le savais !",10,-3]],
+  ["Tu m'invites au restaurant chinois un jour ?",["Au Dragon d'Or, quand tu veux","Tu connais le chemin de mon cœur, toi.",3,6],["On partage l'addition","Radin…",4,-4]],
+  ["Tu te moques de ma coiffure ?",["Jamais, elle est magnifique","Merci ! Elle m'a coûté une heure.",7,6],["Un peu, elle est énorme","Répète encore une fois, pour voir.",5,-9]]]},
+
+katila:{nom:"Katila",caractere:"infirmière attentionnée, un peu maman",
+ appel:{q:[{d:"Coucou, c'est Katila ! Je sors tout juste de ma garde.",c:[["Tu dois être crevée","Épuisée… mais j'avais envie de t'entendre."],["Ça s'est bien passé ?","Longue nuit, mais tout le monde va bien."]]},{d:"Et toi, tu prends soin de toi, au moins ?",c:[["J'essaie","Il faut, hein ! Je te surveille."],["Pas vraiment","Ah non, ça va pas, ça !"]]}],
+  fin:"J'ai encore ma tenue… Tu veux que je vienne vérifier que tu vas bien ?",non:"D'accord. Mais bois de l'eau et dors bien, hein !"},
+ arrive:[9,"Me voilà ! Alors, mon patient préféré, comment on se sent ?"],
+ seule:[[9,"T'as bu assez d'eau aujourd'hui ?"],[2,"Attends, l'hôpital m'écrit… non, c'est bon."],[1,"Ma garde m'a cassé le dos, aïe."],[10,"Tu te tiens mal sur ta chaise, je l'ai vu !"],[7,"C'est calme chez toi, ça fait du bien."],[8,"Je repense à ta tête quand je t'ai fait ta piqûre, hihi."]],
+ froid:[[4,"Je suis fatiguée, Rudy."],[4,"J'aurais mieux fait de dormir."]],
+ ignore:["Tu m'ignores ? Même mes patients sont plus bavards que toi.","Je sors d'une garde de douze heures pour que tu m'ignores ?","Très bien. Je rentre dormir. Et soigne-toi tout seul !"],
+ tot:"Quoi ? Je traverse la ville après ma garde, et tu me renvoies déjà ? Tu m'as fait perdre mon temps !",bye:"Je rentre dormir. Prends soin de toi, d'accord ?",
+ sortOui:"Avec plaisir ! Mais on rentre pas trop tard, je travaille demain.",sortNon:"Sortir ? Je te connais pas encore assez… et je suis crevée.",
+ jalouse:"Pardon ? Tu invites une autre fille alors que je suis là ? Je rêve…",
+ q:[["Tu dors combien d'heures par nuit ?",["Huit heures, promis","Bravo ! T'es un patient modèle.",8,5],["Quatre heures, je joue la nuit","Mais c'est pas possible ! Tu vas finir aux urgences.",5,-4]],
+  ["Tu penses quoi de mon métier ?",["C'est un métier admirable","Merci… ça me touche vraiment.",7,7],["C'est juste faire des piqûres","Juste des piqûres ? Tu sais pas de quoi tu parles.",5,-8]],
+  ["Tu te souviens de notre rencontre à l'infirmerie ?",["Comment l'oublier ? T'étais trop douce","Et toi, t'étais un vrai bébé, haha.",8,6],["J'avais trop mal, je me souviens de rien","Ah… d'accord.",4,-3]],
+  ["Tu manges équilibré, au moins ?",["J'essaie, avec des légumes","C'est bien, je suis fière de toi.",9,5],["Chips et soda tous les jours","Je vais te confisquer tout ça !",10,-3]],
+  ["Tu me trouves comment, dans ma tenue ?",["Très élégante, ça te va bien","Merci, c'est gentil.",7,6],["Ça me donne des idées","Rudy ! C'est une tenue de travail, pas un déguisement.",5,-9]],
+  ["Tu ferais quoi si je tombais malade ?",["Je viendrais m'occuper de toi","Oh… t'es adorable.",3,7],["Je t'appellerais pas, j'ai peur des microbes","Merci pour le soutien…",4,-6]],
+  ["Tu me masses les épaules ? J'ai mal partout.",["Viens là, je m'en occupe","Hmm… t'as des mains magiques.",7,6],["Pas ce soir, je suis fatigué","Moi aussi, figure-toi…",4,-4]],
+  ["T'as encore mal là où je t'ai soigné ?",["Non, grâce à toi","C'est mon travail… mais ça fait plaisir.",8,5],["Oui, t'as mal fait ton boulot","Mal fait ?! Tu veux une autre piqûre ?",5,-7]]]},
+
+ameline:{nom:"Ameline",caractere:"mystérieuse, élégante et sensible",
+ appel:{q:[{d:"Rudy ? C'est Ameline.",c:[["Ça va ?","Bof… un peu seule ce soir."],["Qu'est-ce qui se passe ?","Rien de grave, t'inquiète."]]},{d:"Parler avec toi, ça me fait du bien.",c:[["Moi aussi","C'est gentil."],["Tu peux m'appeler quand tu veux","Je vais le faire, alors."]]}],
+  fin:"J'ai pas envie de rester seule. Tu veux que je vienne ?",non:"Je comprends. Merci de m'avoir répondu."},
+ arrive:[7,"Bonsoir… Merci de m'avoir laissée venir."],
+ seule:[[9,"J'aime la nuit. Tout est plus calme."],[7,"Ta fenêtre donne sur un joli paysage."],[2,"Je lis un poème sur mon téléphone… tu veux l'entendre ?"],[10,"Tu me regardes souvent quand je parle pas."],[1,"Je me sens bien, ici."],[8,"Tu me fais sourire, c'est rare."]],
+ froid:[[4,"…"],[4,"Je me sens de trop."]],
+ ignore:["Tu es silencieux… Je te dérange ?","Je crois que je n'aurais pas dû venir.","Tu sais quoi ? Je m'en vais. Ne m'appelle plus pour me laisser seule dans un coin."],
+ tot:"Déjà ? Tu m'as fait venir pour me renvoyer tout de suite ? Tu te rends compte que tu m'as fait perdre mon temps ?",bye:"Merci pour ce moment. Bonne nuit, Rudy.",
+ sortOui:"Oui… Une balade de nuit, ce serait parfait.",sortNon:"Sortir ? Laisse-moi d'abord apprendre à te connaître.",
+ jalouse:"Une autre fille… pendant que je suis là ? Je me sens tellement bête…",
+ q:[["Tu crois qu'on peut vraiment connaître quelqu'un ?",["Avec du temps et de la patience, oui","C'est une belle réponse.",7,6],["Non, tout le monde ment","C'est triste, ce que tu dis…",4,-4]],
+  ["Tu aimes la nuit, toi aussi ?",["J'adore, c'est là qu'on parle vrai","Alors on se comprend.",3,6],["Non, la nuit c'est pour dormir","D'accord…",4,-2]],
+  ["Ma tenue ne te choque pas ?",["Elle te va parfaitement, c'est ton style","Merci… On me juge souvent pour ça.",7,7],["Un peu, t'es habillée bizarre","Je vois…",5,-7]],
+  ["Tu lis parfois ?",["Oui, et j'aimerais que tu me conseilles un livre","Avec plaisir. J'en ai plein à te prêter.",8,6],["Jamais, ça m'endort","Dommage…",4,-3]],
+  ["Est-ce que je parle trop de choses tristes ?",["Non, j'aime t'écouter","Tu es plus doux que tu en as l'air.",7,7],["Un peu, ça plombe l'ambiance","Désolée d'exister, alors.",5,-8]],
+  ["Tu as déjà eu le cœur brisé ?",["Oui, mais ça m'a appris des choses","Moi aussi… On a ça en commun.",9,5],["Jamais, c'est moi qui brise les cœurs","Charmant. Je note.",5,-7]],
+  ["Tu préfères les bougies ou les néons ?",["Les bougies, c'est plus doux","Moi aussi, j'adore.",8,5],["Les néons, et le plus fort possible","Ça me donne mal à la tête rien que d'y penser.",10,-2]],
+  ["Tu me trouves étrange ?",["Différente, et c'est ce qui me plaît","Tu sais trouver les mots…",3,7],["Oui, un peu flippante","Ah. Merci.",4,-6]]]},
+
+mifa:{nom:"Mifa",caractere:"ambitieuse, classe et exigeante",
+ appel:{q:[{d:"C'est Mifa. T'es chez toi ?",c:[["Oui","Parfait."],["Pourquoi ?","Tu verras."]]},{d:"Je passais justement dans ton quartier…",c:[["Quel hasard","Oui, un grand hasard."],["T'es sûre que c'est un hasard ?","Hmm… non."]]}],
+  fin:"Je suis juste en bas. Tu veux que je vienne ?",non:"Dommage. Je repasserai… peut-être."},
+ arrive:[9,"Bonsoir, Rudy. J'ai dix minutes… enfin, peut-être plus, si tu es intéressant."],
+ seule:[[2,"Excuse-moi, un client… Voilà, c'est réglé."],[9,"Tu as des projets, dans la vie ? J'aime les hommes qui ont des projets."],[10,"Ta chambre est bien rangée, j'apprécie."],[4,"Le temps, c'est de l'argent, Rudy."],[8,"Tu me fais rire, ça m'arrive rarement."],[7,"J'ai eu une grosse journée. Ça fait du bien de souffler."]],
+ froid:[[4,"Tu me fais perdre mon temps."],[4,"Je m'attendais à mieux."]],
+ ignore:["Je n'ai pas l'habitude qu'on m'ignore, Rudy.","Mon temps est précieux. Réveille-toi.","C'est terminé. Je m'en vais. Ne me fais plus jamais perdre mon temps comme ça !"],
+ tot:"Tu plaisantes ? Tu me fais venir pour me renvoyer tout de suite ? Tu viens de me faire perdre mon temps !",bye:"Bien. C'était agréable. Je te rappellerai.",
+ sortOui:"J'accepte. Je choisis le restaurant, par contre.",sortNon:"Sortir avec moi, ça se mérite. Tu n'y es pas encore.",
+ jalouse:"Tu appelles une autre femme devant moi ? Aucune classe.",
+ q:[["Tu travailles dans quoi, exactement ?",["J'ai mon entreprise, je bosse dur","Intéressant. J'aime les hommes ambitieux.",7,7],["Je glande, je vis au jour le jour","Hmm. On n'a pas les mêmes valeurs.",4,-6]],
+  ["Tu me trouves trop exigeante ?",["Non, tu sais ce que tu veux","Exactement. Tu comprends vite.",8,6],["Oui, t'es insupportable","Alors pourquoi tu m'as invitée ?",5,-8]],
+  ["Où tu te vois dans cinq ans ?",["Avec une belle maison et des projets","Voilà une vraie réponse.",9,6],["Dans cette même chambre","Ça ne me fait pas rêver…",4,-4]],
+  ["Tu aimes ma tenue ?",["Très classe, le rouge te va à merveille","Je sais. Mais merci de l'avoir remarqué.",7,6],["C'est un peu trop pour une soirée chez moi","Je ne m'habille pas pour une chambre, je m'habille pour moi.",4,-4]],
+  ["Tu es ponctuel ?",["Toujours, le respect c'est important","Parfait. Je déteste attendre.",8,5],["Jamais, je suis toujours en retard","Rédhibitoire…",5,-6]],
+  ["Tu me paierais un verre au Pixel Bar ?",["Avec plaisir, le meilleur de la carte","Là, tu marques des points.",3,6],["Chacun paie le sien","Évidemment…",4,-4]],
+  ["Qu'est-ce que tu penses des femmes qui réussissent ?",["C'est ce que j'admire le plus","Tu viens de gagner mon respect.",7,7],["Elles font peur aux hommes","Peut-être… mais pas aux vrais.",5,-7]],
+  ["Tu sais ce que je veux, là, tout de suite ?",["Un moment calme, sans stress","Tu lis dans mes pensées.",8,6],["Moi, évidemment","Ton ego déborde de la pièce, Rudy.",10,-5]]]},
+
+rose:{nom:"Rose",caractere:"pétillante, rêveuse et un peu jalouse",
+ appel:{q:[{d:"Rudy ! C'est Rose. Tu fais quoi ?",c:[["Pas grand-chose","Comme moi. On s'ennuie ensemble, alors."],["Je pensais à toi","Arrête, tu vas me faire rougir."]]},{d:"Ce soir, c'est calme chez moi… trop calme.",c:[["Chez moi aussi","On est deux, alors."],["Profite, repose-toi","Je veux pas me reposer, moi."]]}],
+  fin:"Je m'ennuie trop… Tu veux que je vienne chez toi ?",non:"Ok, ok… Je retourne à mon ennui."},
+ arrive:[8,"Surpriiise ! T'as pas eu le temps de ranger, hein ?"],
+ seule:[[9,"Tu parles à d'autres filles, en ce moment ?"],[7,"J'ai toujours rêvé d'une chambre comme ça."],[2,"Mes copines veulent savoir chez qui je suis, hihi."],[8,"Tu te souviens quand je t'ai trempé ? Trop drôle."],[1,"Je me sens bien, là."],[10,"Pourquoi tu souris comme ça ?"]],
+ froid:[[4,"Pff…"],[4,"T'es bizarre ce soir."]],
+ ignore:["Rudy ?! Tu fais exprès de m'ignorer ?","T'es sûr que tu pensais à moi au téléphone ?","C'est bon, j'ai compris ! Je rentre, et je boude !"],
+ tot:"Quoi ?! Tu me fais venir et tu me mets à la porte ? Tu m'as fait perdre mon temps, oui !",bye:"Bon, j'y vais… Tu m'appelles demain, promis ?",
+ sortOui:"Ouiii ! Je sais exactement où on va !",sortNon:"Sortir ? Faut d'abord que je sois sûre de toi…",
+ jalouse:"Une autre fille ?! Devant moi ?! Je le savais !",
+ q:[["Tu parles à d'autres filles ?",["Juste en amis, rien de sérieux","Hmm… je te surveille, hein.",7,4],["Plein, pourquoi ?","Pourquoi ?! Tu te fiches de moi ?!",5,-9]],
+  ["Tu préfères les rousses ou les blondes ?",["Les rousses, évidemment","Bonne réponse !",3,7],["Les blondes","…Sérieusement ?",5,-6]],
+  ["Tu m'écrirais un poème ?",["Je vais essayer, pour toi","Trop mignon ! J'ai hâte.",7,6],["C'est ringard, les poèmes","T'as vraiment aucun romantisme…",4,-4]],
+  ["Tu te souviens de ce que je portais la première fois ?",["Un débardeur bleu, comme aujourd'hui","Tu as retenu ?! Je fonds.",7,7],["Aucune idée","Évidemment…",4,-5]],
+  ["Tu crois qu'on ferait un beau couple ?",["Je crois que oui","Moi aussi… Chut, on n'en parle plus.",3,7],["Je sais pas, t'es un peu collante","Collante ?! Moi ?!",5,-8]],
+  ["Tu m'emmènes voir la mer un jour ?",["Au coucher du soleil, promis","Je vais te le rappeler tous les jours.",8,6],["Si t'insistes","Super enthousiaste…",4,-3]],
+  ["Tu trouves que je parle trop ?",["J'adore t'écouter","T'es un amour.",7,6],["Un peu, oui","Ah bah très bien, je me tais.",4,-5]],
+  ["Tu ferais quoi si je partais pour toujours ?",["Je te chercherais partout","Tu dis ça pour me faire plaisir… mais ça marche.",7,6],["Je trouverais quelqu'un d'autre","T'es sérieux ?!",5,-9]]]}
+};
+
+/* ---------- plus de discussions pour chaque fille (ajoutées aux 8 d'avant) ---------- */
+const PLUS_Q={
+sophie:[
+ ["Tu fais quoi quand t'es triste ?",["Je joue à un vieux jeu, ça me console","C'est mignon… tu me feras découvrir ?",7,5],["Je pleure dans ma chambre","Oh… Faut pas avoir honte, tu sais.",10,1]],
+ ["Tu préfères la mer ou la montagne ?",["La mer, la nuit, avec quelqu'un","Avec quelqu'un… comme moi ?",3,6],["Je m'en fiche, je sors pas","T'es pas très aventurier…",4,-3]],
+ ["Qu'est-ce que tu as pensé de moi la première fois ?",["Que t'avais un sourire incroyable","Tu vas me faire rougir…",7,7],["Rien de spécial","Ah. D'accord.",4,-6]],
+ ["Tu m'emmènerais où pour un premier rendez-vous ?",["Sur le boulevard, sous les lumières","C'est exactement ce dont je rêvais.",8,6],["Au fast-food, c'est pas cher","Romantique…",4,-4]],
+ ["Tu crois que je suis trop gentille ?",["Non, c'est ce qui te rend spéciale","Merci… On me le reproche souvent.",7,6],["Un peu, on peut profiter de toi","…Tu comptes le faire ?",5,-7]],
+ ["Tu gardes les secrets ?",["Toujours, tu peux tout me dire","Alors je t'en dirai un… un jour.",9,5],["Ça dépend si c'est drôle","Je te dirai rien, alors !",5,-5]]],
+karine:[
+ ["Tu joues en ligne ? C'est quoi ton pseudo ?",["Je te le donne si tu me donnes le tien","Deal. Prépare-toi à perdre en ligne aussi.",8,5],["Je joue seul, les autres sont nuls","Je fais partie des autres, je te signale.",5,-4]],
+ ["Tu trouves ça bizarre, une fille qui joue plus que toi ?",["Non, c'est trop cool","T'es un bon, toi.",8,6],["Un peu, c'est pas normal","Pas normal ?! Répète ?",5,-8]],
+ ["On fait une nuit blanche jeux vidéo ?",["Avec des pizzas, carrément","T'as compris la vie, Rudy.",8,6],["Non, je dors à 22h","Papi Rudy…",4,-3]],
+ ["Tu me laisserais jouer à ta console ?",["Évidemment, fais comme chez toi","Trop bien ! Je vais battre tous tes records.",8,5],["Personne ne touche à ma console","Radin même avec tes jeux…",4,-4]],
+ ["Tu m'as déjà vue pleurer à cause d'un jeu ?",["Non, t'es trop forte pour ça","Chut, c'est arrivé une fois. Une seule.",7,5],["Ouais, t'es une mauvaise perdante","Menteur ! Enfin… un peu.",5,-3]],
+ ["C'est quoi le pire jeu auquel t'as joué ?",["Un jeu que je trouve plus, un vieux truc nul","Haha, pareil, j'en ai plein des comme ça.",8,4],["Les jeux auxquels tu joues","Ok. Guerre déclarée.",5,-6]]],
+gisele:[
+ ["Tu me trouves bronzée ?",["Tu brilles comme le soleil","Aww, c'est la plage, ça !",8,6],["Trop, fais attention","Rabat-joie…",4,-3]],
+ ["On fait un feu de camp sur la plage un soir ?",["Avec de la musique et des guimauves","T'as tout compris ! Je note la date.",8,7],["Il fait froid la nuit","Je te réchaufferai, idiot.",10,-1]],
+ ["C'est quoi ta chanson de l'été ?",["Celle sur laquelle t'as dansé l'autre soir","Tu m'as regardée danser ?! Hihi.",7,6],["J'écoute pas de musique","Comment c'est possible…",4,-5]],
+ ["Tu m'apprends à jouer à tes jeux ?",["Avec plaisir, je suis patient","T'es adorable. Je vais être nulle, hein.",8,5],["Tu vas rien comprendre","Merci pour la confiance !",5,-6]],
+ ["T'as déjà vu le lever du soleil sur la plage ?",["Non, tu m'emmènes ?","Demain matin, 6h. Pas d'excuse !",8,6],["Je dors à cette heure-là","T'es pas marrant…",4,-2]],
+ ["Tu trouves que je parle trop fort ?",["Non, t'es pleine de vie","Merci ! On me dit souvent de me calmer.",8,6],["Un peu, mes oreilles saignent","HAHA. Bon, un peu, c'est vrai.",8,-2]]],
+faty:[
+ ["C'est quoi ton plat préféré ?",["Les pâtes de ma mère","Ta mère cuisine bien ? Présente-la moi !",8,5],["Les plats surgelés","Beurk. On va arranger ça.",4,-3]],
+ ["Tu me trouves gourmande ?",["Gourmande et c'est mignon","Ok, t'as le droit de rester.",8,6],["Un peu trop, oui","Attention à ce que tu dis…",5,-7]],
+ ["Tu partagerais ton dernier morceau de pizza avec moi ?",["Je te le donne en entier","Là, tu viens de marquer des points.",3,7],["Jamais","Pfff. Égoïste.",4,-4]],
+ ["Tu sais danser le coupé-décalé ?",["Non, apprends-moi","Prépare tes jambes, ça va chauffer !",8,6],["C'est quoi ce truc ?","T'es sérieux… On a du boulot.",10,-1]],
+ ["T'as peur de moi quand je m'énerve ?",["Un peu… mais t'es jolie quand même","Haha, flatteur !",8,5],["Non, t'es même pas effrayante","Tu veux tester ?",5,-3]],
+ ["Tu m'emmènes au Dragon d'Or ce week-end ?",["Promis, c'est moi qui invite","Je t'adore, toi.",3,7],["Si t'as des sous","Toujours la même histoire…",4,-5]]],
+katila:[
+ ["Tu prends des vitamines ?",["Oui, grâce à tes conseils","Tu m'écoutes vraiment ? Ça me touche.",7,6],["C'est pour les vieux","Tu dis ça jusqu'à ta première grippe.",10,-3]],
+ ["Tu sais ce que je fais pour me détendre après une garde ?",["Dis-moi, je veux savoir","Un bon bain et une série. Tu viendras ?",8,6],["Tu dors, j'imagine","Bravo Sherlock…",4,-2]],
+ ["Tu m'appellerais si tu te blessais ?",["Tu serais la première que j'appelle","C'est gentil… mais fais attention quand même.",7,6],["J'irais aux urgences","Là où je travaille, idiot.",8,-1]],
+ ["Tu me trouves trop sérieuse ?",["Juste ce qu'il faut","Merci… j'essaie de pas l'être avec toi.",7,5],["Oui, détends-toi un peu","Facile à dire…",4,-4]],
+ ["Tu te laves les mains avant de manger ?",["Toujours, docteur","Bon élève !",8,4],["Jamais","Rudy… sérieusement ?!",5,-5]],
+ ["Tu voudrais que je te prépare une tisane ?",["Avec plaisir, prépare-en deux","On la boit ensemble, alors.",3,6],["Beurk, les tisanes","Même pas un effort…",4,-3]]],
+ameline:[
+ ["Tu écris, parfois ?",["J'aimerais, tu m'apprendrais ?","Avec plaisir. On écrira la nuit.",7,6],["Jamais, ça sert à rien","Tout sert à quelque chose…",4,-4]],
+ ["Tu as peur du noir ?",["Pas avec toi à côté","…Tu sais parler, toi.",7,7],["Oui, grave","C'est adorable, en fait.",8,1]],
+ ["Tu préfères les chats ou les chiens ?",["Les chats, mystérieux comme toi","Tu me compares à un chat ? J'accepte.",8,6],["Je déteste les animaux","Ah…",4,-5]],
+ ["Tu crois aux âmes sœurs ?",["Je commence à y croire","Moi aussi… depuis peu.",3,7],["Non, c'est des histoires","Tu as sûrement raison…",4,-3]],
+ ["Qu'est-ce qui te fait peur, vraiment ?",["Être seul, au fond","Tu ne l'es pas. Pas ce soir.",7,7],["Rien, je suis un roc","Personne n'est un roc.",4,-2]],
+ ["Tu m'offrirais une fleur noire ?",["Une rose noire, rien que pour toi","…J'adorerais.",3,7],["C'est glauque","C'est moi qui suis glauque, alors ?",5,-6]]],
+mifa:[
+ ["Tu investis ton argent ?",["Oui, je pense à l'avenir","Enfin un homme responsable.",7,6],["Je dépense tout","Ça se voit…",4,-5]],
+ ["Qu'est-ce que tu ferais avec un million ?",["J'agrandirais mon entreprise","J'aime ta façon de penser.",8,6],["J'arrêterais de travailler","Quel manque d'ambition.",4,-5]],
+ ["Tu sais cuisiner un vrai repas ?",["Je te ferai un dîner aux chandelles","Je note. Ne me déçois pas.",7,6],["Je commande tout","Évidemment.",4,-3]],
+ ["Tu lis le journal ?",["Chaque matin, avec un café","Un homme informé. Parfait.",9,5],["Non, je regarde des vidéos","On va devoir travailler ça.",10,-3]],
+ ["Tu me trouves trop froide ?",["Non, tu es juste exigeante","Tu commences à me comprendre.",7,6],["Tu es un glaçon","Un glaçon qui est venue chez toi, je te signale.",5,-6]],
+ ["Tu m'accompagnerais à une soirée chic ?",["Avec plaisir, en costume","Je te verrais bien en costume…",3,7],["Je supporte pas ces soirées","Alors on ne sortira jamais ensemble.",4,-5]]],
+rose:[
+ ["Tu as gardé mes messages ?",["Tous, je les relis parfois","Arrête… c'est trop mignon !",7,7],["Je supprime tout","Même les miens ?!",5,-7]],
+ ["Tu trouves que je suis jalouse ?",["Un peu, et ça me fait plaisir","Hihi… tu marques des points.",8,6],["Beaucoup trop","Je suis PAS jalouse ! …Bon, un peu.",5,-4]],
+ ["On se fait une soirée film d'amour ?",["Avec plein de pop-corn","Je choisis le film !",8,6],["Les films d'amour c'est nul","T'as pas de cœur…",4,-4]],
+ ["Tu me trouves jolie sans maquillage ?",["Encore plus jolie","Tu dis ça pour me faire plaisir… et ça marche.",7,7],["Je t'ai jamais vue sans","Tu ne me verras jamais comme ça !",10,-1]],
+ ["Tu parles de moi à tes amis ?",["Tout le temps","Ahhh ! Ils disent quoi ?",8,6],["Jamais","Je suis un secret, c'est ça ?",5,-6]],
+ ["Tu me prendrais la main dans la rue ?",["Devant tout le monde","Je fonds…",3,7],["Si personne regarde","Tu as honte de moi ?!",5,-8]]]
+};
+const PLUS_SEULE={
+ sophie:[[9,"J'aime bien quand on parle comme ça."],[7,"T'as vu, je me suis fait belle ce soir."]],
+ karine:[[9,"Si tu bats mon score à Kart Fury, je t'embrasse."],[10,"T'as pas une manette de secours ?"]],
+ gisele:[[8,"Je danserais bien, là, maintenant !"],[2,"La plage me manque déjà…"]],
+ faty:[[9,"Je sens une odeur de pizza. C'est dans ma tête ?"],[8,"T'es drôle quand tu fais le sérieux."]],
+ katila:[[1,"Si je m'endors, réveille-moi, hein."],[9,"Tu as mangé ce soir, au moins ?"]],
+ ameline:[[7,"Le silence avec toi n'est pas gênant."],[9,"Tu écoutes quoi comme musique, la nuit ?"]],
+ mifa:[[2,"Une seconde, je réponds à un investisseur."],[9,"Tu devrais penser plus grand, Rudy."]],
+ rose:[[7,"Tu penses à moi quand je suis pas là ?"],[2,"Je vais poster une photo de ta chambre… je rigole !"]]
+};
+for(const k in PLUS_Q){ PERSO[k].q.push(...PLUS_Q[k]); PERSO[k].seule.push(...PLUS_SEULE[k]); }
+
+/* ---------- elle se souvient des jeux : elle se moque (ou demande sa revanche) ----------
+   les jeux notent leurs résultats dans localStorage « rudy_resultats » : {jeu, fille, gagne:'fille'|'rudy', t} */
+const JEUX={volley:"au volley",corde:"au tir à la corde",eau:"au pistolet à eau",brasdefer:"au bras de fer",boisson:"à Dernier debout",soccer:"au foot"};
+const MOQUE={   // quand elle a gagné
+ sophie:{volley:"Alors, champion du volley ? J'ai vu ta tête quand j'ai marqué le dernier point, haha !",corde:"Tu te souviens du tir à la corde ? Tu as fini les fesses par terre !",eau:"T'étais tout trempé au pistolet à eau… trop mignon !",brasdefer:"Battu au bras de fer par une fille en jean blanc… ça doit faire mal à l'ego !",boisson:"Tu tenais pas debout à Dernier debout, haha !",soccer:"Même au foot je t'ai eu !"},
+ karine:{volley:"GG EZ au volley, Rudy. Tu veux un tuto ?",corde:"Au tir à la corde, t'as lâché comme un débutant !",eau:"Headshot au pistolet à eau ! Tu t'es fait sécher, mon pote.",brasdefer:"Bras de fer : Karine 1, Rudy 0. Faut s'entraîner !",boisson:"T'as rage quit à Dernier debout ou quoi ?",soccer:"Au foot, t'as même pas touché le ballon !"},
+ gisele:{volley:"C'est MON terrain, le volley ! T'avais aucune chance, bébé !",corde:"Hop, hop, hop ! Je t'ai traîné dans le sable au tir à la corde !",eau:"Splash ! T'étais trempé comme un poisson !",brasdefer:"Au bras de fer, j'ai à peine forcé, hihi !",boisson:"Tu tiens pas l'alcool, toi, hein !",soccer:"Même en talons je te bats au foot !"},
+ faty:{volley:"Le volley ? Je t'ai éclaté. Point.",corde:"Au tir à la corde, t'as volé comme une feuille, mdr !",eau:"T'étais tellement trempé, on aurait dit un chat mouillé.",brasdefer:"Bras de fer ? T'as des bras en spaghetti ou quoi ?",boisson:"Tu tenais même pas trois verres !",soccer:"Au foot t'es une catastrophe, sérieux."},
+ katila:{volley:"Fais attention à ton dos après le volley, tu as beaucoup plongé… pour rien, hihi.",corde:"Tu t'es fait mal en tombant au tir à la corde ? Je peux regarder, si tu veux.",eau:"Change-toi, tu vas attraper froid après ce que je t'ai mis au pistolet à eau !",brasdefer:"Au bras de fer, ton poignet a failli lâcher. Je m'inquiète, moi !",boisson:"Après Dernier debout, bois beaucoup d'eau, hein ? Petit joueur.",soccer:"Tu as couru comme un canard au foot, haha."},
+ ameline:{volley:"Au volley… tu étais charmant, à courir partout pour rien.",corde:"Le tir à la corde t'a trahi, on dirait.",eau:"Tu étais adorable, tout trempé.",brasdefer:"Je ne pensais pas gagner au bras de fer. Toi non plus, je crois.",boisson:"Tu as perdu à Dernier debout… et un peu de ta dignité.",soccer:"Le foot n'est pas ton art, Rudy."},
+ mifa:{volley:"Le volley ? Une victoire nette. Comme toujours.",corde:"Au tir à la corde, il faut de la stratégie. Tu n'en avais pas.",eau:"Au pistolet à eau, tu n'as même pas visé correctement.",brasdefer:"Bras de fer : j'ai gagné sans décoiffer ma tresse.",boisson:"Tu tiens mal l'alcool. Noté.",soccer:"Au foot, tu as été… décevant."},
+ rose:{volley:"Hihi, je t'ai battu au volley ! Tu m'as laissée gagner, avoue ?",corde:"Au tir à la corde je t'ai tiré jusqu'à moi… exprès !",eau:"Je t'ai trempé de la tête aux pieds, c'était trop drôle !",brasdefer:"J'ai gagné au bras de fer ! Tu m'as laissée faire, hein ?",boisson:"Tu tenais plus debout, c'était trop mignon !",soccer:"J'ai marqué contre toi au foot !"}
+};
+const REVANCHE={ // quand Rudy a gagné
+ sophie:"Tu m'as battue {jeu}… Tu vas pas te moquer de moi, hein ?",
+ karine:"Tu m'as eue {jeu}… mais c'était de la chance. Revanche quand tu veux !",
+ gisele:"Tu m'as battue {jeu}… j'avais du sable dans les yeux, c'est tout !",
+ faty:"Ouais ouais, t'as gagné {jeu}. Profite, ça durera pas.",
+ katila:"Tu m'as battue {jeu}… j'étais fatiguée de ma garde, voilà.",
+ ameline:"Tu as gagné {jeu}. Je ne suis pas vexée… un peu, peut-être.",
+ mifa:"Tu m'as battue {jeu}. Ça n'arrivera plus.",
+ rose:"Tu m'as battue {jeu} ! Tu aurais pu me laisser gagner, quand même !"
+};
+const RIRE={sophie:"Hahaha ! J'adore quand tu le prends comme ça.",karine:"Haha, t'es un bon perdant, respect !",gisele:"Hahaha ! T'es trop drôle !",faty:"Mdr, t'es cool en fait.",katila:"Hihi, tu sais rire de toi, c'est sain.",ameline:"…Tu me fais rire, c'est rare.",mifa:"Tu sais perdre avec élégance. J'apprécie.",rose:"Hihi, je t'adore quand t'es comme ça !"};
+const VEXE={sophie:"Oh là… c'était pour rire, pas la peine de t'énerver.",karine:"Ouh, le rageux ! C'était une blague, détends-toi.",gisele:"Oh ça va, t'es pas drôle ce soir !",faty:"Hé, tu me parles pas comme ça.",katila:"Je plaisantais… tu es de mauvaise humeur ?",ameline:"Je ne voulais pas te blesser…",mifa:"Un mauvais perdant. Rédhibitoire.",rose:"Pourquoi tu t'énerves ?! C'était pour rire !"};
+
+/* ---------- encore plus de dialogues : 2 appels de plus, des arrivées variées, des phrases et questions sur le lit ---------- */
+const APPELS_PLUS={
+sophie:[
+ {q:[{d:"Coucou… c'est encore moi. Tu vas me trouver collante.",c:[["Jamais, ça me fait plaisir","Ouf… j'avais peur de te déranger."],["Un peu, mais j'aime bien","Hihi, au moins t'es honnête."]]},
+     {d:"J'ai vu un film trop triste ce soir… j'ai besoin de réconfort.",c:[["Raconte-moi","C'est l'histoire de deux amoureux… je te raconterai en vrai."],["Fallait regarder une comédie","T'as raison… mais c'est trop tard, snif."]]}],
+  fin:"Je peux venir me blottir chez toi un moment ? Tu veux que je vienne ?",non:"D'accord… je vais finir mon pot de glace toute seule."},
+ {q:[{d:"Rudy ! Devine ce que j'ai acheté aujourd'hui.",c:[["Une nouvelle robe ?","Presque ! Un nouveau haut. Il est bleu, comme d'hab."],["Aucune idée","Pff, tu joues pas le jeu !"]]},
+     {d:"Il faut absolument que quelqu'un le voie… et donne son avis.",c:[["Je suis le meilleur juge","Alors c'est toi qui décides."],["Envoie une photo","Non ! En vrai, c'est mieux."]]}],
+  fin:"Je te le montre en vrai ? Tu veux que je vienne ?",non:"Tant pis, t'as raté un défilé !"}],
+karine:[
+ {q:[{d:"Yo ! Je viens de finir un boss trop dur. Il fallait que je le dise à quelqu'un.",c:[["GG, t'es une machine","Je sais, je sais. Merci, merci."],["Il était pas si dur","Répète ça et je te fais faire le niveau toi-même !"]]},
+     {d:"Du coup je suis motivée à fond. Il me faut un adversaire.",c:[["Je suis là","Parfait, prépare-toi à pleurer."],["Joue en ligne","Non, j'aime voir la tête de mes victimes."]]}],
+  fin:"Je ramène ma manette. Tu veux que je vienne ?",non:"Froussard ! Je vais écraser des inconnus, alors."},
+ {q:[{d:"Rudy, c'est Karine. J'ai faim et mon frigo est vide.",c:[["Viens manger chez moi","T'es sérieux ? Tu vas me faire à manger ?"],["Commande une pizza","J'ai plus de sous… à cause du jeu que j'ai acheté."]]},
+     {d:"En échange, je te laisse choisir le jeu. C'est un super deal.",c:[["J'accepte","Ha ! Tu t'es fait avoir, je gagne à tous les jeux."],["Tu choisis de toute façon","C'est vrai. Tu me connais bien."]]}],
+  fin:"Alors ? Tu veux que je vienne ?",non:"Je vais manger des céréales sèches. Merci, hein."}],
+gisele:[
+ {q:[{d:"Rudy ! Il y a une étoile filante, t'as vu ?!",c:[["J'ai fait un vœu","Ah ouais ? Lequel ? …Non, dis pas, sinon il marche pas !"],["J'étais pas dehors","Dommage ! C'était magique."]]},
+     {d:"Moi aussi j'ai fait un vœu… et il te concerne un peu.",c:[["Ah bon ?","Hihi, secret !"],["J'espère que c'est gentil","Très gentil, promis."]]}],
+  fin:"Pour qu'il se réalise… tu veux que je vienne ?",non:"Pff, tu viens de casser mon vœu !"},
+ {q:[{d:"Coucou ! J'ai appris une nouvelle danse aujourd'hui.",c:[["Montre-moi","Il me faut un partenaire pour ça…"],["Encore une ?","Toujours ! On ne danse jamais assez."]]},
+     {d:"Il me faut de la place et de la musique. Ta chambre ferait l'affaire.",c:[["J'ai des enceintes","Parfait, parfait !"],["Ma chambre est petite","On se serrera, c'est encore mieux."]]}],
+  fin:"On danse chez toi ? Tu veux que je vienne ?",non:"Je danserai toute seule, alors…"}],
+faty:[
+ {q:[{d:"Rudy, urgence ! J'ai fait trop de beignets.",c:[["J'arrive… enfin, viens !","Haha, t'as compris direct."],["Donne-les aux voisins","Jamais ! Mes beignets, c'est pour les gens bien."]]},
+     {d:"Ils sont encore chauds. Faut pas traîner.",c:[["Je sors les assiettes","Voilà une bonne réponse."],["Je suis au régime","Toi ? Arrête de mentir."]]}],
+  fin:"Je t'en apporte ? Tu veux que je vienne ?",non:"Tant pis pour toi, j'en mangerai double."},
+ {q:[{d:"Tu sais quoi ? Ma cousine m'a encore saoulée.",c:[["Raconte, je t'écoute","Elle m'a piqué mon rouge à lèvres… LE rouge à lèvres !"],["Encore elle ?","Toujours elle. C'est un fléau."]]},
+     {d:"J'ai besoin de sortir de chez moi avant de craquer.",c:[["Viens te changer les idées","T'es un vrai pote, toi."],["Respire un grand coup","J'ai respiré. Ça marche pas."]]}],
+  fin:"Je peux venir chez toi me calmer ? Tu veux que je vienne ?",non:"Ok… si je craque, c'est ta faute."}],
+katila:[
+ {q:[{d:"Rudy, c'est Katila. Je sors d'une garde de nuit… je peux pas dormir.",c:[["Trop d'adrénaline ?","Oui, j'ai eu trois urgences d'affilée."],["Compte les moutons","J'ai essayé, je suis à 4000."]]},
+     {d:"J'aurais besoin de parler à quelqu'un de calme.",c:[["Je suis ton homme","Tu sais toujours quoi dire."],["Appelle une amie","C'est toi que j'ai envie d'appeler."]]}],
+  fin:"Je peux passer une heure chez toi ? Tu veux que je vienne ?",non:"D'accord… je vais essayer de dormir."},
+ {q:[{d:"Tu as bien pris tes vitamines aujourd'hui ?",c:[["Oui, infirmière","Bon patient !"],["J'ai oublié","Rudy ! Je vais devoir venir vérifier."]]},
+     {d:"Et tu as bu assez d'eau ? Je parie que non.",c:[["Pas assez, c'est vrai","Je le savais."],["Deux litres, promis","Hmm… je vérifierai."]]}],
+  fin:"Visite de contrôle à domicile… Tu veux que je vienne ?",non:"D'accord, mais bois un verre d'eau avant de dormir !"}],
+ameline:[
+ {q:[{d:"Rudy… Tu dors ?",c:[["Pas encore","Moi non plus. La nuit est trop belle."],["Je rêvais de toi","…Tu es sérieux ?"]]},
+     {d:"Je regarde la lune depuis ma fenêtre. Elle est pleine ce soir.",c:[["On la regarde ensemble ?","J'aimerais bien…"],["C'est joli","Oui… mais ce serait mieux à deux."]]}],
+  fin:"Je peux venir la regarder de ta fenêtre ? Tu veux que je vienne ?",non:"Bonne nuit, Rudy. Rêve de moi, alors."},
+ {q:[{d:"J'ai écrit quelque chose… je n'ose le montrer à personne.",c:[["Tu peux me le montrer","Tu ne te moqueras pas ?"],["Lis-le-moi","Pas au téléphone… c'est trop personnel."]]},
+     {d:"C'est un poème. Il parle d'un garçon.",c:[["Un garçon que je connais ?","Peut-être…"],["Il a de la chance","Tu trouves ?"]]}],
+  fin:"Je te le lis en vrai ? Tu veux que je vienne ?",non:"Ce sera pour une autre nuit, alors."}],
+mifa:[
+ {q:[{d:"Rudy. Je viens de signer un gros contrat.",c:[["Félicitations, t'es la meilleure","Je sais. Mais c'est agréable à entendre."],["Ah, cool","Cool ? C'est tout ?"]]},
+     {d:"J'ai envie de fêter ça, mais pas avec mes collègues.",c:[["Avec moi, alors","C'était exactement l'idée."],["Fête ça seule","Quel manque de galanterie."]]}],
+  fin:"J'apporte le champagne. Tu veux que je vienne ?",non:"Très bien. Je le boirai avec quelqu'un d'autre."},
+ {q:[{d:"J'ai eu une journée épouvantable. Des incompétents partout.",c:[["Raconte-moi tout","Tu as une heure devant toi ?"],["Tu exagères sûrement","Je n'exagère jamais."]]},
+     {d:"J'ai besoin de voir quelqu'un de… compétent.",c:[["Je suis très compétent","Prouve-le."],["Je fais de mon mieux","C'est déjà ça."]]}],
+  fin:"Dix minutes. Peut-être vingt. Tu veux que je vienne ?",non:"Hmph. Tu me déçois."}],
+rose:[
+ {q:[{d:"Rudy ! T'as vu mon dernier post ? Tu l'as pas liké !",c:[["Je le like tout de suite","Trop tard, c'est noté dans ma tête."],["J'étais occupé","Occupé à quoi ? Avec qui ?"]]},
+     {d:"Bon, je te pardonne. Mais faut te faire pardonner en vrai.",c:[["Comment ?","Hihi, tu verras."],["J'ai rien fait de mal","Si, tu m'as ignorée !"]]}],
+  fin:"Je viens pour que tu te fasses pardonner. Tu veux que je vienne ?",non:"Pff ! Je le savais que tu t'en fichais."},
+ {q:[{d:"J'ai fait un rêve trop bizarre cette nuit. T'étais dedans.",c:[["Raconte !","On était sur une plage… et tu savais pas nager, haha."],["J'espère que j'étais beau","Plutôt, ouais."]]},
+     {d:"Depuis, je pense qu'à ça. C'est ta faute.",c:[["Je m'excuse… ou pas","Hihi, t'es bête."],["Pense à autre chose","Impossible !"]]}],
+  fin:"On en parle en vrai ? Tu veux que je vienne ?",non:"Bon… je vais rêver de toi encore, alors."}]
+};
+const ARRIVE_PLUS={
+ sophie:[[8,"Me revoilà ! Tu m'as manqué, tu sais ?"],[7,"Salut… j'ai couru pour venir, je suis toute essoufflée."],[9,"Coucou ! J'espère que t'as rangé un peu, cette fois."]],
+ karine:[[10,"C'est encore moi ! T'as préparé la console ?"],[8,"Yo ! J'ai croisé ton voisin, il m'a regardée bizarre."],[9,"Salut toi. Alors, on se fait une partie ?"]],
+ gisele:[[1,"Coucouuu ! La reine de la plage est arrivée !"],[8,"Me voilà ! T'as mis de la musique, j'espère ?"],[7,"Salut beau gosse… Je suis venue en courant !"]],
+ faty:[[9,"Salut ! T'as quelque chose à manger ou je repars ?"],[8,"C'est moi ! Ouvre, j'ai ramené des bonbons."],[10,"Me revoilà. T'as pas changé de coiffure, toi."]],
+ katila:[[7,"Bonsoir… je sors de l'hôpital, je suis toute chiffonnée."],[8,"Coucou mon patient préféré ! Comment tu vas ?"],[9,"Me voilà. J'ai apporté de la tisane, on sait jamais."]],
+ ameline:[[9,"Bonsoir, Rudy. J'ai marché sous les étoiles pour venir."],[7,"Je suis là… Ta chambre m'avait manqué."],[3,"Tu as pensé à moi aujourd'hui ?"]],
+ mifa:[[4,"Je suis là. Tu as de la chance, j'avais un créneau."],[9,"Bonsoir. J'ai annulé un dîner d'affaires pour toi."],[7,"Salut, Rudy. Ne me fais pas regretter d'être venue."]],
+ rose:[[8,"Coucou ! J'ai mis mon plus beau short, t'as vu ?"],[3,"Me revoilà ! Tu étais seul, au moins ?"],[9,"Salut ! J'ai tellement de trucs à te raconter !"]]
+};
+const LIT_SEULE={
+ sophie:[[0,"Ton lit est trop confortable… je pourrais m'endormir."],[0,"Tes peluches sont trop mignonnes."],[0,"C'est cosy chez toi, j'aime bien."]],
+ karine:[[0,"Ton lit est parfait pour faire une nuit de jeux."],[0,"Hé, il y a une chaussette sous ton oreiller, haha."],[0,"On devrait mettre la console sur le lit."]],
+ gisele:[[0,"Si je ferme les yeux, j'ai l'impression d'être sur la plage."],[0,"Ton lit rebondit bien ! Hihi."],[0,"Mets un slow, pour voir…"]],
+ faty:[[0,"Si t'avais des chips, ce serait le paradis ici."],[0,"Je bouge plus, je suis trop bien."],[0,"Ton oreiller sent bon. C'est quoi ta lessive ?"]],
+ katila:[[0,"Oh… enfin un vrai matelas. Mon dos te remercie."],[0,"Si je m'endors, tu me réveilles pas, hein."],[0,"Tu devrais changer tes draps plus souvent, docteur Katila a dit."]],
+ ameline:[[0,"Allongée ici, j'entends ton cœur battre… c'est apaisant."],[0,"Les ombres sur ton plafond dessinent des formes."],[0,"Je me sens étrangement bien, chez toi."]],
+ mifa:[[0,"Ton lit est correct. Tes draps, un peu moins."],[0,"Je me détends rarement. Profite du moment."],[0,"Tu devrais investir dans un meilleur matelas."]],
+ rose:[[0,"Je prends une photo de nous deux ? Non je rigole !"],[0,"Tes peluches, elles ont des prénoms ?"],[0,"Je pourrais rester ici toute la nuit…"]]
+};
+const LIT_Q={
+ sophie:[["Tu fais souvent entrer des filles dans ta chambre ?",["Non, t'es la première à t'asseoir ici","Vraiment ? Je me sens spéciale…",7,6],["Tout le temps","Ah… d'accord.",4,-7]],
+  ["Tu dors avec une peluche, avoue ?",["Juste une, celle-là","Trop chou !",8,5],["Jamais, c'est pour les bébés","Pourtant ton lit en est plein…",10,-2]]],
+ karine:[["Si je m'endors ici, tu me laisses dormir ?",["Je te mets une couverture","T'es un ange, toi.",7,6],["Je te chatouille pour te réveiller","Ose, et tu meurs.",5,-3]],
+  ["Tu préfères jouer allongé ou assis ?",["Allongé, avec toi à côté","Ok… ça me va.",7,6],["Assis, comme un pro","T'es pas drôle.",4,-2]]],
+ gisele:[["Tu veux que je te fasse un massage des épaules ?",["Avec plaisir","Détends-toi, laisse-toi faire…",7,6],["Non merci, ça chatouille","Rabat-joie !",4,-2]],
+  ["On compte les étoiles par ta fenêtre ?",["Allez, une, deux…","Trois, quatre… t'es mignon.",8,5],["Il y en a trop","Justement, c'est ça qui est bien.",10,-2]]],
+ faty:[["On commande à manger et on regarde un film ici ?",["Pizza et comédie, parfait","T'as tout compris.",8,6],["On a déjà mangé","On a toujours de la place pour une pizza.",10,-2]],
+  ["Tu partages ton oreiller ?",["Prends-le, il est à toi","Aww, t'es gentil.",7,5],["C'est mon oreiller","Radin jusqu'à l'oreiller…",4,-4]]],
+ katila:[["Tu me laisses fermer les yeux cinq minutes ?",["Repose-toi, je veille sur toi","…Merci. Tu es adorable.",7,7],["Pas maintenant, on parle","D'accord…",4,-3]],
+  ["Tu m'enlèverais ma coiffe ? Mes cheveux me tirent.",["Doucement, voilà","Ah… ça fait du bien.",7,6],["Fais-le toi-même","Charmant.",4,-4]]],
+ ameline:[["Tu crois qu'on pourrait rester comme ça pour toujours ?",["J'aimerais bien","Moi aussi…",7,7],["J'ai des trucs à faire demain","…Bien sûr.",4,-5]],
+  ["Tu me racontes une histoire ?",["Il était une fois une fille mystérieuse…","Continue, j'adore déjà.",8,6],["Je connais pas d'histoires","Invente, alors.",10,-2]]],
+ mifa:[["Tu comptes me laisser seule sur ce lit longtemps ?",["Je viens m'asseoir près de toi","Enfin une bonne initiative.",7,6],["Je suis bien ici","Tant pis pour toi.",4,-4]],
+  ["Tu me serviras un verre, ou je dois tout faire ?",["Tout de suite, madame","Voilà un homme bien élevé.",8,5],["La cuisine est au fond","Aucune galanterie…",5,-5]]],
+ rose:[["On fait un selfie tous les deux sur ton lit ?",["Allez, souris !","Hihi, elle est trop belle celle-là !",8,6],["Pas de photo","T'as quelque chose à cacher ?",5,-5]],
+  ["Tu veux que je reste dormir… pour discuter ?",["Pourquoi pas","Hihi… on verra.",7,6],["Non, t'as ta maison","Ouch.",4,-6]]]
+};
+const PLUS_Q2={
+ sophie:[["Tu préfères le matin ou le soir ?",["Le soir, surtout avec toi","Tu as réponse à tout…",7,5],["Aucun, je déteste me lever et me coucher","Haha, t'es compliqué.",8,-1]],
+  ["Tu m'offrirais des fleurs ?",["Des roses blanches","Mes préférées… comment tu savais ?",7,7],["Les fleurs, ça fane","Pas très romantique…",4,-4]]],
+ karine:[["Tu me laisserais gagner exprès ?",["Jamais, je te respecte trop","Bonne réponse, champion.",8,6],["Tout le temps, t'es nulle","Répète ?!",5,-7]],
+  ["Tu cosplayerais avec moi ?",["Carrément, en duo","Trop bien ! Je choisis les costumes.",8,6],["C'est ridicule","T'es pas marrant…",4,-4]]],
+ gisele:[["Tu m'aimes mieux en talons ou pieds nus ?",["Pieds nus sur la plage","Moi aussi !",8,5],["Talons, c'est plus classe","Bof, je vais me tordre la cheville.",4,-1]],
+  ["Tu viendrais à mon anniversaire ?",["Avec un super cadeau","Je t'attends de pied ferme !",8,6],["Si je suis libre","Wow, quel enthousiasme…",4,-4]]],
+ faty:[["Tu sais faire des crêpes ?",["Oui, je t'en fais demain","Marché conclu !",8,6],["Non, et je veux pas apprendre","Tu me déçois.",4,-4]],
+  ["Qui est le plus drôle, toi ou moi ?",["Toi, sans hésiter","Évidemment.",8,5],["Moi, clairement","Tu rêves.",10,-2]]],
+ katila:[["Tu as peur des piqûres ?",["Un peu… mais avec toi, ça va","Hihi, je serai douce.",7,6],["Pas du tout","Je vais tester, alors.",10,-1]],
+  ["Tu viendrais me chercher après une garde ?",["Avec un café chaud","Tu es un amour.",7,7],["C'est trop tôt","Merci pour le soutien…",4,-4]]],
+ ameline:[["Tu préfères la pluie ou le soleil ?",["La pluie, avec un bon livre","On se ressemble.",7,6],["Le soleil, la pluie c'est déprimant","Hmm.",4,-2]],
+  ["Tu pourrais m'aimer même dans le noir ?",["Surtout dans le noir","…Tu me troubles.",7,7],["C'est une question bizarre","Oublie.",4,-3]]],
+ mifa:[["Tu serais prêt à déménager pour le travail ?",["Pour une belle opportunité, oui","Voilà de l'ambition.",8,6],["Jamais, je bouge pas","Quel manque d'audace.",4,-4]],
+  ["Tu t'habilles comment pour un entretien ?",["Costume impeccable","Parfait.",8,5],["Comme d'habitude","Ça explique beaucoup de choses.",4,-3]]],
+ rose:[["Tu garderais une photo de moi dans ton portefeuille ?",["Déjà fait","Menteur ! …Trop mignon.",7,6],["Je n'ai pas de portefeuille","Excuse nulle.",10,-2]],
+  ["Tu m'emmènerais au bal ?",["En costume, avec une fleur pour toi","Je fonds complètement…",7,7],["Je danse pas","Tu apprendras !",4,-2]]]
+};
+for(const k in PLUS_Q2){ PERSO[k].q.push(...PLUS_Q2[k]); PERSO[k].qlit=LIT_Q[k]; }
+
+/* ---------- la ville et les autres gars : Shinato, Vaviel, la ville délabrée, la plage, le Pixel Bar, le Dragon d'Or,
+   le Relais, le RestoChic, Chez Valia, le Home Run, la salle d'arcade… et Carlos, Mody, Théo, Mathis, Limon, Valor, Shanna ---------- */
+const VILLE_SEULE={
+ sophie:[[9,"L'autre jour au Pixel Bar, Mathis m'a offert un verre… j'ai dit non, hein."],[7,"J'adore les lumières du boulevard, surtout devant le RestoChic."],[10,"Carlos m'a proposé un bras de fer. Tu crois qu'il plaisantait ?"],[2,"Shanna m'envoie des photos de la plage de Gisèle, c'est trop beau."],[9,"La rue de Shinato fait un peu peur la nuit, non ?"],[8,"J'ai vu Mody courir après un chat à Vaviel, haha."]],
+ karine:[[8,"J'ai battu Limon à la salle d'arcade, il a boudé toute la soirée."],[9,"Théo dit qu'il est imbattable à PariBoxe. On va voir ça."],[10,"Tu vas souvent au Home Run ? Il paraît que Valor y fait des scores de fou."],[2,"Mathis m'a demandé mon pseudo… je lui ai donné un faux, hihi."],[9,"La ville délabrée, c'est flippant, mais les bornes d'arcade y sont géniales."],[8,"Carlos a encore gagné au bras de fer. Un jour je le bats."]],
+ gisele:[[1,"Demain, soirée volley sur ma plage ! Tout Shinato vient."],[8,"Shanna m'a battue au volley… une fois. Une seule !"],[9,"Tu connais Chez Valia ? C'est la boîte la plus folle du boulevard."],[10,"Mathis danse comme un pied, mais il s'amuse, c'est l'essentiel."],[7,"Vaviel est trop mignon, avec ses petites rues."],[9,"Carlos m'a regardée danser au Relais… il a pas osé m'inviter, haha."]],
+ faty:[[9,"Le Dragon d'Or fait les meilleurs nems de Shinato. Point."],[8,"Mody a mangé trois assiettes au buffet… même moi j'ai pas pu."],[10,"Limon m'a dragué avec une blague nulle. Je l'ai encore dans la tête."],[9,"Au Relais, les frites sont pas mal, mais trop chères."],[2,"Ma cousine traîne avec Théo en ce moment. Je sens pas ce mec."],[8,"J'ai gagné un concours de nourriture au Glouton ! Oui, ça existe."]],
+ katila:[[9,"On a soigné Valor à l'hôpital la semaine dernière. Il pleurait pour une piqûre."],[7,"L'infirmerie de Vaviel est calme la nuit… sauf quand Mody débarque."],[10,"Carlos s'est encore fait mal au poignet au bras de fer. Toujours lui."],[9,"Théo a fini aux urgences après PariBoxe. Je lui avais dit !"],[2,"Mes collègues veulent aller au RestoChic. Trop cher pour moi."],[1,"La plage de Gisèle m'aide à décompresser après mes gardes."]],
+ ameline:[[9,"La ville délabrée a quelque chose de poétique, tu ne trouves pas ?"],[7,"Je vais souvent m'asseoir au bord de l'eau, à la plage, la nuit."],[10,"Limon m'a écrit un poème. Il était… très mauvais."],[9,"Chez Valia, la musique est trop forte pour moi."],[2,"Shanna veut que je vienne jouer au volley. Moi, en plein soleil ? Jamais."],[7,"Le Relais a un vieux piano. Personne ne sait en jouer."]],
+ mifa:[[4,"Le RestoChic est le seul restaurant correct de Shinato."],[9,"Valor m'a proposé de s'associer avec lui. J'ai ri."],[10,"Mathis est gentil, mais il n'a aucune ambition."],[2,"J'ai un rendez-vous d'affaires Chez Valia demain soir."],[9,"La ville délabrée ? Il faudrait tout racheter et rénover."],[4,"Carlos devrait arrêter le bras de fer et monter une salle de sport."]],
+ rose:[[3,"Mathis m'a envoyé un message… t'es pas jaloux, hein ?"],[8,"J'ai trempé Théo au pistolet à eau ! Il a hurlé !"],[9,"Il y a une fête au Pixel Bar samedi, tu viens ?"],[10,"Shanna dit que t'es mignon. Je l'ai remise à sa place, hihi."],[2,"Mes copines veulent aller Chez Valia. Je t'emmène ?"],[7,"J'aimerais qu'on se promène sur le boulevard, juste toi et moi."]]
+};
+const VILLE_Q={
+ sophie:[["Tu vas souvent au Pixel Bar ?",["De temps en temps, mais c'est mieux avec toi","T'es mignon…",7,5],["Tous les soirs, j'y drague","Ah… super.",4,-6]],
+  ["Tu t'entends bien avec Carlos ?",["Oui, c'est un bon gars","Tant mieux, il a l'air gentil.",9,3],["Je le supporte pas","Oh… pourquoi ?",10,-1]],
+  ["Mathis m'a invitée à boire un verre. J'y vais ?",["Si tu veux, mais je préférerais que tu restes avec moi","Hihi… alors je reste.",3,7],["Fais ce que tu veux","Ah. D'accord.",4,-6]]],
+ karine:[["Tu me bats au bras de fer, ou même Carlos te fait peur ?",["Carlos me fait peur, toi non","Haha, t'as tort !",8,5],["Personne me fait peur","Ok monsieur muscles.",10,-1]],
+  ["Limon dit qu'il te bat à l'arcade. C'est vrai ?",["Qu'il vienne, je l'attends","C'est ça que j'aime !",8,6],["Il a raison, il est meilleur","Pff, pas de fierté.",4,-3]],
+  ["On fait une équipe contre Théo et Mody au foot ?",["Carrément, on va les écraser","Duo de choc !",8,6],["Ils sont trop forts","Froussard.",4,-4]]],
+ gisele:[["Tu viendras à ma soirée volley sur la plage ?",["Je serai le premier","Yes ! T'es dans mon équipe !",8,6],["J'aime pas le sable","Encore ?!",4,-5]],
+  ["Shanna dit qu'elle joue mieux que moi au volley. T'en penses quoi ?",["Personne ne joue mieux que toi","Voilà un homme qui a des yeux !",3,6],["Elle a raison","Traître !",5,-7]],
+  ["On va danser Chez Valia un soir ?",["Toute la nuit","Tu me plais de plus en plus.",8,6],["Je danse comme Mathis","Haha, alors c'est grave.",8,1]]],
+ faty:[["Le Dragon d'Or ou le Relais ?",["Le Dragon d'Or, pour les nems","T'as du goût !",8,6],["Aucun, je mange chez moi","Ennuyeux…",4,-3]],
+  ["Mody dit qu'il mange plus que moi. Tu le crois ?",["Personne ne te bat à ça","Merci ! …C'était un compliment, hein ?",8,5],["Il est deux fois plus grand","Et alors ?! Ça veut rien dire.",5,-3]],
+  ["Théo tourne autour de ma cousine. Tu le connais ?",["Je vais lui parler s'il faut","T'es un vrai, toi.",9,6],["C'est pas mes affaires","Merci du soutien…",4,-4]]],
+ katila:[["Tu fais attention quand tu joues à PariBoxe ?",["Promis, pas comme Théo","Heureusement !",8,5],["Je fonce, c'est ça le jeu","Et tu finiras à mon hôpital…",10,-3]],
+  ["Valor dit qu'il n'a peur de rien. Tu l'as vu devant une seringue ?",["Il paraît qu'il a pleuré, haha","Ne le répète à personne ! Hihi.",8,5],["Il a raison, c'est un dur","Si tu savais…",10,-1]],
+  ["Tu viendrais me voir à l'infirmerie de Vaviel ?",["Même sans être malade","C'est gentil…",7,6],["Seulement si je me blesse","Charmant.",4,-3]]],
+ ameline:[["Tu te promènes parfois dans la ville délabrée ?",["La nuit, c'est beau","Tu comprends ce que je ressens.",7,6],["Jamais, c'est glauque","C'est là que je me sens bien, moi…",4,-4]],
+  ["Limon m'a écrit un poème. Je devrais lui répondre ?",["Réponds-lui gentiment, mais c'est moi que tu vois","…Tu es jaloux ? C'est mignon.",7,6],["Fais ce que tu veux","D'accord…",4,-5]],
+  ["Le Relais ou Chez Valia ?",["Le Relais, pour le vieux piano","On y ira ensemble, alors.",8,5],["Chez Valia, pour faire la fête","Pas pour moi…",4,-2]]],
+ mifa:[["Valor veut s'associer avec moi. Tu en penses quoi ?",["Tu mérites mieux qu'un associé comme lui","Tu as raison.",8,6],["Accepte, il a de l'argent","L'argent ne suffit pas.",4,-4]],
+  ["Tu m'emmènerais au RestoChic, ou tu attends que je paie ?",["C'est moi qui t'invite","Voilà ce que je voulais entendre.",3,7],["On partage","Évidemment…",4,-5]],
+  ["Carlos, Mathis, toi… Qui est le plus sérieux ?",["Moi, et je vais te le prouver","J'attends de voir.",9,5],["Carlos, il est costaud","Ce n'est pas la question.",10,-3]]],
+ rose:[["Si Mathis m'invite Chez Valia, tu fais quoi ?",["Je t'y emmène avant lui","Hihi, t'es jaloux !",3,7],["Rien, t'es libre","…Ok.",5,-7]],
+  ["Tu crois que Shanna est plus jolie que moi ?",["Personne n'est plus jolie que toi","Menteur… mais j'adore.",7,7],["Un peu, oui","QUOI ?!",5,-9]],
+  ["On va trembler de peur dans la ville délabrée ?",["Je te tiendrai la main","Bon, d'accord alors.",7,6],["J'y vais pas, j'ai peur","Toi ? Haha !",8,-1]]]
+};
+const VILLE_APPEL={
+ sophie:{q:[{d:"Rudy, je suis au Pixel Bar… et Mathis n'arrête pas de me parler.",c:[["Ignore-le","J'essaie, mais il insiste…"],["Il est sympa, Mathis","Oui, mais c'est pas toi…"]]},{d:"J'aimerais bien partir d'ici.",c:[["Viens chez moi","C'est exactement ce que j'espérais."],["Rentre chez toi","Mmh…"]]}],fin:"Je quitte le bar et je viens ? Tu veux que je vienne ?",non:"Bon… je rentre toute seule."},
+ karine:{q:[{d:"Rudy ! Je suis à la salle d'arcade, Limon vient de me battre !",c:[["Impossible !","Si ! Il a triché, j'en suis sûre."],["Bien fait","Traître !"]]},{d:"J'ai besoin de m'entraîner… avec quelqu'un de nul.",c:[["Merci pour moi","Haha, je rigole."],["Je suis pas nul","On verra."]]}],fin:"Je viens m'entraîner chez toi ? Tu veux que je vienne ?",non:"Pff, je vais m'entraîner contre des bots."},
+ gisele:{q:[{d:"Je suis sur ma plage, la soirée volley est finie. Tout le monde est parti.",c:[["Même Shanna ?","Même elle. J'ai perdu, elle a fui avec sa victoire."],["Tu dois être crevée","Un peu… mais j'ai encore de l'énergie."]]},{d:"Il reste plein de musique dans ma tête.",c:[["Viens la danser ici","Ohh, oui !"],["Va dormir","Rabat-joie."]]}],fin:"Je monte à Shinato te voir ? Tu veux que je vienne ?",non:"Je danse avec les vagues, alors."},
+ faty:{q:[{d:"Rudy, je sors du Dragon d'Or. J'ai trop mangé.",c:[["Encore ?!","Oui. Et j'ai pris des restes."],["C'était bon ?","Divin."]]},{d:"J'ai des nems en trop dans un sac.",c:[["Apporte-les !","J'espérais que tu dises ça."],["Mange-les demain","Ils seront plus bons demain."]]}],fin:"Je te les apporte ? Tu veux que je vienne ?",non:"Je les mange devant la télé, tant pis."},
+ katila:{q:[{d:"Rudy… Carlos est encore passé à l'infirmerie. Son poignet.",c:[["Le bras de fer, encore ?","Évidemment. Il ne comprendra jamais."],["Il va bien ?","Oui, il est costaud. Mais il m'a épuisée."]]},{d:"J'ai fini mon service. J'ai besoin de voir un visage sympa.",c:[["Le mien ?","Exactement."],["Va te coucher","Tu n'es pas drôle."]]}],fin:"Je passe chez toi ? Tu veux que je vienne ?",non:"D'accord… je rentre à Vaviel."},
+ ameline:{q:[{d:"Je suis dans la ville délabrée. Il y a un silence magnifique ici.",c:[["Fais attention à toi","C'est gentil de t'inquiéter."],["C'est flippant là-bas","Pas pour moi."]]},{d:"Mais le silence, à deux, c'est encore mieux.",c:[["Je suis d'accord","…Alors je viens."],["Profite de ta solitude","Oui… sans doute."]]}],fin:"Je traverse la ville pour toi. Tu veux que je vienne ?",non:"Je reste avec mes ombres, alors."},
+ mifa:{q:[{d:"Je sors d'un rendez-vous Chez Valia. Valor était insupportable.",c:[["Il t'a embêtée ?","Il a essayé de me vendre ses idées. Zéro intérêt."],["Valor est sympa","Tu ne le connais pas."]]},{d:"J'ai besoin d'une conversation intelligente pour me remettre.",c:[["Je suis là pour ça","Nous allons voir."],["Lis un livre","Très drôle."]]}],fin:"Je passe te voir ? Tu veux que je vienne ?",non:"Tant pis. Je te croyais plus disponible."},
+ rose:{q:[{d:"Rudy, je suis avec Shanna sur le boulevard. Elle parle que de toi !",c:[["Ah bon ?","Oui ! Et ça m'énerve !"],["Elle a bon goût","RUDY !"]]},{d:"Je l'ai laissée devant le RestoChic. Je suis toute seule, maintenant.",c:[["Viens me voir","Hihi, j'espérais que tu dises ça."],["Rentre chez toi","Pff !"]]}],fin:"Je viens te voir avant elle ? Tu veux que je vienne ?",non:"Parfait. Va voir Shanna, alors !"}
+};
+const LIT_SEULE2={
+ sophie:[[0,"Si Mathis me voyait allongée ici, il serait jaloux, hihi."],[0,"On devrait aller au RestoChic un de ces soirs."]],
+ karine:[[0,"Allongée ici, je réfléchis à comment battre Limon."],[0,"Le Home Run, on y va demain ? Je te bats au baseball."]],
+ gisele:[[0,"Tu viendras à ma prochaine soirée sur la plage ?"],[0,"Le lit, c'est bien, mais le sable c'est mieux."]],
+ faty:[[0,"Je rêve d'un plateau de nems du Dragon d'Or, là."],[0,"Si Mody voyait ton lit, il s'y endormirait direct."]],
+ katila:[[0,"Ici, c'est plus confortable que la salle de garde."],[0,"Si Carlos se blesse encore ce soir, je réponds pas."]],
+ ameline:[[0,"D'ici, on voit presque les lumières de la ville délabrée."],[0,"Ton lit est plus doux que les bancs du Relais."]],
+ mifa:[[0,"Chez Valia, il n'y a pas de lit aussi calme."],[0,"Ne dis à personne que je me suis allongée ici."]],
+ rose:[[0,"Si Shanna savait que je suis sur ton lit… hihi."],[0,"On va au Pixel Bar après ? Ou pas… on est bien ici."]]
+};
+for(const k in VILLE_Q){ PERSO[k].q.push(...VILLE_Q[k]); PERSO[k].seule.push(...VILLE_SEULE[k]); (APPELS_PLUS[k]=APPELS_PLUS[k]||[]).push(VILLE_APPEL[k]); (LIT_SEULE[k]=LIT_SEULE[k]||[]).push(...LIT_SEULE2[k]); }
+
+
+const POSES={"sophie": ["/assets/web/visite/debout/sophie_01.webp", "/assets/web/visite/debout/sophie_02.webp", "/assets/web/visite/debout/sophie_03.webp", "/assets/web/visite/debout/sophie_04.webp", "/assets/web/visite/debout/sophie_05.webp", "/assets/web/visite/debout/sophie_06.webp", "/assets/web/visite/debout/sophie_07.webp", "/assets/web/visite/debout/sophie_08.webp", "/assets/web/visite/debout/sophie_09.webp", "/assets/web/visite/debout/sophie_10.webp"], "karine": ["/assets/web/visite/debout/karine_01.webp", "/assets/web/visite/debout/karine_02.webp", "/assets/web/visite/debout/karine_03.webp", "/assets/web/visite/debout/karine_04.webp", "/assets/web/visite/debout/karine_05.webp", "/assets/web/visite/debout/karine_06.webp", "/assets/web/visite/debout/karine_07.webp", "/assets/web/visite/debout/karine_08.webp", "/assets/web/visite/debout/karine_09.webp", "/assets/web/visite/debout/karine_10.webp"], "gisele": ["/assets/web/visite/debout/gisele_01.webp", "/assets/web/visite/debout/gisele_02.webp", "/assets/web/visite/debout/gisele_03.webp", "/assets/web/visite/debout/gisele_04.webp", "/assets/web/visite/debout/gisele_05.webp", "/assets/web/visite/debout/gisele_06.webp", "/assets/web/visite/debout/gisele_07.webp", "/assets/web/visite/debout/gisele_08.webp", "/assets/web/visite/debout/gisele_09.webp", "/assets/web/visite/debout/gisele_10.webp"], "faty": ["/assets/web/visite/debout/faty_01.webp", "/assets/web/visite/debout/faty_02.webp", "/assets/web/visite/debout/faty_03.webp", "/assets/web/visite/debout/faty_04.webp", "/assets/web/visite/debout/faty_05.webp", "/assets/web/visite/debout/faty_06.webp", "/assets/web/visite/debout/faty_07.webp", "/assets/web/visite/debout/faty_08.webp", "/assets/web/visite/debout/faty_09.webp", "/assets/web/visite/debout/faty_10.webp"], "katila": ["/assets/web/visite/debout/katila_01.webp", "/assets/web/visite/debout/katila_02.webp", "/assets/web/visite/debout/katila_03.webp", "/assets/web/visite/debout/katila_04.webp", "/assets/web/visite/debout/katila_05.webp", "/assets/web/visite/debout/katila_06.webp", "/assets/web/visite/debout/katila_07.webp", "/assets/web/visite/debout/katila_08.webp", "/assets/web/visite/debout/katila_09.webp", "/assets/web/visite/debout/katila_10.webp"], "ameline": ["/assets/web/visite/debout/ameline_01.webp", "/assets/web/visite/debout/ameline_02.webp", "/assets/web/visite/debout/ameline_03.webp", "/assets/web/visite/debout/ameline_04.webp", "/assets/web/visite/debout/ameline_05.webp", "/assets/web/visite/debout/ameline_06.webp", "/assets/web/visite/debout/ameline_07.webp", "/assets/web/visite/debout/ameline_08.webp", "/assets/web/visite/debout/ameline_09.webp", "/assets/web/visite/debout/ameline_10.webp"], "mifa": ["/assets/web/visite/debout/mifa_01.webp", "/assets/web/visite/debout/mifa_02.webp", "/assets/web/visite/debout/mifa_03.webp", "/assets/web/visite/debout/mifa_04.webp", "/assets/web/visite/debout/mifa_05.webp", "/assets/web/visite/debout/mifa_06.webp", "/assets/web/visite/debout/mifa_07.webp", "/assets/web/visite/debout/mifa_08.webp", "/assets/web/visite/debout/mifa_09.webp", "/assets/web/visite/debout/mifa_10.webp"], "rose": ["/assets/web/visite/debout/rose_01.webp", "/assets/web/visite/debout/rose_02.webp", "/assets/web/visite/debout/rose_03.webp", "/assets/web/visite/debout/rose_04.webp", "/assets/web/visite/debout/rose_05.webp", "/assets/web/visite/debout/rose_06.webp", "/assets/web/visite/debout/rose_07.webp", "/assets/web/visite/debout/rose_08.webp", "/assets/web/visite/debout/rose_09.webp", "/assets/web/visite/debout/rose_10.webp"]};   // POSES[id] = 10 images
+const HR={"sophie": [1.023, 0.995, 0.992, 1.0, 1.0, 1.007, 1.003, 0.992, 0.998, 1.0], "karine": [1.044, 0.988, 1.0, 0.998, 1.001, 1.003, 0.999, 1.003, 0.995, 1.0], "gisele": [1.036, 0.991, 0.965, 1.0, 1.01, 1.011, 0.992, 0.993, 1.0, 1.001], "faty": [1.006, 1.0, 0.992, 1.0, 0.998, 1.0, 1.006, 1.0, 1.002, 1.0], "katila": [1.017, 1.012, 0.975, 0.993, 1.0, 1.006, 1.0, 1.007, 1.0, 0.999], "ameline": [1.033, 1.0, 0.98, 1.001, 0.997, 1.007, 1.01, 0.997, 0.998, 1.0], "mifa": [1.006, 0.975, 0.938, 1.0, 1.005, 1.006, 0.998, 0.961, 1.0, 1.005], "rose": [1.002, 1.0, 0.993, 1.001, 0.999, 1.008, 0.99, 1.0, 1.008, 1.0]};         // hauteur de chaque pose par rapport à la pose neutre
+const AV={"sophie": "/assets/web/visite/debout/sophie_av.jpg", "karine": "/assets/web/visite/debout/karine_av.jpg", "gisele": "/assets/web/visite/debout/gisele_av.jpg", "faty": "/assets/web/visite/debout/faty_av.jpg", "katila": "/assets/web/visite/debout/katila_av.jpg", "ameline": "/assets/web/visite/debout/ameline_av.jpg", "mifa": "/assets/web/visite/debout/mifa_av.jpg", "rose": "/assets/web/visite/debout/rose_av.jpg"};
+const $=id=>document.getElementById(id);
+const ORDRE=["sophie","karine","gisele","faty","katila","ameline","mifa","rose"];
+
+/* ---------- le cœur : l'amitié avec chaque fille (0 à 100 %), gardée d'une fois sur l'autre ---------- */
+let COEUR={}; try{ COEUR=JSON.parse(localStorage.getItem('test_coeurs')||'{}')||{}; }catch(e){}
+ORDRE.forEach(id=>{ if(COEUR[id]==null) COEUR[id]=50; });
+function majCoeurs(){ document.querySelectorAll('[data-coeur]').forEach(e=>e.textContent='♥ '+COEUR[e.dataset.coeur]+' %'); if(ici) $('coeurTxt').textContent=PERSO[ici].nom+' '+COEUR[ici]+' %'; }
+function gagne(id,n){
+  COEUR[id]=Math.max(0,Math.min(100,COEUR[id]+n)); try{ localStorage.setItem('test_coeurs',JSON.stringify(COEUR)); }catch(e){}
+  majCoeurs(); if(!n||id!==ici) return;
+  const f=document.createElement('div'); f.className='flotte '+(n>0?'plus':'moins'); f.textContent=(n>0?'♥ +':'♥ ')+n+' %';
+  const sc=$('scene').getBoundingClientRect(), ir=cible().getBoundingClientRect();
+  f.style.left=(ir.left-sc.left+ir.width*.55)+'px'; f.style.top=(ir.top-sc.top+ir.height*.12)+'px'; $('scene').appendChild(f); setTimeout(()=>f.remove(),1500);
+}
+
+/* ---------- liste des contacts ---------- */
+const liste=$('liste');
+ORDRE.forEach(id=>{
+  const f=PERSO[id]; const b=document.createElement('button'); b.className='contact';
+  b.innerHTML=`<span class="av"></span><span>${f.nom}<small><span class="cz" data-coeur="${id}"></span></small></span><span class="appel" aria-hidden="true">📞</span>`;
+  b.querySelector('.av').style.backgroundImage=`url(${AV[id]})`;
+  b.addEventListener('click',()=>appeler(id)); liste.appendChild(b);
+});
+function ouvreTel(){ $('tel').classList.add('ouvert'); montre('vContacts'); majHeure(); majCoeurs(); }
+function fermeTel(){ $('tel').classList.remove('ouvert'); }
+function montre(id){ document.querySelectorAll('.vue').forEach(v=>v.classList.toggle('on',v.id===id)); }
+function majHeure(){ const d=new Date(); $('heure').textContent=d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+$('btnTel').addEventListener('click',ouvreTel);
+$('fermerTel').addEventListener('click',fermeTel);
+$('tel').addEventListener('click',e=>{ if(e.target.id==='tel') fermeTel(); });
+
+/* ---------- l'appel ---------- */
+let appel=null, attente=[], dernierAppel={};
+const pause=ms=>new Promise(r=>{ const t=setTimeout(r,ms); attente.push(t); });
+function stop(){ attente.forEach(clearTimeout); attente=[]; }
+function bulleTel(texte,qui){ const d=document.createElement('div'); d.className='b '+qui; d.textContent=texte; $('fil').appendChild(d); $('fil').scrollTop=1e6; }
+async function elleDit(t){ const e=document.createElement('div'); e.className='ecrit'; e.textContent='…'; $('fil').appendChild(e); $('fil').scrollTop=1e6; await pause(650+Math.min(t.length*14,900)); e.remove(); bulleTel(t,'elle'); }
+function proposer(opts){ return new Promise(res=>{ const c=$('choix'); c.innerHTML='';
+  opts.forEach((o,i)=>{ const b=document.createElement('button'); b.className='choix'+(o.cls?' '+o.cls:''); b.textContent=o.t;
+    b.addEventListener('click',()=>{ c.innerHTML=''; bulleTel(o.t,'rudy'); res(i); }); c.appendChild(b); });
+  requestAnimationFrame(()=>{ $('fil').scrollTop=1e6; }); }); }
+
+async function appeler(id){
+  const f=PERSO[id]; stop(); appel=id; montre('vAppel'); $('fil').innerHTML=''; $('choix').innerHTML='';
+  $('nomAppel').textContent=f.nom; $('avAppel').style.backgroundImage=`url(${AV[id]})`;
+  $('etat').textContent='Appel…';
+  // la fille qui est là remarque que tu appelles quelqu'un d'autre
+  if(ici&&ici!==id){ humeur(10,2600); dit("Tu appelles qui, là ?",2600); }
+  await pause(1400); if(appel!==id) return;
+  $('etat').textContent='En communication';
+  if(ici===id){ await elleDit("Rudy… je suis juste à côté de toi 😄 Raccroche !"); await pause(1400); finAppel(); return; }
+  if(COEUR[id]<=10){ await elleDit("Tu m'appelles encore ? Après ce que tu m'as fait ? Non merci."); await pause(1500); finAppel(); return; }
+  const scripts=[f.appel,...(APPELS_PLUS[id]||[])]; let k=Math.floor(Math.random()*scripts.length); if(scripts.length>1&&k===dernierAppel[id]) k=(k+1)%scripts.length; dernierAppel[id]=k; const A=scripts[k];
+  for(const q of A.q){
+    await elleDit(q.d); if(appel!==id) return;
+    const i=await proposer(q.c.map(c=>({t:c[0]}))); if(appel!==id) return;
+    await pause(350); await elleDit(q.c[i][1]); if(appel!==id) return;
+    await pause(300);
+  }
+  await elleDit(A.fin); if(appel!==id) return;
+  const oui=(await proposer([{t:'Oui',cls:'oui'},{t:'Non',cls:'non'}]))===0; if(appel!==id) return;
+  await pause(300);
+  await elleDit(oui?"D'accord, j'arrive tout de suite !":A.non);
+  await pause(1300); if(appel!==id) return;
+  finAppel();
+  if(oui) arrivee(id);
+}
+function finAppel(){ stop(); appel=null; $('etat').textContent='Appel terminé'; $('choix').innerHTML='';
+  setTimeout(()=>{ if(!appel){ fermeTel(); } },700); }
+$('raccrocher').addEventListener('click',()=>{ const f=appel; stop(); appel=null; $('choix').innerHTML=''; if(f) bulleTel('(Tu as raccroché)','rudy'); $('etat').textContent='Appel terminé'; setTimeout(fermeTel,600); });
+function toast(t,ms=2600){ const e=$('toast'); e.textContent=t; e.style.display='block'; clearTimeout(e._t); e._t=setTimeout(()=>e.style.display='none',ms); }
+
+/* ---------- la fille dans la chambre ---------- */
+const img=$('sophie');
+let ici=null, arriveeT=0, discussions=0, dernierContact=0, alerte=0, occupee=false, dejaPosees={};
+const DEF={x:63,b:10.9,h:57.7};
+let place=Object.assign({},DEF);
+try{ const s=JSON.parse(localStorage.getItem('test_sophie_place')||'null'); if(s) place=s; }catch(e){}
+let poseCourante=6;
+function appliquePlace(){ img.style.left=place.x+'%'; img.style.bottom=place.b+'%'; img.style.height=(place.h*(ici?HR[ici][poseCourante-1]:1))+'%';
+  $('taille').value=place.h; $('valeurs').textContent=`x ${place.x.toFixed(1)} % · bas ${place.b.toFixed(1)} % · taille ${place.h.toFixed(1)} %`; }
+appliquePlace();
+function pose(n){ if(mode==='lit'){ poseLit(n); return; } poseCourante=n; img.src=POSES[ici][n-1]; appliquePlace(); }
+let retourPose=null;
+function humeur(p,ms=2600){ if(!ici) return; pose(p); clearTimeout(retourPose); retourPose=setTimeout(()=>{ if(ici&&!occupee) pose(6); },ms); }
+
+// sa bulle : son prénom, puis ce qu'elle dit
+let parle=false;
+function dit(t,ms=2600){ if(!ici) return; const b=$('bulle'); b.innerHTML=`<span class="qui">${PERSO[ici].nom}</span>`; b.appendChild(document.createTextNode(t)); b.style.display='block';
+  const sc=$('scene').getBoundingClientRect(), ir=cible().getBoundingClientRect();
+  b.style.left=Math.max(4,Math.min(ir.left-sc.left+ir.width*.35, sc.width-b.offsetWidth-6))+'px';
+  b.style.top=Math.max(40,ir.top-sc.top-b.offsetHeight+ir.height*.03)+'px';
+  parle=true; clearTimeout(b._t); b._t=setTimeout(()=>{ b.style.display='none'; parle=false; },ms); }
+function tait(){ const b=$('bulle'); clearTimeout(b._t); b.style.display='none'; parle=false; }
+function contact(){ dernierContact=Date.now(); alerte=0; }
+
+function arrivee(id){
+  // une autre fille est déjà là : elle le prend très mal et s'en va
+  if(ici&&ici!==id){ const avant=ici; humeur(5,3000); dit(PERSO[avant].jalouse,3000); gagne(avant,-15); setTimeout(()=>{ depart(()=>setTimeout(()=>arrivee(id),600)); },3000); return; }
+  // ici viendra l'animation d'arrivée ; pour le test, elle apparaît en fondu
+  setTimeout(()=>{
+    ici=id; arriveeT=Date.now(); discussions=0; occupee=false; contact();
+    pose(6); img.alt=PERSO[id].nom; img.style.display='block'; img.classList.remove('arrive'); void img.offsetWidth; img.classList.add('arrive');
+    $('btnReglage').style.display='block'; $('coeur').style.display='flex'; majCoeurs(); majArgent();
+    setTimeout(()=>{ const L=[PERSO[id].arrive,...(ARRIVE_PLUS[id]||[])]; const [p,t]=L[Math.floor(Math.random()*L.length)]; humeur(p,3000); dit(t,3000); },900);
+  },900);
+}
+function depart(apres){
+  occupee=false; tait(); fermeMenus(); clearTimeout(retourPose);
+  if(mode==='lit'){ quitteLit(()=>depart(apres)); return; }
+  img.style.transition='opacity .8s'; img.style.opacity='0';
+  setTimeout(()=>{ img.style.display='none'; img.style.opacity=''; img.style.transition=''; ici=null; $('btnReglage').style.display='none'; $('coeur').style.display='none'; if(apres) apres(); },850);
+}
+
+/* ---------- elle vit toute seule : elle parle, elle pose des questions, et elle n'aime pas qu'on l'ignore ----------
+   1 min sans lui parler : elle le remarque · 2 min 30 : elle se vexe · 5 min : très en colère, elle s'en va */
+let prochaine=Date.now()+8000;
+setInterval(()=>{
+  if(!ici||reglage||enBalade||$('tel').classList.contains('ouvert')) return;
+  const P=PERSO[ici], calme=(Date.now()-dernierContact)/1000;
+  // une question ou un menu laissés sans réponse : elle finit par le remarquer
+  const panneau=$('menu').style.display==='flex'||$('discu').style.display==='flex';
+  if(occupee&&panneau&&calme>=40){ fermeMenus(); occupee=false; alerte=Math.max(alerte,1); humeur(4,3000); dit(P.ignore[0],3000); gagne(ici,-3); dernierContact=Date.now()-60000; return; }
+  if(occupee) return;
+  if(calme>=300&&alerte<3){ alerte=3; occupee=true; humeur(5,3500); dit(P.ignore[2],3500); gagne(ici,-12); setTimeout(()=>depart(),3600); return; }
+  if(calme>=150&&alerte<2){ alerte=2; humeur(5,3200); dit(P.ignore[1],3200); gagne(ici,-5); return; }
+  if(calme>=60&&alerte<1){ alerte=1; humeur(4,3200); dit(P.ignore[0],3200); gagne(ici,-3); return; }
+  if(Date.now()<prochaine||parle) return;
+  prochaine=Date.now()+11000+Math.random()*9000;
+  // de temps en temps, c'est elle qui lance la discussion
+  if(resultatRecent(ici)&&Date.now()-arriveeT>6000){ taquine(); return; }
+  if(ici==='karine'&&calme>15&&Date.now()-derniereDemande>75000&&Date.now()-arriveeT>30000&&Math.random()<.4){ demandeArgent(); return; }
+  if(Math.random()<.28&&calme>20){ questionSurprise(); return; }
+  const lignes=estFachee(ici)?P.froid:(mode==='lit'?P.seule.concat(LIT_SEULE[ici]||[],LIT_SEULE[ici]||[]):P.seule);
+  const [p,t]=lignes[Math.floor(Math.random()*lignes.length)]; humeur(p,3200); dit(t,3200);
+},1000);
+
+/* ---------- quand on la touche : discuter, sortir, ou la laisser rentrer ---------- */
+function fermeMenus(){ $('menu').style.display='none'; $('discu').style.display='none'; }
+function menu(){
+  const P=PERSO[ici], m=$('menu'); m.innerHTML=`<div class="titre">${P.nom}</div>`;
+  const choix=mode==='lit'
+    ?[["💬 Discuter",discuter],[`🌃 Sortir avec ${P.nom}`,sortir],[`🏠 Laisser ${P.nom} rentrer chez elle`,renvoyer],["💤 Je veux que tu dormes ici ce soir",dormir]]
+    :[["💬 Discuter",discuter],[`🛋️ Inviter ${P.nom} à s'asseoir`,asseoir],[`🌃 Sortir avec ${P.nom}`,sortir],[`🏠 Laisser ${P.nom} rentrer chez elle`,renvoyer]];
+  choix.push(["Annuler",()=>{ fermeMenus(); occupee=false; }]);
+  choix.forEach(([t,fn],i)=>{
+    const b=document.createElement('button'); b.className='opt'+(i===choix.length-1?' doux':''); b.textContent=t; b.addEventListener('click',fn); m.appendChild(b); });
+  m.style.display='flex'; occupee=true; tait(); contact();
+}
+img.addEventListener('click',()=>{ if(reglage||!ici) return; if($('menu').style.display==='flex'||$('discu').style.display==='flex') return; menu(); });
+
+function renvoyer(){
+  fermeMenus(); occupee=true; const P=PERSO[ici], id=ici;
+  if((Date.now()-arriveeT)/1000<90&&discussions<2){ humeur(5,3000); dit(P.tot,3200); gagne(id,-10); }
+  else{ humeur(3,3000); dit(P.bye,3000); gagne(id,2); }
+  setTimeout(()=>depart(),3200);
+}
+/* ---------- sortir avec elle : une petite discussion, puis la balade sur le boulevard ---------- */
+const SORTIE={
+ sophie:[[8,"C'est vrai ? Tu m'emmènes vraiment sortir ?"],[7,"Attends, je me recoiffe… Voilà, je suis prête !"]],
+ karine:[[8,"Enfin ! Je commençais à croire que t'oserais jamais."],[10,"Mais c'est moi qui choisis où on s'arrête, ok ?"]],
+ gisele:[[8,"Ouiii ! Je savais que t'étais pas un papi !"],[1,"Le boulevard la nuit, c'est ma deuxième maison !"]],
+ faty:[[8,"Toi, tu m'invites ? Faut marquer ce jour dans le calendrier !"],[9,"On passe devant le resto, hein. Juste pour regarder… ou pas."]],
+ katila:[[7,"Oh… Tu veux sortir avec moi ? Ça me touche."],[9,"Allez, une petite balade, ça me fera du bien après ma garde."]],
+ ameline:[[7,"Une balade de nuit… Tu sais exactement ce qui me plaît."],[3,"Je te suis, Rudy."]],
+ mifa:[[9,"Tu m'invites ? Tu as enfin compris comment on parle à une femme."],[8,"Très bien. Mais on marche doucement, j'ai mes talons."]],
+ rose:[[8,"Ahhh, je rêvais que tu me le demandes !"],[3,"Je le dirai à personne… enfin, peut-être à mes copines."]]
+};
+function sortir(){
+  fermeMenus(); contact(); const P=PERSO[ici], id=ici;
+  if(COEUR[id]<30){ humeur(10,3000); dit(P.sortNon,3000); gagne(id,-1); setTimeout(()=>{ occupee=false; },3000); return; }
+  occupee=true; const [a,b]=SORTIE[id];
+  humeur(a[0],3000); dit(a[1],3000); gagne(id,3);
+  setTimeout(()=>{ if(ici!==id) return;
+    const d=$('discu'); d.innerHTML=''; const bt=document.createElement('button'); bt.className='opt'; bt.textContent="Je t'emmène faire un tour sur le boulevard.";
+    bt.addEventListener('click',()=>{ d.style.display='none'; contact(); humeur(b[0],2800); dit(b[1],2800); setTimeout(()=>partirEnBalade(id),2900); });
+    d.appendChild(bt); d.style.display='flex';
+  },3000);
+}
+let enBalade=null;
+/* ---------- le RestoChic : on passe à table avec la fille de la balade ---------- */
+const MERCI_RESTO={win:"C'était une soirée parfaite… Merci pour le dîner, Rudy.",mid:"C'était sympa, ce resto. Merci !",low:"Bon… merci pour le dîner quand même.",throw:"Tu l'as bien cherché, ce plat dans la figure !"};
+const COEUR_RESTO={win:8,mid:3,low:-3,throw:-8};
+addEventListener('message',e=>{
+  if(!e.data||!enBalade) return; const id=enBalade;
+  if(e.data.type==='resto:inviter'){
+    const f=$('resto');
+    const init='window.FILLE_IMPOSEE='+JSON.stringify(PERSO[id].nom)+';(function(){var b=document.getElementById("startBtn");if(b)b.textContent="Passer à table avec '+PERSO[id].nom.replace(/"/g,'')+'";})();';
+    f.style.opacity='0'; f.style.display='block'; chargeResto().then(T=>{ f.srcdoc=T.replace('/*__FILLE__*/',init); });
+    f.onload=()=>{ f.style.opacity='1'; try{ f.contentWindow.focus(); }catch(er){} };
+  }
+  if(e.data.type==='resto:fin'){
+    const f=$('resto'); f.style.opacity='0'; const fin=e.data.fin||'mid';
+    setTimeout(()=>{ f.style.display='none'; f.srcdoc='';
+      gagne(id,COEUR_RESTO[fin]||0);
+      try{ const b=$('sortie').contentWindow; b.postMessage({type:'coeur',v:COEUR[id]},'*'); b.postMessage({type:'parle',t:MERCI_RESTO[fin]||MERCI_RESTO.mid},'*'); b.focus(); }catch(er){}
+    },450);
+  }
+});
+function partirEnBalade(id){
+  if(ici!==id) return;
+  if(!BALADE[id]){ toast(`La balade avec ${PERSO[id].nom} arrivera quand j'aurai sa planche de marche.`,3200); occupee=false; return; }
+  enBalade=id; tait(); fermeMenus(); if(mode==='lit') quitteLit(null,true);
+  const d=BALADE[id]; const html=BALADE_BASE.split('__NOM__').join(PERSO[id].nom).replace('__FRAMES__',JSON.stringify(d.f)).replace('__AR__',d.ar).replace('__BISOU__',d.f.length>12?'true':'false').replace('__MOTS__',JSON.stringify(d.mots));
+  const f=$('sortie'); f.style.opacity='0'; f.style.display='block'; f.srcdoc=html;
+  f.onload=()=>{ f.style.opacity='1'; try{ f.contentWindow.postMessage({type:'coeur',v:COEUR[id]},'*'); f.contentWindow.focus(); }catch(e){} };
+}
+addEventListener('message',e=>{
+  if(!e.data||!enBalade) return; const id=enBalade;
+  if(e.data.type==='sortie:bisou'){ gagne(id,e.data.n===1?5:(e.data.n<=3?1:0)); try{ $('sortie').contentWindow.postMessage({type:'coeur',v:COEUR[id]},'*'); }catch(er){} }
+  if(e.data.type==='sortie:fin'){
+    const f=$('sortie'); f.style.opacity='0';
+    setTimeout(()=>{ f.style.display='none'; f.srcdoc=''; enBalade=null; occupee=false; contact(); gagne(id,4); humeur(3,3200); dit("Merci pour cette soirée, c'était trop bien !",3200); },450);
+  }
+});
+
+/* ---------- la discussion : toujours 2 réponses, une qui lui plaît et une qui lui déplaît ---------- */
+function listeQ(id){ const P=PERSO[id]; return mode==='lit'&&P.qlit?P.q.concat(P.qlit):P.q; }
+function tire(n){
+  const P=PERSO[ici], Q=listeQ(ici); const deja=dejaPosees[ici]||(dejaPosees[ici]=[]);
+  let dispo=Q.map((q,i)=>i).filter(i=>!deja.includes(i)); if(dispo.length<n){ deja.length=0; dispo=Q.map((q,i)=>i); }
+  const t=[]; while(t.length<n){ const i=dispo.splice(Math.floor(Math.random()*dispo.length),1)[0]; t.push(i); deja.push(i); } return t;
+}
+function poser(liste,fin){
+  let n=0; const id=ici;
+  const suivante=()=>{
+    if(ici!==id) return;
+    if(n>=liste.length){ fin(); return; }
+    const [q,bon,mauvais]=listeQ(id)[liste[n++]];
+    const d=$('discu'); d.innerHTML=''; const bq=document.createElement('div'); bq.className='question'; bq.innerHTML=`<span class="qui">${PERSO[id].nom}</span>`; bq.appendChild(document.createTextNode(q)); d.appendChild(bq);
+    tait(); pose(9);
+    (Math.random()<.5?[bon,mauvais]:[mauvais,bon]).forEach(o=>{ const b=document.createElement('button'); b.className='opt'; b.textContent=o[0];
+      b.addEventListener('click',()=>{ d.style.display='none'; humeur(o[2],2600); dit(o[1],2400); gagne(id,o[3]); contact(); setTimeout(suivante,2600); });
+      d.appendChild(b); });
+    d.style.display='flex';
+  };
+  suivante();
+}
+function discuter(){
+  fermeMenus(); occupee=true; tait(); contact();
+  poser(tire(3),()=>{ fermeMenus(); discussions++; contact(); humeur(9,2600); dit("Ça me fait plaisir de parler avec toi.",2600); setTimeout(()=>{ occupee=false; },2600); });
+}
+function questionSurprise(){
+  occupee=true; contact(); humeur(10,1800); dit("Hé, je peux te demander un truc ?",1800);
+  setTimeout(()=>{ if(!ici) return; poser(tire(1),()=>{ fermeMenus(); discussions++; contact(); occupee=false; }); },1900);
+}
+
+/* ---------- s'asseoir sur le lit ---------- */
+let mode='debout', litCle=null, litCouche=0, litIdle=null, litJeton=0;
+const L1=$('lit1'), L2=$('lit2');
+function cible(){ return mode==='lit'?(litCouche?L2:L1):img; }
+function placeLit(el,cle){
+  const d=LIT[ici].d.find(x=>x[0]===cle); const h=d[2]/600*34;          // 34 % de la hauteur pour la pose la plus haute
+  el.style.height=h+'%'; el.style.width='auto';
+}
+function montreLit(cle){
+  if(!LIT[ici]||cle===litCle) return; litCle=cle;
+  const neuf=litCouche?L1:L2, vieux=litCouche?L2:L1; litCouche=1-litCouche;
+  const jeton=++litJeton; neuf.src=LIT[ici].src[cle]; placeLit(neuf,cle);
+  const bascule=()=>{ if(jeton!==litJeton) return; neuf.style.opacity='1'; vieux.style.opacity='0'; };   // fondu entre deux poses
+  // on attend que la nouvelle pose soit dessinée : l'ancienne reste visible en attendant (pas de trou)
+  if(neuf.decode) neuf.decode().then(bascule,bascule); else if(neuf.complete) bascule(); else neuf.onload=bascule;
+}
+function reposAuHasard(){ const r=Object.keys(LIT[ici].src).filter(k=>k[0]==='r'&&k!==litCle); return r[Math.floor(Math.random()*r.length)]; }
+function poseLit(n){
+  const src=LIT[ici].src, parle=!!src.p1;
+  if(!parle){   // pas de planche « parle / fâchée / bisou » (Ameline) : ses poses « elle parle » (t1-t4) et ses poses assises
+    const cause=Object.keys(src).filter(k=>k[0]==='t'&&k!==litCle);
+    const uneCause=()=>cause.length?cause[Math.floor(Math.random()*cause.length)]:(src.r7?'r7':reposAuHasard());
+    if(n===4||n===5){ montreLit(src.r8?'r8':reposAuHasard()); return; }
+    if(n===9||n===10||n===3||n===8){ montreLit(uneCause()); return; }
+    if(n===7||n===1){ montreLit(src.r5?'r5':reposAuHasard()); return; }
+  }
+  if(n===4||n===5){ if(parle) montreLit('p2'); return; }
+  if(n===3){ montreLit(parle?'p3':reposAuHasard()); return; }
+  if(n===9||n===10){ if(parle) montreLit('p1'); return; }
+  if(n===8||n===7||n===1){ montreLit(reposAuHasard()); return; }
+  if(litCle&&(litCle[0]==='p'||litCle[0]==='t')) montreLit(reposAuHasard());               // elle a fini de parler : elle se remet à l'aise
+}
+function asseoir(){
+  fermeMenus(); contact(); const P=PERSO[ici], id=ici;
+  if(!LIT[id]){ humeur(10,2600); dit("Je reste debout pour l'instant…",2600); toast(`Les poses assises de ${P.nom} arrivent avec sa planche.`); setTimeout(()=>{ occupee=false; },2600); return; }
+  if(discussions<1){ humeur(10,3000); dit("M'asseoir ? On a même pas encore discuté, toi et moi…",3000); gagne(id,-1); setTimeout(()=>{ occupee=false; },3000); return; }
+  occupee=true; humeur(8,2200); dit(["Avec plaisir, j'ai mal aux pieds !","Oh, ton lit a l'air trop confortable…","D'accord, mais tu gardes tes distances, hein ?","Enfin ! Je pensais que tu me le proposerais jamais."][Math.floor(Math.random()*4)],2200);
+  setTimeout(()=>{ if(ici!==id) return;
+    $('voile').classList.add('on');
+    setTimeout(()=>{ if(ici!==id){ $('voile').classList.remove('on'); return; }
+      tait(); img.style.display='none'; mode='lit'; litCle=null;
+      $('scene').style.backgroundImage=`url(${BG_LIT})`; L1.style.opacity='0'; L2.style.opacity='0';
+      L1.style.display=L2.style.display='block'; montreLit(reposAuHasard());
+      clearInterval(litIdle); litIdle=setInterval(()=>{ if(mode==='lit'&&!occupee&&!parle&&!reglage&&!enBalade) montreLit(reposAuHasard()); },6500);
+      $('voile').classList.remove('on'); occupee=false; contact();
+    },450);
+  },2300);
+}
+function quitteLit(apres,sansFondu){
+  clearInterval(litIdle); mode='debout'; litCle=null;
+  const fin=()=>{ L1.style.display=L2.style.display='none'; L1.style.opacity=L2.style.opacity='0'; $('scene').style.backgroundImage='';
+    if(ici){ img.style.display='block'; pose(6); } if(apres) apres(); };
+  if(sansFondu){ fin(); return; }
+  $('voile').classList.add('on'); setTimeout(()=>{ fin(); $('voile').classList.remove('on'); },450);
+}
+function dormir(){ fermeMenus(); occupee=false; contact(); toast("« Je veux que tu dormes ici ce soir » : cette partie arrive bientôt."); }
+[L1,L2].forEach(el=>el.addEventListener('click',()=>{ if(reglage||!ici||mode!=='lit') return; if($('menu').style.display==='flex'||$('discu').style.display==='flex') return; menu(); }));
+
+/* ---------- les jeux : elle se moque si elle a gagné, elle demande sa revanche si elle a perdu ---------- */
+function lireResultats(){ try{ return JSON.parse(localStorage.getItem('rudy_resultats')||'[]')||[]; }catch(e){ return []; } }
+function resultatRecent(id){
+  const l=lireResultats(), lim=Date.now()-2*3600*1000;   // « pas longtemps avant » : les 2 dernières heures
+  for(let i=l.length-1;i>=0;i--){ const r=l[i]; if(r.fille===id&&!r.vu&&r.t>lim&&JEUX[r.jeu]) return r; }
+  return null;
+}
+function marqueVu(r){ const l=lireResultats(); l.forEach(x=>{ if(x.t===r.t&&x.fille===r.fille&&x.jeu===r.jeu) x.vu=true; }); try{ localStorage.setItem('rudy_resultats',JSON.stringify(l)); }catch(e){} }
+function taquine(){
+  const r=resultatRecent(ici); if(!r) return; marqueVu(r);
+  const id=ici, elleAGagne=r.gagne==='fille';
+  occupee=true; contact(); tait();
+  const phrase=elleAGagne?MOQUE[id][r.jeu]:REVANCHE[id].replace('{jeu}',JEUX[r.jeu]);
+  const bien=elleAGagne?["Haha, t'étais trop forte, j'avoue !","Ok, ok… je me suis fait avoir. Bien joué !","J'ai perdu, mais c'était trop drôle."]:["T'as super bien joué aussi, c'était serré.","T'inquiète, tu m'auras la prochaine fois.","Je me moque pas, t'étais forte."];
+  const mal=elleAGagne?["T'as triché, c'est tout.","Arrête avec ça, ça m'énerve.","C'est un jeu nul de toute façon."]:["Avoue, je t'ai écrasée !","T'es trop nulle, c'était facile.","Tu devrais même plus rejouer contre moi."];
+  const d=$('discu'); d.innerHTML='';
+  const bq=document.createElement('div'); bq.className='question'; bq.innerHTML=`<span class="qui">${PERSO[id].nom}</span>`; bq.appendChild(document.createTextNode(phrase)); d.appendChild(bq);
+  pose(elleAGagne?10:4);
+  const bon=[bien[Math.floor(Math.random()*3)],true], mauvais=[mal[Math.floor(Math.random()*3)],false];
+  (Math.random()<.5?[bon,mauvais]:[mauvais,bon]).forEach(([t,ok])=>{
+    const b=document.createElement('button'); b.className='opt'; b.textContent=t;
+    b.addEventListener('click',()=>{ d.style.display='none'; contact();
+      if(ok){ humeur(8,3000); dit(elleAGagne?RIRE[id]:"C'est gentil… T'es un vrai gentleman, toi.",3000); gagne(id,4); }
+      else{ humeur(5,3000); dit(elleAGagne?VEXE[id]:"Frimeur… Tu vas voir à la revanche.",3000); gagne(id,-6); }
+      setTimeout(()=>{ occupee=false; },3000);
+    });
+    d.appendChild(b);
+  });
+  d.style.display='flex';
+}
+// pour le test : simuler un match (dans le vrai jeu, ce sont les mini-jeux qui notent le résultat)
+function simuleMatch(){
+  const l=lireResultats(); l.push({jeu:$('smJeu').value,fille:$('smFille').value,gagne:$('smGagne').value,t:Date.now()});
+  try{ localStorage.setItem('rudy_resultats',JSON.stringify(l.slice(-30))); }catch(e){}
+  $('simu').style.display='none'; toast('Match noté : '+PERSO[$('smFille').value].nom+' s\'en souviendra quand elle viendra.');
+}
+$('btnSimu').addEventListener('click',()=>{ const p=$('simu'); p.style.display=p.style.display==='flex'?'none':'flex'; });
+$('smOk').addEventListener('click',simuleMatch);
+(()=>{ const f=$('smFille'); ORDRE.forEach(id=>{ const o=document.createElement('option'); o.value=id; o.textContent=PERSO[id].nom; f.appendChild(o); });
+  const j=$('smJeu'); Object.keys(JEUX).forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=JEUX[k].replace(/^(au |à )/,''); j.appendChild(o); }); })();
+
+/* ---------- Karine demande de l'argent (jamais plus de 100 €) ---------- */
+let ARGENT=500; try{ const v=localStorage.getItem('test_argent'); if(v!=null) ARGENT=+v; }catch(e){}
+let derniereDemande=0;
+const DEMANDES=[
+ ["Rudy… y'a une manette en édition limitée qui vient de sortir. Tu me l'offres ?",79],
+ ["J'ai vu un jeu trop bien en promo… tu me le payes ?",45],
+ ["Mes bottes sont usées… Une nouvelle paire, tu m'aides un peu ?",95],
+ ["Il y a un skin exclusif dans mon jeu… s'il te plaît, s'il te plaît ?",20],
+ ["Le tournoi de Kart Fury, c'est ce week-end… tu m'offres l'inscription ?",60],
+ ["J'ai trouvé un sweat comme le tien… on serait assortis. Tu me l'achètes ?",55],
+ ["Un casque gamer avec des oreilles de chat… trop mignon. Tu me le prends ?",89],
+ ["Je meurs de faim… tu me paies des sushis ?",35]
+];
+const MERCI=[
+ "Aaah, t'es le meilleur ! Viens là que je te fasse un énorme câlin…",
+ "Mmh… un homme généreux, j'adore ça. Tu mérites un bisou… ou deux… ou dix.",
+ "Tu sais comment faire fondre une fille, toi… Reste près de moi ce soir.",
+ "T'es trop chou… Je crois que je vais plus te lâcher de la soirée 😘",
+ "Rudy… tu me rends dingue quand tu fais ça. Approche un peu…"
+];
+function majArgent(){ $('argentTxt').textContent=ARGENT+' €'; try{ localStorage.setItem('test_argent',ARGENT); }catch(e){} }
+function pluieDeCoeurs(){
+  const sc=$('scene'), ir=cible().getBoundingClientRect(), sr=sc.getBoundingClientRect();
+  const cx=ir.left-sr.left+ir.width/2, top=ir.top-sr.top+ir.height*.06;
+  for(let i=0;i<18;i++){
+    const c=document.createElement('div'); c.className='pluie'; c.textContent=['❤','💖','💕','💗'][i%4];
+    c.style.left=(cx+(Math.random()-.5)*ir.width*.9)+'px'; c.style.top=(top+Math.random()*ir.height*.15)+'px';
+    c.style.fontSize=(16+Math.random()*18)+'px'; c.style.animationDelay=(Math.random()*1.2)+'s';
+    sc.appendChild(c); setTimeout(()=>c.remove(),3600);
+  }
+}
+function demandeArgent(){
+  derniereDemande=Date.now(); occupee=true; contact(); tait();
+  const [texte,prix]=DEMANDES[Math.floor(Math.random()*DEMANDES.length)];
+  const d=$('discu'); d.innerHTML='';
+  const bq=document.createElement('div'); bq.className='question'; bq.innerHTML='<span class="qui">Karine</span>';
+  bq.appendChild(document.createTextNode(texte+' Ça coûte '+prix+' €.')); d.appendChild(bq);
+  const info=document.createElement('div'); info.className='cz'; info.textContent='Ton porte-monnaie : '+ARGENT+' €'; d.appendChild(info);
+  pose(7);
+  [['Oui, je te l’offre ('+prix+' €)','oui'],['Non','non']].forEach(([t,k])=>{
+    const b=document.createElement('button'); b.className='opt '+(k==='oui'?'argOui':'argNon'); b.textContent=t;
+    b.addEventListener('click',()=>{ d.style.display='none'; contact();
+      if(k==='oui'&&ARGENT>=prix){
+        ARGENT-=prix; majArgent(); gagne('karine',8); pose(3); pluieDeCoeurs();
+        dit(MERCI[Math.floor(Math.random()*MERCI.length)],4200);
+        setTimeout(()=>{ if(ici==='karine'){ humeur(7,2600); } occupee=false; },4200);
+      }else{
+        const t2=k==='oui'?"Tu n'as même pas "+prix+" € ? ":"";
+        humeur(5,3600); dit(t2+"J'ai rien à faire avec quelqu'un comme toi qui ne peut même pas m'assumer !",3600); gagne('karine',-12);
+        setTimeout(()=>depart(),3700);
+      }
+    });
+    d.appendChild(b);
+  });
+  d.style.display='flex';
+}
+
+/* ---------- réglage : la déplacer au doigt ---------- */
+let reglage=false, glisse=null;
+$('btnReglage').addEventListener('click',()=>{ reglage=!reglage; $('reglage').style.display=reglage?'block':'none'; });
+$('finReglage').addEventListener('click',()=>{ reglage=false; $('reglage').style.display='none'; });
+$('reset').addEventListener('click',()=>{ place=Object.assign({},DEF); sauve(); appliquePlace(); });
+$('taille').addEventListener('input',e=>{ place.h=+e.target.value; sauve(); appliquePlace(); });
+function sauve(){ try{ localStorage.setItem('test_sophie_place',JSON.stringify(place)); }catch(e){} }
+img.addEventListener('pointerdown',e=>{ if(!reglage) return; e.preventDefault(); img.setPointerCapture(e.pointerId);
+  const sc=$('scene').getBoundingClientRect(); glisse={id:e.pointerId,sx:e.clientX,sy:e.clientY,x:place.x,b:place.b,w:sc.width,h:sc.height}; });
+img.addEventListener('pointermove',e=>{ if(!glisse||e.pointerId!==glisse.id) return;
+  place.x=Math.max(0,Math.min(100,glisse.x+(e.clientX-glisse.sx)/glisse.w*100));
+  place.b=Math.max(0,Math.min(60,glisse.b-(e.clientY-glisse.sy)/glisse.h*100)); appliquePlace(); });
+['pointerup','pointercancel'].forEach(t=>img.addEventListener(t,()=>{ if(glisse){ glisse=null; sauve(); } }));
+majCoeurs();
+
+/* ====================================================================
+   VISITE (dans l'appli) : la fille est chez Rudy.
+   On reste dans la chambre (bureau, baie vitrée, lit). Pour sortir, on lui parle (« Sortir avec… » -> boulevard).
+   Pour retourner seul dans la ville, il faut d'abord lui dire de partir.
+   ==================================================================== */
+function estFachee(id){ try{ const f=JSON.parse(localStorage.getItem('rudy_fache')||'{}'); return !!f[id]&&Date.now()-f[id]<30*60*1000; }catch(e){ return false; } }
+(function(){
+const DANS_APPLI=typeof Android!=='undefined';
+const R='/assets/web/visite/';
+// ---------- le cœur est celui du téléphone (Contacts) ----------
+function lireS(){ try{ return JSON.parse(localStorage.getItem('rudyphone')||'{}')||{}; }catch(e){ return {}; } }
+ORDRE.forEach(id=>{ const S=lireS(); COEUR[id]=(S.love&&S.love[id])||0; });
+const gagneAvant=gagne;
+gagne=function(id,n){
+  const S=lireS(); COEUR[id]=(S.love&&S.love[id])||0;       // la valeur à jour (le téléphone a pu la changer)
+  gagneAvant(id,n);
+  const S2=lireS(); S2.love=S2.love||{}; S2.love[id]=COEUR[id];
+  try{ localStorage.setItem('rudyphone',JSON.stringify(S2)); }catch(e){}
+  if(n<=-8){ try{ const f=JSON.parse(localStorage.getItem('rudy_fache')||'{}'); f[id]=Date.now(); localStorage.setItem('rudy_fache',JSON.stringify(f)); }catch(e){} }
+};
+majCoeurs();
+// ---------- l'argent : le vrai porte-monnaie de Rudy ----------
+let argentConnu=null;
+if(DANS_APPLI&&Android.argent){ try{ ARGENT=Android.argent(); argentConnu=ARGENT; }catch(e){} }
+const majArgentAvant=majArgent;
+majArgent=function(){
+  if(DANS_APPLI&&Android.argent&&Android.ajouterArgent){
+    try{ if(argentConnu!==null&&ARGENT!==argentConnu) Android.ajouterArgent(ARGENT-argentConnu); ARGENT=Android.argent(); argentConnu=ARGENT; }catch(e){}
+  }
+  majArgentAvant();
+};
+// ---------- les trois vues de la chambre ----------
+const VUES=['bureau','fenetre','lit']; let vue='fenetre';
+const IMG_VUE={bureau:R+'bureau.jpg',fenetre:R+'fenetre.jpg',lit:R+'lit.jpg'};
+function filleVisible(){ return !!ici&&((mode==='debout'&&vue==='fenetre')||(mode==='lit'&&vue==='lit')); }
+function appliqueVue(){
+  $('scene').style.backgroundImage=`url(${IMG_VUE[vue]})`;
+  if(ici&&mode==='debout'&&img.style.opacity!=='0') img.style.display=vue==='fenetre'?'block':'none';
+  if(mode==='lit'){ L1.style.display=L2.style.display=vue==='lit'?'block':'none'; }
+  $('coeur').style.display=ici?'flex':'none';
+  $('flG').style.display=vue==='bureau'?'none':'grid'; $('flD').style.display=vue==='lit'?'none':'grid';
+}
+function allerVue(v){ if(v===vue) return; vue=v; $('voile').classList.add('on'); setTimeout(()=>{ appliqueVue(); $('voile').classList.remove('on'); },220); }
+window.allerVue=allerVue;
+$('flG').addEventListener('click',()=>allerVue(VUES[Math.max(0,VUES.indexOf(vue)-1)]));
+$('flD').addEventListener('click',()=>allerVue(VUES[Math.min(2,VUES.indexOf(vue)+1)]));
+let sx=null;
+$('scene').addEventListener('touchstart',e=>{ sx=e.touches.length===1?e.touches[0].clientX:null; },{passive:true});
+$('scene').addEventListener('touchend',e=>{ if(sx===null) return; const dx=e.changedTouches[0].clientX-sx; sx=null;
+  if(Math.abs(dx)>70&&!$('discu').offsetParent&&!$('menu').offsetParent){ allerVue(VUES[Math.max(0,Math.min(2,VUES.indexOf(vue)+(dx<0?1:-1)))]); } },{passive:true});
+setInterval(appliqueVue,300);
+// elle arrive : on regarde la baie vitrée ; elle s'assoit : on regarde le lit ; elle se lève : retour à la baie vitrée
+const arriveeAvant=arrivee; arrivee=function(id){ arriveeAvant(id); setTimeout(()=>{ if(!enBalade){ vue='fenetre'; appliqueVue(); } },950); try{ localStorage.setItem('rudy_visite_ici',id); }catch(e){} };
+const asseoirAvant=asseoir; asseoir=function(){ asseoirAvant(); setTimeout(()=>{ if(mode==='lit'){ vue='lit'; appliqueVue(); } },2900); };
+const quitteLitAvant=quitteLit; quitteLit=function(a,b){ quitteLitAvant(a,b); vue='fenetre'; };
+// ---------- sa bulle : si on ne la voit pas (on regarde ailleurs), elle parle quand même, en haut de l'écran ----------
+const ditAvant=dit;
+dit=function(t,ms){ ditAvant(t,ms); if(!filleVisible()){ const b=$('bulle'), sc=$('scene').getBoundingClientRect(); b.style.left=Math.max(6,(sc.width-b.offsetWidth)/2)+'px'; b.style.top=(sc.height*.11)+'px'; } };
+// ---------- quand elle part : Rudy se retrouve seul, retour à la chambre normale ----------
+const departAvant=depart;
+depart=function(apres){
+  departAvant(apres);
+  setTimeout(()=>{ if(!ici){ try{ localStorage.removeItem('rudy_visite_ici'); }catch(e){} if(DANS_APPLI&&Android.retourChambre) Android.retourChambre(); else toast('Elle est partie : retour à ta chambre.'); } },2600);
+};
+// ---------- impossible de partir en la laissant là ----------
+window.retourDemande=function(){
+  if(!ici){ if(DANS_APPLI&&Android.retourChambre) Android.retourChambre(); return; }
+  if(enBalade) return;
+  dit(["Tu comptes partir en me laissant là ?","Hé ! Je suis encore là, moi !","Tu vas où comme ça ?"][Math.floor(Math.random()*3)],2600);
+  toast(`Pour sortir, parle à ${PERSO[ici].nom} : « Sortir avec elle » ou « Laisser rentrer chez elle ».`,3200);
+};
+// ---------- le vrai téléphone ----------
+const tel=$('telV'), telF=$('telFermer');
+function ouvreVraiTel(){ tel.src='/assets/web/telephone.html?dec=room'; tel.style.display='block'; telF.style.display='block'; }
+function fermeVraiTel(){ tel.style.display='none'; tel.src='about:blank'; telF.style.display='none'; }
+const bt=$('btnTel'), bt2=bt.cloneNode(true); bt.parentNode.replaceChild(bt2,bt); bt2.addEventListener('click',ouvreVraiTel);
+telF.addEventListener('click',fermeVraiTel);
+addEventListener('message',e=>{
+  if(!e.data) return;
+  if(e.data.type==='telephone:visite'){                 // elle a dit « oui » au téléphone
+    fermeVraiTel(); const id=e.data.fille;
+    if(id===ici) return;
+    if(!PERSO[id]){ toast("Elle ne peut pas venir pour l'instant."); return; }
+    if(ici&&mode==='lit') quitteLit(null,true);
+    humeur&&ici&&humeur(10,2600); if(ici) dit("Tu appelles qui, là ?",2400);
+    setTimeout(()=>arrivee(id),ici?2500:200);
+  }
+  if(e.data.type==='telephone:aller'){                   // la MAP : pas de voyage tant qu'elle est là
+    fermeVraiTel();
+    if(ici){ dit("Tu vas pas me laisser toute seule ici ?!",2800); toast(`Dis d'abord à ${PERSO[ici].nom} de partir, ou sors avec elle.`,3200); }
+  }
+});
+// ---------- les balades et le resto viennent des fichiers de l'appli ----------
+let baseBalade=null, baseResto=null;
+fetch(R+'boulevard.html').then(r=>r.text()).then(t=>{ baseBalade=t; }).catch(()=>{});
+const partirAvant=partirEnBalade;
+partirEnBalade=function(id){
+  if(baseBalade===null){ toast('Un instant…'); setTimeout(()=>partirEnBalade(id),600); return; }
+  BALADE_BASE=baseBalade; partirAvant(id);
+  try{ if(DANS_APPLI&&Android.radio) Android.radio(false); }catch(e){}     // la radio de la chambre se tait : le boulevard a sa musique
+};
+addEventListener('message',e=>{ if(e.data&&e.data.type==='sortie:fin'){ try{ if(DANS_APPLI&&Android.radio) Android.radio(true); }catch(er){} } });
+window.chargeResto=function(){ return baseResto?Promise.resolve(baseResto):fetch(R+'resto.html').then(r=>r.text()).then(t=>(baseResto=t)); };
+// ---------- ce qui ne sert qu'au test ----------
+['btnSimu','btnReglage'].forEach(i=>{ const e=$(i); if(e) e.style.display='none'; });
+// ---------- elle arrive ----------
+const q=new URLSearchParams(location.search).get('fille');
+if(q&&PERSO[q]) setTimeout(()=>arrivee(q),300); else if(DANS_APPLI&&Android.retourChambre) setTimeout(()=>Android.retourChambre(),300);
+appliqueVue();
+})();
+
+</script>
+</body>
+</html>
