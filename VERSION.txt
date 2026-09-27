@@ -1,18 +1,10 @@
-version 160 — Les filles viennent chez Rudy
+version 161 — Appels : seulement de chez soi, et aucun blocage
 
-  Téléphone > Contacts > appeler une fille : elle discute (4 conversations
-  différentes chacune), puis demande « Tu veux que je vienne ? ». Si oui, Rudy
-  est chez lui et elle arrive.
-
-  Pendant qu'elle est là, on reste chez Rudy : le bureau, la baie vitrée et le
-  lit (flèches ou glisser le doigt). Pas de retour, pas de MAP.
-  - Pour sortir : lui parler > « Sortir avec elle » -> balade sur le boulevard
-    (marche main dans la main, bisou, invitation au RestoChic = Table pour deux
-    avec elle, musique jazz). « Rentrer » ramène à la chambre, avec elle.
-  - Pour retrouver la ville : lui dire de rentrer chez elle. Rudy se retrouve
-    seul dans sa chambre, et tout redevient normal.
-  Menu quand elle est debout : Discuter, Inviter à s'asseoir, Sortir, Laisser
-  rentrer. Sur le lit : Discuter, Sortir, Laisser rentrer, « Je veux que tu
-  dormes ici ce soir » (à venir).
-  Cœur d'amitié partagé avec le téléphone, argent de Rudy pour les demandes de
-  Karine, colère si on l'ignore 5 minutes.
+  - Dehors (rue de Shinato, plage, Vaviel…), appeler une fille sonne « occupé »
+    (tonalité occupé) : on ne peut l'appeler que de chez soi. Les messages, eux,
+    marchent partout.
+  - Plus aucun refus d'appel : on peut rappeler une fille autant qu'on veut, même
+    fâchée (elle reste fâchée dans ses phrases, mais elle répond).
+  - Enchaîner les visites sans souci : appeler une autre fille pendant qu'une est
+    là (jalousie puis arrivée de la nouvelle), plusieurs fois de suite ; un appel
+    passé pendant une balade attend le retour à la chambre.

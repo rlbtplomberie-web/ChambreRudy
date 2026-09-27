@@ -1092,7 +1092,8 @@ setInterval(()=>{
 // ---------- quand l'appli est en pause (un jeu, un émulateur) : elle attend sans compter le temps ----------
 window.enPause=function(p){ window.PAUSE=!!p; if(!p){ try{ contact(); }catch(e){} } };
 // ---------- elle arrive : la chambre se tourne vers la baie vitrée ; elle s'assoit : vers le lit ----------
-const arriveeAvant=arrivee; arrivee=function(id){ arriveeAvant(id); regarder(1,DEBOUT.fx); try{ localStorage.setItem('rudy_visite_ici',id); }catch(e){} setTimeout(placeTout,950); };
+let attenteArrivee=0;
+const arriveeAvant=arrivee; arrivee=function(id){ attenteArrivee=Date.now(); arriveeAvant(id); regarder(1,DEBOUT.fx); try{ localStorage.setItem('rudy_visite_ici',id); }catch(e){} setTimeout(placeTout,950); };
 const asseoirAvant=asseoir; asseoir=function(){ asseoirAvant(); let n=0; const t=setInterval(()=>{ if(mode==='lit'){ clearInterval(t); regarder(2,SUR_LIT.fx); placeTout(); } else if(++n>40) clearInterval(t); },100); };
 const quitteLitAvant=quitteLit; quitteLit=function(a,b){ quitteLitAvant(a,b); if(!b) setTimeout(()=>{ regarder(1,DEBOUT.fx); placeTout(); },460); };
 // ---------- sa bulle : si on ne la voit pas (on regarde ailleurs), elle parle quand même, en haut de l'écran ----------
@@ -1101,7 +1102,7 @@ dit=function(t,ms){ ditAvant(t,ms); if(!filleVisible()){ const b=$('bulle'); b.s
 // ---------- quand elle part : Rudy se retrouve seul, la chambre redevient normale ----------
 function finVisite(){ try{ localStorage.removeItem('rudy_visite_ici'); }catch(e){} if(DANS_APPLI&&Android.finVisite) Android.finVisite(); else toast('Elle est partie.'); }
 const departAvant=depart;
-depart=function(apres){ departAvant(apres); setTimeout(()=>{ if(!ici) finVisite(); },2600); };
+depart=function(apres){ departAvant(apres); const t0=Date.now(); const verif=()=>{ if(ici) return; const attend=apres||Date.now()-attenteArrivee<4500; if(attend&&Date.now()-t0<12000){ setTimeout(verif,700); return; } finVisite(); }; setTimeout(verif,2600); };
 // ---------- sortir en ville : impossible tant qu'elle est là ----------
 window.retourDemande=function(){
   if(!ici){ finVisite(); return; }
@@ -1112,6 +1113,7 @@ window.retourDemande=function(){
 // ---------- une autre fille a dit « oui » au téléphone pendant qu'une est là ----------
 window.nouvelleVisite=function(id){
   if(id===ici) return;
+  if(enBalade){ const r=()=>{ if(enBalade) setTimeout(r,800); else window.nouvelleVisite(id); }; setTimeout(r,800); return; }
   if(!PERSO[id]){ toast("Elle ne peut pas venir pour l'instant."); return; }
   if(ici&&mode==='lit') quitteLit(null,true);
   if(ici){ humeur(10,2600); dit("Tu appelles qui, là ?",2400); }

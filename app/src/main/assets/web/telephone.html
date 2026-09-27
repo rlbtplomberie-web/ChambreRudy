@@ -1603,8 +1603,28 @@ paintWall();applyDec();paintLast();tick();
  }
  const ancienAppel=openCall, ancienRaccroche=hangUp;
  hangUp=function(silent){ jeton++; try{ $('cchoix').innerHTML=''; }catch(e){} ancienRaccroche(silent); };
+ // où est Rudy : la page qui ouvre le téléphone le dit (?dec=room chez lui, ?dec=street dehors)
+ const LIEU=(()=>{ try{ return new URLSearchParams(location.search).get('dec')||S.dec; }catch(e){ return S.dec; } })();
+ let AC=null;
+ function bipsOccupe(){                 // la tonalité « occupé » : 440 Hz, une demi-seconde sur deux, quatre fois
+   try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume();
+     const t0=AC.currentTime+.05;
+     for(let i=0;i<4;i++){ const o=AC.createOscillator(), v=AC.createGain(); o.type='sine'; o.frequency.value=440;
+       v.gain.setValueAtTime(0,t0+i); v.gain.linearRampToValueAtTime(.18,t0+i+.02); v.gain.setValueAtTime(.18,t0+i+.48); v.gain.linearRampToValueAtTime(0,t0+i+.5);
+       o.connect(v).connect(AC.destination); o.start(t0+i); o.stop(t0+i+.55); }
+   }catch(e){}
+ }
+ function occupe(g){
+   hangUp(true); const tok=++jeton;
+   $('clav').style.backgroundImage=`url(${FACES[g.id]})`; $('clname').textContent=g.name;
+   $('cstat').textContent='Appel en cours…'; $('csay').innerHTML=''; $('cchoix').innerHTML=''; $('c-call').classList.add('ring'); showCV('call');
+   callT.push(setTimeout(()=>{ if(tok!==jeton) return; $('c-call').classList.remove('ring'); $('cstat').textContent='Occupé'; bipsOccupe();
+     toast("Tu ne peux l'appeler que de chez toi. Écris-lui un message !"); },1200));
+   callT.push(setTimeout(()=>{ if(tok===jeton) hangUp(); },5600));
+ }
  openCall=function(){
-   const g=gg(); const A=APPELS_VISITE[g.id]; if(!A){ ancienAppel(); return; }
+   const g=gg(); if(LIEU!=='room'){ occupe(g); return; }
+   const A=APPELS_VISITE[g.id]; if(!A){ ancienAppel(); return; }
    hangUp(true); const tok=++jeton;
    $('clav').style.backgroundImage=`url(${FACES[g.id]})`; $('clname').textContent=g.name;
    $('cstat').textContent='Appel en cours…'; $('csay').innerHTML=''; $('cchoix').innerHTML=''; $('c-call').classList.add('ring'); showCV('call');
@@ -1619,7 +1639,6 @@ paintWall();applyDec();paintLast();tick();
      await attend(1800); $('c-call').classList.remove('ring'); let t=0; $('cstat').textContent='00:00';
      callT.push(setInterval(()=>{ t++; $('cstat').textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0'); },1000));
      if(chez()===g.id){ await elle("Rudy… je suis juste à côté de toi 😄 Raccroche !"); await attend(1600); hangUp(); return; }
-     if(fache(g.id)){ await elle("Tu m'appelles encore ? Après ce que tu m'as fait ? Non merci."); await attend(1600); hangUp(); return; }
      const L=A.scripts; let k=Math.floor(Math.random()*L.length); if(L.length>1&&k===dernier[g.id]) k=(k+1)%L.length; dernier[g.id]=k; const C=L[k];
      for(const q of C.q){ await elle(q.d); const i=await choix(q.c.map(x=>({t:x[0]}))); await attend(350); await elle(q.c[i][1]); }
      await elle(C.fin);
