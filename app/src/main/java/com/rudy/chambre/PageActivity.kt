@@ -550,14 +550,14 @@ class PageActivity : ComponentActivity() {
         @JavascriptInterface
         fun retourChambre() { runOnUiThread { finish() } }
 
-        /** Le téléphone : une fille a dit « oui », elle arrive chez Rudy. */
+        /** Le téléphone : une fille a dit « oui », elle arrive dans la vraie chambre de Rudy. */
         @JavascriptInterface
         fun ouvrirVisite(id: String) {
             runOnUiThread {
+                Visite.demander(this@PageActivity, id)
                 try {
-                    startActivity(Intent(this@PageActivity, PageActivity::class.java)
-                        .putExtra("page", "visite.html?fille=" + id.filter { it.isLetter() })
-                        .putExtra("titre", ""))
+                    startActivity(Intent(this@PageActivity, ChambreActivity::class.java)
+                        .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP))
                 } catch (_: Throwable) {}
                 finish()
             }
@@ -577,6 +577,7 @@ class PageActivity : ComponentActivity() {
         /** La MAP du téléphone : Rudy part à Shinato (la page a noté où il va). */
         @JavascriptInterface
         fun allerShinato() {
+            if (Visite.ici(this@PageActivity).isNotEmpty()) return
             runOnUiThread {
                 try { startActivity(Intent(this@PageActivity, ShinatoActivity::class.java)) } catch (_: Throwable) {}
                 finish()

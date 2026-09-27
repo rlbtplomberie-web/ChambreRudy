@@ -18,12 +18,11 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:#05040f;overflow:hidden;font-family:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--texte);touch-action:manipulation}
+html,body{margin:0;height:100%;background:transparent;overflow:hidden;font-family:Nunito,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--texte);touch-action:manipulation}
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 /* la chambre : même proportion que ta capture, centrée */
-#scene{position:relative;height:100%;aspect-ratio:1080/2340;max-width:100vw;margin:0 auto;overflow:hidden;
-  background:url(/assets/web/visite/fenetre.jpg) center/cover no-repeat}
-@supports not (aspect-ratio:1/1){#scene{width:min(100vw,calc(100vh*1080/2340))}}
+/* calque transparent : la chambre est dessinée par l'appli, juste en dessous */
+#scene{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;background:none}
 #sophie{position:absolute;transform:translateX(-50%);height:57.7%;left:63%;bottom:10.9%;display:none;
   filter:drop-shadow(0 14px 10px rgba(0,0,20,.45));user-select:none;-webkit-user-drag:none;transition:opacity .25s}
 #sophie.arrive{animation:arrive .9s ease-out}
@@ -112,7 +111,8 @@ h2{margin:6px 18px 10px;font-size:26px;font-weight:800;letter-spacing:-.3px}
 #flG{left:6px}#flD{right:6px}
 #toast{position:fixed;left:50%;bottom:6%;transform:translateX(-50%);padding:10px 16px;border-radius:12px;background:rgba(10,8,28,.92);border:1px solid var(--trait);font-weight:700;font-size:14px;display:none;z-index:20;max-width:90vw;text-align:center}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-#btnReglage,#btnSimu{display:none!important}
+#btnReglage,#btnSimu,#btnTel,.fl,#telV,#telFermer,#tel{display:none!important}
+#sophie,.lit{visibility:hidden}
 </style>
 </head>
 <body>
@@ -165,7 +165,7 @@ h2{margin:6px 18px 10px;font-size:26px;font-weight:800;letter-spacing:-.3px}
 <button id="telFermer">✕ Fermer</button>
 
 <script>
-let BG_LIT="/assets/web/visite/lit.jpg";
+let BG_LIT="";
 const LIT={"katila": {"src": {"r1": "/assets/web/visite/lit/katila_r1.webp", "r2": "/assets/web/visite/lit/katila_r2.webp", "r3": "/assets/web/visite/lit/katila_r3.webp", "r4": "/assets/web/visite/lit/katila_r4.webp", "r5": "/assets/web/visite/lit/katila_r5.webp", "r6": "/assets/web/visite/lit/katila_r6.webp", "r7": "/assets/web/visite/lit/katila_r7.webp", "r8": "/assets/web/visite/lit/katila_r8.webp", "p1": "/assets/web/visite/lit/katila_p1.webp", "p2": "/assets/web/visite/lit/katila_p2.webp", "p3": "/assets/web/visite/lit/katila_p3.webp"}, "d": [["r1", 586, 459], ["r2", 267, 600], ["r3", 515, 371], ["r4", 417, 579], ["r5", 423, 600], ["r6", 282, 589], ["r7", 498, 580], ["r8", 294, 572], ["p1", 481, 590], ["p2", 467, 591], ["p3", 475, 600]]}, "rose": {"src": {"r1": "/assets/web/visite/lit/rose_r1.webp", "r2": "/assets/web/visite/lit/rose_r2.webp", "r3": "/assets/web/visite/lit/rose_r3.webp", "r4": "/assets/web/visite/lit/rose_r4.webp", "r5": "/assets/web/visite/lit/rose_r5.webp", "r6": "/assets/web/visite/lit/rose_r6.webp", "r7": "/assets/web/visite/lit/rose_r7.webp", "r8": "/assets/web/visite/lit/rose_r8.webp", "p1": "/assets/web/visite/lit/rose_p1.webp", "p2": "/assets/web/visite/lit/rose_p2.webp", "p3": "/assets/web/visite/lit/rose_p3.webp"}, "d": [["r1", 491, 549], ["r2", 419, 600], ["r3", 538, 556], ["r4", 421, 593], ["r5", 442, 582], ["r6", 404, 600], ["r7", 621, 540], ["r8", 441, 547], ["p1", 412, 600], ["p2", 407, 594], ["p3", 373, 592]]}, "karine": {"src": {"r1": "/assets/web/visite/lit/karine_r1.webp", "r2": "/assets/web/visite/lit/karine_r2.webp", "r3": "/assets/web/visite/lit/karine_r3.webp", "r4": "/assets/web/visite/lit/karine_r4.webp", "r5": "/assets/web/visite/lit/karine_r5.webp", "r6": "/assets/web/visite/lit/karine_r6.webp", "r7": "/assets/web/visite/lit/karine_r7.webp", "r8": "/assets/web/visite/lit/karine_r8.webp", "p1": "/assets/web/visite/lit/karine_p1.webp", "p2": "/assets/web/visite/lit/karine_p2.webp", "p3": "/assets/web/visite/lit/karine_p3.webp"}, "d": [["r1", 470, 600], ["r2", 417, 539], ["r3", 640, 450], ["r4", 379, 594], ["r5", 461, 600], ["r6", 410, 584], ["r7", 621, 542], ["r8", 371, 581], ["p1", 430, 600], ["p2", 408, 596], ["p3", 374, 599]]}, "mifa": {"src": {"r1": "/assets/web/visite/lit/mifa_r1.webp", "r2": "/assets/web/visite/lit/mifa_r2.webp", "r3": "/assets/web/visite/lit/mifa_r3.webp", "r4": "/assets/web/visite/lit/mifa_r4.webp", "r5": "/assets/web/visite/lit/mifa_r5.webp", "r6": "/assets/web/visite/lit/mifa_r6.webp", "r7": "/assets/web/visite/lit/mifa_r7.webp", "r8": "/assets/web/visite/lit/mifa_r8.webp", "p1": "/assets/web/visite/lit/mifa_p1.webp", "p2": "/assets/web/visite/lit/mifa_p2.webp", "p3": "/assets/web/visite/lit/mifa_p3.webp"}, "d": [["r1", 475, 600], ["r2", 410, 591], ["r3", 627, 474], ["r4", 394, 493], ["r5", 463, 591], ["r6", 413, 560], ["r7", 582, 484], ["r8", 368, 600], ["p1", 431, 600], ["p2", 411, 595], ["p3", 374, 596]]}, "faty": {"src": {"r1": "/assets/web/visite/lit/faty_r1.webp", "r2": "/assets/web/visite/lit/faty_r2.webp", "r3": "/assets/web/visite/lit/faty_r3.webp", "r4": "/assets/web/visite/lit/faty_r4.webp", "r5": "/assets/web/visite/lit/faty_r5.webp", "r6": "/assets/web/visite/lit/faty_r6.webp", "r7": "/assets/web/visite/lit/faty_r7.webp", "r8": "/assets/web/visite/lit/faty_r8.webp", "p1": "/assets/web/visite/lit/faty_p1.webp", "p2": "/assets/web/visite/lit/faty_p2.webp", "p3": "/assets/web/visite/lit/faty_p3.webp"}, "d": [["r1", 383, 600], ["r2", 313, 594], ["r3", 584, 580], ["r4", 352, 576], ["r5", 450, 562], ["r6", 294, 600], ["r7", 560, 515], ["r8", 281, 596], ["p1", 426, 600], ["p2", 402, 595], ["p3", 390, 590]]}, "ameline": {"src": {"r1": "/assets/web/visite/lit/ameline_r1.webp", "r2": "/assets/web/visite/lit/ameline_r2.webp", "r3": "/assets/web/visite/lit/ameline_r3.webp", "r4": "/assets/web/visite/lit/ameline_r4.webp", "r5": "/assets/web/visite/lit/ameline_r5.webp", "r6": "/assets/web/visite/lit/ameline_r6.webp", "r7": "/assets/web/visite/lit/ameline_r7.webp", "r8": "/assets/web/visite/lit/ameline_r8.webp", "t1": "/assets/web/visite/lit/ameline_t1.webp", "t2": "/assets/web/visite/lit/ameline_t2.webp", "t3": "/assets/web/visite/lit/ameline_t3.webp", "t4": "/assets/web/visite/lit/ameline_t4.webp"}, "d": [["r1", 1220, 600], ["r2", 38, 42], ["r3", 718, 300], ["r4", 24, 21], ["r5", 382, 600], ["r6", 329, 599], ["r7", 333, 528], ["r8", 357, 559], ["t1", 345, 577], ["t2", 337, 600], ["t3", 323, 588], ["t4", 359, 596]]}, "sophie": {"src": {"r1": "/assets/web/visite/lit/sophie_r1.webp", "r2": "/assets/web/visite/lit/sophie_r2.webp", "r3": "/assets/web/visite/lit/sophie_r3.webp", "r4": "/assets/web/visite/lit/sophie_r4.webp", "r5": "/assets/web/visite/lit/sophie_r5.webp", "r6": "/assets/web/visite/lit/sophie_r6.webp", "r7": "/assets/web/visite/lit/sophie_r7.webp", "r8": "/assets/web/visite/lit/sophie_r8.webp", "p1": "/assets/web/visite/lit/sophie_p1.webp", "p2": "/assets/web/visite/lit/sophie_p2.webp", "p3": "/assets/web/visite/lit/sophie_p3.webp"}, "d": [["r1", 450, 565], ["r2", 465, 600], ["r3", 556, 544], ["r4", 417, 599], ["r5", 427, 600], ["r6", 452, 600], ["r7", 571, 597], ["r8", 415, 549], ["p1", 402, 600], ["p2", 391, 578], ["p3", 373, 578]]}, "gisele": {"src": {"r1": "/assets/web/visite/lit/gisele_r1.webp", "r2": "/assets/web/visite/lit/gisele_r2.webp", "r3": "/assets/web/visite/lit/gisele_r3.webp", "r4": "/assets/web/visite/lit/gisele_r4.webp", "r5": "/assets/web/visite/lit/gisele_r5.webp", "r6": "/assets/web/visite/lit/gisele_r6.webp", "r7": "/assets/web/visite/lit/gisele_r7.webp", "r8": "/assets/web/visite/lit/gisele_r8.webp", "p1": "/assets/web/visite/lit/gisele_p1.webp", "p2": "/assets/web/visite/lit/gisele_p2.webp", "p3": "/assets/web/visite/lit/gisele_p3.webp"}, "d": [["r1", 430, 600], ["r2", 441, 599], ["r3", 562, 578], ["r4", 423, 564], ["r5", 453, 582], ["r6", 437, 600], ["r7", 569, 512], ["r8", 439, 597], ["p1", 431, 600], ["p2", 407, 587], ["p3", 373, 590]]}};
 let RESTO="";
 let BALADE_BASE="";
@@ -722,7 +722,7 @@ function depart(apres){
    1 min sans lui parler : elle le remarque · 2 min 30 : elle se vexe · 5 min : très en colère, elle s'en va */
 let prochaine=Date.now()+8000;
 setInterval(()=>{
-  if(!ici||reglage||enBalade||$('tel').classList.contains('ouvert')) return;
+  if(!ici||reglage||enBalade||window.PAUSE||$('tel').classList.contains('ouvert')) return;
   const P=PERSO[ici], calme=(Date.now()-dernierContact)/1000;
   // une question ou un menu laissés sans réponse : elle finit par le remarquer
   const panneau=$('menu').style.display==='flex'||$('discu').style.display==='flex';
@@ -892,7 +892,7 @@ function asseoir(){
     $('voile').classList.add('on');
     setTimeout(()=>{ if(ici!==id){ $('voile').classList.remove('on'); return; }
       tait(); img.style.display='none'; mode='lit'; litCle=null;
-      $('scene').style.backgroundImage=`url(${BG_LIT})`; L1.style.opacity='0'; L2.style.opacity='0';
+      /* la vraie chambre montre son lit (l'appli tourne la tête vers lui) */ L1.style.opacity='0'; L2.style.opacity='0';
       L1.style.display=L2.style.display='block'; montreLit(reposAuHasard());
       clearInterval(litIdle); litIdle=setInterval(()=>{ if(mode==='lit'&&!occupee&&!parle&&!reglage&&!enBalade) montreLit(reposAuHasard()); },6500);
       $('voile').classList.remove('on'); occupee=false; contact();
@@ -1053,67 +1053,70 @@ majArgent=function(){
   }
   majArgentAvant();
 };
-// ---------- les trois vues de la chambre ----------
-const VUES=['bureau','fenetre','lit']; let vue='fenetre';
-const IMG_VUE={bureau:R+'bureau.jpg',fenetre:R+'fenetre.jpg',lit:R+'lit.jpg'};
-function filleVisible(){ return !!ici&&((mode==='debout'&&vue==='fenetre')||(mode==='lit'&&vue==='lit')); }
-function appliqueVue(){
-  $('scene').style.backgroundImage=`url(${IMG_VUE[vue]})`;
-  if(ici&&mode==='debout'&&img.style.opacity!=='0') img.style.display=vue==='fenetre'?'block':'none';
-  if(mode==='lit'){ L1.style.display=L2.style.display=vue==='lit'?'block':'none'; }
-  $('coeur').style.display=ici?'flex':'none';
-  $('flG').style.display=vue==='bureau'?'none':'grid'; $('flD').style.display=vue==='lit'?'none':'grid';
+// ---------- la fille dans la VRAIE chambre ----------
+// L'appli dessine la chambre (bureau, baie vitrée, lit) et nous dit où est chaque mur à l'écran.
+let CAM={vue:-1,l:0,t:0,w:1,h:1};
+const DEBOUT={fx:.60,fy:.925,hf:.56};     // debout sur le tapis, devant la baie vitrée
+const SUR_LIT={fx:.42,fy:.76,hf:.30};     // sur le lit
+window.camera=function(v,l,t,w,h){ CAM={vue:v,l:l,t:t,w:w,h:h}; placeTout(); };
+function filleVisible(){ return !!ici&&((mode==='debout'&&CAM.vue===1)||(mode==='lit'&&CAM.vue===2)); }
+appliquePlace=function(){
+  if(!ici) return; const H=innerHeight, hr=(HR[ici]&&HR[ici][poseCourante-1])||1;
+  img.style.left=(CAM.l+DEBOUT.fx*CAM.w)+'px'; img.style.bottom=(H-(CAM.t+DEBOUT.fy*CAM.h))+'px';
+  img.style.height=(DEBOUT.hf*CAM.h*hr)+'px';
+  img.style.visibility=(mode==='debout'&&CAM.vue===1)?'visible':'hidden';
+};
+placeLit=function(el,cle){
+  const d=LIT[ici]&&LIT[ici].d.find(x=>x[0]===cle); if(!d) return; el.dataset.cle=cle; const H=innerHeight;
+  el.style.left=(CAM.l+SUR_LIT.fx*CAM.w)+'px'; el.style.bottom=(H-(CAM.t+SUR_LIT.fy*CAM.h))+'px';
+  el.style.height=(d[2]/600*SUR_LIT.hf*CAM.h)+'px'; el.style.width='auto';
+};
+function placeTout(){
+  if(!ici) return;
+  appliquePlace();
+  [L1,L2].forEach(el=>{ if(el.dataset.cle) placeLit(el,el.dataset.cle); el.style.visibility=(mode==='lit'&&CAM.vue===2)?'visible':'hidden'; });
+  $('coeur').style.display='flex';
 }
-function allerVue(v){ if(v===vue) return; vue=v; $('voile').classList.add('on'); setTimeout(()=>{ appliqueVue(); $('voile').classList.remove('on'); },220); }
-window.allerVue=allerVue;
-$('flG').addEventListener('click',()=>allerVue(VUES[Math.max(0,VUES.indexOf(vue)-1)]));
-$('flD').addEventListener('click',()=>allerVue(VUES[Math.min(2,VUES.indexOf(vue)+1)]));
-let sx=null;
-$('scene').addEventListener('touchstart',e=>{ sx=e.touches.length===1?e.touches[0].clientX:null; },{passive:true});
-$('scene').addEventListener('touchend',e=>{ if(sx===null) return; const dx=e.changedTouches[0].clientX-sx; sx=null;
-  if(Math.abs(dx)>70&&!$('discu').offsetParent&&!$('menu').offsetParent){ allerVue(VUES[Math.max(0,Math.min(2,VUES.indexOf(vue)+(dx<0?1:-1)))]); } },{passive:true});
-setInterval(appliqueVue,300);
-// elle arrive : on regarde la baie vitrée ; elle s'assoit : on regarde le lit ; elle se lève : retour à la baie vitrée
-const arriveeAvant=arrivee; arrivee=function(id){ arriveeAvant(id); setTimeout(()=>{ if(!enBalade){ vue='fenetre'; appliqueVue(); } },950); try{ localStorage.setItem('rudy_visite_ici',id); }catch(e){} };
-const asseoirAvant=asseoir; asseoir=function(){ asseoirAvant(); setTimeout(()=>{ if(mode==='lit'){ vue='lit'; appliqueVue(); } },2900); };
-const quitteLitAvant=quitteLit; quitteLit=function(a,b){ quitteLitAvant(a,b); vue='fenetre'; };
+addEventListener('resize',placeTout);
+function regarder(mur,fx){ try{ if(DANS_APPLI&&Android.regarder) Android.regarder(mur,fx); }catch(e){} }
+// ---------- les zones qu'on peut toucher : le reste passe à la chambre (bureau, consoles, tiroirs…) ----------
+let zonesTxt='';
+function rectDe(el){ if(!el) return null; const cs=getComputedStyle(el); if(cs.display==='none'||cs.visibility==='hidden'||+cs.opacity<0.05) return null;
+  const r=el.getBoundingClientRect(); if(r.width<2||r.height<2) return null; return [r.left,r.top,r.right,r.bottom].map(Math.round); }
+setInterval(()=>{
+  const z=[]; const plein=['sortie','resto'].some(i=>$(i).style.display==='block');
+  if(plein) z.push([0,0,innerWidth,innerHeight]);
+  else [img,(mode==='lit'?(litCouche?L2:L1):null),$('menu'),$('discu')].forEach(e=>{ const r=rectDe(e); if(r) z.push(r); });
+  const t=JSON.stringify(z); if(t!==zonesTxt){ zonesTxt=t; try{ if(DANS_APPLI&&Android.zones) Android.zones(t); }catch(e){} }
+},150);
+// ---------- quand l'appli est en pause (un jeu, un émulateur) : elle attend sans compter le temps ----------
+window.enPause=function(p){ window.PAUSE=!!p; if(!p){ try{ contact(); }catch(e){} } };
+// ---------- elle arrive : la chambre se tourne vers la baie vitrée ; elle s'assoit : vers le lit ----------
+const arriveeAvant=arrivee; arrivee=function(id){ arriveeAvant(id); regarder(1,DEBOUT.fx); try{ localStorage.setItem('rudy_visite_ici',id); }catch(e){} setTimeout(placeTout,950); };
+const asseoirAvant=asseoir; asseoir=function(){ asseoirAvant(); let n=0; const t=setInterval(()=>{ if(mode==='lit'){ clearInterval(t); regarder(2,SUR_LIT.fx); placeTout(); } else if(++n>40) clearInterval(t); },100); };
+const quitteLitAvant=quitteLit; quitteLit=function(a,b){ quitteLitAvant(a,b); if(!b) setTimeout(()=>{ regarder(1,DEBOUT.fx); placeTout(); },460); };
 // ---------- sa bulle : si on ne la voit pas (on regarde ailleurs), elle parle quand même, en haut de l'écran ----------
 const ditAvant=dit;
-dit=function(t,ms){ ditAvant(t,ms); if(!filleVisible()){ const b=$('bulle'), sc=$('scene').getBoundingClientRect(); b.style.left=Math.max(6,(sc.width-b.offsetWidth)/2)+'px'; b.style.top=(sc.height*.11)+'px'; } };
-// ---------- quand elle part : Rudy se retrouve seul, retour à la chambre normale ----------
+dit=function(t,ms){ ditAvant(t,ms); if(!filleVisible()){ const b=$('bulle'); b.style.left=Math.max(6,(innerWidth-b.offsetWidth)/2)+'px'; b.style.top=(innerHeight*.11)+'px'; } };
+// ---------- quand elle part : Rudy se retrouve seul, la chambre redevient normale ----------
+function finVisite(){ try{ localStorage.removeItem('rudy_visite_ici'); }catch(e){} if(DANS_APPLI&&Android.finVisite) Android.finVisite(); else toast('Elle est partie.'); }
 const departAvant=depart;
-depart=function(apres){
-  departAvant(apres);
-  setTimeout(()=>{ if(!ici){ try{ localStorage.removeItem('rudy_visite_ici'); }catch(e){} if(DANS_APPLI&&Android.retourChambre) Android.retourChambre(); else toast('Elle est partie : retour à ta chambre.'); } },2600);
-};
-// ---------- impossible de partir en la laissant là ----------
+depart=function(apres){ departAvant(apres); setTimeout(()=>{ if(!ici) finVisite(); },2600); };
+// ---------- sortir en ville : impossible tant qu'elle est là ----------
 window.retourDemande=function(){
-  if(!ici){ if(DANS_APPLI&&Android.retourChambre) Android.retourChambre(); return; }
+  if(!ici){ finVisite(); return; }
   if(enBalade) return;
   dit(["Tu comptes partir en me laissant là ?","Hé ! Je suis encore là, moi !","Tu vas où comme ça ?"][Math.floor(Math.random()*3)],2600);
   toast(`Pour sortir, parle à ${PERSO[ici].nom} : « Sortir avec elle » ou « Laisser rentrer chez elle ».`,3200);
 };
-// ---------- le vrai téléphone ----------
-const tel=$('telV'), telF=$('telFermer');
-function ouvreVraiTel(){ tel.src='/assets/web/telephone.html?dec=room'; tel.style.display='block'; telF.style.display='block'; }
-function fermeVraiTel(){ tel.style.display='none'; tel.src='about:blank'; telF.style.display='none'; }
-const bt=$('btnTel'), bt2=bt.cloneNode(true); bt.parentNode.replaceChild(bt2,bt); bt2.addEventListener('click',ouvreVraiTel);
-telF.addEventListener('click',fermeVraiTel);
-addEventListener('message',e=>{
-  if(!e.data) return;
-  if(e.data.type==='telephone:visite'){                 // elle a dit « oui » au téléphone
-    fermeVraiTel(); const id=e.data.fille;
-    if(id===ici) return;
-    if(!PERSO[id]){ toast("Elle ne peut pas venir pour l'instant."); return; }
-    if(ici&&mode==='lit') quitteLit(null,true);
-    humeur&&ici&&humeur(10,2600); if(ici) dit("Tu appelles qui, là ?",2400);
-    setTimeout(()=>arrivee(id),ici?2500:200);
-  }
-  if(e.data.type==='telephone:aller'){                   // la MAP : pas de voyage tant qu'elle est là
-    fermeVraiTel();
-    if(ici){ dit("Tu vas pas me laisser toute seule ici ?!",2800); toast(`Dis d'abord à ${PERSO[ici].nom} de partir, ou sors avec elle.`,3200); }
-  }
-});
+// ---------- une autre fille a dit « oui » au téléphone pendant qu'une est là ----------
+window.nouvelleVisite=function(id){
+  if(id===ici) return;
+  if(!PERSO[id]){ toast("Elle ne peut pas venir pour l'instant."); return; }
+  if(ici&&mode==='lit') quitteLit(null,true);
+  if(ici){ humeur(10,2600); dit("Tu appelles qui, là ?",2400); }
+  setTimeout(()=>arrivee(id),ici?2500:200);
+};
 // ---------- les balades et le resto viennent des fichiers de l'appli ----------
 let baseBalade=null, baseResto=null;
 fetch(R+'boulevard.html').then(r=>r.text()).then(t=>{ baseBalade=t; }).catch(()=>{});
@@ -1129,8 +1132,7 @@ window.chargeResto=function(){ return baseResto?Promise.resolve(baseResto):fetch
 ['btnSimu','btnReglage'].forEach(i=>{ const e=$(i); if(e) e.style.display='none'; });
 // ---------- elle arrive ----------
 const q=new URLSearchParams(location.search).get('fille');
-if(q&&PERSO[q]) setTimeout(()=>arrivee(q),300); else if(DANS_APPLI&&Android.retourChambre) setTimeout(()=>Android.retourChambre(),300);
-appliqueVue();
+if(q&&PERSO[q]) setTimeout(()=>arrivee(q),300); else setTimeout(finVisite,300);
 })();
 
 </script>

@@ -1517,6 +1517,8 @@ const MP=(()=>{
 
 /* ---------- MAP : on arrive directement à l'endroit choisi ---------- */
 function arriveA(lieu){
+  // une fille est chez Rudy : pas de voyage en ville (il faut sortir avec elle, ou lui dire de rentrer)
+  try{const ici=localStorage.getItem('rudy_visite_ici');if(ici&&lieu!=='home'){const n={sophie:'Sophie',karine:'Karine',gisele:'Gisèle',faty:'Faty',katila:'Katila',ameline:'Ameline',mifa:'Mifa',rose:'Rose'}[ici]||'Elle';toast(n+' est chez toi : sors avec elle, ou dis-lui de rentrer chez elle.');return}}catch(e){}
   // ouvert dans la rue (dans un cadre) : la rue fait le voyage
   try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:'telephone:aller',lieu:lieu},'*');return}}catch(e){}
   // ouvert depuis la chambre

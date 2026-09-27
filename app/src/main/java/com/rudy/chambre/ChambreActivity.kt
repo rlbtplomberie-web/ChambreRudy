@@ -77,6 +77,7 @@ class ChambreActivity : ComponentActivity() {
         vue = VueChambre(this)
         vue.surObjet = { quoi -> toucheObjet(quoi) }
         vue.surEcranTele = { r -> placerEcranTele(r) }
+        vue.surCamera = { m, l, t, w, h -> cameraVisite(m, l, t, w, h) }
         // le bouton de la radio regle vraiment le volume de la musique
         vue.surVolume = { v -> son.majVolume(v) }
 
@@ -117,6 +118,7 @@ class ChambreActivity : ComponentActivity() {
         // « Bureau » depuis un emulateur doit revenir immediatement a la
         // chambre utile (TV, tiroirs et consoles), jamais a l'introduction.
         val retourBureau = intent.getBooleanExtra("retour_bureau", false)
+        if (etat == null && !retourBureau) Visite.partie(this)
         if (retourBureau || etat != null) boutonTelephone?.visibility = View.VISIBLE
         if (retourBureau) {
             vue.post { vue.cadrerSurLaTele() }
@@ -273,7 +275,7 @@ class ChambreActivity : ComponentActivity() {
             }
             "tele" -> vue.consolePosee()?.let { dire(it.nom) }
             "teleLong" -> montrerAssemblage()
-            "serrure" -> menuDehors()
+            "serrure" -> if (calque != null) calque?.evaluateJavascript("window.retourDemande&&window.retourDemande()", null) else menuDehors()
             "livre" -> startActivity(Intent(this,
                 com.rudy.chambre.livre.LivreActivity::class.java))
         }
@@ -537,6 +539,10 @@ class ChambreActivity : ComponentActivity() {
     /** Le retour Android : dans YouTube, on revient en arrière, puis on ferme. */
     @Deprecated("Retour Android")
     override fun onBackPressed() {
+        if (calque != null && choixYoutube == null) {
+            calque?.evaluateJavascript("window.retourDemande&&window.retourDemande()", null)
+            return
+        }
         val w = webChoix
         if (choixYoutube != null) {
             if (w != null && w.canGoBack()) w.goBack() else fermerYoutube()
@@ -898,8 +904,106 @@ class ChambreActivity : ComponentActivity() {
             .putExtra("paysage", paysage))
     }
 
+    // ==================== La visite d'une fille ====================
+    /*
+     * La fille est un calque transparent posé sur la vraie chambre : la chambre
+     * reste entière (bureau, consoles, tiroirs, télé, livres…). Seuls ses
+     * propres morceaux (elle, son menu, ses discussions, la balade) prennent
+     * le doigt ; le reste passe à la chambre en dessous.
+     */
+    private var calque: CalqueVisite? = null
+    private var derniereCamera = ""
+
+    private fun verifierVisite() {
+        val demandee = Visite.prendreDemande(this)
+        if (demandee.isNotEmpty()) {
+            if (calque == null) ouvrirVisite(demandee)
+            else calque?.evaluateJavascript("window.nouvelleVisite&&window.nouvelleVisite('$demandee')", null)
+        } else if (calque == null) {
+            val ici = Visite.ici(this)
+            if (ici.isNotEmpty()) ouvrirVisite(ici)          // la chambre a été recréée : elle est toujours là
+        }
+        calque?.evaluateJavascript("window.enPause&&window.enPause(false)", null)
+    }
+
+    private fun ouvrirVisite(id: String) {
+        if (!::racineChambre.isInitialized) return
+        val racine = racineChambre
+        Visite.arrivee(this, id)
+        boutonTelephone?.visibility = View.VISIBLE
+        val serveur = androidx.webkit.WebViewAssetLoader.Builder()
+            .addPathHandler("/assets/", androidx.webkit.WebViewAssetLoader.AssetsPathHandler(this))
+            .build()
+        val w = CalqueVisite(this).apply {
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            settings.mediaPlaybackRequiresUserGesture = false
+            setBackgroundColor(android.graphics.Color.TRANSPARENT)
+            overScrollMode = View.OVER_SCROLL_NEVER
+            webViewClient = object : android.webkit.WebViewClient() {
+                override fun shouldInterceptRequest(v: android.webkit.WebView,
+                                                    r: android.webkit.WebResourceRequest): android.webkit.WebResourceResponse? =
+                    serveur.shouldInterceptRequest(r.url)
+                override fun onPageFinished(v: android.webkit.WebView?, url: String?) {
+                    derniereCamera = ""
+                    vue.invalidate()                          // la page reçoit tout de suite où sont les murs
+                }
+            }
+            webChromeClient = android.webkit.WebChromeClient()
+            addJavascriptInterface(PontVisite(), "Android")
+            loadUrl("https://appassets.androidplatform.net/assets/web/visite.html?fille=" + id.filter { it.isLetter() })
+        }
+        // au-dessus de la chambre, sous le téléphone et le porte-monnaie
+        val i = racine.indexOfChild(etiquette) + 1
+        racine.addView(w, i, FrameLayout.LayoutParams(-1, -1))
+        calque = w
+        derniereCamera = ""
+    }
+
+    private fun fermerVisite() {
+        val w = calque ?: return
+        calque = null
+        Visite.partie(this)
+        try { racineChambre.removeView(w); w.destroy() } catch (_: Throwable) { }
+        try { SonPartage.volume(1f) } catch (_: Throwable) { }
+    }
+
+    /** À chaque image de la chambre : le calque apprend où est le mur (en pixels de la page). */
+    private fun cameraVisite(m: Int, l: Float, t: Float, w: Float, h: Float) {
+        val c = calque ?: return
+        val d = resources.displayMetrics.density
+        val txt = String.format(java.util.Locale.US, "%d,%.1f,%.1f,%.1f,%.1f", m, l / d, t / d, w / d, h / d)
+        if (txt == derniereCamera) return
+        derniereCamera = txt
+        c.evaluateJavascript("window.camera&&window.camera($txt)", null)
+    }
+
+    private inner class PontVisite {
+        @android.webkit.JavascriptInterface
+        fun zones(json: String) { calque?.majZones(json, resources.displayMetrics.density) }
+
+        @android.webkit.JavascriptInterface
+        fun regarder(mur: Int, fx: Float) { runOnUiThread { vue.regarder(mur, fx) } }
+
+        @android.webkit.JavascriptInterface
+        fun finVisite() { runOnUiThread { fermerVisite() } }
+
+        @android.webkit.JavascriptInterface
+        fun retourChambre() { runOnUiThread { fermerVisite() } }
+
+        @android.webkit.JavascriptInterface
+        fun argent(): Int = Argent.lire(this@ChambreActivity)
+
+        @android.webkit.JavascriptInterface
+        fun ajouterArgent(n: Int) { Argent.ajouter(this@ChambreActivity, n); runOnUiThread { majArgent() } }
+
+        @android.webkit.JavascriptInterface
+        fun radio(allumee: Boolean) { runOnUiThread { SonPartage.volume(if (allumee) 1f else 0f) } }
+    }
+
     override fun onResume() {
         majArgent()                              // l'argent peut avoir change dans un jeu ou a Shinato
+        try { verifierVisite() } catch (_: Throwable) { }
         try { teleWeb?.onResume(); webChoix?.onResume() } catch (_: Throwable) { }
         super.onResume()
         // si une console vient de partir, la chambre ne fait que passer :
@@ -912,6 +1016,7 @@ class ChambreActivity : ComponentActivity() {
 
     override fun onPause() {
         try { teleWeb?.onPause(); webChoix?.onPause() } catch (_: Throwable) { }
+        try { calque?.evaluateJavascript("window.enPause&&window.enPause(true)", null) } catch (_: Throwable) { }
         super.onPause()
         // On ouvre un jeu ou une vitrine : la chambre passe derriere, mais
         // elle reste a l'ecran de l'application. La radio continue donc de
@@ -930,7 +1035,7 @@ class ChambreActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
-        try { teleWeb?.destroy(); webChoix?.destroy() } catch (_: Throwable) { }
+        try { teleWeb?.destroy(); webChoix?.destroy(); calque?.destroy() } catch (_: Throwable) { }
         try { lecteur?.release() } catch (_: Throwable) {}
         try { lecteurPret?.release() } catch (_: Throwable) {}
         son.liberer()
@@ -1028,10 +1133,11 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
             @android.webkit.JavascriptInterface
             fun visite(id: String) {
                 runOnUiThread {
+                    Visite.demander(this@ShinatoActivity, id)
                     try {
-                        startActivity(android.content.Intent(this@ShinatoActivity, PageActivity::class.java)
-                            .putExtra("page", "visite.html?fille=" + id.filter { it.isLetter() })
-                            .putExtra("titre", ""))
+                        startActivity(android.content.Intent(this@ShinatoActivity, ChambreActivity::class.java)
+                            .addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                                      android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP))
                     } catch (_: Throwable) {}
                     finish()
                 }

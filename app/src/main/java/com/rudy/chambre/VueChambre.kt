@@ -21,6 +21,8 @@ class VueChambre(ctx: Context) : View(ctx) {
     var surObjet: ((String) -> Unit)? = null
     /** Ou se trouve l'ecran de la tele, a chaque image : la video l'y suit. */
     var surEcranTele: ((RectF?) -> Unit)? = null
+    /** La visite d'une fille : quel mur on regarde, et ou il est dessine (mur, gauche, haut, largeur, hauteur). */
+    var surCamera: ((Int, Float, Float, Float, Float) -> Unit)? = null
 
     private val images = java.util.concurrent.ConcurrentHashMap<String, Bitmap>()
     private val peinture = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
@@ -139,11 +141,12 @@ class VueChambre(ctx: Context) : View(ctx) {
     // ================= dessin =================
 
     override fun onDraw(c: Canvas) {
-        if (etape == 1) { dessinerIntro(c); return }
+        if (etape == 1) { surCamera?.invoke(-1, 0f, 0f, 1f, 1f); dessinerIntro(c); return }
         val fond = charger(murs[vue]) ?: return
         c.drawColor(Color.BLACK)
         val dest = RectF(decX, decY, decX + largeurMur, decY + hauteurMur)
         c.drawBitmap(fond, null, dest, peinture)
+        surCamera?.invoke(vue, decX, decY, largeurMur, hauteurMur)
         // la video de la tele suit le decor, ou disparait si on regarde ailleurs
         surEcranTele?.invoke(if (vue == 0) zone(Decor.TELE) else null)
 
@@ -588,6 +591,17 @@ class VueChambre(ctx: Context) : View(ctx) {
             }
         }
         return super.onTouchEvent(e)
+    }
+
+    /** La visite : la tete se tourne vers un mur (1 baie vitree, 2 lit), cadree sur un point du mur. */
+    fun regarder(mur: Int, fx: Float) {
+        if (etape == 1 || mur !in 0..2) return
+        val change = mur != vue
+        vue = mur
+        recalculer()
+        decX = (width * .5f - fx * largeurMur).coerceIn(min(0f, width - largeurMur), 0f)
+        if (change) { alpha = 0.35f; animate().alpha(1f).setDuration(220).start() }
+        invalidate()
     }
 
     private fun pivoter(sens: Int) {
