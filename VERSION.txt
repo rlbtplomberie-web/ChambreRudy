@@ -1,11 +1,6 @@
-version 163 — Chez Valia : le Valia Club
+version 164 — Valia Club : « Réserver » + 2 photos
 
-  Sur le boulevard, quand Rudy s'y promène SEUL (arrivé par la MAP), devant
-  l'entrée de Chez Valia : flèche jaune brillante + bouton ENTRER.
-  À l'intérieur : la danseuse sur le podium, Rudy qui marche devant la scène
-  (même planche que dans le Pixel Bar), musique orientale du club.
-  Près de la danseuse : bouton « Regarder » -> la vidéo, en plein écran
-  (Fermer, ou elle se ferme à la fin). « Sortir » ramène devant le club.
-  Entrer / sortir / regarder autant de fois qu'on veut.
-  Le club n'existe pas pendant une balade avec une fille (et le RestoChic,
-  lui, reste réservé aux balades avec une fille).
+  - Au Valia Club, face à la danseuse : à côté de « Regarder », un bouton
+    « Réserver » lance la nouvelle vidéo (plein écran, Fermer ou fin de vidéo).
+  - Téléphone > Photos : 2 nouvelles images du Valia Club (ph_19, ph_20),
+    utilisables aussi en fond d'écran.

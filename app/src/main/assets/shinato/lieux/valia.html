@@ -145,6 +145,8 @@ function draw(now){
 #sortirV{left:calc(10px + env(safe-area-inset-left,0px));top:calc(10px + env(safe-area-inset-top,0px));padding:8px 14px;border-radius:999px;border:1.5px solid rgba(255,79,184,.6);background:rgba(20,6,24,.82);color:#ffd6f0;font-weight:800;font-size:13px;cursor:pointer}
 #regarderV{right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(30px + env(safe-area-inset-bottom,0px));display:none;padding:16px 22px;border-radius:999px;border:2px solid #fff3b0;
   background:radial-gradient(circle at 40% 30%,#ffe98a,#ffc21a 60%,#b77a00);color:#3a2300;font-weight:900;font-size:17px;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(255,200,40,.7);cursor:pointer}
+#reserverV{right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(96px + env(safe-area-inset-bottom,0px));display:none;padding:14px 22px;border-radius:999px;border:2px solid #ffd6f0;
+  background:radial-gradient(circle at 40% 30%,#ff9ad6,#ff4fb8 60%,#8c1760);color:#fff;font-weight:900;font-size:17px;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(255,79,184,.7);cursor:pointer}
 #videoV{position:fixed;inset:0;z-index:40;display:none;background:#000;align-items:center;justify-content:center}
 #videoV video{width:100%;height:100%;object-fit:contain;background:#000}
 #fermerVid{position:fixed;z-index:41;right:calc(12px + env(safe-area-inset-right,0px));top:calc(12px + env(safe-area-inset-top,0px));padding:9px 15px;border-radius:999px;border:1.5px solid rgba(255,255,255,.6);background:rgba(0,0,0,.65);color:#fff;font-weight:800;font-size:14px;cursor:pointer}
@@ -153,7 +155,8 @@ function draw(now){
 <div class="uiV" id="joyV" aria-label="Se déplacer"><div id="knobV"></div></div>
 <button class="uiV" id="sortirV">🚪 Sortir</button>
 <button class="uiV" id="regarderV">👀 Regarder</button>
-<div id="videoV"><video id="vidV" playsinline preload="auto" src="/assets/shinato/m/valia_danse.mp4"></video><button id="fermerVid">✕ Fermer</button></div>
+<button class="uiV" id="reserverV">💎 Réserver</button>
+<div id="videoV"><video id="vidV" playsinline preload="auto"></video><button id="fermerVid">✕ Fermer</button></div>
 <script>
 /* ---------- Rudy : la même planche que dans le Pixel Bar ---------- */
 let videoOuverte=false;
@@ -191,7 +194,9 @@ function avanceRudy(){
   }else RUDY.bouge=false;
   // près de la danseuse : « Regarder »
   const fx=F[cur]&&F[cur].pole?POLEX:x;
-  document.getElementById('regarderV').style.display=(!videoOuverte&&Math.abs(RUDY.x-fx)<260&&RUDY.y<790)?'block':'none';
+  const devant=!videoOuverte&&Math.abs(RUDY.x-fx)<260&&RUDY.y<790;
+  document.getElementById('regarderV').style.display=devant?'block':'none';
+  document.getElementById('reserverV').style.display=devant?'block':'none';
 }
 /* ---------- stick ---------- */
 (function(){
@@ -216,9 +221,10 @@ joueV(); ['pointerdown','touchstart','keydown'].forEach(t=>addEventListener(t,()
 document.addEventListener('visibilitychange',()=>{ if(document.hidden) musV.pause(); else joueV(); });
 /* ---------- regarder la danseuse : la vidéo ---------- */
 const vid=document.getElementById('vidV'), boiteVid=document.getElementById('videoV');
-function ouvreVideo(){ videoOuverte=true; musV.pause(); boiteVid.style.display='flex'; try{ vid.currentTime=0; }catch(e){} const q=vid.play(); if(q&&q.catch) q.catch(()=>{}); }
+function ouvreVideo(fichier){ videoOuverte=true; musV.pause(); boiteVid.style.display='flex'; vid.src='/assets/shinato/m/'+fichier; try{ vid.currentTime=0; }catch(e){} const q=vid.play(); if(q&&q.catch) q.catch(()=>{}); }
 function fermeVideo(){ videoOuverte=false; try{ vid.pause(); }catch(e){} boiteVid.style.display='none'; joueV(); }
-document.getElementById('regarderV').addEventListener('click',ouvreVideo);
+document.getElementById('regarderV').addEventListener('click',()=>ouvreVideo('valia_danse.mp4'));
+document.getElementById('reserverV').addEventListener('click',()=>ouvreVideo('valia_reserve.mp4'));
 document.getElementById('fermerVid').addEventListener('click',fermeVideo);
 vid.addEventListener('ended',fermeVideo);
 /* ---------- sortir : retour sur le boulevard, devant le club ---------- */
