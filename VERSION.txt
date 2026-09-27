@@ -1,4 +1,7 @@
-version 157 — Pistolet à eau : vidéos de victoire en 1 contre 8
-  En 1 contre 8, quand Mifa, Gisèle ou Sophie trempe Rudy en dernier, sa vidéo
-  passe à la place de l'image (shinato/m/eau8_*.mp4 + .webm). Les autres filles
-  gardent l'image, comme avant. Ces vidéos se débloquent aussi dans le téléphone.
+version 158 — Shinato Soccer jouable dans l'appli + plage de Gisèle sans lag au 2e passage
+  - Shinato Soccer (shinato/jeux/soccer.html) : dans l'appli, le jeu ne passe plus en
+    plein écran et ne bloque plus l'orientation au lancement. Ce plein écran, dans la
+    WebView Android, décalait le tactile (boutons qui ne répondent plus, deux doigts).
+  - Rue (shinato/index.html) : quand un lieu est remplacé par un autre (plage, plage de
+    Gisèle, Vaviel…), la mémoire de ses dessins (2D/3D) est rendue tout de suite, pour que
+    la plage de Gisèle ne rame plus au deuxième passage.

@@ -1621,7 +1621,34 @@ else carte.addEventListener("load",demarre);
   maj();
  };
 })();
-</script><style>
+</script><script>
+/* ---------- Quand un lieu est remplacé (plage -> plage de Gisèle -> plage…), ses dessins 3D (WebGL)
+   sont libérés tout de suite. Sinon la carte graphique garde l'ancien lieu en mémoire un moment,
+   et au deuxième passage la plage de Gisèle rame. ---------- */
+(function(){
+ function libere(doc,prof){
+  if(!doc||prof>4) return;
+  try{
+   var cs=doc.getElementsByTagName("canvas");
+   for(var i=0;i<cs.length;i++){
+    try{ cs[i].width=1; cs[i].height=1; }catch(e){}      // la mémoire de dessin (2D ou 3D) est rendue tout de suite
+   }
+   var fs=doc.getElementsByTagName("iframe");
+   for(var j=0;j<fs.length;j++){ try{ libere(fs[j].contentDocument,prof+1); }catch(e){} }
+  }catch(e){}
+ }
+ window.libereCadre=function(f){ try{ libere(f.contentDocument,0); }catch(e){} };
+ try{
+  var d=Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype,"srcdoc");
+  if(d&&d.set&&d.configurable){
+   Object.defineProperty(HTMLIFrameElement.prototype,"srcdoc",{configurable:true,enumerable:d.enumerable,
+    get:function(){ return d.get.call(this); },
+    set:function(v){ window.libereCadre(this); d.set.call(this,v); }});
+  }
+ }catch(e){}
+})();
+</script>
+<style>
 #telBtn{position:fixed;z-index:65;display:none;left:calc(8px + env(safe-area-inset-left,0px));top:max(6px,env(safe-area-inset-top,0px));
  padding:6px 12px;border-radius:999px;background:rgba(10,10,14,.72);border:1px solid rgba(255,226,122,.6);
  color:#ffe27a;font:800 13px/1 Arial,Helvetica,sans-serif;text-shadow:0 1px 2px #000;cursor:pointer}

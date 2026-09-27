@@ -2,6 +2,15 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<script>
+/* Dans l'appli (ouvert depuis la rue de Shinato) : pas de plein écran ni de blocage de l'orientation.
+   Dans la WebView Android, ce plein écran décale le tactile (boutons qui ne répondent plus, deux doigts). */
+(function(){ try{ if(window.parent!==window){
+  var non=function(){ return Promise.resolve(); };
+  Element.prototype.requestFullscreen=non; Element.prototype.webkitRequestFullscreen=non;
+  if(window.screen&&screen.orientation){ try{ screen.orientation.lock=function(){ return Promise.resolve(); }; }catch(e){} }
+} }catch(e){} })();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Shinato Soccer Z</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
