@@ -159,6 +159,7 @@ h2{margin:6px 18px 10px;font-size:26px;font-weight:800;letter-spacing:-.3px}
   </div></div>
 </div>
 <div id="toast"></div>
+<div id="nuitV" style="position:fixed;inset:0;z-index:60;display:none;background:#000"><video id="nuitVid" playsinline style="width:100%;height:100%;object-fit:contain;background:#000"></video><button id="nuitFermer" style="position:fixed;z-index:61;right:calc(12px + env(safe-area-inset-right,0px));top:calc(12px + env(safe-area-inset-top,0px));padding:9px 15px;border-radius:999px;border:1.5px solid rgba(255,255,255,.6);background:rgba(0,0,0,.65);color:#fff;font:800 14px system-ui,sans-serif">✕ Fermer</button></div>
 <iframe id="sortie" title="Balade sur le boulevard" allow="autoplay"></iframe>
 <iframe id="resto" title="Dîner au RestoChic" allow="autoplay"></iframe>
 <iframe id="telV" title="Téléphone" allow="autoplay; camera; microphone"></iframe>
@@ -796,6 +797,7 @@ addEventListener('message',e=>{
     f.onload=()=>{ f.style.opacity='1'; try{ f.contentWindow.focus(); }catch(er){} };
   }
   if(e.data.type==='resto:fin'){
+    if(e.data.fin!=='throw') restoFait[id]=true;          // elle a dîné avec Rudy ce soir
     const f=$('resto'); f.style.opacity='0'; const fin=e.data.fin||'mid';
     setTimeout(()=>{ f.style.display='none'; f.srcdoc='';
       gagne(id,COEUR_RESTO[fin]||0);
@@ -906,7 +908,49 @@ function quitteLit(apres,sansFondu){
   if(sansFondu){ fin(); return; }
   $('voile').classList.add('on'); setTimeout(()=>{ fin(); $('voile').classList.remove('on'); },450);
 }
-function dormir(){ fermeMenus(); occupee=false; contact(); toast("« Je veux que tu dormes ici ce soir » : cette partie arrive bientôt."); }
+/* ---------- « Je veux que tu dormes ici ce soir » ---------- */
+const restoFait={};
+const NUIT={
+ sophie:{
+  video:'/assets/web/visite/sophie_nuit.mp4',
+  non:["Dormir ici ? Doucement, Rudy… on n'en est pas encore là.",
+       "Tu ne m'as même pas encore invitée au restaurant…",
+       "Je t'aime bien, mais laisse-moi un peu de temps.",
+       "Hihi, t'es pressé, toi ! Pas ce soir.",
+       "Il faut me mériter, monsieur. Un dîner, pour commencer ?"],
+  oui:["Rester ici, avec toi… j'en rêvais depuis le dîner.",
+       "Éteins la lumière… et viens tout près de moi.",
+       "Cette nuit, je suis toute à toi, Rudy.",
+       "Tu as été parfait ce soir… je n'ai plus du tout envie de rentrer.",
+       "Approche… j'ai un peu froid. Réchauffe-moi."],
+  apres:["C'était une nuit magique… mais je dois rentrer, maintenant.",
+         "Je n'oublierai pas ce moment. Il faut que j'y aille, à très vite.",
+         "Mmh… j'ai passé un moment merveilleux. Je rentre avant qu'on s'inquiète pour moi.",
+         "Tu es incroyable, Rudy. Je file, mais je reviendrai.",
+         "Quelle nuit… Je dois partir, mais je pense déjà à toi."]
+ }
+};
+const auHasard=L=>L[Math.floor(Math.random()*L.length)];
+function dormir(){
+  fermeMenus(); contact(); const id=ici, N=NUIT[id];
+  if(!N){ occupee=false; toast("« Je veux que tu dormes ici ce soir » : pour elle, cette partie arrive bientôt."); return; }
+  if(COEUR[id]<80||!restoFait[id]){ occupee=true; humeur(10,3200); dit(auHasard(N.non),3200); setTimeout(()=>{ occupee=false; },3200); return; }
+  // elle accepte : une phrase, puis la vidéo
+  occupee=true; humeur(3,3400); dit(auHasard(N.oui),3400);
+  setTimeout(()=>{ if(ici!==id) return; tait(); ouvreNuit(N.video,()=>{
+      humeur(8,4200); dit(auHasard(N.apres),4200); gagne(id,5);
+      setTimeout(()=>{ occupee=false; depart(); },4300);        // elle rentre chez elle
+    }); },3500);
+}
+function ouvreNuit(src,fin){
+  const b=$('nuitV'), v=$('nuitVid'); let fini=false;
+  const termine=()=>{ if(fini) return; fini=true; try{ v.pause(); }catch(e){} b.style.display='none'; v.removeAttribute('src'); try{ v.load(); }catch(e){}
+    try{ if(DANS_APPLI&&Android.radio) Android.radio(true); }catch(e){} fin(); };
+  try{ if(DANS_APPLI&&Android.radio) Android.radio(false); }catch(e){}
+  v.onended=termine; v.onerror=()=>{ toast("La vidéo n'a pas pu se lire (fichier manquant ?)",3000); termine(); };
+  $('nuitFermer').onclick=termine;
+  v.src=src; b.style.display='block'; const q=v.play(); if(q&&q.catch) q.catch(()=>{});
+}
 [L1,L2].forEach(el=>el.addEventListener('click',()=>{ if(reglage||!ici||mode!=='lit') return; if($('menu').style.display==='flex'||$('discu').style.display==='flex') return; menu(); }));
 
 /* ---------- les jeux : elle se moque si elle a gagné, elle demande sa revanche si elle a perdu ---------- */
@@ -1084,7 +1128,7 @@ let zonesTxt='';
 function rectDe(el){ if(!el) return null; const cs=getComputedStyle(el); if(cs.display==='none'||cs.visibility==='hidden'||+cs.opacity<0.05) return null;
   const r=el.getBoundingClientRect(); if(r.width<2||r.height<2) return null; return [r.left,r.top,r.right,r.bottom].map(Math.round); }
 setInterval(()=>{
-  const z=[]; const plein=['sortie','resto'].some(i=>$(i).style.display==='block');
+  const z=[]; const plein=['sortie','resto','nuitV'].some(i=>$(i).style.display==='block');
   if(plein) z.push([0,0,innerWidth,innerHeight]);
   else [img,(mode==='lit'?(litCouche?L2:L1):null),$('menu'),$('discu')].forEach(e=>{ const r=rectDe(e); if(r) z.push(r); });
   const t=JSON.stringify(z); if(t!==zonesTxt){ zonesTxt=t; try{ if(DANS_APPLI&&Android.zones) Android.zones(t); }catch(e){} }
