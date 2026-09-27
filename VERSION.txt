@@ -1,7 +1,6 @@
-version 158 — Shinato Soccer jouable dans l'appli + plage de Gisèle sans lag au 2e passage
-  - Shinato Soccer (shinato/jeux/soccer.html) : dans l'appli, le jeu ne passe plus en
-    plein écran et ne bloque plus l'orientation au lancement. Ce plein écran, dans la
-    WebView Android, décalait le tactile (boutons qui ne répondent plus, deux doigts).
-  - Rue (shinato/index.html) : quand un lieu est remplacé par un autre (plage, plage de
-    Gisèle, Vaviel…), la mémoire de ses dessins (2D/3D) est rendue tout de suite, pour que
-    la plage de Gisèle ne rame plus au deuxième passage.
+version 159 — Shinato Soccer : commandes tactiles refaites
+  - Stick et boutons (Tir, Passe, Esquive, Tacle, flèches du duel) écoutent directement
+    les doigts, chacun suivi à part : on peut diriger et tirer en même temps, et un
+    appui ne se perd plus dans la WebView Android. Zone d'appui des boutons élargie.
+  - Pas de plein écran dans l'appli (il décalait le tactile).
+  - Rue : la mémoire de dessin d'un lieu est rendue quand on le quitte (plage de Gisèle).

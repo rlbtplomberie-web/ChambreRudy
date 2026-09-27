@@ -117,6 +117,12 @@ body{background:#0b1433}
 @media (orientation:portrait){#rotate{display:flex}}
 @media (prefers-reduced-motion:reduce){#play,#bShoot.sp,.bar.full i,#rotate .ph{animation:none}}
 </style>
+<style>
+/* touches : zone d'appui plus large que le rond, et toujours au-dessus de la zone du stick */
+#joyZone{z-index:1}
+.btn{z-index:2}
+.btn::after{content:"";position:absolute;inset:-14px;border-radius:50%}
+</style>
 </head>
 <body>
 <canvas id="gl"></canvas><canvas id="fg"></canvas>
@@ -958,6 +964,40 @@ $('toMenu').addEventListener('click',()=>{ $('end').style.display='none'; $('hud
 $('again').addEventListener('click',()=>{ startMatch(); });
 for(const d of DIRS) $('d_'+d).addEventListener('pointerdown',e=>{ e.preventDefault(); pickDuel(d); });
 requestAnimationFrame(frame);
+</script>
+<script>
+/* ---------- Commandes tactiles refaites pour l'appli Android ----------
+   Le stick et les boutons écoutent directement les doigts (événements « touch », chaque doigt suivi
+   à part), comme la rue de Shinato. Dans la WebView, les événements « pointer » d'un jeu ouvert dans
+   un cadre se perdaient : boutons qui ne répondent pas, ou qu'il faut toucher à deux doigts.
+   À la souris (ordinateur), rien ne change. */
+(function(){
+ if(!("ontouchstart" in window)) return;
+ var cibles=["joyZone","bShoot","bPass","bDodge","bTackle"].concat(DIRS.map(function(d){ return "d_"+d; }))
+   .map(function(i){ return document.getElementById(i); }).filter(Boolean);
+ // les anciens écouteurs « pointer » ne reçoivent plus les doigts (la souris, si)
+ ["pointerdown","pointermove","pointerup","pointercancel","pointerleave"].forEach(function(t){
+  window.addEventListener(t,function(e){ if(e.pointerType!=="mouse"&&cibles.indexOf(e.target)>=0) e.stopPropagation(); },true);
+ });
+ // stick
+ var jz=$("joyZone"), doigt=null;
+ function suivi(e){ for(var i=0;i<e.changedTouches.length;i++) if(e.changedTouches[i].identifier===doigt) return e.changedTouches[i]; return null; }
+ jz.addEventListener("touchstart",function(e){ e.preventDefault(); if(doigt!==null) return; var t=e.changedTouches[0]; doigt=t.identifier; joyId=-1; audio(); joyMove(t); },{passive:false});
+ jz.addEventListener("touchmove",function(e){ e.preventDefault(); var t=suivi(e); if(t) joyMove(t); },{passive:false});
+ function lache(e){ var t=suivi(e); if(t){ doigt=null; joyId=null; input.jx=input.jz=0; knob.style.transform=""; } }
+ jz.addEventListener("touchend",lache); jz.addEventListener("touchcancel",lache);
+ // boutons d'action
+ [["bShoot","shoot"],["bPass","pass"],["bDodge","dodge"],["bTackle","tackle"]].forEach(function(a){
+  var b=$(a[0]); if(!b) return;
+  b.addEventListener("touchstart",function(e){ e.preventDefault(); audio(); input[a[1]]=true; b.classList.add("down"); },{passive:false});
+  ["touchend","touchcancel"].forEach(function(t){ b.addEventListener(t,function(){ b.classList.remove("down"); }); });
+ });
+ // flèches du duel de gardien
+ DIRS.forEach(function(d){ var b=$("d_"+d); if(b) b.addEventListener("touchstart",function(e){ e.preventDefault(); pickDuel(d); },{passive:false}); });
+ // si l'appli repasse devant (retour, notification…), plus aucun doigt n'est considéré comme posé
+ function reset(){ doigt=null; joyId=null; input.jx=input.jz=0; knob.style.transform=""; }
+ window.addEventListener("blur",reset); document.addEventListener("visibilitychange",reset);
+})();
 </script>
 </body>
 </html>
