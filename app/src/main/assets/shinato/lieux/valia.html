@@ -78,6 +78,7 @@ function setFrame(k){if(k===cur)return;prev=cur;cur=k;swapT=performance.now()}
 let last=0;
 function start(){resize();nextStep();setFrame(SEQ[step.seq][0]);last=performance.now();requestAnimationFrame(loop)}
 function loop(now){
+  if(window.ARRET){ last=now; setFrame(window.ARRET); draw(now); requestAnimationFrame(loop); return; }   // elle s'arrête, à genoux, face à Rudy
   const dt=Math.min(0.05,(now-last)/1000)*speed;last=now;
   const seq=SEQ[step.seq];
   // déplacement
@@ -99,11 +100,12 @@ function loop(now){
   }
   draw(now);requestAnimationFrame(loop);
 }
+const TAILLE_D=0.8;                       // la danseuse, un peu plus petite
 function dancerRect(k){
-  const f=F[k];
-  if(f.pole)return{left:POLEX-f.ax,top:POLEFLOOR+f.top,w:f.w,h:f.h,flip:false};
+  const f=F[k], s=TAILLE_D, w=f.w*s, h=f.h*s, ax=f.ax*s, top=f.top*s;
+  if(f.pole)return{left:POLEX-ax,top:POLEFLOOR+top,w,h,flip:false};
   const flip=dir<0;
-  return{left:flip?x-(f.w-f.ax):x-f.ax,top:FLOOR+f.top,w:f.w,h:f.h,flip};
+  return{left:flip?x-(w-ax):x-ax,top:FLOOR+top,w,h,flip};
 }
 function drawSprite(k,alpha){
   const r=dancerRect(k);ctx.save();ctx.globalAlpha=alpha;
@@ -133,6 +135,10 @@ function draw(now){
   const t=Math.min(1,(now-swapT)/60);
   if(prev&&t<1){drawSprite(prev,1);drawSprite(cur,t)}else drawSprite(cur,1);
   dessineRudy();                                     // Rudy, devant la scène
+  const bd=document.getElementById('bulleD');
+  if(bd&&bd.style.display==='block'){ const fr=F[cur], r=dancerRect(cur);
+    bd.style.left=Math.max(6,Math.min(W-bd.offsetWidth-6,OX+(r.left+r.w*0.5)*S-bd.offsetWidth*0.3))+'px';
+    bd.style.top=Math.max(50,OY+r.top*S-bd.offsetHeight-8)+'px'; }
 }
 
 </script>
@@ -147,6 +153,11 @@ function draw(now){
   background:radial-gradient(circle at 40% 30%,#ffe98a,#ffc21a 60%,#b77a00);color:#3a2300;font-weight:900;font-size:17px;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(255,200,40,.7);cursor:pointer}
 #reserverV{right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(96px + env(safe-area-inset-bottom,0px));display:none;padding:14px 22px;border-radius:999px;border:2px solid #ffd6f0;
   background:radial-gradient(circle at 40% 30%,#ff9ad6,#ff4fb8 60%,#8c1760);color:#fff;font-weight:900;font-size:17px;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(255,79,184,.7);cursor:pointer}
+#chambreV{right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(162px + env(safe-area-inset-bottom,0px));display:none;padding:14px 22px;border-radius:999px;border:2px solid #e9d6ff;
+  background:radial-gradient(circle at 40% 30%,#c9a2ff,#8a4fff 60%,#3d1580);color:#fff;font-weight:900;font-size:16px;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(150,90,255,.7);cursor:pointer}
+.prixV{display:block;font-size:12px;font-weight:800;opacity:.9}
+#argentV{right:calc(10px + env(safe-area-inset-right,0px));top:calc(10px + env(safe-area-inset-top,0px));padding:8px 14px;border-radius:999px;border:1.5px solid rgba(255,225,160,.6);background:rgba(20,6,24,.82);color:#ffeec2;font-weight:800;font-size:13px}
+#toastV{position:fixed;z-index:45;left:50%;top:40%;transform:translateX(-50%);display:none;max-width:84%;padding:12px 16px;border-radius:14px;background:rgba(20,6,24,.94);border:1.5px solid rgba(255,79,184,.6);color:#fff;font-weight:800;font-size:15px;text-align:center}
 #videoV{position:fixed;inset:0;z-index:40;display:none;background:#000;align-items:center;justify-content:center}
 #videoV video{width:100%;height:100%;object-fit:contain;background:#000}
 #fermerVid{position:fixed;z-index:41;right:calc(12px + env(safe-area-inset-right,0px));top:calc(12px + env(safe-area-inset-top,0px));padding:9px 15px;border-radius:999px;border:1.5px solid rgba(255,255,255,.6);background:rgba(0,0,0,.65);color:#fff;font-weight:800;font-size:14px;cursor:pointer}
@@ -155,7 +166,11 @@ function draw(now){
 <div class="uiV" id="joyV" aria-label="Se déplacer"><div id="knobV"></div></div>
 <button class="uiV" id="sortirV">🚪 Sortir</button>
 <button class="uiV" id="regarderV">👀 Regarder</button>
-<button class="uiV" id="reserverV">💎 Réserver</button>
+<button class="uiV" id="reserverV">💎 Réserver<span class="prixV">50 €</span></button>
+<button class="uiV" id="chambreV">🛏️ Réserver une chambre<span class="prixV">100 €</span></button>
+<div class="uiV" id="argentV">💶 …</div>
+<div id="toastV"></div>
+<div id="bulleD" style="position:fixed;z-index:30;display:none;max-width:62%;padding:8px 13px 10px;border-radius:14px 14px 14px 4px;background:rgba(255,255,255,.96);color:#2a0b22;font-weight:800;font-size:15px;line-height:1.3;box-shadow:0 6px 16px rgba(0,0,0,.4);pointer-events:none"><span style="display:block;font-size:11px;color:#c2317a">La danseuse</span><span id="bulleDt"></span></div>
 <div id="videoV"><video id="vidV" playsinline preload="auto"></video><button id="fermerVid">✕ Fermer</button></div>
 <script>
 /* ---------- Rudy : la même planche que dans le Pixel Bar ---------- */
@@ -166,7 +181,7 @@ for(const k in RB) RB[k].fr=RB[k].img.map(chargeImg);
 const SOL_V={x0:420,x1:1380,y0:712,y1:835};           // le sol devant la scène, entre les tables
 const RUDY={x:900,y:820,dir:'haut',pas:0,bouge:false};
 let joyX=0,joyY=0;
-function tailleRudy(y){return 250+(y-SOL_V.y0)*0.55}
+function tailleRudy(y){return (250+(y-SOL_V.y0)*0.55)*1.25}
 function dessineRudy(){
   const set=RUDY.dir, R=RB[set], i=RUDY.bouge?Math.floor(RUDY.pas/(tailleRudy(RUDY.y)*0.13)):0, im=R.fr[i%R.fr.length];
   if(!im.complete) return;
@@ -194,9 +209,10 @@ function avanceRudy(){
   }else RUDY.bouge=false;
   // près de la danseuse : « Regarder »
   const fx=F[cur]&&F[cur].pole?POLEX:x;
-  const devant=!videoOuverte&&Math.abs(RUDY.x-fx)<260&&RUDY.y<790;
+  const devant=!videoOuverte&&!window.ARRET&&Math.abs(RUDY.x-fx)<260&&RUDY.y<790;
   document.getElementById('regarderV').style.display=devant?'block':'none';
   document.getElementById('reserverV').style.display=devant?'block':'none';
+  document.getElementById('chambreV').style.display=devant?'block':'none';
 }
 /* ---------- stick ---------- */
 (function(){
@@ -222,9 +238,30 @@ document.addEventListener('visibilitychange',()=>{ if(document.hidden) musV.paus
 /* ---------- regarder la danseuse : la vidéo ---------- */
 const vid=document.getElementById('vidV'), boiteVid=document.getElementById('videoV');
 function ouvreVideo(fichier){ videoOuverte=true; musV.pause(); boiteVid.style.display='flex'; vid.src='/assets/shinato/m/'+fichier; try{ vid.currentTime=0; }catch(e){} const q=vid.play(); if(q&&q.catch) q.catch(()=>{}); }
-function fermeVideo(){ videoOuverte=false; try{ vid.pause(); }catch(e){} boiteVid.style.display='none'; joueV(); }
+function fermeVideo(){ window.ARRET=null; videoOuverte=false; try{ vid.pause(); }catch(e){} boiteVid.style.display='none'; joueV(); }
 document.getElementById('regarderV').addEventListener('click',()=>ouvreVideo('valia_danse.mp4'));
-document.getElementById('reserverV').addEventListener('click',()=>ouvreVideo('valia_reserve.mp4'));
+// ---------- l'argent de Rudy : « Réserver » coûte 50 €, « Réserver une chambre » 100 € ----------
+function pont(){ for(const w of [window,parent,top]){ try{ if(w.Chambre&&w.Chambre.argent) return w.Chambre; }catch(e){} } return null; }
+function argent(){ const p=pont(); try{ return p?p.argent():null; }catch(e){ return null; } }
+function payer(n){ const p=pont(); try{ if(p&&p.ajouterArgent) p.ajouterArgent(-n); }catch(e){} majArgent(); }
+function majArgent(){ const a=argent(); document.getElementById('argentV').textContent='💶 '+(a===null?'—':a.toLocaleString('fr-FR')+' €'); }
+function toastV(t,ms){ const e=document.getElementById('toastV'); e.textContent=t; e.style.display='block'; clearTimeout(e._t); e._t=setTimeout(()=>e.style.display='none',ms||2400); }
+function reserver(prix,fichier){
+  const a=argent();
+  if(a!==null&&a<prix){ toastV("Il te faut "+prix+" € pour ça. Tu n'as que "+a+" €."); return; }
+  payer(prix); toastV("−"+prix+" €",1200); setTimeout(()=>ouvreVideo(fichier),500);
+}
+majArgent(); setInterval(majArgent,3000);
+document.getElementById('reserverV').addEventListener('click',()=>reserver(50,'valia_reserve.mp4'));
+document.getElementById('chambreV').addEventListener('click',()=>{
+  const a=argent(); if(a!==null&&a<100){ toastV("Il te faut 100 € pour ça. Tu n'as que "+a+" €."); return; }
+  payer(100); toastV("−100 €",1200);
+  // elle s'arrête, se met à genoux face à Rudy, et lui parle… puis la vidéo
+  dir=RUDY.x<x?-1:1; window.ARRET='belly_20'; setFrame('belly_20');
+  document.getElementById('bulleDt').textContent='Prépare-toi à prendre du plaisir…';
+  document.getElementById('bulleD').style.display='block';
+  setTimeout(()=>{ document.getElementById('bulleD').style.display='none'; ouvreVideo('valia_chambre.mp4'); },3000);
+});
 document.getElementById('fermerVid').addEventListener('click',fermeVideo);
 vid.addEventListener('ended',fermeVideo);
 /* ---------- sortir : retour sur le boulevard, devant le club ---------- */

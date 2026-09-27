@@ -1,3 +1,7 @@
-version 166 — Téléphone : nouvelle vidéo
+version 168 — Valia Club : la danseuse s'adresse à Rudy
 
-  Téléphone > Galerie > Vidéos : nouvelle vidéo (tel_video_18, 11 s).
+  - « Réserver une chambre » (100 €) : la danseuse s'arrête, se met à genoux
+    face à Rudy, et une bulle apparaît au-dessus d'elle :
+    « Prépare-toi à prendre du plaisir… ». Puis la vidéo. Après la vidéo,
+    elle reprend sa danse.
+  - La danseuse est un peu plus petite, Rudy un peu plus grand quand il marche.
