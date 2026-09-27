@@ -1,10 +1,3 @@
-version 171 — Sophie : « Je veux que tu dormes ici ce soir »
+version 172 — Téléphone : nouvelle vidéo
 
-  Sophie sur le lit > « Je veux que tu dormes ici ce soir » :
-  - Il faut son cœur à 80 % minimum ET l'avoir emmenée dîner au RestoChic
-    pendant cette visite (Sortir > balade > Inviter). Sinon elle refuse
-    (5 réponses différentes, au hasard).
-  - Si c'est bon : une phrase sensuelle (5 au hasard), puis la vidéo en plein
-    écran. À la fin, elle dit qu'elle a passé un bon moment et qu'elle doit
-    rentrer (5 au hasard), puis elle rentre chez elle.
-  - Les autres filles : cette partie arrive plus tard.
+  Téléphone > Galerie > Vidéos : nouvelle vidéo (tel_video_19, 5 s).
