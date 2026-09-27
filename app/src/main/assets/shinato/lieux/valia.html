@@ -258,12 +258,14 @@ document.getElementById('chambreV').addEventListener('click',()=>{
   payer(100); toastV("−100 €",1200);
   // elle s'arrête, se met à genoux face à Rudy, et lui parle… puis la vidéo
   dir=RUDY.x<x?-1:1; window.ARRET='belly_20'; setFrame('belly_20');
+  try{ vid.src='/assets/shinato/m/valia_chambre.mp4'; vid.load(); }catch(e){}
   document.getElementById('bulleDt').textContent='Prépare-toi à prendre du plaisir…';
   document.getElementById('bulleD').style.display='block';
   setTimeout(()=>{ document.getElementById('bulleD').style.display='none'; ouvreVideo('valia_chambre.mp4'); },3000);
 });
 document.getElementById('fermerVid').addEventListener('click',fermeVideo);
 vid.addEventListener('ended',fermeVideo);
+vid.addEventListener('error',()=>{ if(!videoOuverte) return; fermeVideo(); toastV("La vidéo n'a pas pu se lire (fichier manquant ?)",3200); });
 /* ---------- sortir : retour sur le boulevard, devant le club ---------- */
 document.getElementById('sortirV').addEventListener('click',()=>{ try{ musV.pause(); vid.pause(); }catch(e){} try{ parent.postMessage({type:'valia:sortie'},'*'); }catch(e){} });
 </script>

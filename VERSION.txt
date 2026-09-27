@@ -1,7 +1,7 @@
-version 168 — Valia Club : la danseuse s'adresse à Rudy
+version 169 — Valia Club : vidéo « Réserver une chambre »
 
-  - « Réserver une chambre » (100 €) : la danseuse s'arrête, se met à genoux
-    face à Rudy, et une bulle apparaît au-dessus d'elle :
-    « Prépare-toi à prendre du plaisir… ». Puis la vidéo. Après la vidéo,
-    elle reprend sa danse.
-  - La danseuse est un peu plus petite, Rudy un peu plus grand quand il marche.
+  - La vidéo de la chambre est remise dans l'appli (shinato/m/valia_chambre.mp4).
+  - Elle est chargée dès l'appui sur « Réserver une chambre », puis lancée à la
+    fin de la phrase de la danseuse.
+  - Si une vidéo du club ne peut pas se lire, un message le dit au lieu d'un
+    écran noir.
