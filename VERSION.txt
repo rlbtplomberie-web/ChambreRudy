@@ -1,10 +1,11 @@
-version 162 — Le boulevard dans la MAP
+version 163 — Chez Valia : le Valia Club
 
-  Téléphone > MAP : nouvelle destination « Le boulevard ». Rudy y va seul,
-  téléporté comme pour la plage ou Vaviel (depuis la chambre ou depuis la rue).
-  Il s'y promène avec la même planche que dans la rue de Shinato : il marche,
-  fume (bouton Fumer), marche la cigarette à la main, et la jette (bouton Jeter).
-  Stick : gauche/droite, et un peu vers le haut ou le bas sur la route.
-  Musique jazz du boulevard. Seul, pas d'accès au RestoChic (il faut venir avec
-  une fille, depuis la chambre). On repart par la MAP.
-  Toujours bloqué pendant qu'une fille est chez Rudy.
+  Sur le boulevard, quand Rudy s'y promène SEUL (arrivé par la MAP), devant
+  l'entrée de Chez Valia : flèche jaune brillante + bouton ENTRER.
+  À l'intérieur : la danseuse sur le podium, Rudy qui marche devant la scène
+  (même planche que dans le Pixel Bar), musique orientale du club.
+  Près de la danseuse : bouton « Regarder » -> la vidéo, en plein écran
+  (Fermer, ou elle se ferme à la fin). « Sortir » ramène devant le club.
+  Entrer / sortir / regarder autant de fois qu'on veut.
+  Le club n'existe pas pendant une balade avec une fille (et le RestoChic,
+  lui, reste réservé aux balades avec une fille).

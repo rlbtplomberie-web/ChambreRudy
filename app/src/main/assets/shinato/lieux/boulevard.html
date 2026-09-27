@@ -163,10 +163,18 @@ v.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){v.scrol
 #fumerS{bottom:calc(92px + env(safe-area-inset-bottom,0px));background:radial-gradient(circle at 40% 30%,#ffb56b,#d9731f 60%,#7a3a08)}
 #jeterS{bottom:calc(30px + env(safe-area-inset-bottom,0px));background:radial-gradient(circle at 40% 30%,#9aa3b8,#4d566b 60%,#232838)}
 .btnS.off{opacity:.35;pointer-events:none}
+#flecheV{position:absolute;z-index:6;display:none;width:0;height:0;pointer-events:none}
+#flecheV svg{position:absolute;left:-22px;top:-44px;width:44px;height:44px;filter:drop-shadow(0 0 8px #ffd23f) drop-shadow(0 0 16px #ffb000);animation:sauteV .7s ease-in-out infinite alternate}
+@keyframes sauteV{from{transform:translateY(0)}to{transform:translateY(-10px)}}
+#entrerS{bottom:calc(154px + env(safe-area-inset-bottom,0px));display:none;background:radial-gradient(circle at 40% 30%,#ffe98a,#ffc21a 60%,#b77a00);color:#3a2300;border-color:#fff3b0;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(255,200,40,.7)}
+#clubV{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:50;background:#0d0612;display:none}
 </style>
 <div id="rudyB" style="visibility:hidden"><span class="sol"></span><img id="rudyImg" alt="Rudy"></div>
 <audio id="musiqueS" loop preload="auto" src="/assets/web/visite/boulevard.mp3"></audio>
 <div class="uiB" id="joyS" aria-label="Se déplacer"><div id="knobS"></div></div>
+<div id="flecheV"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 L37 22 H27 V37 H13 V22 H3 Z" fill="#ffd93b" stroke="#fff6c2" stroke-width="2" stroke-linejoin="round"/></svg></div>
+<button class="uiB btnS" id="entrerS">ENTRER</button>
+<iframe id="clubV" title="Valia Club" allow="autoplay"></iframe>
 <button class="uiB btnS" id="fumerS">🚬 Fumer</button>
 <button class="uiB btnS off" id="jeterS">Jeter</button>
 <script>
@@ -174,7 +182,7 @@ v.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){v.scrol
 const IMG={"marche": ["/assets/shinato/m/f66b7486849bf5b6.webp", "/assets/shinato/m/cc08b27eef23e5a1.webp", "/assets/shinato/m/8d7a4da973184d42.webp", "/assets/shinato/m/c3af9ca2675d2358.webp", "/assets/shinato/m/e69420c5e154a6e8.webp", "/assets/shinato/m/1e7d270f5c81b1d7.webp"], "marchecig": ["/assets/shinato/m/d67e7594cc42e870.webp", "/assets/shinato/m/03ece0389ddde297.webp", "/assets/shinato/m/b151e5b2b7a95417.webp", "/assets/shinato/m/9b0eb765d4393a26.webp", "/assets/shinato/m/d754aefb2c136d92.webp", "/assets/shinato/m/25ffc9231580075c.webp"], "fumer": ["/assets/shinato/m/bedcf36925325251.webp", "/assets/shinato/m/4ebd35da82f3a2e9.webp", "/assets/shinato/m/f7881a04b223dd0e.webp", "/assets/shinato/m/7ffc91a79091a2b6.webp", "/assets/shinato/m/fa8228dd48637425.webp", "/assets/shinato/m/43eb2067b32c9926.webp", "/assets/shinato/m/8108a6212954d8a4.webp", "/assets/shinato/m/af7011fab2bf9118.webp"], "jeter": ["/assets/shinato/m/c641f840c39566aa.webp", "/assets/shinato/m/305939c97e25c315.webp", "/assets/shinato/m/f9d3aa2a9eb1e230.webp", "/assets/shinato/m/30b1d03ab2b1509e.webp", "/assets/shinato/m/787b5557b3a151cc.webp", "/assets/shinato/m/2d3b6b31173af9a5.webp", "/assets/shinato/m/2644b102ac4560ca.webp", "/assets/shinato/m/506c07a78b8481f4.webp", "/assets/shinato/m/ab9a2f2011d3f12f.webp"]};
 // les images de Rudy : 560 × 800, le personnage fait 660 de haut, les pieds à 30 du bas
 const el=document.getElementById('rudyB'), im=document.getElementById('rudyImg'), scene=document.getElementById('scene'), vue=document.getElementById('vue');
-scene.appendChild(el);
+scene.appendChild(el); scene.appendChild(document.getElementById('flecheV'));
 const Y_HAUT=338, Y_BAS=492, X_MIN=60, X_MAX=2110, H_BASE=96;      // la route, dans les coordonnées du décor (2172 × 528)
 let x=330, y=400, sens=1, dirX=0, dirY=0, etat='repos', clope=false, f=0, phase=0, parcours=0;
 const DUREE={fumer:300, jeter:190, repos:520, reposcig:600};
@@ -239,17 +247,34 @@ function boucle(now){
     montre(L[Math.min(f,L.length-1)]);
   }
   place();
+  // devant l'entrée de Chez Valia : la flèche jaune et le bouton « ENTRER »
+  const fv=document.getElementById('flecheV'), be=document.getElementById('entrerS');
+  if(x>1850&&x<2030&&!dansClub){ fv.style.display='block'; fv.style.left=(x/2172*100)+'%'; fv.style.top=((y-hp*1.08)/528*100)+'%'; be.style.display='block'; }
+  else{ fv.style.display='none'; be.style.display='none'; }
   const sc=scene.getBoundingClientRect(); const cible=x/2172*sc.width-vue.clientWidth/2;
   camera=camera===null?cible:camera+(cible-camera)*Math.min(1,dt*4); vue.scrollLeft=camera;
 }
 requestAnimationFrame(boucle);
 
+// ---------- Chez Valia : on entre, on ressort, autant de fois qu'on veut ----------
+let dansClub=false; const club=document.getElementById('clubV');
+document.getElementById('entrerS').addEventListener('click',()=>{
+  if(dansClub) return; dansClub=true; dirX=dirY=0; for(const k in touches) touches[k]=false;
+  try{ mus.pause(); }catch(e){}
+  club.src='/assets/shinato/lieux/valia.html'; club.style.display='block';
+  setTimeout(()=>{ try{ club.focus(); }catch(e){} },300);
+});
+addEventListener('message',e=>{
+  if(!e.data||e.data.type!=='valia:sortie') return;
+  club.style.display='none'; club.src='about:blank'; dansClub=false;
+  x=1940; y=Math.max(y,360); sens=1; etat='repos'; f=0; joue();
+});
 // ---------- la musique du boulevard (celle de la ville se tait le temps d'être ici) ----------
 const mus=document.getElementById('musiqueS'); mus.volume=.45;
 function joue(){ const q=mus.play(); if(q&&q.catch) q.catch(()=>{}); }
 try{ if(parent&&parent.RUDY_AUDIO&&!parent.RUDY_AUDIO.paused) parent.RUDY_AUDIO.pause(); }catch(e){}
-joue(); ['pointerdown','touchstart','keydown'].forEach(t=>addEventListener(t,()=>{ if(mus.paused) joue(); },{passive:true}));
-document.addEventListener('visibilitychange',()=>{ if(document.hidden) mus.pause(); else joue(); });
+joue(); ['pointerdown','touchstart','keydown'].forEach(t=>addEventListener(t,()=>{ if(mus.paused&&!dansClub) joue(); },{passive:true}));
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) mus.pause(); else if(!dansClub) joue(); });
 addEventListener('pagehide',()=>{ try{ mus.pause(); }catch(e){} });
 })();
 </script>
