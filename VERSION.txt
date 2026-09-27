@@ -1,3 +1,6 @@
-version 173 — Téléphone : nouvelle vidéo
+version 174 — Sophie : la nuit dès 60 %
 
-  Téléphone > Galerie > Vidéos : nouvelle vidéo (tel_video_20, 5 s).
+  « Je veux que tu dormes ici ce soir » avec Sophie, après le dîner au RestoChic :
+  - cœur entre 60 et 79 % : nouvelle vidéo (sophie_nuit60) ;
+  - cœur à 80 % ou plus : la vidéo d'avant, inchangée ;
+  - moins de 60 %, ou pas de dîner : elle refuse, comme avant.
