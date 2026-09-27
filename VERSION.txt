@@ -1,2 +1,4 @@
-version 156 — Téléphone : une nouvelle vidéo
-  - Vidéo web/vid/tel_video_17.mp4 dans l'appli Vidéos.
+version 157 — Pistolet à eau : vidéos de victoire en 1 contre 8
+  En 1 contre 8, quand Mifa, Gisèle ou Sophie trempe Rudy en dernier, sa vidéo
+  passe à la place de l'image (shinato/m/eau8_*.mp4 + .webm). Les autres filles
+  gardent l'image, comme avant. Ces vidéos se débloquent aussi dans le téléphone.
