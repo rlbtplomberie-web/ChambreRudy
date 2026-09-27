@@ -1,2 +1,2 @@
-version 155 — Téléphone : une nouvelle vidéo
-  - Vidéo web/vid/tel_video_16.mp4 dans l'appli Vidéos.
+version 156 — Téléphone : une nouvelle vidéo
+  - Vidéo web/vid/tel_video_17.mp4 dans l'appli Vidéos.
