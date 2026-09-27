@@ -167,6 +167,11 @@ v.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){v.scrol
 #flecheV svg{position:absolute;left:-22px;top:-44px;width:44px;height:44px;filter:drop-shadow(0 0 8px #ffd23f) drop-shadow(0 0 16px #ffb000);animation:sauteV .7s ease-in-out infinite alternate}
 @keyframes sauteV{from{transform:translateY(0)}to{transform:translateY(-10px)}}
 #entrerS{bottom:calc(154px + env(safe-area-inset-bottom,0px));display:none;background:radial-gradient(circle at 40% 30%,#ffe98a,#ffc21a 60%,#b77a00);color:#3a2300;border-color:#fff3b0;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(255,200,40,.7)}
+#rentrerQ{position:fixed;z-index:30;left:50%;top:38%;transform:translateX(-50%);display:none;flex-direction:column;gap:10px;width:min(82%,320px);padding:16px;border-radius:18px;background:rgba(14,10,30,.95);border:1.5px solid rgba(255,225,160,.55);color:#fff;font-family:system-ui,sans-serif;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#rentrerQ b{font-size:17px}
+#rentrerQ .l{display:flex;gap:10px}
+#rentrerQ button{flex:1;padding:12px;border-radius:14px;border:0;font-weight:900;font-size:16px;cursor:pointer}
+#rentrerOui{background:#2fcf62;color:#062611}#rentrerNon{background:#3a3560;color:#fff}
 #clubV{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:50;background:#0d0612;display:none}
 </style>
 <div id="rudyB" style="visibility:hidden"><span class="sol"></span><img id="rudyImg" alt="Rudy"></div>
@@ -175,6 +180,7 @@ v.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){v.scrol
 <div id="flecheV"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 L37 22 H27 V37 H13 V22 H3 Z" fill="#ffd93b" stroke="#fff6c2" stroke-width="2" stroke-linejoin="round"/></svg></div>
 <button class="uiB btnS" id="entrerS">ENTRER</button>
 <iframe id="clubV" title="Valia Club" allow="autoplay"></iframe>
+<div id="rentrerQ" role="dialog" aria-label="Rentrer"><b>🏠 Voulez-vous rentrer ?</b><div class="l"><button id="rentrerOui">Oui</button><button id="rentrerNon">Non</button></div></div>
 <button class="uiB btnS" id="fumerS">🚬 Fumer</button>
 <button class="uiB btnS off" id="jeterS">Jeter</button>
 <script>
@@ -229,6 +235,7 @@ function boucle(now){
   const dt=Math.min(.05,(now-avant)/1000); avant=now;
   let vx=dirX, vy=dirY;
   if(touches.ArrowRight) vx=1; if(touches.ArrowLeft) vx=-1; if(touches.ArrowUp) vy=-1; if(touches.ArrowDown) vy=1;
+  if(questionRentrer){ vx=0; vy=0; }
   const hp=hPerso(), libre=(etat==='repos'||etat==='marche');
   if(libre&&(vx||vy)){
     if(etat!=='marche'){ etat='marche'; parcours=0; }
@@ -251,11 +258,23 @@ function boucle(now){
   const fv=document.getElementById('flecheV'), be=document.getElementById('entrerS');
   if(x>1850&&x<2030&&!dansClub){ fv.style.display='block'; fv.style.left=(x/2172*100)+'%'; fv.style.top=((y-hp*1.08)/528*100)+'%'; be.style.display='block'; }
   else{ fv.style.display='none'; be.style.display='none'; }
+  // tout à gauche du boulevard : on propose de rentrer
+  if(x<=X_MIN+4&&!dansClub&&!questionRentrer&&!refusRentrer){ questionRentrer=true; dirX=dirY=0; for(const k in touches) touches[k]=false; document.getElementById('rentrerQ').style.display='flex'; }
+  if(x>X_MIN+80) refusRentrer=false;
   const sc=scene.getBoundingClientRect(); const cible=x/2172*sc.width-vue.clientWidth/2;
   camera=camera===null?cible:camera+(cible-camera)*Math.min(1,dt*4); vue.scrollLeft=camera;
 }
 requestAnimationFrame(boucle);
 
+// ---------- rentrer chez soi (tout à gauche) ----------
+let questionRentrer=false, refusRentrer=false;
+document.getElementById('rentrerOui').addEventListener('click',()=>{
+  document.getElementById('rentrerQ').style.display='none'; try{ mus.pause(); }catch(e){}
+  try{ if(parent&&parent.teleporteVers){ parent.teleporteVers('home'); return; } }catch(e){}
+  try{ if(window.Chambre&&window.Chambre.rentrer){ window.Chambre.rentrer(); return; } }catch(e){}
+  try{ parent.postMessage({type:'telephone:aller',lieu:'home'},'*'); }catch(e){}
+});
+document.getElementById('rentrerNon').addEventListener('click',()=>{ document.getElementById('rentrerQ').style.display='none'; questionRentrer=false; refusRentrer=true; });
 // ---------- Chez Valia : on entre, on ressort, autant de fois qu'on veut ----------
 let dansClub=false; const club=document.getElementById('clubV');
 document.getElementById('entrerS').addEventListener('click',()=>{

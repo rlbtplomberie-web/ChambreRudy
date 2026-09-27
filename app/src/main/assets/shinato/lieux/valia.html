@@ -148,7 +148,7 @@ function draw(now){
 #joyV{left:calc(18px + env(safe-area-inset-left,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));width:120px;height:120px;border-radius:50%;
   background:radial-gradient(circle,rgba(255,255,255,.08),rgba(30,6,30,.55));border:2px solid rgba(255,79,184,.55);touch-action:none}
 #knobV{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#ffc2e6 45%,#ff4fb8);box-shadow:0 3px 10px rgba(0,0,0,.5)}
-#sortirV{left:calc(10px + env(safe-area-inset-left,0px));top:calc(10px + env(safe-area-inset-top,0px));padding:8px 14px;border-radius:999px;border:1.5px solid rgba(255,79,184,.6);background:rgba(20,6,24,.82);color:#ffd6f0;font-weight:800;font-size:13px;cursor:pointer}
+#sortirV{right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(30px + env(safe-area-inset-bottom,0px));display:none;padding:16px 24px;border-radius:999px;border:2px solid rgba(255,214,240,.9);background:radial-gradient(circle at 40% 30%,#5a2a52,#2a0b22 70%);color:#ffd6f0;font-weight:900;font-size:17px;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 16px rgba(255,79,184,.5);cursor:pointer}
 #regarderV{right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(30px + env(safe-area-inset-bottom,0px));display:none;padding:16px 22px;border-radius:999px;border:2px solid #fff3b0;
   background:radial-gradient(circle at 40% 30%,#ffe98a,#ffc21a 60%,#b77a00);color:#3a2300;font-weight:900;font-size:17px;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(255,200,40,.7);cursor:pointer}
 #reserverV{right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(96px + env(safe-area-inset-bottom,0px));display:none;padding:14px 22px;border-radius:999px;border:2px solid #ffd6f0;
@@ -164,7 +164,7 @@ function draw(now){
 </style>
 <audio id="musiqueV" loop preload="auto" src="/assets/shinato/m/valia_club.mp3"></audio>
 <div class="uiV" id="joyV" aria-label="Se déplacer"><div id="knobV"></div></div>
-<button class="uiV" id="sortirV">🚪 Sortir</button>
+<button class="uiV" id="sortirV">🚪 Sortie</button>
 <button class="uiV" id="regarderV">👀 Regarder</button>
 <button class="uiV" id="reserverV">💎 Réserver<span class="prixV">50 €</span></button>
 <button class="uiV" id="chambreV">🛏️ Réserver une chambre<span class="prixV">100 €</span></button>
@@ -179,7 +179,7 @@ const RB={"droite": {"img": ["/assets/shinato/m/ef1f0b8c2cc9473b.webp", "/assets
 const chargeImg=s=>{const i=new Image();i.src=s;return i};
 for(const k in RB) RB[k].fr=RB[k].img.map(chargeImg);
 const SOL_V={x0:420,x1:1380,y0:712,y1:835};           // le sol devant la scène, entre les tables
-const RUDY={x:900,y:820,dir:'haut',pas:0,bouge:false};
+const RUDY={x:900,y:790,dir:'haut',pas:0,bouge:false};   // il entre un peu au-dessus de la sortie
 let joyX=0,joyY=0;
 function tailleRudy(y){return (250+(y-SOL_V.y0)*0.55)*1.25}
 function dessineRudy(){
@@ -213,6 +213,8 @@ function avanceRudy(){
   document.getElementById('regarderV').style.display=devant?'block':'none';
   document.getElementById('reserverV').style.display=devant?'block':'none';
   document.getElementById('chambreV').style.display=devant?'block':'none';
+  // tout en bas de la salle : la sortie
+  document.getElementById('sortirV').style.display=(!videoOuverte&&!window.ARRET&&RUDY.y>=SOL_V.y1-18)?'block':'none';
 }
 /* ---------- stick ---------- */
 (function(){

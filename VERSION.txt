@@ -1,7 +1,7 @@
-version 169 — Valia Club : vidéo « Réserver une chambre »
+version 170 — Sortie du club et retour à la maison
 
-  - La vidéo de la chambre est remise dans l'appli (shinato/m/valia_chambre.mp4).
-  - Elle est chargée dès l'appui sur « Réserver une chambre », puis lancée à la
-    fin de la phrase de la danseuse.
-  - Si une vidéo du club ne peut pas se lire, un message le dit au lieu d'un
-    écran noir.
+  - Valia Club : plus de bouton « Sortir » en haut. Pour sortir, Rudy descend
+    tout en bas de la salle : un bouton « Sortie » apparaît à droite.
+  - Boulevard (seul) : tout à gauche, une question « Voulez-vous rentrer ? ».
+    Oui -> retour dans la chambre. Non -> on reste ; la question revient si on
+    s'éloigne puis qu'on retourne tout à gauche.
