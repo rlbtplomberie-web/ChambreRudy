@@ -782,7 +782,7 @@ function sortir(){
     const d=$('discu'); d.innerHTML=''; const bt=document.createElement('button'); bt.className='opt'; bt.textContent="Je t'emmène faire un tour sur le boulevard.";
     bt.addEventListener('click',()=>{ d.style.display='none'; contact(); humeur(b[0],2800); dit(b[1],2800);
       // en route pour le boulevard : la vidéo de la moto, puis la balade
-      setTimeout(()=>{ if(ici!==id) return; tait(); ouvreNuit('/assets/web/visite/'+id+'_moto.mp4',()=>partirEnBalade(id)); },2900); });
+      setTimeout(()=>{ if(ici!==id) return; tait(); ouvreNuit('/assets/web/visite/'+id+'_moto.mp4',()=>partirEnBalade(id),true); },2900); });
     d.appendChild(bt); d.style.display='flex';
   },3000);
 }
@@ -834,7 +834,7 @@ function partirEnBalade(id){
 }
 addEventListener('message',e=>{
   if(!e.data||!enBalade) return; const id=enBalade;
-  if(e.data.type==='sortie:bisou'){ gagne(id,e.data.n===1?5:(e.data.n<=3?1:0)); try{ $('sortie').contentWindow.postMessage({type:'coeur',v:COEUR[id]},'*'); }catch(er){} }
+  if(e.data.type==='sortie:bisou'){ gagne(id,2); /* chaque bisou dans la rue : +2 % */ try{ $('sortie').contentWindow.postMessage({type:'coeur',v:COEUR[id]},'*'); }catch(er){} }
   if(e.data.type==='sortie:fin'){ retourMaison(id); }
 });
 
@@ -1036,11 +1036,21 @@ function dormir(){
       setTimeout(()=>{ occupee=false; depart(); },4300);        // elle rentre chez elle
     }); },3500);
 }
-function ouvreNuit(src,fin){
+function musiquesDeLaPage(doc,prof,out){
+  if(!doc||prof>5) return out;
+  try{ doc.querySelectorAll('audio,video').forEach(m=>{ if(m.id!=='nuitVid') out.push(m); }); }catch(e){}
+  try{ [...doc.getElementsByTagName('iframe')].forEach(f=>{ try{ musiquesDeLaPage(f.contentDocument,prof+1,out); }catch(e){} }); }catch(e){}
+  return out;
+}
+function ouvreNuit(src,fin,garderRadioCoupee){
   const b=$('nuitV'), v=$('nuitVid'); let fini=false;
+  // la vidéo passe seule : on coupe la radio de la chambre ET toutes les musiques des pages (boulevard, resto…)
+  const coupees=musiquesDeLaPage(document,0,[]).filter(m=>!m.paused); coupees.forEach(m=>{ try{ m.pause(); }catch(e){} });
   const termine=()=>{ if(fini) return; fini=true; try{ v.pause(); }catch(e){} b.style.display='none'; v.removeAttribute('src'); try{ v.load(); }catch(e){}
-    try{ if(DANS_APPLI&&Android.radio) Android.radio(true); }catch(e){} fin(); };
-  try{ if(DANS_APPLI&&Android.radio) Android.radio(false); }catch(e){}
+    coupees.forEach(m=>{ try{ if(m.isConnected&&m.tagName==='AUDIO'){ const p=m.play(); if(p&&p.catch) p.catch(()=>{}); } }catch(e){} });
+    if(!garderRadioCoupee){ try{ if(typeof Android!=='undefined'&&Android.radio) Android.radio(true); }catch(e){} }
+    fin(); };
+  try{ if(typeof Android!=='undefined'&&Android.radio) Android.radio(false); }catch(e){}   // (avant : jamais appelé -> la radio continuait pendant la vidéo)
   v.onended=termine; v.onerror=()=>{ toast("La vidéo n'a pas pu se lire (fichier manquant ?)",3000); termine(); };
   $('nuitFermer').onclick=termine;
   v.src=src; b.style.display='block'; const q=v.play(); if(q&&q.catch) q.catch(()=>{});
@@ -1266,7 +1276,7 @@ partirEnBalade=function(id){
   BALADE_BASE=baseBalade; partirAvant(id);
   try{ if(DANS_APPLI&&Android.radio) Android.radio(false); }catch(e){}     // la radio de la chambre se tait : le boulevard a sa musique
 };
-addEventListener('message',e=>{ if(e.data&&e.data.type==='sortie:fin'){ try{ if(DANS_APPLI&&Android.radio) Android.radio(true); }catch(er){} } });
+/* (la radio revient à la fin de la vidéo du retour, pas avant) */
 window.chargeResto=function(){ return baseResto?Promise.resolve(baseResto):fetch(R+'resto.html').then(r=>r.text()).then(t=>(baseResto=t)); };
 // ---------- ce qui ne sert qu'au test ----------
 ['btnSimu','btnReglage'].forEach(i=>{ const e=$(i); if(e) e.style.display='none'; });

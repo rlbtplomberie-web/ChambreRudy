@@ -1017,7 +1017,13 @@ class ChambreActivity : ComponentActivity() {
         fun ajouterArgent(n: Int) { Argent.ajouter(this@ChambreActivity, n); runOnUiThread { majArgent() } }
 
         @android.webkit.JavascriptInterface
-        fun radio(allumee: Boolean) { runOnUiThread { SonPartage.volume(if (allumee) 1f else 0f) } }
+        fun radio(allumee: Boolean) {
+            runOnUiThread {
+                // pendant une vidéo ou une balade : la radio s'arrête vraiment, puis reprend
+                SonPartage.volume(if (allumee) 1f else 0f)
+                try { if (allumee) { if (!teleAllumee && !youtubeAllume) son.enPause(false) } else son.enPause(true) } catch (_: Throwable) { }
+            }
+        }
     }
 
     override fun onResume() {

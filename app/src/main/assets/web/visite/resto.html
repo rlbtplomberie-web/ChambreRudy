@@ -103,6 +103,12 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .mini .breathe{position:absolute;inset:0;transform-origin:50% 100%;animation:breathe 3.6s ease-in-out infinite}
 @keyframes breathe{0%,100%{transform:scale(1,1)}45%{transform:scale(1.008,1.018)}}
 .mini img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 40%}
+/* la poitrine bouge un peu : une copie de l'image, fondue en ovale sur la poitrine, qui rebondit doucement */
+.mini img.sein{pointer-events:none;transform-origin:50% var(--y,50%);
+  -webkit-mask-image:radial-gradient(ellipse 46% 12% at 50% var(--y,50%),#000 55%,transparent 100%);
+  mask-image:radial-gradient(ellipse 46% 12% at 50% var(--y,50%),#000 55%,transparent 100%);
+  animation:rebond 1.15s ease-in-out infinite}
+@keyframes rebond{0%,100%{transform:translateY(0) scaleY(1)}22%{transform:translateY(-0.55%) scaleY(1.012)}48%{transform:translateY(0.4%) scaleY(0.994)}72%{transform:translateY(-0.2%) scaleY(1.006)}}
 .mini .vign{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 55%,transparent 45%,rgba(0,0,0,.55));transition:opacity .2s}
 .mini .hud2{position:relative;z-index:2;padding:10px 14px;display:flex;flex-direction:column;gap:8px;background:linear-gradient(rgba(0,0,0,.65),transparent)}
 .mini .bar{height:14px;border-radius:7px;background:rgba(255,255,255,.18);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
@@ -202,7 +208,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
   <div class="sheet hide" id="sheet"><div class="notes" id="sheetNotes"></div></div>
 
   <div class="mini hide" id="mini">
-    <div class="view"><div class="zoom" id="mZoom"><div class="breathe"><img id="mImg" alt=""></div></div><div class="vign"></div></div>
+    <div class="view"><div class="zoom" id="mZoom"><div class="breathe"><img id="mImg" alt=""><img id="mSein" class="sein" alt=""></div></div><div class="vign"></div></div>
     <div class="hud2"><div class="bar"><i id="mBar"></i></div><div class="status" id="mStatus">Elle mange</div></div>
     <div class="foot"><button class="hold" id="mHold">Maintiens pour regarder</button></div>
     <div class="card2" id="mCard"></div>
@@ -485,7 +491,9 @@ function miniGame(){
   return new Promise(resolve=>{
     const P=POV[G.id];const el=$('#mini'),img=$('#mImg'),zoom=$('#mZoom'),bar=$('#mBar'),st=$('#mStatus'),btn=$('#mHold'),card=$('#mCard');
     let prog=0,holding=false,state='eat',tState=0,dur=1500,running=false,last=0,raf=0,grace=0;
-    const setImg=k=>{img.src=P[k]};
+    const sein=$('#mSein'), YSEIN={infirmiere:'59%',rousse:'57%',ameline:'60%',boucles:'53%',tresses:'60%',blonde:'59%',couettes:'56%',afro:'58%'};
+    sein.style.setProperty('--y',YSEIN[G.id]||'50%');
+    const setImg=k=>{img.src=P[k];sein.src=P[k]};
     setImg('eat');bar.style.width='0%';zoom.style.transform='scale(1)';st.className='status';st.textContent='Elle mange';
     el.classList.remove('hide');idleG=false;
     card.innerHTML=`<h3>Regard discret</h3><p>${esc(G.name)} a le nez dans son assiette… Maintiens le bouton pour t'approcher discrètement. Lâche dès qu'elle relève la tête !</p><button class="big" id="mGo">C'est parti</button>`;

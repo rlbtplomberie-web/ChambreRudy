@@ -1,6 +1,9 @@
-version 189 — Voyage par la MAP sans voir la rue
+version 190 — Bisous, musique et mini-jeu du regard
 
-  Quand on part avec la MAP du téléphone (boulevard, plage, Vaviel, ville
-  délabrée), un écran de voyage « 🛵 En route vers … » s'affiche tout de suite
-  et reste jusqu'à ce que le lieu soit prêt : on ne voit plus la rue de
-  Shinato une ou deux secondes avant d'arriver. Départ aussi plus rapide.
+  - Balade sur le boulevard : chaque bisou donne +2 % de cœur (à chaque fois).
+  - Vidéos (moto aller/retour, nuits 60 % / 80 %) : plus aucune musique en même
+    temps. La radio de la chambre s'arrête vraiment (avant, l'ordre de la couper
+    ne partait jamais), ainsi que la musique du boulevard ou du resto. Elles
+    reprennent après la vidéo (après la moto de l'aller : la musique du boulevard).
+  - Resto, mini-jeu « Regard discret » : la poitrine bouge doucement, pour les
+    8 filles.
