@@ -1,18 +1,6 @@
-version 188 — Réparation générale (écrans noirs, tactile, allers-retours)
+version 189 — Voyage par la MAP sans voir la rue
 
-  - LA cause principale des écrans noirs : en quittant la ville (Shinato), l'appli
-    mettait en pause les minuteries de TOUTES les pages web. Au retour dans la
-    chambre, le téléphone (et les autres pages) restait figé ou noir. Corrigé :
-    Shinato coupe seulement ses sons, et chaque écran relance les minuteries.
-  - Si Android arrête une page par manque de mémoire, elle est rouverte toute seule
-    (téléphone, pages de la chambre, la fille dans la chambre, la télé YouTube),
-    au lieu de rester sur un écran noir.
-  - Téléphone dans la rue : rechargé à neuf après un voyage, un jeu ou un retour
-    dans l'appli, avec un écran « Chargement du téléphone… » au lieu du noir ;
-    s'il s'ouvre vide, il se recharge tout seul.
-  - Téléphone de la chambre : écran « Chargement… » au lieu du noir.
-  - La fille dans la chambre ne bloque plus jamais le doigt si sa page ne répond
-    plus : la chambre reprend la main au bout de 3 secondes.
-  - Valia Club : écran d'attente pendant son chargement, rechargé à chaque entrée.
-  - Sons : en quittant l'appli, toutes les musiques se mettent en pause (ville,
-    boulevard, club…) et reprennent au retour.
+  Quand on part avec la MAP du téléphone (boulevard, plage, Vaviel, ville
+  délabrée), un écran de voyage « 🛵 En route vers … » s'affiche tout de suite
+  et reste jusqu'à ce que le lieu soit prêt : on ne voit plus la rue de
+  Shinato une ou deux secondes avant d'arriver. Départ aussi plus rapide.

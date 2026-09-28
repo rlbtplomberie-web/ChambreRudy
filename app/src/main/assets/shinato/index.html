@@ -147,6 +147,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
 </style>
 </head>
 <body>
+<div id="voyageCouv" style="position:fixed;inset:0;z-index:95;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:radial-gradient(circle at 50% 40%,#1c1640,#07060f 70%);color:#fff;font:800 18px system-ui,sans-serif;text-align:center"><div style="font-size:42px">🛵</div><div id="voyageTxt">En route…</div></div>
+<script>
+/* Arrivée directe dans un lieu (MAP du téléphone depuis la chambre) : on cache la rue tout de suite,
+   pour ne pas la voir une seconde avant le lieu. */
+(function(){ try{ var t=localStorage.getItem("rudy_teleport"), n={plage:"la plage",vaviel:"Vaviel",ville:"la ville délabrée",delabree:"la ville délabrée",boulevard:"le boulevard"}[t];
+  if(n){ var c=document.getElementById("voyageCouv"); document.getElementById("voyageTxt").textContent="En route vers "+n+"…"; c.style.display="flex"; } }catch(e){} })();
+</script>
 <div id="vue">
  <div id="monde">
   <img id="carte" alt="">
@@ -1793,13 +1800,19 @@ else carte.addEventListener("load",demarre);
   try{ if(window.RUDY_AUDIO&&window.RUDY_AUDIO.paused){ var pr=window.RUDY_AUDIO.play(); if(pr&&pr.catch) pr.catch(function(){}); } }catch(e){}
   var cm=document.getElementById("moto");
   window.libereLieux();                                  // on quitte le bar ou le restaurant s'il y était
+  var couv=document.getElementById("voyageCouv");
   if(!dest){                                             // Shinato : retour dans la rue
+   if(couv) couv.style.display="none";
    if(cm){ cm.style.pointerEvents="none"; cm.style.display="none"; cm.srcdoc=""; }
    window.DESTINATION_MOTO="plage"; dir=0; window.repriseRue(); if(typeof cadre==="function") cadre(true);
    return;
   }
   window.DESTINATION_MOTO=dest; dir=0; window.pauseRue();
   if(!cm){ cm=document.createElement("iframe"); cm.id="moto"; cm.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(cm); }
+  // un écran de voyage le temps que le lieu se dessine : la rue ne se montre plus entre les deux
+  if(couv){ document.getElementById("voyageTxt").textContent="En route vers "+({plage:"la plage",vaviel:"Vaviel",ville:"la ville délabrée",delabree:"la ville délabrée",boulevard:"le boulevard"}[lieu]||"là-bas")+"…"; couv.style.display="flex"; }
+  var fini=false, cache=function(){ if(fini) return; fini=true; window.minuterieLibre(function(){ if(couv) couv.style.display="none"; },250); };
+  cm.onload=cache; window.minuterieLibre(cache,8000);
   cm.style.pointerEvents="auto"; cm.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/"+dest+".html")); cm.style.display="block";
   window.minuterieLibre(function(){ try{ cm.focus(); }catch(e){} },300);
  };
@@ -1818,7 +1831,7 @@ else carte.addEventListener("load",demarre);
  // arrivée depuis le téléphone de la chambre : la destination a été notée avant de sortir
  try{
   var t=localStorage.getItem("rudy_teleport");
-  if(t){ localStorage.removeItem("rudy_teleport"); window.minuterieLibre(function(){ window.teleporteVers(t); },900); }
+  if(t){ localStorage.removeItem("rudy_teleport"); window.minuterieLibre(function(){ window.teleporteVers(t); },120); }
  }catch(e){}
 })();
 </script>
