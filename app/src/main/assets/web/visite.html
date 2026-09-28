@@ -806,7 +806,7 @@ function retourMaison(id){
 setInterval(()=>{ try{ const t=+localStorage.getItem('rudy_retour_maison')||0; if(t&&Date.now()-t<120000&&enBalade){ localStorage.removeItem('rudy_retour_maison'); retourMaison(enBalade); } else if(t&&!enBalade) localStorage.removeItem('rudy_retour_maison'); }catch(e){} },800);
 /* ---------- le RestoChic : on passe à table avec la fille de la balade ---------- */
 const MERCI_RESTO={win:"C'était une soirée parfaite… Merci pour le dîner, Rudy.",mid:"C'était sympa, ce resto. Merci !",low:"Bon… merci pour le dîner quand même.",throw:"Tu l'as bien cherché, ce plat dans la figure !"};
-const COEUR_RESTO={win:8,mid:3,low:-3,throw:-8};
+const COEUR_RESTO={win:5,mid:5,low:0,throw:-8};      // réussi : +5 ; à 100 % (complicité 10/10) : +10
 addEventListener('message',e=>{
   if(!e.data||!enBalade) return; const id=enBalade;
   if(e.data.type==='resto:inviter'){
@@ -819,7 +819,7 @@ addEventListener('message',e=>{
     if(e.data.fin!=='throw') restoFait[id]=true;          // elle a dîné avec Rudy ce soir
     const f=$('resto'); f.style.opacity='0'; const fin=e.data.fin||'mid';
     setTimeout(()=>{ f.style.display='none'; f.srcdoc='';
-      gagne(id,COEUR_RESTO[fin]||0);
+      gagne(id,(e.data.aff>=10&&fin!=='throw')?10:(COEUR_RESTO[fin]||0));
       try{ const b=$('sortie').contentWindow; b.postMessage({type:'coeur',v:COEUR[id]},'*'); b.postMessage({type:'parle',t:MERCI_RESTO[fin]||MERCI_RESTO.mid},'*'); b.focus(); }catch(er){}
     },450);
   }

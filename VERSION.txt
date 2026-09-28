@@ -1,5 +1,10 @@
-version 185 — « Je veux que tu dormes ici ce soir » pour toutes
+version 186 — RestoChic : questions de chaque fille et nouveau cœur
 
-  Le choix « 💤 Je veux que tu dormes ici ce soir » est maintenant dans le menu
-  de toutes les filles, debout ET sur le lit (avant : seulement sur le lit).
-  Conditions inchangées (resto pendant la visite, 60 % / 80 % de cœur).
+  - Cœur après le dîner : complicité 10/10 (100 %) = +10 % ; dîner réussi à
+    moins de 100 % = +5 % ; soirée ratée = 0 ; assiette dans la figure = −8 %.
+  - 12 questions rien qu'à elle pour chaque fille (6 tirées au hasard à chaque
+    dîner, mélangées aux questions générales) :
+    Faty « hot », Mifa son corps, Karine Zelda et son côté fou, Gisèle la force
+    et les faiblesses de Rudy (corde, volley, pistolet à eau), Ameline sensuelle,
+    Rose son métier de strip-teaseuse, Katila vicieuse avec sa seringue,
+    Sophie l'amitié ambiguë.
