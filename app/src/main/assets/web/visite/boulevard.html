@@ -172,6 +172,10 @@ v.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){v.scrol
 @keyframes saute{from{transform:translateY(0)}to{transform:translateY(-10px)}}
 #inviterB{right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(104px + env(safe-area-inset-bottom,0px));display:none;padding:14px 20px;border-radius:999px;border:2px solid #fff3b0;
   background:radial-gradient(circle at 40% 30%,#ffe98a,#ffc21a 60%,#b77a00);color:#3a2300;font-weight:900;font-size:17px;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(255,200,40,.7);cursor:pointer}
+#rentrerQB{position:fixed;z-index:30;left:50%;top:38%;transform:translateX(-50%);display:none;flex-direction:column;gap:10px;width:min(82%,320px);padding:16px;border-radius:18px;background:rgba(14,10,30,.95);border:1.5px solid rgba(255,225,160,.55);color:#fff;font-family:system-ui,sans-serif;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+#rentrerQB b{font-size:17px}#rentrerQB .l{display:flex;gap:10px}
+#rentrerQB button{flex:1;padding:12px;border-radius:14px;border:0;font-weight:900;font-size:16px;cursor:pointer}
+#rqOui{background:#2fcf62;color:#062611}#rqNon{background:#3a3560;color:#fff}
 #bulleB{position:absolute;z-index:7;display:none;max-width:240px;padding:6px 11px 8px;border-radius:12px 12px 12px 3px;background:rgba(255,255,255,.96);color:#1c1740;font:700 13px/1.3 system-ui,sans-serif;pointer-events:none;white-space:normal}
 #bulleB b{display:block;font-size:11px;color:#c2317a}
 </style>
@@ -182,6 +186,7 @@ v.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){v.scrol
 <div id="flecheR"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 L37 22 H27 V37 H13 V22 H3 Z" fill="#ffd93b" stroke="#fff6c2" stroke-width="2" stroke-linejoin="round"/></svg></div>
 <button class="ui" id="inviterB">🍽️ Inviter</button>
 <button class="ui" id="rentrerB">🏠 Rentrer</button>
+<div id="rentrerQB" role="dialog" aria-label="Rentrer"><b>🏠 Voulez-vous rentrer ?</b><div class="l"><button id="rqOui">Oui</button><button id="rqNon">Non</button></div></div>
 <div class="ui" id="coeurB"><i>♥</i> <span id="coeurBt">__NOM__</span></div>
 <div class="ui" id="joyB" aria-label="Se déplacer"><div id="knobB"></div></div>
 <button class="ui" id="bisouB">💋 Embrasser</button>
@@ -269,6 +274,7 @@ function boucle(now){
   const dt=Math.min(.05,(now-avant)/1000); avant=now;
   let vx=dirX, vy=dirY;
   if(touches.ArrowRight) vx=1; if(touches.ArrowLeft) vx=-1; if(touches.ArrowUp) vy=-1; if(touches.ArrowDown) vy=1;
+  if(questionR){ vx=0; vy=0; }
   const bougent=(vx||vy)&&etat!=='resto';
   if(bougent){
     if(etat==='bisou'||etat==='approche'){ etat='repart'; montre(14); heure=now; }
@@ -287,6 +293,9 @@ function boucle(now){
   const fr=document.getElementById('flecheR'), ib=document.getElementById('inviterB');
   if(devantResto){ const h=taille(); fr.style.display='block'; fr.style.left=(x/2172*100)+'%'; fr.style.top=((y-h*1.08)/528*100)+'%'; ib.style.display='block'; }
   else{ fr.style.display='none'; ib.style.display='none'; }
+  // tout à gauche : on propose de rentrer
+  if(x<=X_MIN+4&&!questionR&&!refusR&&!rentre){ questionR=true; dirX=dirY=0; for(const k in touches) touches[k]=false; document.getElementById('rentrerQB').style.display='flex'; }
+  if(x>X_MIN+80) refusR=false;
   // la caméra suit le couple
   const sc=scene.getBoundingClientRect(); const cible=x/2172*sc.width-vue.clientWidth/2;
   camera=camera===null?cible:camera+(cible-camera)*Math.min(1,dt*4); vue.scrollLeft=camera;
@@ -294,7 +303,11 @@ function boucle(now){
 }
 requestAnimationFrame(boucle);
 
-document.getElementById('rentrerB').addEventListener('click',()=>{ try{ parent.postMessage({type:'sortie:fin',bisous:nbBisous},'*'); }catch(e){} });
+let questionR=false, refusR=false, rentre=false;
+function rentrer(){ if(rentre) return; rentre=true; document.getElementById('rentrerQB').style.display='none'; try{ parent.postMessage({type:'sortie:fin',bisous:nbBisous},'*'); }catch(e){} }
+document.getElementById('rentrerB').addEventListener('click',rentrer);
+document.getElementById('rqOui').addEventListener('click',rentrer);
+document.getElementById('rqNon').addEventListener('click',()=>{ document.getElementById('rentrerQB').style.display='none'; questionR=false; refusR=true; });
 addEventListener('message',e=>{ if(e.data&&e.data.type==='parle'){ parle(e.data.t); etat='arret'; montre(3); joue(); } });
 addEventListener('message',e=>{ if(e.data&&e.data.type==='coeur') document.getElementById('coeurBt').textContent=NOM+' '+e.data.v+' %'; });
 setTimeout(()=>parle(MOTS.arrive),900);

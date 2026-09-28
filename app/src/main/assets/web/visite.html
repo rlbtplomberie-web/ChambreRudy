@@ -786,7 +786,24 @@ function sortir(){
     d.appendChild(bt); d.style.display='flex';
   },3000);
 }
-let enBalade=null;
+let enBalade=null, retourEnCours=false;
+/* ---------- du boulevard à la chambre : une phrase, la vidéo de moto du retour, puis la chambre ---------- */
+const RETOUR={"sophie": ["On rentre déjà ? Bon… mais tu me ramènes en moto, hein.", "Cette balade était parfaite. Allez, ramène-moi chez toi.", "J'ai un peu froid… on rentre, je me serre contre toi.", "Déjà fini ? Tu me promets qu'on reviendra ?", "Ok, on rentre. Mais je garde ta main jusqu'à la moto."], "karine": ["On rentre ? Je conduis, évidemment.", "Allez, dernier tour de circuit jusqu'à chez toi !", "T'as eu peur à l'aller ? Accroche-toi, au retour je vais plus vite.", "Game over pour ce soir… enfin, pour le boulevard.", "Monte derrière moi, papi, on rentre !"], "gisele": ["Déjà ? J'aurais dansé toute la nuit !", "On rentre… mais je mets la musique à fond dans ma tête.", "Allez, en route ! Le vent dans les cheveux, j'adore.", "Ramène-moi chez toi, beau gosse, la soirée continue !", "Hihi, j'ai encore mon pistolet à eau dans mon sac…"], "faty": ["On rentre ? Je conduis, cette fois, t'as promis !", "Allez, je t'emmène. Accroche-toi bien à moi !", "Retour à la maison… on s'arrête pas pour manger ? Non ? Ok.", "J'ai adoré ce soir. Monte, c'est moi le pilote.", "Tu me fais confiance ? Tant mieux, on rentre !"], "katila": ["On rentre ? Tu as raison, il se fait tard.", "Ramène-moi doucement, d'accord ? Je me serre contre toi.", "Cette soirée m'a fait un bien fou. On rentre.", "Je suis bien, là… mais oui, rentrons.", "Mets ton casque… enfin, fais comme si. Hihi."], "ameline": ["Rentrons… la nuit nous suivra jusque chez toi.", "Le boulevard va me manquer. Mais toi, tu restes avec moi.", "Ramène-moi… et ne lâche pas ma main.", "La route de nuit, avec toi, c'est comme un rêve.", "Allons-y. Je veux sentir le vent encore un peu."], "mifa": ["Bien. Ramène-moi, la soirée a été agréable.", "On rentre. Conduis prudemment, j'ai une réputation.", "C'était parfait. Maintenant, chez toi.", "Je t'accorde le retour en moto. Ne me décoiffe pas.", "Rentrons. Tu as mérité quelques minutes de plus avec moi."], "rose": ["Déjà ? Bon, ramène-moi, mais on s'arrête pour un bisou en route !", "On rentre ! Je vais te serrer tellement fort sur la moto.", "Mes copines vont être jalouses de cette soirée !", "Allez, en route. Et tu regardes que la route… et moi.", "J'adore cette soirée. On rentre chez toi ?"]};
+function retourMaison(id){
+  if(retourEnCours||enBalade!==id) return; retourEnCours=true;
+  const f=$('sortie'), L=RETOUR[id]||["On rentre ?"];
+  try{ f.contentWindow.postMessage({type:'parle',t:L[Math.floor(Math.random()*L.length)]},'*'); }catch(e){}
+  setTimeout(()=>{
+    f.style.opacity='0';
+    setTimeout(()=>{ f.style.display='none'; f.srcdoc='';
+      ouvreNuit('/assets/web/visite/'+id+'_retour.mp4',()=>{
+        enBalade=null; retourEnCours=false; occupee=false; contact(); gagne(id,4); humeur(3,3200); dit("Merci pour cette soirée, c'était trop bien !",3200);
+      });
+    },450);
+  },2800);
+}
+// « Chez moi » dans la MAP du téléphone pendant la balade : on rentre aussi
+setInterval(()=>{ try{ const t=+localStorage.getItem('rudy_retour_maison')||0; if(t&&Date.now()-t<120000&&enBalade){ localStorage.removeItem('rudy_retour_maison'); retourMaison(enBalade); } else if(t&&!enBalade) localStorage.removeItem('rudy_retour_maison'); }catch(e){} },800);
 /* ---------- le RestoChic : on passe à table avec la fille de la balade ---------- */
 const MERCI_RESTO={win:"C'était une soirée parfaite… Merci pour le dîner, Rudy.",mid:"C'était sympa, ce resto. Merci !",low:"Bon… merci pour le dîner quand même.",throw:"Tu l'as bien cherché, ce plat dans la figure !"};
 const COEUR_RESTO={win:8,mid:3,low:-3,throw:-8};
@@ -818,10 +835,7 @@ function partirEnBalade(id){
 addEventListener('message',e=>{
   if(!e.data||!enBalade) return; const id=enBalade;
   if(e.data.type==='sortie:bisou'){ gagne(id,e.data.n===1?5:(e.data.n<=3?1:0)); try{ $('sortie').contentWindow.postMessage({type:'coeur',v:COEUR[id]},'*'); }catch(er){} }
-  if(e.data.type==='sortie:fin'){
-    const f=$('sortie'); f.style.opacity='0';
-    setTimeout(()=>{ f.style.display='none'; f.srcdoc=''; enBalade=null; occupee=false; contact(); gagne(id,4); humeur(3,3200); dit("Merci pour cette soirée, c'était trop bien !",3200); },450);
-  }
+  if(e.data.type==='sortie:fin'){ retourMaison(id); }
 });
 
 /* ---------- la discussion : toujours 2 réponses, une qui lui plaît et une qui lui déplaît ---------- */

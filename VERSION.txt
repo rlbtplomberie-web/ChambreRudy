@@ -1,3 +1,8 @@
-version 177 — Téléphone : nouvelle vidéo
+version 178 — Retour du boulevard en moto
 
-  Téléphone > Galerie > Vidéos : nouvelle vidéo (tel_video_21, 5 s).
+  En balade avec une fille, quand on rentre à la chambre — bouton « Rentrer »,
+  tout à gauche du boulevard (« Voulez-vous rentrer ? » > Oui), ou « Chez moi »
+  dans la MAP du téléphone — elle dit une phrase (5 différentes par fille),
+  puis la vidéo du retour en moto (une par fille), puis on est dans la chambre
+  avec elle. Les vidéos de l'aller (chambre -> boulevard) ne changent pas.
+  (archive en deux parties : 29a + 29b)
