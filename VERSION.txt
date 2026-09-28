@@ -1,8 +1,3 @@
-version 176 — En moto vers le boulevard
+version 177 — Téléphone : nouvelle vidéo
 
-  Quand on propose à une fille de sortir et qu'elle accepte : après sa petite
-  discussion (elle est contente), une vidéo en moto se lance (une par fille),
-  puis la balade sur le boulevard.
-  - Faty demande : « Tu me laisses conduire ta moto ? Allez, dis oui ! »
-  - Karine annonce : « Je conduis ta moto. Et c'est pas une demande, c'est un ordre ! »
-  (archive en deux parties : 27a + 27b)
+  Téléphone > Galerie > Vidéos : nouvelle vidéo (tel_video_21, 5 s).
