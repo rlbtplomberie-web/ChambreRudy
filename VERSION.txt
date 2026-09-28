@@ -1,8 +1,6 @@
-version 178 — Retour du boulevard en moto
+version 179 — Ameline : vidéo des 80 %
 
-  En balade avec une fille, quand on rentre à la chambre — bouton « Rentrer »,
-  tout à gauche du boulevard (« Voulez-vous rentrer ? » > Oui), ou « Chez moi »
-  dans la MAP du téléphone — elle dit une phrase (5 différentes par fille),
-  puis la vidéo du retour en moto (une par fille), puis on est dans la chambre
-  avec elle. Les vidéos de l'aller (chambre -> boulevard) ne changent pas.
-  (archive en deux parties : 29a + 29b)
+  « Je veux que tu dormes ici ce soir » avec Ameline, après le RestoChic :
+  - cœur à 80 % ou plus : nouvelle vidéo (ameline_nuit80) ;
+  - cœur entre 60 et 79 % : sa vidéo d'avant, inchangée ;
+  - moins de 60 % ou pas de dîner : elle refuse, comme avant.
