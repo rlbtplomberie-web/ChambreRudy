@@ -1218,14 +1218,14 @@ function placeTout(){
 addEventListener('resize',placeTout);
 function regarder(mur,fx){ try{ if(DANS_APPLI&&Android.regarder) Android.regarder(mur,fx); }catch(e){} }
 // ---------- les zones qu'on peut toucher : le reste passe à la chambre (bureau, consoles, tiroirs…) ----------
-let zonesTxt='';
+let zonesTxt='', zonesT=0;
 function rectDe(el){ if(!el) return null; const cs=getComputedStyle(el); if(cs.display==='none'||cs.visibility==='hidden'||+cs.opacity<0.05) return null;
   const r=el.getBoundingClientRect(); if(r.width<2||r.height<2) return null; return [r.left,r.top,r.right,r.bottom].map(Math.round); }
 setInterval(()=>{
   const z=[]; const plein=['sortie','resto','nuitV'].some(i=>$(i).style.display==='block');
   if(plein) z.push([0,0,innerWidth,innerHeight]);
   else [img,(mode==='lit'?(litCouche?L2:L1):null),$('menu'),$('discu')].forEach(e=>{ const r=rectDe(e); if(r) z.push(r); });
-  const t=JSON.stringify(z); if(t!==zonesTxt){ zonesTxt=t; try{ if(DANS_APPLI&&Android.zones) Android.zones(t); }catch(e){} }
+  const t=JSON.stringify(z); if(t!==zonesTxt||Date.now()-zonesT>1000){ zonesTxt=t; zonesT=Date.now(); try{ if(DANS_APPLI&&Android.zones) Android.zones(t); }catch(e){} }   // redit chaque seconde : l'appli sait que la page est vivante
 },150);
 // ---------- quand l'appli est en pause (un jeu, un émulateur) : elle attend sans compter le temps ----------
 window.enPause=function(p){ window.PAUSE=!!p; if(!p){ try{ contact(); }catch(e){} } };

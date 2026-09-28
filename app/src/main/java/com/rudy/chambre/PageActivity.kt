@@ -187,6 +187,7 @@ class PageActivity : ComponentActivity() {
             .build()
 
         vue = WebView(this).apply {
+            resumeTimers()                        // au cas où une autre page les aurait laissées en pause
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.mediaPlaybackRequiresUserGesture = false
@@ -209,6 +210,17 @@ class PageActivity : ComponentActivity() {
                 override fun onPageFinished(v: WebView?, url: String?) {
                     super.onPageFinished(v, url)
                     v?.evaluateJavascript(RANGEMENT, null)
+                    chargement?.visibility = android.view.View.GONE
+                }
+
+                // L'affichage de la page a été arrêté par Android (mémoire) : sans ceci, écran noir.
+                // On rouvre la même page proprement.
+                override fun onRenderProcessGone(v: WebView, d: android.webkit.RenderProcessGoneDetail): Boolean {
+                    try { (v.parent as? android.view.ViewGroup)?.removeView(v) } catch (_: Throwable) { }
+                    try { v.destroy() } catch (_: Throwable) { }
+                    vueMorte = true
+                    runOnUiThread { recreate() }
+                    return true
                 }
             }
             /*
@@ -251,6 +263,14 @@ class PageActivity : ComponentActivity() {
 
         val racine = FrameLayout(this)
         racine.addView(vue, FrameLayout.LayoutParams(-1, -1))
+        // pendant le chargement : un écran d'attente plutôt qu'un écran noir
+        chargement = android.widget.TextView(this).apply {
+            text = "Chargement…"
+            setTextColor(0xCCFFFFFF.toInt()); textSize = 15f; gravity = Gravity.CENTER
+            setBackgroundColor(0xFF0B0A14.toInt())
+        }
+        racine.addView(chargement, FrameLayout.LayoutParams(-1, -1))
+        vue.postDelayed({ chargement?.visibility = android.view.View.GONE }, 9000)
         // Pendant une visite, la fille est chez Rudy : on ne quitte pas la chambre sans passer par elle.
         val visite = page.startsWith("visite.html")
         if (!visite) racine.addView(retour, FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.START).apply {
@@ -279,7 +299,22 @@ class PageActivity : ComponentActivity() {
         }
     }
 
-    override fun onDestroy() { vue.destroy(); super.onDestroy() }
+    private var chargement: android.widget.TextView? = null
+    private var vueMorte = false
+
+    override fun onResume() {
+        super.onResume()
+        // Les minuteries des pages web sont communes à toute l'appli : si un autre écran
+        // les a mises en pause, la page resterait figée (écran noir). On les relance toujours.
+        if (!vueMorte) try { vue.onResume(); vue.resumeTimers() } catch (_: Throwable) { }
+    }
+
+    override fun onPause() {
+        if (!vueMorte) try { vue.onPause() } catch (_: Throwable) { }
+        super.onPause()
+    }
+
+    override fun onDestroy() { if (!vueMorte) try { vue.destroy() } catch (_: Throwable) { }; super.onDestroy() }
 
     /** Ce que la page peut demander au telephone. */
     inner class Pont {

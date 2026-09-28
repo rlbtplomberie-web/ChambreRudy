@@ -502,7 +502,17 @@ class ChambreActivity : ComponentActivity() {
         var w = teleWeb
         if (w == null) {
             w = android.webkit.WebView(this)
+            w.resumeTimers()
             w.setBackgroundColor(Color.BLACK)
+            // si YouTube fait planter l'affichage : la télé s'éteint au lieu de tout bloquer
+            w.webViewClient = object : android.webkit.WebViewClient() {
+                override fun onRenderProcessGone(v: android.webkit.WebView, d: android.webkit.RenderProcessGoneDetail): Boolean {
+                    try { racineChambre.removeView(v); v.destroy() } catch (_: Throwable) { }
+                    if (teleWeb === v) teleWeb = null
+                    youtubeAllume = false
+                    return true
+                }
+            }
             w.settings.javaScriptEnabled = true
             w.settings.domStorageEnabled = true
             w.settings.mediaPlaybackRequiresUserGesture = false   // elle démarre toute seule
@@ -935,6 +945,7 @@ class ChambreActivity : ComponentActivity() {
             .addPathHandler("/assets/", androidx.webkit.WebViewAssetLoader.AssetsPathHandler(this))
             .build()
         val w = CalqueVisite(this).apply {
+            resumeTimers()
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.mediaPlaybackRequiresUserGesture = false
@@ -947,6 +958,14 @@ class ChambreActivity : ComponentActivity() {
                 override fun onPageFinished(v: android.webkit.WebView?, url: String?) {
                     derniereCamera = ""
                     vue.invalidate()                          // la page reçoit tout de suite où sont les murs
+                }
+                // la page de la fille a été arrêtée par Android : on la remet, elle est toujours là
+                override fun onRenderProcessGone(v: android.webkit.WebView, d: android.webkit.RenderProcessGoneDetail): Boolean {
+                    try { racineChambre.removeView(v); v.destroy() } catch (_: Throwable) { }
+                    if (calque === v) calque = null
+                    val ici = Visite.ici(this@ChambreActivity)
+                    if (ici.isNotEmpty()) vue.postDelayed({ if (calque == null) ouvrirVisite(ici) }, 600)
+                    return true
                 }
             }
             webChromeClient = android.webkit.WebChromeClient()
@@ -1003,6 +1022,9 @@ class ChambreActivity : ComponentActivity() {
 
     override fun onResume() {
         majArgent()                              // l'argent peut avoir change dans un jeu ou a Shinato
+        // les minuteries des pages web sont communes à toute l'appli : on les relance toujours
+        try { (calque ?: teleWeb ?: webChoix)?.resumeTimers() } catch (_: Throwable) { }
+        try { calque?.onResume() } catch (_: Throwable) { }
         try { verifierVisite() } catch (_: Throwable) { }
         try { teleWeb?.onResume(); webChoix?.onResume() } catch (_: Throwable) { }
         super.onResume()
@@ -1179,6 +1201,7 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
         super.onResume()
         if (!vueDetruite) {
             web.onResume(); web.resumeTimers()
+            web.evaluateJavascript("try{window.repriseApresPause&&window.repriseApresPause()}catch(e){}", null)
             web.post { web.requestFocus() }
         }
         // au retour d'un jeu, la musique de la chambre reste coupée : c'est celle de Shinato qui joue
@@ -1186,7 +1209,12 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
     }
 
     override fun onPause() {
-        if (!vueDetruite) { web.onPause(); web.pauseTimers() }   // plus de son quand l'appli passe derrière
+        // Plus de son quand l'appli passe derrière. Surtout PAS pauseTimers() : il gèle les pages
+        // web de TOUTE l'appli (le téléphone de la chambre restait noir après un passage en ville).
+        if (!vueDetruite) {
+            web.evaluateJavascript("try{window.pauseAvantSortie&&window.pauseAvantSortie()}catch(e){}", null)
+            web.onPause()
+        }
         super.onPause()
     }
 
@@ -1196,7 +1224,7 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
     }
 
     override fun onDestroy() {
-        if (!vueDetruite) try { web.stopLoading(); web.loadUrl("about:blank"); web.destroy() } catch (_: Throwable) { }
+        if (!vueDetruite) try { web.resumeTimers(); web.stopLoading(); web.loadUrl("about:blank"); web.destroy() } catch (_: Throwable) { }
         SonPartage.dansShinato = false
         try { Ambiance.rendreLaMusique() } catch (_: Throwable) { }
         super.onDestroy()

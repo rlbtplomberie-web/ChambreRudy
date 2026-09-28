@@ -37,8 +37,10 @@ object Visite {
  */
 class CalqueVisite(ctx: Context) : android.webkit.WebView(ctx) {
     @Volatile private var zones: List<RectF> = emptyList()
+    @Volatile private var derniereNouvelle = 0L            // la page redit ses zones chaque seconde
 
     fun majZones(json: String, densite: Float) {
+        derniereNouvelle = android.os.SystemClock.uptimeMillis()
         val l = ArrayList<RectF>()
         try {
             val a = org.json.JSONArray(json)
@@ -53,7 +55,11 @@ class CalqueVisite(ctx: Context) : android.webkit.WebView(ctx) {
 
     override fun dispatchTouchEvent(e: MotionEvent): Boolean {
         // un appui hors de ses zones : il n'est pas pour elle, la chambre le reçoit
-        if (e.actionMasked == MotionEvent.ACTION_DOWN && zones.none { it.contains(e.x, e.y) }) return false
+        if (e.actionMasked == MotionEvent.ACTION_DOWN) {
+            // la page ne donne plus de nouvelles (figée, rechargée) : on ne bloque rien
+            if (android.os.SystemClock.uptimeMillis() - derniereNouvelle > 3000) return false
+            if (zones.none { it.contains(e.x, e.y) }) return false
+        }
         return super.dispatchTouchEvent(e)
     }
 }

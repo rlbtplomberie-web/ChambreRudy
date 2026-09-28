@@ -172,6 +172,7 @@ v.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){v.scrol
 #rentrerQ .l{display:flex;gap:10px}
 #rentrerQ button{flex:1;padding:12px;border-radius:14px;border:0;font-weight:900;font-size:16px;cursor:pointer}
 #rentrerOui{background:#2fcf62;color:#062611}#rentrerNon{background:#3a3560;color:#fff}
+#clubCharge{position:fixed;inset:0;z-index:51;display:none;align-items:center;justify-content:center;background:#0d0612;color:#ffd6f0;font:800 17px system-ui,sans-serif;pointer-events:none}
 #clubV{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:50;background:#0d0612;display:none}
 </style>
 <div id="rudyB" style="visibility:hidden"><span class="sol"></span><img id="rudyImg" alt="Rudy"></div>
@@ -180,6 +181,7 @@ v.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){v.scrol
 <div id="flecheV"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 L37 22 H27 V37 H13 V22 H3 Z" fill="#ffd93b" stroke="#fff6c2" stroke-width="2" stroke-linejoin="round"/></svg></div>
 <button class="uiB btnS" id="entrerS">ENTRER</button>
 <iframe id="clubV" title="Valia Club" allow="autoplay"></iframe>
+<div id="clubCharge">✨ Valia Club…</div>
 <div id="rentrerQ" role="dialog" aria-label="Rentrer"><b>🏠 Voulez-vous rentrer ?</b><div class="l"><button id="rentrerOui">Oui</button><button id="rentrerNon">Non</button></div></div>
 <button class="uiB btnS" id="fumerS">🚬 Fumer</button>
 <button class="uiB btnS off" id="jeterS">Jeter</button>
@@ -280,12 +282,14 @@ let dansClub=false; const club=document.getElementById('clubV');
 document.getElementById('entrerS').addEventListener('click',()=>{
   if(dansClub) return; dansClub=true; dirX=dirY=0; for(const k in touches) touches[k]=false;
   try{ mus.pause(); }catch(e){}
-  club.src='/assets/shinato/lieux/valia.html'; club.style.display='block';
+  const ch=document.getElementById('clubCharge'); ch.style.display='flex';
+  club.onload=()=>{ if(dansClub) ch.style.display='none'; }; setTimeout(()=>{ ch.style.display='none'; },12000);
+  club.src='/assets/shinato/lieux/valia.html?t='+Date.now(); club.style.display='block';
   setTimeout(()=>{ try{ club.focus(); }catch(e){} },300);
 });
 addEventListener('message',e=>{
   if(!e.data||e.data.type!=='valia:sortie') return;
-  club.style.display='none'; club.src='about:blank'; dansClub=false;
+  club.style.display='none'; club.onload=null; club.src='about:blank'; dansClub=false; document.getElementById('clubCharge').style.display='none';
   x=1940; y=Math.max(y,360); sens=1; etat='repos'; f=0; joue();
 });
 // ---------- la musique du boulevard (celle de la ville se tait le temps d'être ici) ----------
