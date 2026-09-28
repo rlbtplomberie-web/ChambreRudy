@@ -162,6 +162,15 @@ function draw(now){
 #videoV video{width:100%;height:100%;object-fit:contain;background:#000}
 #fermerVid{position:fixed;z-index:41;right:calc(12px + env(safe-area-inset-right,0px));top:calc(12px + env(safe-area-inset-top,0px));padding:9px 15px;border-radius:999px;border:1.5px solid rgba(255,255,255,.6);background:rgba(0,0,0,.65);color:#fff;font-weight:800;font-size:14px;cursor:pointer}
 </style>
+<style>
+/* les choix face à la danseuse : plus petits, en colonne à droite */
+#regarderV,#reserverV,#chambreV{right:calc(10px + env(safe-area-inset-right,0px))!important;width:136px;box-sizing:border-box;padding:8px 8px!important;
+  font-size:13px!important;line-height:1.15;text-align:center;border-radius:14px!important;border-width:1.5px!important}
+#chambreV{bottom:calc(150px + env(safe-area-inset-bottom,0px))!important}
+#reserverV{bottom:calc(92px + env(safe-area-inset-bottom,0px))!important}
+#regarderV{bottom:calc(34px + env(safe-area-inset-bottom,0px))!important;padding:13px 8px!important}
+#regarderV .prixV,#reserverV .prixV,#chambreV .prixV{font-size:11px}
+</style>
 <audio id="musiqueV" loop preload="auto" src="/assets/shinato/m/valia_club.mp3"></audio>
 <div class="uiV" id="joyV" aria-label="Se déplacer"><div id="knobV"></div></div>
 <button class="uiV" id="sortirV">🚪 Sortie</button>

@@ -1,10 +1,4 @@
-version 186 — RestoChic : questions de chaque fille et nouveau cœur
+version 187 — Valia Club : choix plus petits, en colonne à droite
 
-  - Cœur après le dîner : complicité 10/10 (100 %) = +10 % ; dîner réussi à
-    moins de 100 % = +5 % ; soirée ratée = 0 ; assiette dans la figure = −8 %.
-  - 12 questions rien qu'à elle pour chaque fille (6 tirées au hasard à chaque
-    dîner, mélangées aux questions générales) :
-    Faty « hot », Mifa son corps, Karine Zelda et son côté fou, Gisèle la force
-    et les faiblesses de Rudy (corde, volley, pistolet à eau), Ameline sensuelle,
-    Rose son métier de strip-teaseuse, Katila vicieuse avec sa seringue,
-    Sophie l'amitié ambiguë.
+  Face à la danseuse, « Réserver une chambre », « Réserver » et « Regarder »
+  sont plus petits, de la même largeur, en colonne sur la droite de l'écran.
