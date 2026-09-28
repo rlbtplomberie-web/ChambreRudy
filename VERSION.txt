@@ -1,6 +1,7 @@
-version 180 — Rose : vidéo des 80 %
+version 181 — Faty : « Je veux que tu dormes ici ce soir »
 
-  « Je veux que tu dormes ici ce soir » avec Rose, après le RestoChic :
-  - cœur à 80 % ou plus : nouvelle vidéo (rose_nuit80) ;
-  - cœur entre 60 et 79 % : sa vidéo d'avant, inchangée ;
-  - moins de 60 % ou pas de dîner : elle refuse, comme avant.
+  Faty sur le lit, après le dîner au RestoChic pendant la visite :
+  - cœur à 60 % ou plus : une phrase (5 au hasard, à sa façon), sa vidéo,
+    puis elle rentre chez elle (5 phrases de fin au hasard). Même vidéo à 80 %
+    tant qu'il n'y en a pas une à part.
+  - sinon elle refuse (5 réponses au hasard).
