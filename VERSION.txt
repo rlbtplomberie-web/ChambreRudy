@@ -1,6 +1,8 @@
-version 174 — Sophie : la nuit dès 60 %
+version 175 — Rose et Ameline : « Je veux que tu dormes ici ce soir »
 
-  « Je veux que tu dormes ici ce soir » avec Sophie, après le dîner au RestoChic :
-  - cœur entre 60 et 79 % : nouvelle vidéo (sophie_nuit60) ;
-  - cœur à 80 % ou plus : la vidéo d'avant, inchangée ;
-  - moins de 60 %, ou pas de dîner : elle refuse, comme avant.
+  Comme pour Sophie, sur le lit, après le dîner au RestoChic pendant la visite :
+  - Rose et Ameline acceptent dès 60 % de cœur : une phrase (5 au hasard,
+    chacune à sa façon), leur vidéo, puis elles rentrent chez elles (5 phrases
+    de fin au hasard).
+  - Sinon elles refusent (5 réponses au hasard).
+  Sophie ne change pas (60-79 % : sa vidéo 60 ; 80 % et plus : sa vidéo 80).
