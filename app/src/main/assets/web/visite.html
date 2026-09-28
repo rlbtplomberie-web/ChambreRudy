@@ -765,9 +765,9 @@ function renvoyer(){
 /* ---------- sortir avec elle : une petite discussion, puis la balade sur le boulevard ---------- */
 const SORTIE={
  sophie:[[8,"C'est vrai ? Tu m'emmènes vraiment sortir ?"],[7,"Attends, je me recoiffe… Voilà, je suis prête !"]],
- karine:[[8,"Enfin ! Je commençais à croire que t'oserais jamais."],[10,"Mais c'est moi qui choisis où on s'arrête, ok ?"]],
+ karine:[[8,"Enfin ! Je commençais à croire que t'oserais jamais."],[10,"Je conduis ta moto. Et c'est pas une demande, c'est un ordre !"]],
  gisele:[[8,"Ouiii ! Je savais que t'étais pas un papi !"],[1,"Le boulevard la nuit, c'est ma deuxième maison !"]],
- faty:[[8,"Toi, tu m'invites ? Faut marquer ce jour dans le calendrier !"],[9,"On passe devant le resto, hein. Juste pour regarder… ou pas."]],
+ faty:[[8,"Toi, tu m'invites ? Faut marquer ce jour dans le calendrier !"],[9,"Tu me laisses conduire ta moto ? Allez, dis oui !"]],
  katila:[[7,"Oh… Tu veux sortir avec moi ? Ça me touche."],[9,"Allez, une petite balade, ça me fera du bien après ma garde."]],
  ameline:[[7,"Une balade de nuit… Tu sais exactement ce qui me plaît."],[3,"Je te suis, Rudy."]],
  mifa:[[9,"Tu m'invites ? Tu as enfin compris comment on parle à une femme."],[8,"Très bien. Mais on marche doucement, j'ai mes talons."]],
@@ -780,7 +780,9 @@ function sortir(){
   humeur(a[0],3000); dit(a[1],3000); gagne(id,3);
   setTimeout(()=>{ if(ici!==id) return;
     const d=$('discu'); d.innerHTML=''; const bt=document.createElement('button'); bt.className='opt'; bt.textContent="Je t'emmène faire un tour sur le boulevard.";
-    bt.addEventListener('click',()=>{ d.style.display='none'; contact(); humeur(b[0],2800); dit(b[1],2800); setTimeout(()=>partirEnBalade(id),2900); });
+    bt.addEventListener('click',()=>{ d.style.display='none'; contact(); humeur(b[0],2800); dit(b[1],2800);
+      // en route pour le boulevard : la vidéo de la moto, puis la balade
+      setTimeout(()=>{ if(ici!==id) return; tait(); ouvreNuit('/assets/web/visite/'+id+'_moto.mp4',()=>partirEnBalade(id)); },2900); });
     d.appendChild(bt); d.style.display='flex';
   },3000);
 }
