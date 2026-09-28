@@ -748,7 +748,7 @@ function menu(){
   const P=PERSO[ici], m=$('menu'); m.innerHTML=`<div class="titre">${P.nom}</div>`;
   const choix=mode==='lit'
     ?[["💬 Discuter",discuter],[`🌃 Sortir avec ${P.nom}`,sortir],[`🏠 Laisser ${P.nom} rentrer chez elle`,renvoyer],["💤 Je veux que tu dormes ici ce soir",dormir]]
-    :[["💬 Discuter",discuter],[`🛋️ Inviter ${P.nom} à s'asseoir`,asseoir],[`🌃 Sortir avec ${P.nom}`,sortir],[`🏠 Laisser ${P.nom} rentrer chez elle`,renvoyer]];
+    :[["💬 Discuter",discuter],[`🛋️ Inviter ${P.nom} à s'asseoir`,asseoir],[`🌃 Sortir avec ${P.nom}`,sortir],[`🏠 Laisser ${P.nom} rentrer chez elle`,renvoyer],["💤 Je veux que tu dormes ici ce soir",dormir]];
   choix.push(["Annuler",()=>{ fermeMenus(); occupee=false; }]);
   choix.forEach(([t,fn],i)=>{
     const b=document.createElement('button'); b.className='opt'+(i===choix.length-1?' doux':''); b.textContent=t; b.addEventListener('click',fn); m.appendChild(b); });
