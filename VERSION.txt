@@ -1,9 +1,12 @@
-version 190 — Bisous, musique et mini-jeu du regard
+version 191 — Home Run avec la fille, bulles manga et rires
 
-  - Balade sur le boulevard : chaque bisou donne +2 % de cœur (à chaque fois).
-  - Vidéos (moto aller/retour, nuits 60 % / 80 %) : plus aucune musique en même
-    temps. La radio de la chambre s'arrête vraiment (avant, l'ordre de la couper
-    ne partait jamais), ainsi que la musique du boulevard ou du resto. Elles
-    reprennent après la vidéo (après la moto de l'aller : la musique du boulevard).
-  - Resto, mini-jeu « Regard discret » : la poitrine bouge doucement, pour les
-    8 filles.
+  - Balade avec une fille : devant le stade Home Run, flèche jaune + bouton
+    « ⚾ Inviter à jouer ». Elle est heureuse d'être invitée (3 phrases par
+    fille), puis le match commence directement contre elle (plus de choix de
+    rivale). Victoire : +20 % de cœur ; défaite : −5 % ; égalité : 0.
+    « Rejouer » ou « Sortir du stade » (retour sur le boulevard, elle commente
+    le match). On peut revenir jouer autant qu'on veut.
+    Seul sur le boulevard : pas de flèche, pas de Home Run.
+  - Pendant le match : petites bulles façon manga (début de round, home run,
+    ratés, bisou…) et ses rires (ceux du resto) quand elle fait mieux que Rudy.
+  - À la maison : quand tu donnes une super bonne réponse, elle rit parfois.

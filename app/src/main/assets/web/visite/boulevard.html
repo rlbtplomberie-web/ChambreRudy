@@ -176,6 +176,8 @@ v.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){v.scrol
 #rentrerQB b{font-size:17px}#rentrerQB .l{display:flex;gap:10px}
 #rentrerQB button{flex:1;padding:12px;border-radius:14px;border:0;font-weight:900;font-size:16px;cursor:pointer}
 #rqOui{background:#2fcf62;color:#062611}#rqNon{background:#3a3560;color:#fff}
+#inviterHR{right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(104px + env(safe-area-inset-bottom,0px));display:none;padding:14px 20px;border-radius:999px;border:2px solid #cfe9ff;
+  background:radial-gradient(circle at 40% 30%,#9fd8ff,#2f8be0 60%,#0d3a78);color:#fff;font-weight:900;font-size:17px;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(80,170,255,.7);cursor:pointer}
 #bulleB{position:absolute;z-index:7;display:none;max-width:240px;padding:6px 11px 8px;border-radius:12px 12px 12px 3px;background:rgba(255,255,255,.96);color:#1c1740;font:700 13px/1.3 system-ui,sans-serif;pointer-events:none;white-space:normal}
 #bulleB b{display:block;font-size:11px;color:#c2317a}
 </style>
@@ -185,6 +187,7 @@ v.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){v.scrol
 <audio id="musiqueB" loop preload="auto" src="/assets/web/visite/boulevard.mp3"></audio>
 <div id="flecheR"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3 L37 22 H27 V37 H13 V22 H3 Z" fill="#ffd93b" stroke="#fff6c2" stroke-width="2" stroke-linejoin="round"/></svg></div>
 <button class="ui" id="inviterB">🍽️ Inviter</button>
+<button class="ui" id="inviterHR">⚾ Inviter à jouer</button>
 <button class="ui" id="rentrerB">🏠 Rentrer</button>
 <div id="rentrerQB" role="dialog" aria-label="Rentrer"><b>🏠 Voulez-vous rentrer ?</b><div class="l"><button id="rqOui">Oui</button><button id="rqNon">Non</button></div></div>
 <div class="ui" id="coeurB"><i>♥</i> <span id="coeurBt">__NOM__</span></div>
@@ -244,6 +247,13 @@ document.getElementById('inviterB').addEventListener('click',()=>{
   setTimeout(()=>{ mus.pause(); try{ parent.postMessage({type:'resto:inviter'},'*'); }catch(e){} },2600);   // le resto a sa propre musique
 });
 
+// inviter à jouer au Home Run : elle est heureuse, puis on entre dans le stade
+document.getElementById('inviterHR').addEventListener('click',()=>{
+  if(etat==='resto') return; etat='resto'; dirX=dirY=0; montre(BISOU?12:3);
+  const L=MOTS.homerun||["Un match avec toi ? Trop bien !"]; parle(L[Math.floor(Math.random()*L.length)]);
+  setTimeout(()=>{ mus.pause(); try{ parent.postMessage({type:'homerun:inviter'},'*'); }catch(e){} },2800);
+});
+
 // le cœur tourne autour d'eux, puis grossit en l'air au-dessus de leurs têtes
 const cv=document.getElementById('coeurVol'); let coeurAnim=null;
 function coeur(){
@@ -290,9 +300,11 @@ function boucle(now){
   if(bu.style.display==='block'){ const hb=taille(); bu.style.left=(x/2172*100)+'%'; bu.style.top=((y-hb*1.18)/528*100)+'%'; }   // la bulle suit le couple
   // devant l'entrée du RestoChic : la flèche jaune et le bouton « Inviter »
   const devantResto=x>1105&&x<1325&&etat!=='resto';
-  const fr=document.getElementById('flecheR'), ib=document.getElementById('inviterB');
-  if(devantResto){ const h=taille(); fr.style.display='block'; fr.style.left=(x/2172*100)+'%'; fr.style.top=((y-h*1.08)/528*100)+'%'; ib.style.display='block'; }
-  else{ fr.style.display='none'; ib.style.display='none'; }
+  const devantHR=x>1470&&x<1650&&etat!=='resto';                      // le stade du Home Run
+  const fr=document.getElementById('flecheR'), ib=document.getElementById('inviterB'), ih=document.getElementById('inviterHR');
+  if(devantResto||devantHR){ const h=taille(); fr.style.display='block'; fr.style.left=(x/2172*100)+'%'; fr.style.top=((y-h*1.08)/528*100)+'%'; }
+  else fr.style.display='none';
+  ib.style.display=devantResto?'block':'none'; ih.style.display=devantHR?'block':'none';
   // tout à gauche : on propose de rentrer
   if(x<=X_MIN+4&&!questionR&&!refusR&&!rentre){ questionR=true; dirX=dirY=0; for(const k in touches) touches[k]=false; document.getElementById('rentrerQB').style.display='flex'; }
   if(x>X_MIN+80) refusR=false;
