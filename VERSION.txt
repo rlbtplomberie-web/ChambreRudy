@@ -1,4 +1,4 @@
-version 197 — Home Run : vidéo de Sophie quand elle gagne
+version 198 — Home Run : vidéo de Faty quand elle gagne
 
-  Balade avec Sophie > Home Run : si c'est elle qui gagne le match, sa vidéo se
-  lance en plein écran (sans musique), comme pour Katila et Rose.
+  Balade avec Faty > Home Run : si c'est elle qui gagne le match, sa vidéo se
+  lance en plein écran (sans musique), comme pour Katila, Rose et Sophie.
