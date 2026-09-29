@@ -555,6 +555,9 @@ class VueChambre(ctx: Context) : View(ctx) {
             MotionEvent.ACTION_DOWN -> {
                 xDepart = e.x; yDepart = e.y; xPrec = e.x; bouge = false
                 tempsDepart = System.currentTimeMillis()
+                // un geste interrompu ne doit jamais laisser le bouton de
+                // volume « accroche » : chaque appui repart de zero
+                volumePret = false; volumeEnCours = false
                 if (surLeBoutonDeVolume(e.x, e.y)) preparerLeVolume(e.x, e.y)
                 return true
             }
@@ -587,6 +590,13 @@ class VueChambre(ctx: Context) : View(ctx) {
                 if (!bouge && duree > 650 && vue == 0 && zone(Decor.TELE).contains(e.x, e.y)) {
                     surObjet?.invoke("teleLong")     // appui long sur la tele : le bilan
                 } else if (!bouge) toucher(e.x, e.y)
+                return true
+            }
+            // le systeme reprend le doigt (menu, notification, geste de bord) :
+            // on relache tout, sans declencher d'objet
+            MotionEvent.ACTION_CANCEL -> {
+                lacherLeVolume()
+                bouge = false
                 return true
             }
         }

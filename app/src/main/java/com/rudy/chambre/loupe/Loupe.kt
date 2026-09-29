@@ -52,9 +52,21 @@ object Loupe {
             // three.js vient d'internet : garde en cache, la loupe marche
             // ensuite meme sans connexion
             settings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
-            webViewClient = WebViewClient()
-            loadUrl("file:///android_asset/loupe/$page")
         }
+        /*
+         * Si Android arrete l'affichage des pages web par manque de memoire,
+         * une WebView sans cette reponse fait fermer TOUTE l'appli.
+         * La loupe se referme simplement, et l'on retrouve la chambre.
+         */
+        vue.webViewClient = object : WebViewClient() {
+            override fun onRenderProcessGone(v: WebView, d: android.webkit.RenderProcessGoneDetail): Boolean {
+                try { (v.parent as? android.view.ViewGroup)?.removeView(v) } catch (_: Throwable) { }
+                try { v.destroy() } catch (_: Throwable) { }
+                try { dialogue.setOnDismissListener(null); dialogue.dismiss() } catch (_: Throwable) { }
+                return true
+            }
+        }
+        vue.loadUrl("file:///android_asset/loupe/$page")
         dialogue.setContentView(vue)
         dialogue.setOnDismissListener {
             try { vue.stopLoading(); vue.loadUrl("about:blank"); vue.destroy() } catch (_: Throwable) { }

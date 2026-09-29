@@ -159,7 +159,7 @@ class ChambreActivity : ComponentActivity() {
         try {
             lecteur = android.media.MediaPlayer().apply {
                 setDataSource(this@ChambreActivity, uri)
-                setSurface(android.view.Surface(surface))
+                setSurface(surfaceDeLaTele(surface))
                 setVolume(0.9f, 0.9f)
                 setOnCompletionListener {
                     teleAllumee = false
@@ -603,6 +603,25 @@ class ChambreActivity : ComponentActivity() {
     }
 
     private var videoEnPreparation: String? = null
+    private var essaisVideo = 0
+
+    /*
+     * La surface de l'ecran de la tele.
+     *
+     * Avant, chaque video en fabriquait une nouvelle sans jamais rendre
+     * l'ancienne : au fil des consoles sorties du carton, la memoire des
+     * images se remplissait, jusqu'aux ralentissements et a l'ecran noir.
+     * Il n'y en a plus qu'une, rendue a la fermeture.
+     */
+    private var surfaceTele: android.view.Surface? = null
+    private var textureTele: android.graphics.SurfaceTexture? = null
+
+    private fun surfaceDeLaTele(st: android.graphics.SurfaceTexture): android.view.Surface {
+        val s = surfaceTele
+        if (s != null && textureTele === st && s.isValid) return s
+        try { s?.release() } catch (_: Throwable) {}
+        return android.view.Surface(st).also { surfaceTele = it; textureTele = st }
+    }
 
     /** La tele s'allume et joue la sequence de demarrage de cette console. */
     /** La tele s'eteint : la video s'arrete et l'ecran s'efface en douceur. */
@@ -632,14 +651,24 @@ class ChambreActivity : ComponentActivity() {
             lecteurPret = null; videoPrete = null
             if (pret == null) {
                 // pas encore prete : on la prepare a cote et on rappelle
-                // cette meme fonction des qu'elle l'est
+                // cette meme fonction des qu'elle l'est.
+                // Au bout de 5 secondes on abandonne : avant, si la video ne
+                // voulait pas se preparer, l'appli relancait l'essai toutes
+                // les 120 ms sans jamais s'arreter, et tout ralentissait.
+                if (essaisVideo++ >= 40) {
+                    essaisVideo = 0
+                    teleAllumee = false
+                    ecranTele.alpha = 0f
+                    return
+                }
                 preparerVideo(console)
                 vue.postDelayed({ if (teleAllumee) allumerLaTele(console) }, 120)
                 teleAllumee = true
                 return
             }
+            essaisVideo = 0
             lecteur = pret.apply {
-                setSurface(android.view.Surface(surface))
+                setSurface(surfaceDeLaTele(surface))
                 setOnCompletionListener {
                     teleAllumee = false
                     ecranTele.animate().alpha(0f).setDuration(600).start()
@@ -1066,6 +1095,8 @@ class ChambreActivity : ComponentActivity() {
         try { teleWeb?.destroy(); webChoix?.destroy(); calque?.destroy() } catch (_: Throwable) { }
         try { lecteur?.release() } catch (_: Throwable) {}
         try { lecteurPret?.release() } catch (_: Throwable) {}
+        try { surfaceTele?.release() } catch (_: Throwable) {}
+        surfaceTele = null; textureTele = null
         son.liberer()
         super.onDestroy()
     }
@@ -1103,7 +1134,9 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
         web.settings.mediaPlaybackRequiresUserGesture = false      // la musique de la ville démarre sans attendre
         web.settings.setSupportZoom(false)
         web.settings.builtInZoomControls = false
-        web.setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
+        // Pas de couche a part pour la WebView : elle obligeait a redessiner
+        // toute la rue une seconde fois a chaque image (ralentissements) et
+        // pouvait laisser l'ecran noir sur les grandes pages.
         web.overScrollMode = android.view.View.OVER_SCROLL_NEVER
         web.isLongClickable = false
         web.setOnLongClickListener { true }                          // pas de menu d'appui long

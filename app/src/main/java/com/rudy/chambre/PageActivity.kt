@@ -192,7 +192,8 @@ class PageActivity : ComponentActivity() {
             settings.domStorageEnabled = true
             settings.mediaPlaybackRequiresUserGesture = false
             settings.allowFileAccess = true
-            setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
+            // pas de couche a part : double dessin a chaque image, et risque
+            // d'ecran noir sur les grandes pages de jeu
             overScrollMode = android.view.View.OVER_SCROLL_NEVER
             setBackgroundColor(Color.BLACK)
             webViewClient = object : WebViewClient() {
