@@ -1,3 +1,9 @@
+version 205 — Katila peut enfin embrasser Rudy au boulevard
+
+  Balade de Katila : 5 nouvelles poses découpées depuis sa planche (main dans
+    la main, face à face, bisou, câlin, marche) ; le bouton « Embrasser »
+    apparaît pour elle comme pour les autres filles.
+
 version 204 — Vidéos à l'heure, découpes réparées au boulevard
 
   Home Run : quand elle gagne, sa vidéo part tout de suite ; l'écran
@@ -11,4 +17,3 @@ version 204 — Vidéos à l'heure, découpes réparées au boulevard
     et les baskets de Rudy).
 
   Contient aussi la version 203 (stabilité : télé, loupe, Shinato, toucher).
-  Reste à faire : les poses bisou de Katila (planche à fournir).
