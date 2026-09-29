@@ -1,4 +1,3 @@
-version 195 — Home Run : vidéo de Rose quand elle gagne
+version 196 — Téléphone : nouvelle vidéo
 
-  Balade avec Rose > Home Run : si c'est elle qui gagne le match, sa vidéo se
-  lance en plein écran (sans musique), comme pour Katila.
+  Téléphone > Galerie > Vidéos : nouvelle vidéo (tel_video_23).
