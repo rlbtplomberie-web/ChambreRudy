@@ -1,3 +1,4 @@
-version 196 — Téléphone : nouvelle vidéo
+version 197 — Home Run : vidéo de Sophie quand elle gagne
 
-  Téléphone > Galerie > Vidéos : nouvelle vidéo (tel_video_23).
+  Balade avec Sophie > Home Run : si c'est elle qui gagne le match, sa vidéo se
+  lance en plein écran (sans musique), comme pour Katila et Rose.
