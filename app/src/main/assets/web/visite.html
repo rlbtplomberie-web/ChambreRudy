@@ -789,6 +789,7 @@ function sortir(){
   },3000);
 }
 let enBalade=null, retourEnCours=false, homerunDernier=null;
+const HR_ELLE_GAGNE={katila:'/assets/web/visite/katila_homerun.mp4'};   // vidéo quand elle gagne le Home Run
 /* ---------- du boulevard à la chambre : une phrase, la vidéo de moto du retour, puis la chambre ---------- */
 const RETOUR={"sophie": ["On rentre déjà ? Bon… mais tu me ramènes en moto, hein.", "Cette balade était parfaite. Allez, ramène-moi chez toi.", "J'ai un peu froid… on rentre, je me serre contre toi.", "Déjà fini ? Tu me promets qu'on reviendra ?", "Ok, on rentre. Mais je garde ta main jusqu'à la moto."], "karine": ["On rentre ? Je conduis, évidemment.", "Allez, dernier tour de circuit jusqu'à chez toi !", "T'as eu peur à l'aller ? Accroche-toi, au retour je vais plus vite.", "Game over pour ce soir… enfin, pour le boulevard.", "Monte derrière moi, papi, on rentre !"], "gisele": ["Déjà ? J'aurais dansé toute la nuit !", "On rentre… mais je mets la musique à fond dans ma tête.", "Allez, en route ! Le vent dans les cheveux, j'adore.", "Ramène-moi chez toi, beau gosse, la soirée continue !", "Hihi, j'ai encore mon pistolet à eau dans mon sac…"], "faty": ["On rentre ? Je conduis, cette fois, t'as promis !", "Allez, je t'emmène. Accroche-toi bien à moi !", "Retour à la maison… on s'arrête pas pour manger ? Non ? Ok.", "J'ai adoré ce soir. Monte, c'est moi le pilote.", "Tu me fais confiance ? Tant mieux, on rentre !"], "katila": ["On rentre ? Tu as raison, il se fait tard.", "Ramène-moi doucement, d'accord ? Je me serre contre toi.", "Cette soirée m'a fait un bien fou. On rentre.", "Je suis bien, là… mais oui, rentrons.", "Mets ton casque… enfin, fais comme si. Hihi."], "ameline": ["Rentrons… la nuit nous suivra jusque chez toi.", "Le boulevard va me manquer. Mais toi, tu restes avec moi.", "Ramène-moi… et ne lâche pas ma main.", "La route de nuit, avec toi, c'est comme un rêve.", "Allons-y. Je veux sentir le vent encore un peu."], "mifa": ["Bien. Ramène-moi, la soirée a été agréable.", "On rentre. Conduis prudemment, j'ai une réputation.", "C'était parfait. Maintenant, chez toi.", "Je t'accorde le retour en moto. Ne me décoiffe pas.", "Rentrons. Tu as mérité quelques minutes de plus avec moi."], "rose": ["Déjà ? Bon, ramène-moi, mais on s'arrête pour un bisou en route !", "On rentre ! Je vais te serrer tellement fort sur la moto.", "Mes copines vont être jalouses de cette soirée !", "Allez, en route. Et tu regardes que la route… et moi.", "J'adore cette soirée. On rentre chez toi ?"]};
 function retourMaison(id){
@@ -828,6 +829,8 @@ addEventListener('message',e=>{
   if(e.data.type==='homerun:resultat'){                     // victoire +20 %, défaite −5 % (à chaque match)
     homerunDernier=e.data.draw?'nul':(e.data.win?'gagne':'perdu');
     gagne(id,e.data.draw?0:(e.data.win?20:-5));
+    // quand ELLE gagne le match : sa vidéo (pour celles qui en ont une)
+    if(homerunDernier==='perdu'&&HR_ELLE_GAGNE[id]) setTimeout(()=>{ if(enBalade===id) ouvreNuit(HR_ELLE_GAGNE[id],()=>{},true); },2500);
     try{ $('sortie').contentWindow.postMessage({type:'coeur',v:COEUR[id]},'*'); }catch(er){}
   }
   if(e.data.type==='homerun:fin'){

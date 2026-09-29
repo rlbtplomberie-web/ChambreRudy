@@ -1,3 +1,5 @@
-version 193 — Téléphone : nouvelle vidéo
+version 194 — Home Run : vidéo de Katila quand elle gagne
 
-  Téléphone > Galerie > Vidéos : nouvelle vidéo (tel_video_22, 5 s).
+  Balade avec Katila > Home Run : si c'est elle qui gagne le match, sa vidéo se
+  lance en plein écran (sans musique) par-dessus l'écran de fin, puis on
+  retrouve l'écran de fin (Rejouer / Sortir du stade).
