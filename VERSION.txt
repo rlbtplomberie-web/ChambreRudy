@@ -1,3 +1,8 @@
+version 210 — Mifa : vidéo de victoire au Home Run
+
+  Quand Mifa gagne le match de Home Run, sa vidéo part tout de suite,
+    puis l'écran de fin s'affiche.
+
 version 209 — Mifa peut dormir chez Rudy (vidéo 60 %)
 
   « Je veux que tu dormes ici ce soir » avec Mifa : elle accepte à partir
