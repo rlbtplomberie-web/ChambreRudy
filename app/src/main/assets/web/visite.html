@@ -775,6 +775,17 @@ const SORTIE={
  mifa:[[9,"Tu m'invites ? Tu as enfin compris comment on parle à une femme."],[8,"Très bien. Mais on marche doucement, j'ai mes talons."]],
  rose:[[8,"Ahhh, je rêvais que tu me le demandes !"],[3,"Je le dirai à personne… enfin, peut-être à mes copines."]]
 };
+/* Après la vidéo de moto, on ne revoit pas la chambre : l'écran reste noir
+   jusqu'à ce que le boulevard soit chargé, puis on arrive directement en ville. */
+function noirJusquAuBoulevard(){
+  let n=document.getElementById('noirMoto');
+  if(!n){ n=document.createElement('div'); n.id='noirMoto'; n.style.cssText='position:fixed;inset:0;z-index:61;background:#000;transition:opacity .35s'; document.body.appendChild(n); }
+  n.style.opacity='1'; n.style.display='block';
+  const f=$('sortie'); let parti=false;
+  const enleve=()=>{ if(parti) return; parti=true; n.style.opacity='0'; setTimeout(()=>{ n.style.display='none'; },380); };
+  f.addEventListener('load',()=>setTimeout(enleve,120),{once:true});
+  setTimeout(enleve,6000);                                   // secours : jamais bloqué dans le noir
+}
 function sortir(){
   fermeMenus(); contact(); const P=PERSO[ici], id=ici;
   if(COEUR[id]<30){ humeur(10,3000); dit(P.sortNon,3000); gagne(id,-1); setTimeout(()=>{ occupee=false; },3000); return; }
@@ -784,7 +795,7 @@ function sortir(){
     const d=$('discu'); d.innerHTML=''; const bt=document.createElement('button'); bt.className='opt'; bt.textContent="Je t'emmène faire un tour sur le boulevard.";
     bt.addEventListener('click',()=>{ d.style.display='none'; contact(); humeur(b[0],2800); dit(b[1],2800);
       // en route pour le boulevard : la vidéo de la moto, puis la balade
-      setTimeout(()=>{ if(ici!==id) return; tait(); ouvreNuit('/assets/web/visite/'+id+'_moto.mp4',()=>partirEnBalade(id),true); },2900); });
+      setTimeout(()=>{ if(ici!==id) return; tait(); ouvreNuit('/assets/web/visite/'+id+'_moto.mp4',()=>{ noirJusquAuBoulevard(); partirEnBalade(id); },true); },2000); });
     d.appendChild(bt); d.style.display='flex';
   },3000);
 }
@@ -830,7 +841,11 @@ addEventListener('message',e=>{
     homerunDernier=e.data.draw?'nul':(e.data.win?'gagne':'perdu');
     gagne(id,e.data.draw?0:(e.data.win?20:-5));
     // quand ELLE gagne le match : sa vidéo (pour celles qui en ont une)
-    if(homerunDernier==='perdu'&&HR_ELLE_GAGNE[id]) setTimeout(()=>{ if(enBalade===id) ouvreNuit(HR_ELLE_GAGNE[id],()=>{},true); },2500);
+    // tout de suite, et le stade n'affiche « Rejouer » qu'à la fin de la vidéo
+    if(homerunDernier==='perdu'&&HR_ELLE_GAGNE[id]){
+      const hr=$('homerun'); const dire=t=>{ try{ hr.contentWindow.postMessage({type:t},'*'); }catch(er){} };
+      ouvreNuit(HR_ELLE_GAGNE[id],()=>dire('homerun:videoFinie'),true); dire('homerun:videoDebut');
+    }else if(e.data.attendVideo){ try{ $('homerun').contentWindow.postMessage({type:'homerun:videoFinie'},'*'); }catch(er){} }
     try{ $('sortie').contentWindow.postMessage({type:'coeur',v:COEUR[id]},'*'); }catch(er){}
   }
   if(e.data.type==='homerun:fin'){
@@ -842,6 +857,10 @@ addEventListener('message',e=>{
       try{ const b=$('sortie').contentWindow; b.postMessage({type:'coeur',v:COEUR[id]},'*'); b.postMessage({type:'parle',t:L[Math.floor(Math.random()*L.length)]},'*'); b.focus(); }catch(er){}
     },450);
   }
+  if(e.data.type==='resto:video'){                          // repas réussi : la vidéo tout de suite, avant l'écran de fin
+    const rf=$('resto'); const dire=t=>{ try{ rf.contentWindow.postMessage({type:t},'*'); }catch(er){} };
+    ouvreNuit('/assets/web/visite/'+id+'_resto.mp4',()=>dire('resto:videoFinie'),true); dire('resto:videoDebut');
+  }
   if(e.data.type==='resto:fin'){
     if(e.data.fin!=='throw') restoFait[id]=true;          // elle a dîné avec Rudy ce soir
     const f=$('resto'); f.style.opacity='0'; const fin=e.data.fin||'mid';
@@ -849,7 +868,7 @@ addEventListener('message',e=>{
       gagne(id,(e.data.aff>=10&&fin!=='throw')?10:(COEUR_RESTO[fin]||0));
       const retourBalade=()=>{ try{ const b=$('sortie').contentWindow; b.postMessage({type:'coeur',v:COEUR[id]},'*'); b.postMessage({type:'parle',t:MERCI_RESTO[fin]||MERCI_RESTO.mid},'*'); b.focus(); }catch(er){} };
       // repas réussi : sa vidéo du restaurant, puis retour sur le boulevard
-      if(fin==='win'||fin==='mid') ouvreNuit('/assets/web/visite/'+id+'_resto.mp4',retourBalade,true);
+      if((fin==='win'||fin==='mid')&&!e.data.videoVue) ouvreNuit('/assets/web/visite/'+id+'_resto.mp4',retourBalade,true);
       else retourBalade();
     },450);
   }

@@ -1,15 +1,14 @@
-version 203 — Stabilité : moins de ralentissements, moins d'écrans noirs
+version 204 — Vidéos à l'heure, découpes réparées au boulevard
 
-  - Télé de la chambre : une seule surface d'image, rendue à la fermeture
-    (avant, chaque vidéo de console en créait une nouvelle sans libérer
-    l'ancienne : la mémoire se remplissait au fil de la partie).
-  - Télé de la chambre : si une vidéo ne se prépare pas, on abandonne au bout
-    de 5 secondes au lieu de réessayer toutes les 120 ms sans fin.
-  - Shinato et les pages de jeux : la WebView n'est plus dessinée sur une
-    couche à part (double dessin à chaque image, risque d'écran noir).
-  - Loupe : si Android coupe l'affichage web par manque de mémoire, la loupe
-    se referme au lieu de faire fermer toute l'appli.
-  - Chambre : un geste interrompu par le système ne bloque plus le toucher
-    (bouton de volume de la radio qui restait « accroché »).
+  Home Run : quand elle gagne, sa vidéo part tout de suite ; l'écran
+    « Rejouer / Sortir du stade » n'apparaît qu'après la vidéo.
+  Table pour deux : rendez-vous réussi, la vidéo du resto part tout de suite,
+    avant l'écran de fin (plus besoin de toucher « Sortir du restaurant »).
+  Moto : dernier message, la vidéo de moto enchaîne aussitôt, puis écran noir
+    jusqu'à l'arrivée sur le boulevard (on ne revoit plus la chambre entre les deux).
+  Balade au boulevard : trous transparents rebouchés dans les images du couple
+    (Katila surtout ; aussi Karine, Sophie, Rose, Mifa, Gisèle, Faty, Ameline,
+    et les baskets de Rudy).
 
-  Rien d'autre n'est modifié : émulateurs, jeux et décors restent identiques.
+  Contient aussi la version 203 (stabilité : télé, loupe, Shinato, toucher).
+  Reste à faire : les poses bisou de Katila (planche à fournir).

@@ -577,10 +577,22 @@ async function ending(kind){
   else if(kind==='low'){VOX.gHmph();setG('react1');setR('react1');await say(G.name,"Bon… je vais y aller.")}
   const el=$('#end');
   const auto=!!window.FILLE_IMPOSEE;
+  /* rendez-vous réussi : sa vidéo passe TOUT DE SUITE, avant l'écran de fin
+     (avant : il fallait d'abord toucher « Sortir du restaurant ») */
+  let videoVue=false;
+  if(auto&&(kind==='win'||kind==='mid')){
+    videoVue=await new Promise(ok=>{
+      let fini=false;const fin=v=>{if(fini)return;fini=true;removeEventListener('message',ecoute);ok(v)};
+      const ecoute=e=>{if(!e.data)return;if(e.data.type==='resto:videoDebut')clearTimeout(secours);if(e.data.type==='resto:videoFinie')fin(true)};
+      addEventListener('message',ecoute);
+      const secours=setTimeout(()=>fin(false),1500);
+      try{parent.postMessage({type:'resto:video',fin:kind},'*')}catch(e){fin(false)}
+    });
+  }
   el.innerHTML=`<h2>${E[0]}</h2><p>${esc(E[1])}</p><p style="opacity:.8">Complicité : ${aff}/10</p><div class="notes">${notesHTML()}</div>
    <div class="row">${auto?`<button class="big" id="sortieBtn">Sortir du restaurant</button>`:`<button class="big" id="againBtn">Rejouer avec ${esc(G.name)}</button><button class="ghost" id="otherBtn">Changer de rendez-vous</button>`}</div>`;
   el.classList.remove('hide');
-  if(auto){ $('#sortieBtn').onclick=()=>{ try{ $('#bgm').pause(); }catch(e){} try{ parent.postMessage({type:'resto:fin',fin:kind,aff},'*'); }catch(e){} }; return; }
+  if(auto){ $('#sortieBtn').onclick=()=>{ try{ $('#bgm').pause(); }catch(e){} try{ parent.postMessage({type:'resto:fin',fin:kind,aff,videoVue},'*'); }catch(e){} }; return; }
   $('#againBtn').onclick=()=>{el.classList.add('hide');play()};
   $('#otherBtn').onclick=()=>{el.classList.add('hide');showPick()};
 }

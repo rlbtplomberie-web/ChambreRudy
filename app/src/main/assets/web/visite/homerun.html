@@ -421,9 +421,22 @@ function endMatch(){
   const fc=$('resFig'),fx=fc.getContext('2d');fx.clearRect(0,0,300,300);
   const f=win||draw?SPR.rudy[0][4]:SPR[girl.id][1][4];
   const s=Math.min(280/f.h,290/f.w);fx.drawImage(f.img,150-f.w*s/2,295-f.h*s,f.w*s,f.h*s);
-  crowdStop();if(win){SFX.cheer(true);say('Victoire de Rudy !')}else{SFX.boo();say(girl.name+' remporte le match !');if(!draw)setTimeout(()=>rire(),600)}
-  if(window.FILLE_IMPOSEE){try{parent.postMessage({type:'homerun:resultat',win:win&&!draw,draw},'*')}catch(e){}
-    $('bOther').textContent='Sortir du stade'}
+  crowdStop();
+  const sons=()=>{if(win){SFX.cheer(true);say('Victoire de Rudy !')}else{SFX.boo();say(girl.name+' remporte le match !');if(!draw)setTimeout(()=>rire(),600)}};
+  if(window.FILLE_IMPOSEE){$('bOther').textContent='Sortir du stade';
+    /* elle a gagné : sa vidéo passe TOUT DE SUITE, et l'écran « Rejouer »
+       n'apparaît qu'après la vidéo (avant : écran d'abord, vidéo 2,5 s plus tard) */
+    if(!win&&!draw){
+      let fait=false;const apres=()=>{if(fait)return;fait=true;removeEventListener('message',ecoute);sons();show('sRes')};
+      const ecoute=e=>{if(!e.data)return;if(e.data.type==='homerun:videoDebut')clearTimeout(secours);if(e.data.type==='homerun:videoFinie')apres()};
+      addEventListener('message',ecoute);
+      const secours=setTimeout(apres,1500);          // pas de vidéo pour elle : l'écran de fin s'affiche
+      try{parent.postMessage({type:'homerun:resultat',win:false,draw:false,attendVideo:true},'*')}catch(e){apres()}
+      return;
+    }
+    try{parent.postMessage({type:'homerun:resultat',win:win&&!draw,draw},'*')}catch(e){}
+  }
+  sons();
   show('sRes');
 }
 
