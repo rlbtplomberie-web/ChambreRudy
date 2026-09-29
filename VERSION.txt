@@ -1,12 +1,7 @@
-version 191 — Home Run avec la fille, bulles manga et rires
+version 192 — Vidéos du restaurant
 
-  - Balade avec une fille : devant le stade Home Run, flèche jaune + bouton
-    « ⚾ Inviter à jouer ». Elle est heureuse d'être invitée (3 phrases par
-    fille), puis le match commence directement contre elle (plus de choix de
-    rivale). Victoire : +20 % de cœur ; défaite : −5 % ; égalité : 0.
-    « Rejouer » ou « Sortir du stade » (retour sur le boulevard, elle commente
-    le match). On peut revenir jouer autant qu'on veut.
-    Seul sur le boulevard : pas de flèche, pas de Home Run.
-  - Pendant le match : petites bulles façon manga (début de round, home run,
-    ratés, bisou…) et ses rires (ceux du resto) quand elle fait mieux que Rudy.
-  - À la maison : quand tu donnes une super bonne réponse, elle rit parfois.
+  RestoChic avec une fille (balade) : quand le repas est réussi (« Coup de
+  foudre » ou « Un deuxième rendez-vous ? »), sa vidéo du restaurant se lance
+  (une par fille, 8 en tout), sans musique en même temps, puis retour sur le
+  boulevard. Soirée ratée ou assiette dans la figure : pas de vidéo.
+  (archive en deux parties : 43a + 43b)

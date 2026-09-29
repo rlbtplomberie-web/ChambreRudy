@@ -844,7 +844,10 @@ addEventListener('message',e=>{
     const f=$('resto'); f.style.opacity='0'; const fin=e.data.fin||'mid';
     setTimeout(()=>{ f.style.display='none'; f.srcdoc='';
       gagne(id,(e.data.aff>=10&&fin!=='throw')?10:(COEUR_RESTO[fin]||0));
-      try{ const b=$('sortie').contentWindow; b.postMessage({type:'coeur',v:COEUR[id]},'*'); b.postMessage({type:'parle',t:MERCI_RESTO[fin]||MERCI_RESTO.mid},'*'); b.focus(); }catch(er){}
+      const retourBalade=()=>{ try{ const b=$('sortie').contentWindow; b.postMessage({type:'coeur',v:COEUR[id]},'*'); b.postMessage({type:'parle',t:MERCI_RESTO[fin]||MERCI_RESTO.mid},'*'); b.focus(); }catch(er){} };
+      // repas réussi : sa vidéo du restaurant, puis retour sur le boulevard
+      if(fin==='win'||fin==='mid') ouvreNuit('/assets/web/visite/'+id+'_resto.mp4',retourBalade,true);
+      else retourBalade();
     },450);
   }
 });
