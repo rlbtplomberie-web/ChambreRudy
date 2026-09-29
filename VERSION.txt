@@ -1,4 +1,13 @@
-version 201 — Home Run : vidéo de Karine quand elle gagne
+version 202 — Galerie du téléphone comme un vrai téléphone
 
-  Balade avec Karine > Home Run : si c'est elle qui gagne le match, sa vidéo se
-  lance en plein écran (sans musique), comme pour les autres filles.
+  Téléphone > Galerie :
+  - Vidéos rangées en albums : « Vidéos » (celles envoyées pour le téléphone),
+    Balades en moto, Restaurant, Nuits, Home Run, Valia Club, Tir à la corde,
+    Pistolet à eau, Bras de fer, Dernier debout (bar). Chaque vidéo débloquée
+    va toute seule dans son album (les plus récentes en premier).
+  - Désormais, les vidéos des balades, du resto, des nuits, du Home Run et du
+    Valia Club se débloquent aussi dans le téléphone quand on les voit.
+  - Les grilles se font défiler au doigt (toutes les photos, toutes les vidéos).
+  - En plein écran : glisser vers le haut = vidéo/photo suivante, vers le bas =
+    précédente (comme un vrai téléphone), toucher = pause/lecture, ✕ ou glisser
+    sur le côté pour fermer. Les photos gardent « Définir comme fond d'écran ».

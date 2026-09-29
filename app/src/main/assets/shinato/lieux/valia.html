@@ -248,7 +248,18 @@ joueV(); ['pointerdown','touchstart','keydown'].forEach(t=>addEventListener(t,()
 document.addEventListener('visibilitychange',()=>{ if(document.hidden) musV.pause(); else joueV(); });
 /* ---------- regarder la danseuse : la vidéo ---------- */
 const vid=document.getElementById('vidV'), boiteVid=document.getElementById('videoV');
-function ouvreVideo(fichier){ videoOuverte=true; musV.pause(); boiteVid.style.display='flex'; vid.src='/assets/shinato/m/'+fichier; try{ vid.currentTime=0; }catch(e){} const q=vid.play(); if(q&&q.catch) q.catch(()=>{}); }
+
+/* ---------- chaque vidéo vue s'ajoute au téléphone (Galerie > Vidéos, dans le bon album) ---------- */
+function noteVideoTel(src,titre,v){
+  try{ const L=JSON.parse(localStorage.getItem('rudy_videos')||'[]')||[]; if(L.some(o=>o.src===src)) return; }catch(e){ return; }
+  const enregistre=()=>{ let poster='';
+    try{ const w=220,h=Math.round(w*(v.videoHeight||9)/(v.videoWidth||16)); const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(v,0,0,w,h); poster=c.toDataURL('image/jpeg',0.7); }catch(e){}
+    const s=Math.round(v.duration||0), dur=(isFinite(s)&&s>0)?(Math.floor(s/60)+':'+('0'+(s%60)).slice(-2)):'';
+    try{ const L=JSON.parse(localStorage.getItem('rudy_videos')||'[]')||[]; if(L.some(o=>o.src===src)) return; L.push({src,titre,poster,dur,t:Date.now()}); localStorage.setItem('rudy_videos',JSON.stringify(L)); }catch(e){} };
+  setTimeout(enregistre,1200);
+}
+function ouvreVideo(fichier){ videoOuverte=true; musV.pause(); boiteVid.style.display='flex'; vid.src='/assets/shinato/m/'+fichier; try{ vid.currentTime=0; }catch(e){} const q=vid.play(); if(q&&q.catch) q.catch(()=>{});
+  noteVideoTel('/assets/shinato/m/'+fichier,'Valia Club — '+({'valia_danse.mp4':'la danse','valia_reserve.mp4':'la réservation','valia_chambre.mp4':'la chambre'}[fichier]||'vidéo'),vid); }
 function fermeVideo(){ window.ARRET=null; videoOuverte=false; try{ vid.pause(); }catch(e){} boiteVid.style.display='none'; joueV(); }
 document.getElementById('regarderV').addEventListener('click',()=>ouvreVideo('valia_danse.mp4'));
 // ---------- l'argent de Rudy : « Réserver » coûte 50 €, « Réserver une chambre » 100 € ----------

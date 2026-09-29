@@ -1075,6 +1075,22 @@ function musiquesDeLaPage(doc,prof,out){
   try{ [...doc.getElementsByTagName('iframe')].forEach(f=>{ try{ musiquesDeLaPage(f.contentDocument,prof+1,out); }catch(e){} }); }catch(e){}
   return out;
 }
+
+/* ---------- chaque vidéo vue s'ajoute au téléphone (Galerie > Vidéos, dans le bon album) ---------- */
+function noteVideoTel(src,titre,v){
+  try{ const L=JSON.parse(localStorage.getItem('rudy_videos')||'[]')||[]; if(L.some(o=>o.src===src)) return; }catch(e){ return; }
+  const enregistre=()=>{ let poster='';
+    try{ const w=220,h=Math.round(w*(v.videoHeight||9)/(v.videoWidth||16)); const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(v,0,0,w,h); poster=c.toDataURL('image/jpeg',0.7); }catch(e){}
+    const s=Math.round(v.duration||0), dur=(isFinite(s)&&s>0)?(Math.floor(s/60)+':'+('0'+(s%60)).slice(-2)):'';
+    try{ const L=JSON.parse(localStorage.getItem('rudy_videos')||'[]')||[]; if(L.some(o=>o.src===src)) return; L.push({src,titre,poster,dur,t:Date.now()}); localStorage.setItem('rudy_videos',JSON.stringify(L)); }catch(e){} };
+  setTimeout(enregistre,1200);
+}
+function titreVideo(src){
+  const m=src.match(/\/([a-z]+)_([a-z0-9]+)\.mp4$/); if(!m) return 'Vidéo';
+  const nom=(PERSO[m[1]]&&PERSO[m[1]].nom)||m[1];
+  const T={moto:'Moto (aller)',retour:'Moto (retour)',nuit:'Nuit',nuit60:'Nuit',nuit80:'Nuit',resto:'Restaurant',homerun:'Home Run'}[m[2]]||'Vidéo';
+  return T+' — '+nom;
+}
 function ouvreNuit(src,fin,garderRadioCoupee){
   const b=$('nuitV'), v=$('nuitVid'); let fini=false;
   // la vidéo passe seule : on coupe la radio de la chambre ET toutes les musiques des pages (boulevard, resto…)
@@ -1087,6 +1103,7 @@ function ouvreNuit(src,fin,garderRadioCoupee){
   v.onended=termine; v.onerror=()=>{ toast("La vidéo n'a pas pu se lire (fichier manquant ?)",3000); termine(); };
   $('nuitFermer').onclick=termine;
   v.src=src; b.style.display='block'; const q=v.play(); if(q&&q.catch) q.catch(()=>{});
+  noteVideoTel(src,titreVideo(src),v);
 }
 [L1,L2].forEach(el=>el.addEventListener('click',()=>{ if(reglage||!ici||mode!=='lit') return; if($('menu').style.display==='flex'||$('discu').style.display==='flex') return; menu(); }));
 
