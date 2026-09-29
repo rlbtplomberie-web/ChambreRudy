@@ -155,6 +155,8 @@ function draw(now){
   background:radial-gradient(circle at 40% 30%,#ff9ad6,#ff4fb8 60%,#8c1760);color:#fff;font-weight:900;font-size:17px;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(255,79,184,.7);cursor:pointer}
 #chambreV{right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(162px + env(safe-area-inset-bottom,0px));display:none;padding:14px 22px;border-radius:999px;border:2px solid #e9d6ff;
   background:radial-gradient(circle at 40% 30%,#c9a2ff,#8a4fff 60%,#3d1580);color:#fff;font-weight:900;font-size:16px;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(150,90,255,.7);cursor:pointer}
+#pauseV{position:fixed;z-index:25;display:none;border:2px solid #c8fff0;
+  background:radial-gradient(circle at 40% 30%,#8ff5d8,#1fbf95 60%,#0b5c47);color:#fff;font-weight:900;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(40,220,170,.7);cursor:pointer}
 .prixV{display:block;font-size:12px;font-weight:800;opacity:.9}
 #argentV{right:calc(10px + env(safe-area-inset-right,0px));top:calc(10px + env(safe-area-inset-top,0px));padding:8px 14px;border-radius:999px;border:1.5px solid rgba(255,225,160,.6);background:rgba(20,6,24,.82);color:#ffeec2;font-weight:800;font-size:13px}
 #toastV{position:fixed;z-index:45;left:50%;top:40%;transform:translateX(-50%);display:none;max-width:84%;padding:12px 16px;border-radius:14px;background:rgba(20,6,24,.94);border:1.5px solid rgba(255,79,184,.6);color:#fff;font-weight:800;font-size:15px;text-align:center}
@@ -164,9 +166,10 @@ function draw(now){
 </style>
 <style>
 /* les choix face à la danseuse : plus petits, en colonne à droite */
-#regarderV,#reserverV,#chambreV{right:calc(10px + env(safe-area-inset-right,0px))!important;width:136px;box-sizing:border-box;padding:8px 8px!important;
+#regarderV,#reserverV,#chambreV,#pauseV{right:calc(10px + env(safe-area-inset-right,0px))!important;width:136px;box-sizing:border-box;padding:8px 8px!important;
   font-size:13px!important;line-height:1.15;text-align:center;border-radius:14px!important;border-width:1.5px!important}
 #chambreV{bottom:calc(150px + env(safe-area-inset-bottom,0px))!important}
+#pauseV{bottom:calc(208px + env(safe-area-inset-bottom,0px))!important}
 #reserverV{bottom:calc(92px + env(safe-area-inset-bottom,0px))!important}
 #regarderV{bottom:calc(34px + env(safe-area-inset-bottom,0px))!important;padding:13px 8px!important}
 #regarderV .prixV,#reserverV .prixV,#chambreV .prixV{font-size:11px}
@@ -176,6 +179,7 @@ function draw(now){
 <button class="uiV" id="sortirV">🚪 Sortie</button>
 <button class="uiV" id="regarderV">👀 Regarder</button>
 <button class="uiV" id="reserverV">💎 Réserver<span class="prixV">50 €</span></button>
+<button class="uiV" id="pauseV">☕ C'est la pause</button>
 <button class="uiV" id="chambreV">🛏️ Réserver une chambre<span class="prixV">100 €</span></button>
 <div class="uiV" id="argentV">💶 …</div>
 <div id="toastV"></div>
@@ -222,6 +226,7 @@ function avanceRudy(){
   document.getElementById('regarderV').style.display=devant?'block':'none';
   document.getElementById('reserverV').style.display=devant?'block':'none';
   document.getElementById('chambreV').style.display=devant?'block':'none';
+  document.getElementById('pauseV').style.display=devant?'block':'none';
   // tout en bas de la salle : la sortie
   document.getElementById('sortirV').style.display=(!videoOuverte&&!window.ARRET&&RUDY.y>=SOL_V.y1-18)?'block':'none';
 }
@@ -259,9 +264,10 @@ function noteVideoTel(src,titre,v){
   setTimeout(enregistre,1200);
 }
 function ouvreVideo(fichier){ videoOuverte=true; musV.pause(); boiteVid.style.display='flex'; vid.src='/assets/shinato/m/'+fichier; try{ vid.currentTime=0; }catch(e){} const q=vid.play(); if(q&&q.catch) q.catch(()=>{});
-  noteVideoTel('/assets/shinato/m/'+fichier,'Valia Club — '+({'valia_danse.mp4':'la danse','valia_reserve.mp4':'la réservation','valia_chambre.mp4':'la chambre'}[fichier]||'vidéo'),vid); }
+  noteVideoTel('/assets/shinato/m/'+fichier,'Valia Club — '+({'valia_danse.mp4':'la danse','valia_reserve.mp4':'la réservation','valia_chambre.mp4':'la chambre','valia_pause.mp4':'la pause'}[fichier]||'vidéo'),vid); }
 function fermeVideo(){ window.ARRET=null; videoOuverte=false; try{ vid.pause(); }catch(e){} boiteVid.style.display='none'; joueV(); }
 document.getElementById('regarderV').addEventListener('click',()=>ouvreVideo('valia_danse.mp4'));
+document.getElementById('pauseV').addEventListener('click',()=>ouvreVideo('valia_pause.mp4'));   // « C'est la pause » : gratuit
 // ---------- l'argent de Rudy : « Réserver » coûte 50 €, « Réserver une chambre » 100 € ----------
 function pont(){ for(const w of [window,parent,top]){ try{ if(w.Chambre&&w.Chambre.argent) return w.Chambre; }catch(e){} } return null; }
 function argent(){ const p=pont(); try{ return p?p.argent():null; }catch(e){ return null; } }
