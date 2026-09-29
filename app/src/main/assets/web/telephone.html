@@ -479,6 +479,7 @@ function act(a){
   else if(k==='hang')hangUp();
   else if(k==='tone')pickTone(p);
   else if(k==='och')pickOpt(+p);
+  else if(k==='vraccroche')valiaVideo();
 }
 
 /* ---------- navigation ---------- */
@@ -1455,13 +1456,65 @@ function meSay(g,t){CS[g.id].hist.push({w:'me',t});bub('me',t,true)}
 function setBar(g,b){CS[g.id].bar=b;if(cview==='chat'&&cur_g===g.id)renderBar(g)}
 function renderBar(g){const b=CS[g.id].bar,el=$('cbar');el.innerHTML='';if(!b)return;
   if(b.t==='tones'){el.innerHTML=`<div class="lab">Envoyer un message à ${g.name}</div><div class="tones"><div class="tone s" data-act="tone:s">Simple</div><div class="tone r" data-act="tone:r">Romantique</div><div class="tone h" data-act="tone:h">Hot 🔥</div></div>`}
+  else if(b.t==='raccroche'){el.innerHTML='<div class="opt" data-act="vraccroche" style="text-align:center;background:#7a1630;border-color:#ff6b8a;font-weight:800">📵 Raccrocher</div>'}
   else{b.ch.forEach((c,k)=>{const d=document.createElement('div');d.className='opt';d.dataset.act='och:'+k;d.textContent=c[0];el.appendChild(d)})}
   scrollChat()}
-function pickTone(t){const g=gg(),st=CS[g.id];if(!st.bar||st.bar.t!=='tones')return;const L=g.c[t];let k=Math.floor(Math.random()*L.length);if(L.length>1&&k===st.last[t])k=(k+1)%L.length;st.last[t]=k;const cv=L[k];st.cv=cv;st.tone=t;st.i=0;setBar(g,null);meSay(g,cv.me);setTimeout(()=>runStep(g),350)}
+function pickTone(t){const g=gg(),st=CS[g.id];if(!st.bar||st.bar.t!=='tones')return;const L=g.c[t];let k=Math.floor(Math.random()*L.length);if(L.length>1&&k===st.last[t])k=(k+1)%L.length;st.last[t]=k;const cv=valiaSpecial(g)||L[k];st.cv=cv;st.tone=t;st.i=0;setBar(g,null);meSay(g,cv.me);setTimeout(()=>runStep(g),350)}
 function runStep(g){const st=CS[g.id],cv=st.cv,step=cv.st[st.i];herSay(g,step.q.split('|'),()=>setBar(g,{t:'ch',ch:step.ch}))}
 function pickOpt(k){const g=gg(),st=CS[g.id];if(!st.bar||st.bar.t!=='ch')return;const c=st.bar.ch[k];setBar(g,null);meSay(g,c[0]);
-  setTimeout(()=>herSay(g,c[1].split('|'),()=>{addLove(g,lovePts(c[1],c[0]));st.i++;const cv=st.cv;if(st.i<cv.st.length)runStep(g);else herSay(g,[cv.end],()=>setBar(g,{t:'tones'}))}),350)}
+  setTimeout(()=>herSay(g,c[1].split('|'),()=>{addLove(g,lovePts(c[1],c[0]));st.i++;const cv=st.cv;if(st.i<cv.st.length)runStep(g);else herSay(g,[cv.end],()=>valiaFin(g,cv))}),350)}
 renderList();paintHearts();
+
+/* ---------- Valia à 60 % de cœur et plus : « c'est bientôt ma pause » ----------
+   1) Rudy lui écrit : elle est au travail, il insiste, elle arrive pour sa pause.
+   2) On raccroche : la vidéo s'affiche.
+   3) Le message suivant : on reparle de ce qui s'est passé (trop rapide… mais elle a kiffé).
+   Puis tout recommence la fois d'après. */
+const VALIA_PAUSE={special:'pause',me:"Salut Valia, ça va ?",st:[
+  {q:"Ça va…|Tu sais que je suis au travail, là ? 😅",ch:[
+   ["Oui, mais j'ai besoin de te voir","…|Écoute. C'est bientôt ma pause.|J'arrive. Mais faut que ça aille vite 😏"],
+   ["Je sais… mais tu me manques trop","Rudy… 😳|Bon. C'est bientôt ma pause. J'arrive.|Mais faut que ça aille vite, hein 😏"]]}],
+  end:"Prépare-toi. J'ai dix minutes, pas une de plus 🔥"};
+const VALIA_APRES={special:'apres',me:"Hey… t'es bien retournée au club ?",st:[
+  {q:"Oui oui 😂|Bon… on en parle, de tout à l'heure ?",ch:[
+   ["C'est allé trop vite, désolé","Trop vite ? J'avais à peine enlevé mes talons 😂|Mais t'inquiète, va."],
+   ["C'était intense, non ?","Intense… et super rapide 😂|T'étais pressé, hein ?"],
+   ["Tu as aimé ?","Tu veux la vérité ?|… Oui. J'ai kiffé 😏"]]},
+  {q:"Franchement, t'as été hyper précoce 😂|Mais je vais te dire un secret… j'ai kiffé. Vraiment.",ch:[
+   ["La prochaine fois je tiens plus longtemps","Promis ? Je te chronomètre 😂⏱️"],
+   ["C'est toi, tu me rends fou","Mmh… ça, ça me plaît 🔥|Je le prends comme un compliment."],
+   ["On recommence quand ?","Doucement, champion 😂|À ma prochaine pause… peut-être 😘"]]},
+  {q:"En tout cas… c'était la meilleure pause de ma soirée 😌",ch:[
+   ["Pour moi aussi","T'es mignon 🥰"],
+   ["Et moi le meilleur client ?","Client ? 😂 Toi t'es pas un client, Rudy.|T'es… autre chose."]]}],
+  end:"Bon, je retourne danser. Pense à moi… mais pas trop vite 😂😘"};
+function valiaSpecial(g){ if(g.id!=='valia'||(S.love.valia||0)<60) return null; return S.valiaPause==='fait'?VALIA_APRES:VALIA_PAUSE; }
+function valiaFin(g,cv){
+  if(cv&&cv.special==='pause'){ setBar(g,{t:'raccroche'}); return; }
+  if(cv&&cv.special==='apres'){ S.valiaPause=''; save(); }
+  setBar(g,{t:'tones'});
+}
+function valiaVideo(){
+  const g=gg(); if(g) setBar(g,null);
+  const src='/assets/web/tel/valia_pause_rdv.mp4';
+  const box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center';
+  box.innerHTML='<video playsinline style="width:100%;height:100%;object-fit:contain;background:#000"></video><button style="position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:12px;padding:8px 14px;border-radius:999px;border:0;background:rgba(255,255,255,.18);color:#fff;font-weight:800;font-size:14px">✕ Fermer</button>';
+  ['pointerdown','pointerup','pointermove','touchstart','touchend','click'].forEach(e=>box.addEventListener(e,ev=>ev.stopPropagation()));
+  document.body.appendChild(box);
+  const v=box.querySelector('video'); v.src=src;
+  let fini=false;
+  const ferme=()=>{ if(fini) return; fini=true; try{ v.pause(); }catch(e){} box.remove();
+    S.valiaPause='fait'; save();
+    if(g){ const st=CS[g.id]; st.hist.push({w:'her',t:"Valia s'est déconnectée"}); if(cview==='chat'&&cur_g===g.id) bub('her',"Valia s'est déconnectée",true); setBar(g,{t:'tones'}); } };
+  v.addEventListener('ended',ferme); v.addEventListener('error',ferme);
+  box.querySelector('button').addEventListener('click',ferme);
+  // rangée aussi dans l'album « Valia Club » des vidéos
+  v.addEventListener('loadeddata',()=>{ try{ const L=JSON.parse(localStorage.getItem('rudy_videos')||'[]')||[]; if(!L.some(o=>o.src===src)){
+    let poster=''; try{ const w=220,h=Math.round(w*(v.videoHeight||9)/(v.videoWidth||16)); const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(v,0,0,w,h); poster=c.toDataURL('image/jpeg',0.7); }catch(e){}
+    L.push({src,titre:'Valia — la pause',poster,dur:v.duration||0,t:Date.now()}); localStorage.setItem('rudy_videos',JSON.stringify(L)); } }catch(e){} },{once:true});
+  const q=v.play(); if(q&&q.catch) q.catch(()=>{});
+}
 
 /* ---------- plans ---------- */
 

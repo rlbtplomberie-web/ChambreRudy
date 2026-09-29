@@ -266,24 +266,31 @@ function noteVideoTel(src,titre,v){
 function ouvreVideo(fichier){ videoOuverte=true; musV.pause(); boiteVid.style.display='flex'; vid.src='/assets/shinato/m/'+fichier; try{ vid.currentTime=0; }catch(e){} const q=vid.play(); if(q&&q.catch) q.catch(()=>{});
   noteVideoTel('/assets/shinato/m/'+fichier,'Valia Club — '+({'valia_danse.mp4':'la danse','valia_reserve.mp4':'la réservation','valia_chambre.mp4':'la chambre','valia_pause.mp4':'la pause'}[fichier]||'vidéo'),vid); }
 function fermeVideo(){ window.ARRET=null; videoOuverte=false; try{ vid.pause(); }catch(e){} boiteVid.style.display='none'; joueV(); }
-document.getElementById('regarderV').addEventListener('click',()=>ouvreVideo('valia_danse.mp4'));
-document.getElementById('pauseV').addEventListener('click',()=>ouvreVideo('valia_pause.mp4'));   // « C'est la pause » : gratuit
+document.getElementById('regarderV').addEventListener('click',()=>{ toastV(txtCoeur(2),1400); setTimeout(()=>ouvreVideo('valia_danse.mp4'),700); });
+document.getElementById('pauseV').addEventListener('click',()=>{ toastV(txtCoeur(5),1400); setTimeout(()=>ouvreVideo('valia_pause.mp4'),700); });   // « C'est la pause » : gratuit
 // ---------- l'argent de Rudy : « Réserver » coûte 50 €, « Réserver une chambre » 100 € ----------
 function pont(){ for(const w of [window,parent,top]){ try{ if(w.Chambre&&w.Chambre.argent) return w.Chambre; }catch(e){} } return null; }
 function argent(){ const p=pont(); try{ return p?p.argent():null; }catch(e){ return null; } }
 function payer(n){ const p=pont(); try{ if(p&&p.ajouterArgent) p.ajouterArgent(-n); }catch(e){} majArgent(); }
 function majArgent(){ const a=argent(); document.getElementById('argentV').textContent='💶 '+(a===null?'—':a.toLocaleString('fr-FR')+' €'); }
 function toastV(t,ms){ const e=document.getElementById('toastV'); e.textContent=t; e.style.display='block'; clearTimeout(e._t); e._t=setTimeout(()=>e.style.display='none',ms||2400); }
+/* ---------- le cœur de Valia (le même que dans le téléphone) ---------- */
+function coeurValia(d){
+  try{ const S=JSON.parse(localStorage.getItem('rudyphone')||'{}')||{}; S.love=S.love||{};
+    const v=Math.min(100,Math.round(((S.love.valia||0)+d)*10)/10); S.love.valia=v;
+    localStorage.setItem('rudyphone',JSON.stringify(S)); return v; }catch(e){ return null; }
+}
+function txtCoeur(d){ const v=coeurValia(d); return '❤️ Valia +'+d+' %'+(v===null?'':' ('+String(v).replace('.',',')+' %)'); }
 function reserver(prix,fichier){
   const a=argent();
   if(a!==null&&a<prix){ toastV("Il te faut "+prix+" € pour ça. Tu n'as que "+a+" €."); return; }
-  payer(prix); toastV("−"+prix+" €",1200); setTimeout(()=>ouvreVideo(fichier),500);
+  payer(prix); toastV("−"+prix+" €   "+txtCoeur(5),1400); setTimeout(()=>ouvreVideo(fichier),700);
 }
 majArgent(); setInterval(majArgent,3000);
 document.getElementById('reserverV').addEventListener('click',()=>reserver(50,'valia_reserve.mp4'));
 document.getElementById('chambreV').addEventListener('click',()=>{
   const a=argent(); if(a!==null&&a<100){ toastV("Il te faut 100 € pour ça. Tu n'as que "+a+" €."); return; }
-  payer(100); toastV("−100 €",1200);
+  payer(100); toastV("−100 €   "+txtCoeur(10),2000);
   // elle s'arrête, se met à genoux face à Rudy, et lui parle… puis la vidéo
   dir=RUDY.x<x?-1:1; window.ARRET='belly_20'; setFrame('belly_20');
   try{ vid.src='/assets/shinato/m/valia_chambre.mp4'; vid.load(); }catch(e){}

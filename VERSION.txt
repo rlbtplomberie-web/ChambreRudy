@@ -1,53 +1,8 @@
-version 211 — Valia Club : « C'est la pause »
+version 212 — Le cœur de Valia et « c'est bientôt ma pause »
 
-  Face à la danseuse, un 4e choix « ☕ C'est la pause » (gratuit) au-dessus
-    de « Réserver une chambre » : il lance la vidéo de la pause, qui se range
-    aussi dans les vidéos du téléphone.
+  Valia Club : son cœur (celui du téléphone) monte à chaque visite :
+    Regarder +2 %, Réserver +5 %, Réserver une chambre +10 %, C'est la pause +5 %.
+  Téléphone, Valia à 60 % et plus : Rudy lui écrit, elle est au travail, il
+    insiste, elle arrive pour sa pause ; on raccroche et la vidéo s'affiche.
+    Le message suivant : ils reparlent de ce qui s'est passé. Puis ça recommence.
 
-version 210 — Mifa : vidéo de victoire au Home Run
-
-  Quand Mifa gagne le match de Home Run, sa vidéo part tout de suite,
-    puis l'écran de fin s'affiche.
-
-version 209 — Mifa peut dormir chez Rudy (vidéo 60 %)
-
-  « Je veux que tu dormes ici ce soir » avec Mifa : elle accepte à partir
-    de 60 % de cœur (après un resto ce soir-là), avec sa vidéo et ses phrases.
-    À 80 % et plus, c'est la même vidéo en attendant celle des 80 %.
-
-version 208 — Katila peut dormir chez Rudy (vidéo 60 %)
-
-  « Je veux que tu dormes ici ce soir » avec Katila : elle accepte à partir
-    de 60 % de cœur (après un resto ce soir-là), avec sa vidéo et ses phrases.
-    À 80 % et plus, c'est la même vidéo en attendant celle des 80 %.
-
-version 207 — Gisèle : vidéo de nuit 80 %
-
-  « Je veux que tu dormes ici ce soir » avec Gisèle : à 80 % de cœur et plus,
-    sa nouvelle vidéo ; entre 60 et 79 %, la vidéo 60 %.
-
-version 206 — Gisèle peut dormir chez Rudy (vidéo 60 %)
-
-  « Je veux que tu dormes ici ce soir » avec Gisèle : elle accepte à partir
-    de 60 % de cœur (après un resto ce soir-là), avec sa vidéo et ses phrases.
-    À 80 % et plus, c'est la même vidéo en attendant celle des 80 %.
-
-version 205 — Katila peut enfin embrasser Rudy au boulevard
-
-  Balade de Katila : 5 nouvelles poses découpées depuis sa planche (main dans
-    la main, face à face, bisou, câlin, marche) ; le bouton « Embrasser »
-    apparaît pour elle comme pour les autres filles.
-
-version 204 — Vidéos à l'heure, découpes réparées au boulevard
-
-  Home Run : quand elle gagne, sa vidéo part tout de suite ; l'écran
-    « Rejouer / Sortir du stade » n'apparaît qu'après la vidéo.
-  Table pour deux : rendez-vous réussi, la vidéo du resto part tout de suite,
-    avant l'écran de fin (plus besoin de toucher « Sortir du restaurant »).
-  Moto : dernier message, la vidéo de moto enchaîne aussitôt, puis écran noir
-    jusqu'à l'arrivée sur le boulevard (on ne revoit plus la chambre entre les deux).
-  Balade au boulevard : trous transparents rebouchés dans les images du couple
-    (Katila surtout ; aussi Karine, Sophie, Rose, Mifa, Gisèle, Faty, Ameline,
-    et les baskets de Rudy).
-
-  Contient aussi la version 203 (stabilité : télé, loupe, Shinato, toucher).
