@@ -1,4 +1,4 @@
-version 198 — Home Run : vidéo de Faty quand elle gagne
+version 199 — Home Run : vidéo de Gisèle quand elle gagne
 
-  Balade avec Faty > Home Run : si c'est elle qui gagne le match, sa vidéo se
-  lance en plein écran (sans musique), comme pour Katila, Rose et Sophie.
+  Balade avec Gisèle > Home Run : si c'est elle qui gagne le match, sa vidéo se
+  lance en plein écran (sans musique), comme pour Katila, Rose, Sophie et Faty.
