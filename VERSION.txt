@@ -1,4 +1,4 @@
-version 199 — Home Run : vidéo de Gisèle quand elle gagne
+version 200 — Home Run : vidéo d'Ameline quand elle gagne
 
-  Balade avec Gisèle > Home Run : si c'est elle qui gagne le match, sa vidéo se
-  lance en plein écran (sans musique), comme pour Katila, Rose, Sophie et Faty.
+  Balade avec Ameline > Home Run : si c'est elle qui gagne le match, sa vidéo se
+  lance en plein écran (sans musique), comme pour Katila, Rose, Sophie, Faty et Gisèle.
