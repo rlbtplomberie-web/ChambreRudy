@@ -1,5 +1,4 @@
-version 194 — Home Run : vidéo de Katila quand elle gagne
+version 195 — Home Run : vidéo de Rose quand elle gagne
 
-  Balade avec Katila > Home Run : si c'est elle qui gagne le match, sa vidéo se
-  lance en plein écran (sans musique) par-dessus l'écran de fin, puis on
-  retrouve l'écran de fin (Rejouer / Sortir du stade).
+  Balade avec Rose > Home Run : si c'est elle qui gagne le match, sa vidéo se
+  lance en plein écran (sans musique), comme pour Katila.
