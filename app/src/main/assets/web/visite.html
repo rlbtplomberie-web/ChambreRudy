@@ -979,7 +979,8 @@ function quitteLit(apres,sansFondu){
 const restoFait={};
 const NUIT={
  sophie:{
-  video:'/assets/web/visite/sophie_nuit.mp4',            // cœur à 80 % ou plus
+  video90:'/assets/web/visite/sophie_nuit90.mp4',        // cœur à 90 % ou plus
+  video:'/assets/web/visite/sophie_nuit.mp4',            // cœur de 80 à 89 %
   video60:'/assets/web/visite/sophie_nuit60.mp4',        // cœur entre 60 et 79 %
   non:["Dormir ici ? Doucement, Rudy… on n'en est pas encore là.",
        "Tu ne m'as même pas encore invitée au restaurant…",
@@ -1142,7 +1143,7 @@ function dormir(){
   if(COEUR[id]<seuil||!restoFait[id]){ occupee=true; humeur(10,3200); dit(auHasard(N.non),3200); setTimeout(()=>{ occupee=false; },3200); return; }
   // elle accepte : une phrase, puis la vidéo
   occupee=true; humeur(3,3400); dit(auHasard(N.oui),3400);
-  setTimeout(()=>{ if(ici!==id) return; tait(); ouvreNuit(((COEUR[id]>=80&&N.video)||!N.video60)?N.video:N.video60,()=>{
+  setTimeout(()=>{ if(ici!==id) return; tait(); ouvreNuit((COEUR[id]>=90&&N.video90)?N.video90:(((COEUR[id]>=80&&N.video)||!N.video60)?N.video:N.video60),()=>{
       humeur(8,4200); dit(auHasard(N.apres),4200); gagne(id,5);
       setTimeout(()=>{ occupee=false; depart(); },4300);        // elle rentre chez elle
     }); },3500);
@@ -1166,7 +1167,7 @@ function noteVideoTel(src,titre,v){
 function titreVideo(src){
   const m=src.match(/\/([a-z]+)_([a-z0-9]+)\.mp4$/); if(!m) return 'Vidéo';
   const nom=(PERSO[m[1]]&&PERSO[m[1]].nom)||m[1];
-  const T={moto:'Moto (aller)',retour:'Moto (retour)',nuit:'Nuit',nuit60:'Nuit',nuit80:'Nuit',resto:'Restaurant',homerun:'Home Run',discuter:'On discute'}[m[2]]||'Vidéo';
+  const T={moto:'Moto (aller)',retour:'Moto (retour)',nuit:'Nuit',nuit60:'Nuit',nuit80:'Nuit',nuit90:'Nuit',resto:'Restaurant',homerun:'Home Run',discuter:'On discute'}[m[2]]||'Vidéo';
   return T+' — '+nom;
 }
 function ouvreNuit(src,fin,garderRadioCoupee){
