@@ -866,7 +866,7 @@ addEventListener('message',e=>{
     const f=$('resto'); f.style.opacity='0'; const fin=e.data.fin||'mid';
     setTimeout(()=>{ f.style.display='none'; f.srcdoc='';
       gagne(id,(e.data.aff>=10&&fin!=='throw')?10:(COEUR_RESTO[fin]||0));
-      const retourBalade=()=>{ try{ const b=$('sortie').contentWindow; b.postMessage({type:'coeur',v:COEUR[id]},'*'); b.postMessage({type:'parle',t:MERCI_RESTO[fin]||MERCI_RESTO.mid},'*'); b.focus(); }catch(er){} };
+      const retourBalade=()=>{ try{ const b=$('sortie').contentWindow; b.postMessage({type:'coeur',v:COEUR[id]},'*'); b.postMessage({type:'parle',t:MERCI_RESTO[fin]||MERCI_RESTO.mid},'*'); b.postMessage({type:'discuter',ok:!!restoFait[id]},'*'); b.focus(); }catch(er){} };
       // repas réussi : sa vidéo du restaurant, puis retour sur le boulevard
       if((fin==='win'||fin==='mid')&&!e.data.videoVue) ouvreNuit('/assets/web/visite/'+id+'_resto.mp4',retourBalade,true);
       else retourBalade();
@@ -879,12 +879,14 @@ function partirEnBalade(id){
   enBalade=id; tait(); fermeMenus(); if(mode==='lit') quitteLit(null,true);
   const d=BALADE[id]; const html=BALADE_BASE.split('__NOM__').join(PERSO[id].nom).replace('__FRAMES__',JSON.stringify(d.f)).replace('__AR__',d.ar).replace('__BISOU__',d.f.length>12?'true':'false').replace('__MOTS__',JSON.stringify(d.mots));
   const f=$('sortie'); f.style.opacity='0'; f.style.display='block'; f.srcdoc=html;
-  f.onload=()=>{ f.style.opacity='1'; try{ f.contentWindow.postMessage({type:'coeur',v:COEUR[id]},'*'); f.contentWindow.focus(); }catch(e){} };
+  f.onload=()=>{ f.style.opacity='1'; try{ f.contentWindow.postMessage({type:'coeur',v:COEUR[id]},'*'); f.contentWindow.postMessage({type:'discuter',ok:!!restoFait[id]},'*'); f.contentWindow.focus(); }catch(e){} };
 }
 addEventListener('message',e=>{
   if(!e.data||!enBalade) return; const id=enBalade;
   if(e.data.type==='sortie:bisou'){ gagne(id,2); /* chaque bisou dans la rue : +2 % */ try{ $('sortie').contentWindow.postMessage({type:'coeur',v:COEUR[id]},'*'); }catch(er){} }
   if(e.data.type==='sortie:fin'){ retourMaison(id); }
+  // « Discuter » (après le resto) : sa vidéo
+  if(e.data.type==='sortie:discuter'&&restoFait[id]) ouvreNuit('/assets/web/visite/'+id+'_discuter.mp4',()=>{ try{ $('sortie').contentWindow.focus(); }catch(er){} },true);
 });
 
 /* ---------- la discussion : toujours 2 réponses, une qui lui plaît et une qui lui déplaît ---------- */
@@ -1162,7 +1164,7 @@ function noteVideoTel(src,titre,v){
 function titreVideo(src){
   const m=src.match(/\/([a-z]+)_([a-z0-9]+)\.mp4$/); if(!m) return 'Vidéo';
   const nom=(PERSO[m[1]]&&PERSO[m[1]].nom)||m[1];
-  const T={moto:'Moto (aller)',retour:'Moto (retour)',nuit:'Nuit',nuit60:'Nuit',nuit80:'Nuit',resto:'Restaurant',homerun:'Home Run'}[m[2]]||'Vidéo';
+  const T={moto:'Moto (aller)',retour:'Moto (retour)',nuit:'Nuit',nuit60:'Nuit',nuit80:'Nuit',resto:'Restaurant',homerun:'Home Run',discuter:'On discute'}[m[2]]||'Vidéo';
   return T+' — '+nom;
 }
 function ouvreNuit(src,fin,garderRadioCoupee){

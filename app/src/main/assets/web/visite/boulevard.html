@@ -176,6 +176,8 @@ v.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){v.scrol
 #rentrerQB b{font-size:17px}#rentrerQB .l{display:flex;gap:10px}
 #rentrerQB button{flex:1;padding:12px;border-radius:14px;border:0;font-weight:900;font-size:16px;cursor:pointer}
 #rqOui{background:#2fcf62;color:#062611}#rqNon{background:#3a3560;color:#fff}
+#discuterB{position:fixed;z-index:20;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(178px + env(safe-area-inset-bottom,0px));display:none;padding:13px 20px;border-radius:999px;border:2px solid #d9ffe9;
+  background:radial-gradient(circle at 40% 30%,#9ff0c4,#22b36b 60%,#0b5a33);color:#fff;font-weight:900;font-size:16px;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(60,220,140,.7);cursor:pointer}
 #inviterHR{right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(104px + env(safe-area-inset-bottom,0px));display:none;padding:14px 20px;border-radius:999px;border:2px solid #cfe9ff;
   background:radial-gradient(circle at 40% 30%,#9fd8ff,#2f8be0 60%,#0d3a78);color:#fff;font-weight:900;font-size:17px;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(80,170,255,.7);cursor:pointer}
 #bulleB{position:absolute;z-index:7;display:none;max-width:240px;padding:6px 11px 8px;border-radius:12px 12px 12px 3px;background:rgba(255,255,255,.96);color:#1c1740;font:700 13px/1.3 system-ui,sans-serif;pointer-events:none;white-space:normal}
@@ -193,6 +195,7 @@ v.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){v.scrol
 <div class="ui" id="coeurB"><i>♥</i> <span id="coeurBt">__NOM__</span></div>
 <div class="ui" id="joyB" aria-label="Se déplacer"><div id="knobB"></div></div>
 <button class="ui" id="bisouB">💋 Embrasser</button>
+<button class="ui" id="discuterB">💬 Discuter</button>
 <script>
 (()=>{
 const F=__FRAMES__;                      // 1-10 marche · 11 main dans la main · 12 face à face · 13 bisou · 14 câlin · 15 marche
@@ -335,6 +338,9 @@ function joue(){ const q=mus.play(); if(q&&q.catch) q.catch(()=>{}); }
 joue(); ['pointerdown','touchstart','keydown'].forEach(t=>addEventListener(t,()=>{ if(mus.paused&&etat!=='resto') joue(); },{once:true,passive:true}));
 document.addEventListener('visibilitychange',()=>{ if(document.hidden) mus.pause(); else if(etat!=='resto') joue(); });
 if(!BISOU) document.getElementById('bisouB').style.display='none';
+/* « Discuter » : n'apparaît qu'après le resto avec elle */
+addEventListener('message',e=>{ if(e.data&&e.data.type==='discuter') document.getElementById('discuterB').style.display=e.data.ok?'block':'none'; });
+document.getElementById('discuterB').addEventListener('click',()=>{ try{ parent.postMessage({type:'sortie:discuter'},'*'); }catch(e){} });
 })();
 </script>
 </body></html>

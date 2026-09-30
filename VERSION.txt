@@ -1,8 +1,5 @@
-version 212 — Le cœur de Valia et « c'est bientôt ma pause »
+version 213 — « Discuter » au boulevard après le resto
 
-  Valia Club : son cœur (celui du téléphone) monte à chaque visite :
-    Regarder +2 %, Réserver +5 %, Réserver une chambre +10 %, C'est la pause +5 %.
-  Téléphone, Valia à 60 % et plus : Rudy lui écrit, elle est au travail, il
-    insiste, elle arrive pour sa pause ; on raccroche et la vidéo s'affiche.
-    Le message suivant : ils reparlent de ce qui s'est passé. Puis ça recommence.
-
+  Balade au boulevard : après avoir emmené la fille au restaurant (sans
+    lancer d'assiette), un bouton vert « 💬 Discuter » apparaît ; il lance
+    sa vidéo de discussion (les 8 filles).
