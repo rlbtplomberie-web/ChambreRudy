@@ -1488,15 +1488,23 @@ const VALIA_APRES={special:'apres',me:"Hey… t'es bien retournée au club ?",st
    ["Pour moi aussi","T'es mignon 🥰"],
    ["Et moi le meilleur client ?","Client ? 😂 Toi t'es pas un client, Rudy.|T'es… autre chose."]]}],
   end:"Bon, je retourne danser. Pense à moi… mais pas trop vite 😂😘"};
-function valiaSpecial(g){ if(g.id!=='valia'||(S.love.valia||0)<60) return null; return S.valiaPause==='fait'?VALIA_APRES:VALIA_PAUSE; }
+/* Valia à 80 % et plus : elle n'a pas le temps… mais elle arrive te faire ta fête */
+const VALIA_FETE={special:'fete',me:"Coucou Valia 😊",st:[
+  {q:"J'ai pas beaucoup de temps…|Mais j'ai envie de te voir.",ch:[
+   ["Mes rêves se transforment en réalité","J'ai pas le temps de t'écouter 😏|J'arrive. Prépare-toi…"]]}],
+  end:"Je vais te faire ta fête 🔥"};
+function valiaSpecial(g){ if(g.id!=='valia'||(S.love.valia||0)<60) return null;
+  if((S.love.valia||0)>=80) return VALIA_FETE;
+  return S.valiaPause==='fait'?VALIA_APRES:VALIA_PAUSE; }
 function valiaFin(g,cv){
   if(cv&&cv.special==='pause'){ setBar(g,{t:'raccroche'}); return; }
+  if(cv&&cv.special==='fete'){ setBar(g,null); setTimeout(()=>valiaVideo('/assets/web/tel/valia_fete_rdv.mp4','Valia — sa fête',true),900); return; }
   if(cv&&cv.special==='apres'){ S.valiaPause=''; save(); }
   setBar(g,{t:'tones'});
 }
-function valiaVideo(){
+function valiaVideo(srcDonne,titreDonne,sansSuite){
   const g=gg(); if(g) setBar(g,null);
-  const src='/assets/web/tel/valia_pause_rdv.mp4';
+  const src=srcDonne||'/assets/web/tel/valia_pause_rdv.mp4';
   const box=document.createElement('div');
   box.style.cssText='position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center';
   box.innerHTML='<video playsinline style="width:100%;height:100%;object-fit:contain;background:#000"></video><button style="position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:12px;padding:8px 14px;border-radius:999px;border:0;background:rgba(255,255,255,.18);color:#fff;font-weight:800;font-size:14px">✕ Fermer</button>';
@@ -1505,14 +1513,14 @@ function valiaVideo(){
   const v=box.querySelector('video'); v.src=src;
   let fini=false;
   const ferme=()=>{ if(fini) return; fini=true; try{ v.pause(); }catch(e){} box.remove();
-    S.valiaPause='fait'; save();
+    if(!sansSuite){ S.valiaPause='fait'; save(); }
     if(g){ const st=CS[g.id]; st.hist.push({w:'her',t:"Valia s'est déconnectée"}); if(cview==='chat'&&cur_g===g.id) bub('her',"Valia s'est déconnectée",true); setBar(g,{t:'tones'}); } };
   v.addEventListener('ended',ferme); v.addEventListener('error',ferme);
   box.querySelector('button').addEventListener('click',ferme);
   // rangée aussi dans l'album « Valia Club » des vidéos
   v.addEventListener('loadeddata',()=>{ try{ const L=JSON.parse(localStorage.getItem('rudy_videos')||'[]')||[]; if(!L.some(o=>o.src===src)){
     let poster=''; try{ const w=220,h=Math.round(w*(v.videoHeight||9)/(v.videoWidth||16)); const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(v,0,0,w,h); poster=c.toDataURL('image/jpeg',0.7); }catch(e){}
-    L.push({src,titre:'Valia — la pause',poster,dur:v.duration||0,t:Date.now()}); localStorage.setItem('rudy_videos',JSON.stringify(L)); } }catch(e){} },{once:true});
+    L.push({src,titre:titreDonne||'Valia — la pause',poster,dur:v.duration||0,t:Date.now()}); localStorage.setItem('rudy_videos',JSON.stringify(L)); } }catch(e){} },{once:true});
   const q=v.play(); if(q&&q.catch) q.catch(()=>{});
 }
 
