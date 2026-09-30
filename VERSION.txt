@@ -1,4 +1,7 @@
-version 220 — Ameline : vidéo de nuit 90 %
+version 221 — Téléphone : appli « Déverrouillage »
 
-  « Je veux que tu dormes ici ce soir » avec Ameline : à 90 % de cœur et plus,
-    sa nouvelle vidéo ; de 80 à 89 %, la vidéo 80 % ; de 60 à 79 %, la 60 %.
+  Nouvelle appli sur l'écran d'accueil du téléphone : toutes les vidéos des
+    jeux et des nuits (128), débloquées et rangées en 11 dossiers : Nuits,
+    Balades en moto, Restaurant, On discute, Home Run, Valia Club, Tir à la
+    corde, Pistolet à eau, Bras de fer, Dernier debout, Vidéos du téléphone.
+    Lecteur plein écran avec vidéo précédente / suivante.

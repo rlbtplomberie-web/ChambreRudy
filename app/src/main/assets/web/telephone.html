@@ -51,6 +51,20 @@ html,body{height:100%;margin:0;background:#07080c;overflow:hidden;font-family:So
 .ico.brk{background:linear-gradient(150deg,#ff6a3d,#b3261e)}
 .ico.con{background:linear-gradient(150deg,#34c46a,#17803f)}
 .ico.map{background:linear-gradient(150deg,#2fb7a4,#1a6fd1)}
+.ico.dev{background:linear-gradient(150deg,#ff5f8f,#8a2be2)}
+#devbox{position:absolute;left:0;right:0;top:118px;bottom:0;overflow:hidden;padding:0 14px 40px}
+#devbox .dvh{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;margin:2px 0 12px}
+#devbox .dvh i{font-style:normal;color:#ff7aa8;padding:6px 10px;border-radius:999px;background:rgba(255,122,168,.14)}
+#devbox .dvg{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 10px}
+#devbox .dvd{border-radius:16px;padding:14px 12px;background:linear-gradient(150deg,#262b3d,#171b27);border:1px solid rgba(255,255,255,.08);min-height:92px;display:flex;flex-direction:column;justify-content:space-between}
+#devbox .dvd .e{font-size:30px;line-height:1}
+#devbox .dvd b{font-size:13.5px;display:block;margin-top:8px}
+#devbox .dvd span{font-size:11px;color:rgba(255,255,255,.55)}
+#devbox .dvv{position:relative;border-radius:12px;overflow:hidden;background:#000;aspect-ratio:16/10}
+#devbox .dvv video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+#devbox .dvv b{position:absolute;left:0;right:0;bottom:0;padding:16px 8px 6px;font-size:11.5px;background:linear-gradient(transparent,rgba(0,0,0,.85));pointer-events:none}
+#devbox .dvv svg{position:absolute;right:7px;top:7px;pointer-events:none}
+
 .ico.set{background:linear-gradient(150deg,#2c7a55,#154430)}
 #dock{position:absolute;left:14px;right:14px;bottom:30px;height:84px;border-radius:28px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-around;padding:0 10px}
 #dock .ico{width:56px;height:56px}
@@ -245,6 +259,7 @@ html,body{height:100%;margin:0;background:#07080c;overflow:hidden;font-family:So
         <div class="app" data-act="open:set"><div class="ico set"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></div>Réglages</div>
         <div class="app" data-act="open:game"><div class="ico brk"><svg width="32" height="32" viewBox="0 0 24 24" fill="#fff"><rect x="3" y="4" width="5" height="3" rx=".6"/><rect x="9.5" y="4" width="5" height="3" rx=".6" opacity=".8"/><rect x="16" y="4" width="5" height="3" rx=".6"/><rect x="6" y="8.5" width="5" height="3" rx=".6" opacity=".8"/><rect x="13" y="8.5" width="5" height="3" rx=".6" opacity=".8"/><circle cx="12" cy="15.5" r="1.6"/><rect x="7" y="19" width="10" height="2" rx="1"/></svg></div>Casse-briques</div>
         <div class="app" data-act="open:con"><div class="ico con"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg></div>Contacts</div>
+        <div class="app" data-act="open:dev"><div class="ico dev"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2.2"/><path d="M8 11V7.5a4 4 0 0 1 7.6-1.7"/><path d="M12 15v2.4"/></svg></div>Déverrouillage</div>
         <div class="app" data-act="open:map"><div class="ico map"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></div>Plans</div>
       </div>
       <div id="dock">
@@ -265,6 +280,11 @@ html,body{height:100%;margin:0;background:#07080c;overflow:hidden;font-family:So
       <div id="modes"><span>Vidéo</span><b>Photo</b><span>Portrait</span></div>
       <div id="last" data-act="open:gal"></div>
       <div id="shut" data-act="shoot"></div>
+    </div>
+
+    <div class="layer win" id="app-dev">
+      <h1>Déverrouillage</h1><div class="sub" id="devsub">Toutes les vidéos, à regarder comme tu veux</div>
+      <div id="devbox"></div>
     </div>
 
     <div class="layer win" id="app-gal">
@@ -419,6 +439,7 @@ scr.addEventListener('pointercancel',()=>down=null);
 scr.addEventListener('pointerup',()=>lastY=null);
 let lastY=null;
 scr.addEventListener('pointermove',e=>{
+  if(app==='dev'&&down){const r=scr.getBoundingClientRect();if(DEV.yPrec!==null)$('devbox').scrollTop-=(e.clientY-DEV.yPrec)*UIH/r.height;DEV.yPrec=e.clientY}else DEV.yPrec=null;
   if(app==='con'&&cview==='chat'&&down){const r=scr.getBoundingClientRect();if(lastY!==null)$('msgs').scrollTop-=(e.clientY-lastY)*UIH/r.height;lastY=e.clientY}else lastY=null;if(app==='game'&&down){const r=scr.getBoundingClientRect();G.aim((e.clientX-r.left)/r.width)}});
 scr.addEventListener('pointerdown',e=>{if(app==='game'&&!e.target.closest('[data-act]')){const r=scr.getBoundingClientRect();G.aim((e.clientX-r.left)/r.width);G.launch()}});
 scr.addEventListener('dragstart',e=>e.preventDefault());
@@ -434,6 +455,7 @@ function swipe(dir){
   if(view==='home'){if(dir==='down')lock();return}
   if(view==='app'){
     if(app==='game')return;
+    if(app==='dev'){ if(dir==='right')DEV.retour(); return; }      // haut/bas : on fait défiler
     if(app==='map'&&dir==='right'){MP.back();return}
     if(app==='con'){if(dir==='right'){cBack();return}if(cview==='chat'&&(dir==='up'||dir==='down'))return}
     if($('big').classList.contains('open')&&(dir==='right'||dir==='left')){stepPhoto(dir==='right'?1:-1);return}
@@ -480,6 +502,9 @@ function act(a){
   else if(k==='tone')pickTone(p);
   else if(k==='och')pickOpt(+p);
   else if(k==='vraccroche')valiaVideo();
+  else if(k==='devf')DEV.dossier(+p);
+  else if(k==='devv')DEV.voir(+p);
+  else if(k==='devb')DEV.retour();
 }
 
 /* ---------- navigation ---------- */
@@ -496,6 +521,7 @@ function openApp(n){
   if(n==='map')MP.open();
   if(n==='con')showCV('list');
   if(n==='gal')renderGal();if(n==='walls')renderWalls();if(n==='set')renderSet();
+  if(n==='dev')DEV.ouvrir();
 }
 function closeApp(){if(!app)return;closeVideo();G.stop();MP.stop();hangUp(true);$('app-'+app).classList.remove('open');$('prev').classList.remove('open');$('big').classList.remove('open');app=null;view='home'}
 
@@ -1464,6 +1490,43 @@ function runStep(g){const st=CS[g.id],cv=st.cv,step=cv.st[st.i];herSay(g,step.q.
 function pickOpt(k){const g=gg(),st=CS[g.id];if(!st.bar||st.bar.t!=='ch')return;const c=st.bar.ch[k];setBar(g,null);meSay(g,c[0]);
   setTimeout(()=>herSay(g,c[1].split('|'),()=>{addLove(g,lovePts(c[1],c[0]));st.i++;const cv=st.cv;if(st.i<cv.st.length)runStep(g);else herSay(g,[cv.end],()=>valiaFin(g,cv))}),350)}
 renderList();paintHearts();
+
+/* ---------- appli « Déverrouillage » : toutes les vidéos de tous les jeux, rangées par dossier ---------- */
+const DEV={cat:[{"n": "Nuits", "e": "🌙", "v": [["/assets/web/visite/sophie_nuit60.mp4", "Sophie · 60 %"], ["/assets/web/visite/sophie_nuit.mp4", "Sophie · 80 %"], ["/assets/web/visite/sophie_nuit90.mp4", "Sophie · 90 %"], ["/assets/web/visite/karine_nuit.mp4", "Karine · 60 %"], ["/assets/web/visite/karine_nuit80.mp4", "Karine · 80 %"], ["/assets/web/visite/karine_nuit90.mp4", "Karine · 90 %"], ["/assets/web/visite/faty_nuit.mp4", "Faty · 60 %"], ["/assets/web/visite/faty_nuit80.mp4", "Faty · 80 %"], ["/assets/web/visite/faty_nuit90.mp4", "Faty · 90 %"], ["/assets/web/visite/katila_nuit60.mp4", "Katila · 60 %"], ["/assets/web/visite/katila_nuit80.mp4", "Katila · 80 %"], ["/assets/web/visite/gisele_nuit60.mp4", "Gisèle · 60 %"], ["/assets/web/visite/gisele_nuit80.mp4", "Gisèle · 80 %"], ["/assets/web/visite/mifa_nuit60.mp4", "Mifa · 60 %"], ["/assets/web/visite/mifa_nuit80.mp4", "Mifa · 80 %"], ["/assets/web/visite/ameline_nuit.mp4", "Ameline · 60 %"], ["/assets/web/visite/ameline_nuit80.mp4", "Ameline · 80 %"], ["/assets/web/visite/ameline_nuit90.mp4", "Ameline · 90 %"], ["/assets/web/visite/rose_nuit.mp4", "Rose · 60 %"], ["/assets/web/visite/rose_nuit80.mp4", "Rose · 80 %"]]}, {"n": "Balades en moto", "e": "🏍️", "v": [["/assets/web/visite/sophie_moto.mp4", "Sophie · aller"], ["/assets/web/visite/karine_moto.mp4", "Karine · aller"], ["/assets/web/visite/faty_moto.mp4", "Faty · aller"], ["/assets/web/visite/katila_moto.mp4", "Katila · aller"], ["/assets/web/visite/gisele_moto.mp4", "Gisèle · aller"], ["/assets/web/visite/mifa_moto.mp4", "Mifa · aller"], ["/assets/web/visite/ameline_moto.mp4", "Ameline · aller"], ["/assets/web/visite/rose_moto.mp4", "Rose · aller"], ["/assets/web/visite/sophie_retour.mp4", "Sophie · retour"], ["/assets/web/visite/karine_retour.mp4", "Karine · retour"], ["/assets/web/visite/faty_retour.mp4", "Faty · retour"], ["/assets/web/visite/katila_retour.mp4", "Katila · retour"], ["/assets/web/visite/gisele_retour.mp4", "Gisèle · retour"], ["/assets/web/visite/mifa_retour.mp4", "Mifa · retour"], ["/assets/web/visite/ameline_retour.mp4", "Ameline · retour"], ["/assets/web/visite/rose_retour.mp4", "Rose · retour"]]}, {"n": "Restaurant", "e": "🍷", "v": [["/assets/web/visite/sophie_resto.mp4", "Sophie"], ["/assets/web/visite/karine_resto.mp4", "Karine"], ["/assets/web/visite/faty_resto.mp4", "Faty"], ["/assets/web/visite/katila_resto.mp4", "Katila"], ["/assets/web/visite/gisele_resto.mp4", "Gisèle"], ["/assets/web/visite/mifa_resto.mp4", "Mifa"], ["/assets/web/visite/ameline_resto.mp4", "Ameline"], ["/assets/web/visite/rose_resto.mp4", "Rose"]]}, {"n": "On discute", "e": "💬", "v": [["/assets/web/visite/sophie_discuter.mp4", "Sophie"], ["/assets/web/visite/karine_discuter.mp4", "Karine"], ["/assets/web/visite/faty_discuter.mp4", "Faty"], ["/assets/web/visite/katila_discuter.mp4", "Katila"], ["/assets/web/visite/gisele_discuter.mp4", "Gisèle"], ["/assets/web/visite/mifa_discuter.mp4", "Mifa"], ["/assets/web/visite/ameline_discuter.mp4", "Ameline"], ["/assets/web/visite/rose_discuter.mp4", "Rose"]]}, {"n": "Home Run", "e": "⚾", "v": [["/assets/web/visite/sophie_homerun.mp4", "Sophie"], ["/assets/web/visite/karine_homerun.mp4", "Karine"], ["/assets/web/visite/faty_homerun.mp4", "Faty"], ["/assets/web/visite/katila_homerun.mp4", "Katila"], ["/assets/web/visite/gisele_homerun.mp4", "Gisèle"], ["/assets/web/visite/mifa_homerun.mp4", "Mifa"], ["/assets/web/visite/ameline_homerun.mp4", "Ameline"], ["/assets/web/visite/rose_homerun.mp4", "Rose"]]}, {"n": "Valia Club", "e": "💃", "v": [["/assets/shinato/m/valia_danse.mp4", "Regarder"], ["/assets/shinato/m/valia_reserve.mp4", "Réserver"], ["/assets/shinato/m/valia_chambre.mp4", "La chambre"], ["/assets/shinato/m/valia_pause.mp4", "C'est la pause"], ["/assets/web/tel/valia_pause_rdv.mp4", "Sa pause (texto 60 %)"], ["/assets/web/tel/valia_fete_rdv.mp4", "Sa fête (texto 80 %)"]]}, {"n": "Tir à la corde", "e": "🪢", "v": [["/assets/shinato/m/adc66e02f095a00d.mp4", "Sophie"], ["/assets/shinato/m/32f182e8d7fb9e8b.mp4", "Karine"], ["/assets/shinato/m/c051385d62899df7.mp4", "Faty"], ["/assets/shinato/m/bfdbb35ebc75666e.mp4", "Katila"], ["/assets/shinato/m/bd8b751ea2723ae5.mp4", "Gisèle"], ["/assets/shinato/m/ea00ee6e2147720a.mp4", "Mifa"], ["/assets/shinato/m/d1e34f1699ca7fc7.mp4", "Ameline"], ["/assets/shinato/m/93984b1eb743be63.mp4", "Rose"]]}, {"n": "Pistolet à eau", "e": "🔫", "v": [["/assets/shinato/m/28a62983edca9db4.mp4", "Sophie · duel"], ["/assets/shinato/m/5b18e8aaab2daa3e.mp4", "Karine · duel"], ["/assets/shinato/m/effe82d1c4e2346f.mp4", "Faty · duel"], ["/assets/shinato/m/b0c16295cf09dd30.mp4", "Katila · duel"], ["/assets/shinato/m/a4da8e9ac34ef5fb.mp4", "Gisèle · duel"], ["/assets/shinato/m/a8ca1c40168f8cda.mp4", "Mifa · duel"], ["/assets/shinato/m/d3520a84fa2c7b8f.mp4", "Ameline · duel"], ["/assets/shinato/m/478a3dbd63437bd3.mp4", "Rose · duel"], ["/assets/shinato/m/eau8_sophie.mp4", "Sophie · 1 contre 8"], ["/assets/shinato/m/eau8_karine.mp4", "Karine · 1 contre 8"], ["/assets/shinato/m/eau8_faty.mp4", "Faty · 1 contre 8"], ["/assets/shinato/m/eau8_katila.mp4", "Katila · 1 contre 8"], ["/assets/shinato/m/eau8_gisele.mp4", "Gisèle · 1 contre 8"], ["/assets/shinato/m/eau8_mifa.mp4", "Mifa · 1 contre 8"], ["/assets/shinato/m/eau8_ameline.mp4", "Ameline · 1 contre 8"], ["/assets/shinato/m/eau8_rose.mp4", "Rose · 1 contre 8"]]}, {"n": "Bras de fer", "e": "💪", "v": [["/assets/shinato/m/bdf_sophie_victoire.mp4", "Sophie"], ["/assets/shinato/m/bdf_karine_victoire.mp4", "Karine"], ["/assets/shinato/m/bdf_faty_victoire.mp4", "Faty"], ["/assets/shinato/m/bdf_katila_victoire.mp4", "Katila"], ["/assets/shinato/m/bdf_mifa_victoire.mp4", "Mifa"], ["/assets/shinato/m/bdf_ameline_victoire.mp4", "Ameline"], ["/assets/shinato/m/bdf_rose_victoire.mp4", "Rose"]]}, {"n": "Dernier debout", "e": "🍺", "v": [["/assets/shinato/m/dd_lou_victoire.mp4", "Sophie"], ["/assets/shinato/m/dd_jade_victoire.mp4", "Karine"], ["/assets/shinato/m/dd_nala_victoire.mp4", "Faty"], ["/assets/shinato/m/dd_nina_victoire.mp4", "Katila"], ["/assets/shinato/m/dd_maya_victoire.mp4", "Gisèle"], ["/assets/shinato/m/dd_kenza_victoire.mp4", "Mifa"], ["/assets/shinato/m/dd_sofia_victoire.mp4", "Ameline"], ["/assets/shinato/m/dd_rubi_victoire.mp4", "Rose"]]}, {"n": "Vidéos du téléphone", "e": "📱", "v": [["/assets/web/tel/m_054_bc7c0f85e5.mp4", "Vidéo 1"], ["/assets/web/tel/m_056_0c6ffd06fe.mp4", "Vidéo 2"], ["/assets/web/tel/m_058_1a423ec527.mp4", "Vidéo 3"], ["/assets/web/tel/m_060_5766ec1288.mp4", "Vidéo 4"], ["/assets/web/tel/m_062_5ef50703f0.mp4", "Vidéo 5"], ["/assets/web/tel/m_064_a99d784f9b.mp4", "Vidéo 6"], ["/assets/web/tel/m_066_33eb340811.mp4", "Vidéo 7"], ["/assets/web/tel/m_068_56c3f80452.mp4", "Vidéo 8"], ["/assets/web/vid/tel_video_09.mp4", "Vidéo 9"], ["/assets/web/vid/tel_video_10.mp4", "Vidéo 10"], ["/assets/web/vid/tel_video_11.mp4", "Vidéo 11"], ["/assets/web/vid/tel_video_12.mp4", "Vidéo 12"], ["/assets/web/vid/tel_video_13.mp4", "Vidéo 13"], ["/assets/web/vid/tel_video_14.mp4", "Vidéo 14"], ["/assets/web/vid/tel_video_15.mp4", "Vidéo 15"], ["/assets/web/vid/tel_video_16.mp4", "Vidéo 16"], ["/assets/web/vid/tel_video_17.mp4", "Vidéo 17"], ["/assets/web/vid/tel_video_18.mp4", "Vidéo 18"], ["/assets/web/vid/tel_video_19.mp4", "Vidéo 19"], ["/assets/web/vid/tel_video_20.mp4", "Vidéo 20"], ["/assets/web/vid/tel_video_21.mp4", "Vidéo 21"], ["/assets/web/vid/tel_video_22.mp4", "Vidéo 22"], ["/assets/web/vid/tel_video_23.mp4", "Vidéo 23"]]}],ouvert:-1,yPrec:null,
+  ouvrir(){ this.ouvert=-1; this.dessine(); },
+  dossier(i){ this.ouvert=i; this.dessine(); },
+  retour(){ if(this.ouvert>=0){ this.ouvert=-1; this.dessine(); } else closeApp(); },
+  dessine(){
+    const b=$('devbox'); b.scrollTop=0; const tot=this.cat.reduce((n,d)=>n+d.v.length,0);
+    if(this.ouvert<0){
+      $('devsub').textContent=tot+' vidéos débloquées · '+this.cat.length+' dossiers';
+      b.innerHTML='<div class="dvg">'+this.cat.map((d,i)=>'<div class="dvd" data-act="devf:'+i+'"><div class="e">'+d.e+'</div><div><b>'+d.n+'</b><span>'+d.v.length+' vidéos</span></div></div>').join('')+'</div>';
+    }else{
+      const d=this.cat[this.ouvert]; $('devsub').textContent=d.v.length+' vidéos';
+      b.innerHTML='<div class="dvh"><i data-act="devb">‹ Dossiers</i>'+d.e+' '+d.n+'</div><div class="dvg">'+d.v.map((v,k)=>'<div class="dvv" data-act="devv:'+k+'"><video muted playsinline preload="metadata" src="'+v[0]+'#t=0.8"></video><svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M7 4l14 8-14 8z"/></svg><b>'+v[1]+'</b></div>').join('')+'</div>';
+    }
+  },
+  voir(k){
+    const d=this.cat[this.ouvert]; if(!d) return; let i=k;
+    const box=document.createElement('div');
+    box.style.cssText='position:fixed;inset:0;z-index:99999;background:#000';
+    const btn='position:absolute;padding:9px 15px;border-radius:999px;border:0;background:rgba(255,255,255,.18);color:#fff;font-weight:800;font-size:15px';
+    box.innerHTML='<video playsinline controls style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000"></video>'+
+      '<div class="t" style="position:absolute;left:0;right:0;top:calc(18px + env(safe-area-inset-top,0px));text-align:center;color:#fff;font:700 14px system-ui,sans-serif;text-shadow:0 1px 4px #000;pointer-events:none"></div>'+
+      '<button class="x" style="'+btn+';top:calc(10px + env(safe-area-inset-top,0px));right:12px">✕</button>'+
+      '<button class="p" style="'+btn+';left:12px;top:50%">‹</button><button class="n" style="'+btn+';right:12px;top:50%">›</button>';
+    ['pointerdown','pointerup','pointermove','touchstart','touchend','click'].forEach(e=>box.addEventListener(e,ev=>ev.stopPropagation()));
+    document.body.appendChild(box);
+    const v=box.querySelector('video'), t=box.querySelector('.t');
+    const joue=()=>{ const x=d.v[i]; v.src=x[0]; t.textContent=d.n+' — '+x[1]+'   ('+(i+1)+' / '+d.v.length+')'; const q=v.play(); if(q&&q.catch)q.catch(()=>{}); };
+    const ferme=()=>{ try{ v.pause(); v.removeAttribute('src'); v.load(); }catch(e){} box.remove(); };
+    box.querySelector('.x').addEventListener('click',ferme);
+    box.querySelector('.p').addEventListener('click',()=>{ i=(i-1+d.v.length)%d.v.length; joue(); });
+    box.querySelector('.n').addEventListener('click',()=>{ i=(i+1)%d.v.length; joue(); });
+    v.addEventListener('ended',()=>{ if(i<d.v.length-1){ i++; joue(); } });
+    joue();
+  }
+};
 
 /* ---------- Valia à 60 % de cœur et plus : « c'est bientôt ma pause » ----------
    1) Rudy lui écrit : elle est au travail, il insiste, elle arrive pour sa pause.
