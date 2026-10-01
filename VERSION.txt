@@ -1,4 +1,5 @@
-version 230 — DreamtoSleep : vidéo quand Faty gagne
+version 231 — DreamtoSleep : vidéo quand Katila gagne
 
-  Quand Rudy perd et que la dernière fille qui l'a attrapé est Faty,
+  Quand Rudy perd et que la dernière fille qui l'a attrapé est Katila,
     sa vidéo passe tout de suite, puis l'écran de fin s'affiche.
+  Les 8 filles ont maintenant leur vidéo dans DreamtoSleep.
