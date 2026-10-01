@@ -1,4 +1,4 @@
-version 229 — DreamtoSleep : vidéo quand Karine gagne
+version 230 — DreamtoSleep : vidéo quand Faty gagne
 
-  Quand Rudy perd et que la dernière fille qui l'a attrapé est Karine,
+  Quand Rudy perd et que la dernière fille qui l'a attrapé est Faty,
     sa vidéo passe tout de suite, puis l'écran de fin s'affiche.
