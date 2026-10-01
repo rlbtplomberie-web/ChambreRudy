@@ -1,4 +1,4 @@
-version 232 — Téléphone : 3 nouvelles vidéos
+version 233 — DreamtoSleep : remise complète des 8 vidéos
 
-  Galerie du téléphone, onglet Vidéos (album « Vidéos ») : 3 vidéos en plus.
-  Elles sont aussi dans l'appli Déverrouillage, dossier « Vidéos du téléphone ».
+  Toutes les vidéos de DreamtoSleep (les 8 filles) et le jeu, renvoyés
+    ensemble pour être sûr qu'aucune ne manque sur GitHub (Ameline).
