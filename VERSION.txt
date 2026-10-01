@@ -1,4 +1,4 @@
-version 225 — DreamtoSleep : vidéo quand Gisèle gagne
+version 226 — DreamtoSleep : vidéo quand Rose gagne
 
-  Quand Rudy perd et que la dernière fille qui l'a attrapé est Gisèle,
+  Quand Rudy perd et que la dernière fille qui l'a attrapé est Rose,
     sa vidéo passe tout de suite, puis l'écran de fin s'affiche.
