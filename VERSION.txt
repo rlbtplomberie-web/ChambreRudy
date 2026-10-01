@@ -1,6 +1,9 @@
-version 238 — Balle au prisonnier : vidéos de fin de match
+version 239 — Valia Club : « Gros combat »
 
-  Victoire : la vidéo de Rudy, Sophie et Mathis.
-  Défaite : la vidéo de Shanna, Théo et Carlos.
-  La vidéo passe en plein écran (✕ pour la passer), la musique du jeu se met
-    en pause, puis le choix « Recommencer / Partir » s'affiche.
+  « Combat » montre maintenant deux choix : Petit combat et Gros combat.
+  Gros combat : « Tu en es sûr ? » / « Tu sais, je suis bien plus forte que
+    toi… » / « … même si tu crois le contraire » puis Oui / Non.
+    Non : « C'est une bonne décision. »
+    Oui : « Tu l'auras voulu… » / « Mais t'inquiète pas. » / « Tu seras bien
+    payé, quoi qu'il arrive », +100 €, puis la vidéo du gros combat.
+  Aussi dans l'appli Déverrouillage (dossier Valia Club).
