@@ -1,7 +1,6 @@
-version 221 — Téléphone : appli « Déverrouillage »
+version 222 — Valia Club : « Combat » → « Petit combat »
 
-  Nouvelle appli sur l'écran d'accueil du téléphone : toutes les vidéos des
-    jeux et des nuits (128), débloquées et rangées en 11 dossiers : Nuits,
-    Balades en moto, Restaurant, On discute, Home Run, Valia Club, Tir à la
-    corde, Pistolet à eau, Bras de fer, Dernier debout, Vidéos du téléphone.
-    Lecteur plein écran avec vidéo précédente / suivante.
+  Face à la danseuse, un bouton « 🥊 Combat » ; il fait apparaître « Petit
+    combat ». Valia s'arrête et parle en trois bulles, puis Oui / Non.
+    Oui : +20 € et la vidéo du combat. Non : elle se moque et reprend sa danse.
+  La vidéo est aussi dans l'appli Déverrouillage (dossier Valia Club).
