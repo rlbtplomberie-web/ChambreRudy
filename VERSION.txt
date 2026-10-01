@@ -1,4 +1,4 @@
-version 226 — DreamtoSleep : vidéo quand Rose gagne
+version 227 — DreamtoSleep : vidéo quand Mifa gagne
 
-  Quand Rudy perd et que la dernière fille qui l'a attrapé est Rose,
+  Quand Rudy perd et que la dernière fille qui l'a attrapé est Mifa,
     sa vidéo passe tout de suite, puis l'écran de fin s'affiche.
