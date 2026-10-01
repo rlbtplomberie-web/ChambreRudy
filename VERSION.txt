@@ -1,5 +1,4 @@
-version 231 — DreamtoSleep : vidéo quand Katila gagne
+version 232 — Téléphone : 3 nouvelles vidéos
 
-  Quand Rudy perd et que la dernière fille qui l'a attrapé est Katila,
-    sa vidéo passe tout de suite, puis l'écran de fin s'affiche.
-  Les 8 filles ont maintenant leur vidéo dans DreamtoSleep.
+  Galerie du téléphone, onglet Vidéos (album « Vidéos ») : 3 vidéos en plus.
+  Elles sont aussi dans l'appli Déverrouillage, dossier « Vidéos du téléphone ».
