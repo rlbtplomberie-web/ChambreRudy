@@ -1,9 +1,7 @@
-version 239 — Valia Club : « Gros combat »
+version 240 — Valia à 90 % : c'est elle qui insiste pour venir
 
-  « Combat » montre maintenant deux choix : Petit combat et Gros combat.
-  Gros combat : « Tu en es sûr ? » / « Tu sais, je suis bien plus forte que
-    toi… » / « … même si tu crois le contraire » puis Oui / Non.
-    Non : « C'est une bonne décision. »
-    Oui : « Tu l'auras voulu… » / « Mais t'inquiète pas. » / « Tu seras bien
-    payé, quoi qu'il arrive », +100 €, puis la vidéo du gros combat.
+  Téléphone, Valia à 90 % de cœur et plus : un petit dialogue où elle
+    insiste pour venir, puis « Je peux venir ? » → Oui → « J'arrive ! »
+    et la vidéo se lance.
+  80 à 89 % : « je vais te faire ta fête » ; 60 à 79 % : la pause.
   Aussi dans l'appli Déverrouillage (dossier Valia Club).
