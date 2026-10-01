@@ -1,4 +1,4 @@
-version 227 — DreamtoSleep : vidéo quand Mifa gagne
+version 229 — DreamtoSleep : vidéo quand Karine gagne
 
-  Quand Rudy perd et que la dernière fille qui l'a attrapé est Mifa,
+  Quand Rudy perd et que la dernière fille qui l'a attrapé est Karine,
     sa vidéo passe tout de suite, puis l'écran de fin s'affiche.
