@@ -1,7 +1,4 @@
-version 223 — Chambre : la flèche bleue du lit et « DreamtoSleep »
+version 224 — DreamtoSleep : vidéo quand Sophie gagne
 
-  Face au lit, une flèche bleue (qui monte et descend) montre le lit.
-    En la touchant (ou le lit) : « Voulez-vous dormir ? » OUI → le jeu
-    DreamtoSleep (Échappe-toi, Rudy !), en paysage.
-  Quand une fille est à la maison, la flèche n'apparaît pas et on ne peut
-    pas dormir.
+  Quand Rudy perd et que la dernière fille qui l'a attrapé est Sophie,
+    sa vidéo passe tout de suite, puis l'écran de fin s'affiche.

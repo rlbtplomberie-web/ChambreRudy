@@ -638,7 +638,7 @@ function spawnGirl(id,side){
 const ATK=new Set(['grabWind','lunge','diveWind','dive','jumpWind','jump','hold','mountWind','mount']);
 function rudyLying(){ return (R.st==='floor'||R.st==='down') && !(R.safe>0) && !girls.some(o=>o.st==='mountWind'||o.st==='mount'); }
 function startPin(g){
-  const p=progress(); R.st='pinned'; R.t=0; R.g=g; R.grip=100; R.holdT=0; R.holdMax=3.2-0.6*p; R.tapPow=100/(7+Math.round(3*p+g.str*0.7));
+  const p=progress(); R.st='pinned'; R.t=0; R.g=g; R.grip=100; R.holdT=0; game.derniere=g.id; R.holdMax=3.2-0.6*p; R.tapPow=100/(7+Math.round(3*p+g.str*0.7));
   game.pinN=(game.pinN||0)+1; R.pinType = game.pinN%2 ? 'h' : 'd';
   setSt(g,'mount'); g.h=0; shake=10; sfx.grab(); VOX.laugh(g); g.gig=rnd(1,1.6); say(g,'pin',true); float(g.name+' te plaque !',R.x,R.y-200,'#ff3d7f',1.1);
 }
@@ -649,7 +649,7 @@ function tryCatch(g){
   if(!rudyFree()) return false;
   if(R.st==='push' && R.t<0.3 && sgn(g.x-R.x)===R.dir) return false;
   const side=sgn(g.x-R.x);
-  R.st='grabbed'; R.t=0; R.g=g; R.grip=100; R.holdT=0;
+  R.st='grabbed'; R.t=0; R.g=g; R.grip=100; R.holdT=0; game.derniere=g.id;
   const p=progress(); R.holdMax=3.2-0.6*p; R.tapPow=100/(7+Math.round(3*p+g.str*0.7));
   setSt(g,'hold'); g.h=0; g.side=side; g.y=R.y+1;
   shake=10; sfx.grab(); VOX.laugh(g); g.gig=rnd(1,1.6); say(g,'catch',true); float(g.name+' t\u2019attrape !',R.x,R.y-285,'#ff3d7f',1.1);
@@ -850,7 +850,24 @@ function endGame(won){
   $('endStats').innerHTML = won
     ? `Arrivé au métro en <b>${game.time.toFixed(1)} s</b> avec <b>${R.hearts}</b> cœur${R.hearts>1?'s':''}<br>Poussées : <b>${game.pushes}</b> · Dégagements : <b>${game.escapes}</b><br>Score : <b>${score}</b>${rec?' — nouveau record':''}${best&&!rec?`<br>Record : <b>${best}</b>`:''}`
     : `Rudy a tenu <b>${dist} m</b> sur ${LEVEL/10} m<br>Poussées : <b>${game.pushes}</b> · Dégagements : <b>${game.escapes}</b>`;
+  // Rudy a perdu : si la dernière qui l'a attrapé a sa vidéo, elle passe tout de suite, puis l'écran de fin
+  const vp=!won&&VIDEO_PERDU[game.derniere];
+  if(vp){ videoPerdu(vp,()=>{ $('end').hidden=false; $('againBtn').focus({preventScroll:true}); }); return; }
   $('end').hidden=false; $('againBtn').focus({preventScroll:true});
+}
+/* ---------- les vidéos quand une fille gagne (la dernière qui a attrapé Rudy) ---------- */
+const VIDEO_PERDU={ sophie:'dts_perdu_sophie.mp4' };
+function videoPerdu(fichier,fin){
+  const box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;z-index:9999;background:#000';
+  box.innerHTML='<video playsinline autoplay style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000"></video>'+
+    '<button style="position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:12px;padding:9px 15px;border-radius:999px;border:0;background:rgba(255,255,255,.18);color:#fff;font-weight:800;font-size:15px">✕ Fermer</button>';
+  document.body.appendChild(box);
+  const v=box.querySelector('video'); let fini=false;
+  const ferme=()=>{ if(fini) return; fini=true; try{ v.pause(); }catch(e){} box.remove(); fin(); };
+  v.addEventListener('ended',ferme); v.addEventListener('error',ferme);
+  box.querySelector('button').addEventListener('click',ferme);
+  v.src=fichier; const q=v.play(); if(q&&q.catch) q.catch(()=>{});
 }
 
 /* ---------- fx ---------- */
