@@ -127,15 +127,80 @@ class PartieActivity : ComponentActivity() {
 
     private fun finDePartie(titre: String) {
         // la balle au prisonnier : +100 € si on gagne, -70 € sinon
-        com.rudy.chambre.Argent.ajouter(this, if (titre.contains("VICTOIRE")) 100 else -70)
+        val gagne = titre.contains("VICTOIRE")
+        com.rudy.chambre.Argent.ajouter(this, if (gagne) 100 else -70)
         runOnUiThread {
-            AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
-                .setTitle(titre)
-                .setPositiveButton("Recommencer") { _, _ -> vue.rejouer() }
-                .setNegativeButton("Partir") { _, _ -> finish() }
-                .setCancelable(false)
-                .show()
+            // d'abord la video : Rudy, Sophie et Mathis s'ils gagnent,
+            // Shanna, Theo et Carlos sinon ; ensuite le choix
+            videoDeFin(if (gagne) "balle/fin_victoire.mp4" else "balle/fin_defaite.mp4") {
+                if (isFinishing) return@videoDeFin
+                AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert)
+                    .setTitle(titre)
+                    .setPositiveButton("Recommencer") { _, _ -> vue.rejouer() }
+                    .setNegativeButton("Partir") { _, _ -> finish() }
+                    .setCancelable(false)
+                    .show()
+            }
         }
+    }
+
+    /** Une video plein ecran par-dessus le terrain, puis on continue. */
+    private fun videoDeFin(fichier: String, apres: () -> Unit) {
+        val bloc = FrameLayout(this)
+        bloc.setBackgroundColor(Color.BLACK)
+        bloc.isClickable = true                      // le terrain ne recoit plus les doigts
+        val ecran = android.view.TextureView(this)
+        bloc.addView(ecran, FrameLayout.LayoutParams(-1, -1, Gravity.CENTER))
+        var lecteur: android.media.MediaPlayer? = null
+        var surface: android.view.Surface? = null
+        var fini = false
+        fun finir() {
+            if (fini) return
+            fini = true
+            try { lecteur?.release() } catch (_: Throwable) {}
+            try { surface?.release() } catch (_: Throwable) {}
+            lecteur = null
+            racine.removeView(bloc)
+            com.rudy.chambre.Ambiance.pauseMusique(false)
+            apres()
+        }
+        bloc.addView(Button(this).apply {
+            text = "✕"; textSize = 15f
+            setTextColor(Color.WHITE)
+            setBackgroundColor(0x66000000)
+            setOnClickListener { finir() }
+        }, FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.END).apply {
+            topMargin = 30; rightMargin = 30
+        })
+        // l'image garde ses proportions, au centre
+        fun ajuster(vw: Int, vh: Int) {
+            if (vw <= 0 || vh <= 0 || bloc.width <= 0 || bloc.height <= 0) return
+            val k = minOf(bloc.width / vw.toFloat(), bloc.height / vh.toFloat())
+            ecran.layoutParams = FrameLayout.LayoutParams((vw * k).toInt(), (vh * k).toInt(), Gravity.CENTER)
+        }
+        ecran.surfaceTextureListener = object : android.view.TextureView.SurfaceTextureListener {
+            override fun onSurfaceTextureAvailable(st: android.graphics.SurfaceTexture, w: Int, h: Int) {
+                try {
+                    val f = assets.openFd(fichier)
+                    surface = android.view.Surface(st)
+                    lecteur = android.media.MediaPlayer().apply {
+                        setDataSource(f.fileDescriptor, f.startOffset, f.length)
+                        f.close()
+                        setSurface(surface)
+                        setOnVideoSizeChangedListener { _, vw, vh -> ajuster(vw, vh) }
+                        setOnCompletionListener { finir() }
+                        setOnErrorListener { _, _, _ -> finir(); true }
+                        prepare()
+                        start()
+                    }
+                } catch (_: Throwable) { finir() }      // pas de video : on passe directement au choix
+            }
+            override fun onSurfaceTextureSizeChanged(st: android.graphics.SurfaceTexture, w: Int, h: Int) {}
+            override fun onSurfaceTextureDestroyed(st: android.graphics.SurfaceTexture): Boolean = true
+            override fun onSurfaceTextureUpdated(st: android.graphics.SurfaceTexture) {}
+        }
+        com.rudy.chambre.Ambiance.pauseMusique(true)
+        racine.addView(bloc, FrameLayout.LayoutParams(-1, -1))
     }
 
     override fun onDestroy() {

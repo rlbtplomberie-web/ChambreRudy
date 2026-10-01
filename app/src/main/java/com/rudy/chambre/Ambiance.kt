@@ -45,6 +45,11 @@ object Ambiance {
         lecteur = null
     }
 
+    /** Le temps d'une video : la musique du jeu se met en pause, puis reprend. */
+    fun pauseMusique(enPause: Boolean) {
+        try { if (enPause) lecteur?.pause() else lecteur?.start() } catch (_: Throwable) {}
+    }
+
     /** La musique baisse pendant le jeu, faute de piste propre. */
     fun adoucirLaMusique() = SonPartage.volume(0.25f)
 

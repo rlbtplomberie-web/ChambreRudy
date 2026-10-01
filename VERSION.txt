@@ -1,6 +1,6 @@
-version 237 — Katila : vidéo de nuit 90 %
+version 238 — Balle au prisonnier : vidéos de fin de match
 
-  « Je veux que tu dormes ici ce soir » avec Katila : à 90 % de cœur et plus,
-    sa nouvelle vidéo ; de 80 à 89 %, la vidéo 80 % ; de 60 à 79 %, la 60 %.
-  Les 8 filles ont maintenant leurs trois vidéos de nuit (60, 80 et 90 %).
-  Aussi dans l'appli Déverrouillage (dossier Nuits).
+  Victoire : la vidéo de Rudy, Sophie et Mathis.
+  Défaite : la vidéo de Shanna, Théo et Carlos.
+  La vidéo passe en plein écran (✕ pour la passer), la musique du jeu se met
+    en pause, puis le choix « Recommencer / Partir » s'affiche.
