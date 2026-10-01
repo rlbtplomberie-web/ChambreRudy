@@ -1,4 +1,4 @@
-version 224 — DreamtoSleep : vidéo quand Sophie gagne
+version 225 — DreamtoSleep : vidéo quand Gisèle gagne
 
-  Quand Rudy perd et que la dernière fille qui l'a attrapé est Sophie,
+  Quand Rudy perd et que la dernière fille qui l'a attrapé est Gisèle,
     sa vidéo passe tout de suite, puis l'écran de fin s'affiche.
