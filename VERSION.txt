@@ -1,7 +1,4 @@
-version 240 — Valia à 90 % : c'est elle qui insiste pour venir
+version 241 — Déverrouillage : toutes les vidéos des mini-jeux
 
-  Téléphone, Valia à 90 % de cœur et plus : un petit dialogue où elle
-    insiste pour venir, puis « Je peux venir ? » → Oui → « J'arrive ! »
-    et la vidéo se lance.
-  80 à 89 % : « je vais te faire ta fête » ; 60 à 79 % : la pause.
-  Aussi dans l'appli Déverrouillage (dossier Valia Club).
+  Deux dossiers en plus dans l'appli Déverrouillage :
+    😴 DreamtoSleep (les 8 filles) et 🔴 Balle au prisonnier (victoire, défaite).
