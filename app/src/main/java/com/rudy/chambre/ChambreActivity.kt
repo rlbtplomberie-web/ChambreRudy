@@ -76,6 +76,8 @@ class ChambreActivity : ComponentActivity() {
 
         vue = VueChambre(this)
         vue.surObjet = { quoi -> toucheObjet(quoi) }
+        // la fleche du lit : seulement quand aucune fille n'est a la maison
+        vue.litLibre = { calque == null && Visite.ici(this).isEmpty() }
         vue.surEcranTele = { r -> placerEcranTele(r) }
         vue.surCamera = { m, l, t, w, h -> cameraVisite(m, l, t, w, h) }
         // le bouton de la radio regle vraiment le volume de la musique
@@ -278,6 +280,8 @@ class ChambreActivity : ComponentActivity() {
             "serrure" -> if (calque != null) calque?.evaluateJavascript("window.retourDemande&&window.retourDemande()", null) else menuDehors()
             "livre" -> startActivity(Intent(this,
                 com.rudy.chambre.livre.LivreActivity::class.java))
+            "lit" -> if (calque == null && Visite.ici(this).isEmpty())
+                confirmer("Voulez-vous dormir ?") { page("jeux/dreamtosleep.html", "DreamtoSleep", paysage = true) }
         }
     }
 

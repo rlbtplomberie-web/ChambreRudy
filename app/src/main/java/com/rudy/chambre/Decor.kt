@@ -64,6 +64,13 @@ object Decor {
     val SERRURE = Zone(586f / 1672f, 520f / 941f, 26f / 1672f, 26f / 1672f * 1.3f)
     val LIVRE   = Zone(1298f / 1672f, 684f / 941f, 36f / 1672f, 36f / 1672f)
 
+    // ----- le mur du lit : la fleche bleue « dormir » -----
+    /** Le lit, la ou on le touche pour dormir (couverture et oreillers). */
+    val LIT = Zone(0.10f, 0.47f, 0.86f, 0.38f)
+    /** La pointe de la fleche bleue, au-dessus du milieu du lit. */
+    const val FLECHE_LIT_X = 0.50f
+    const val FLECHE_LIT_Y = 0.60f
+
     /** Les treize consoles du carton, dans l'ordre ou elles sortent. */
     data class ConsolePosee(val id: String, val nom: String, val image: String, val video: String)
 

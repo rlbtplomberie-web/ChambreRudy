@@ -1,6 +1,7 @@
-version 222 — Valia Club : « Combat » → « Petit combat »
+version 223 — Chambre : la flèche bleue du lit et « DreamtoSleep »
 
-  Face à la danseuse, un bouton « 🥊 Combat » ; il fait apparaître « Petit
-    combat ». Valia s'arrête et parle en trois bulles, puis Oui / Non.
-    Oui : +20 € et la vidéo du combat. Non : elle se moque et reprend sa danse.
-  La vidéo est aussi dans l'appli Déverrouillage (dossier Valia Club).
+  Face au lit, une flèche bleue (qui monte et descend) montre le lit.
+    En la touchant (ou le lit) : « Voulez-vous dormir ? » OUI → le jeu
+    DreamtoSleep (Échappe-toi, Rudy !), en paysage.
+  Quand une fille est à la maison, la flèche n'apparaît pas et on ne peut
+    pas dormir.

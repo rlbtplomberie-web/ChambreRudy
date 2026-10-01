@@ -19,6 +19,8 @@ class VueChambre(ctx: Context) : View(ctx) {
 
     /** Ce que la vue demande a l'activite. */
     var surObjet: ((String) -> Unit)? = null
+    /** Vrai quand on peut dormir : personne a la maison. Sinon pas de fleche sur le lit. */
+    var litLibre: () -> Boolean = { true }
     /** Ou se trouve l'ecran de la tele, a chaque image : la video l'y suit. */
     var surEcranTele: ((RectF?) -> Unit)? = null
     /** La visite d'une fille : quel mur on regarde, et ou il est dessine (mur, gauche, haut, largeur, hauteur). */
@@ -167,7 +169,32 @@ class VueChambre(ctx: Context) : View(ctx) {
                 Objets.pastilleLivre(c, zone(Decor.LIVRE), battement())
                 invalidate()                       // la pastille bat doucement
             }
+            2 -> if (litLibre()) { dessinerFlecheLit(c); invalidate() }   // la fleche monte et descend
         }
+    }
+
+    /** La fleche bleue qui montre le lit (seulement quand personne n'est a la maison). */
+    private val peintFleche = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val peintBordFleche = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; color = Color.WHITE; strokeJoin = Paint.Join.ROUND }
+    private fun dessinerFlecheLit(c: Canvas) {
+        val px = decX + Decor.FLECHE_LIT_X * largeurMur
+        val py = decY + Decor.FLECHE_LIT_Y * hauteurMur - battement() * hauteurMur * 0.025f
+        val t = largeurMur * 0.075f                       // taille de la fleche
+        val p = Path().apply {
+            moveTo(px, py)                                // la pointe, vers le lit
+            lineTo(px - t * .62f, py - t * .62f)
+            lineTo(px - t * .24f, py - t * .62f)
+            lineTo(px - t * .24f, py - t * 1.35f)
+            lineTo(px + t * .24f, py - t * 1.35f)
+            lineTo(px + t * .24f, py - t * .62f)
+            lineTo(px + t * .62f, py - t * .62f)
+            close()
+        }
+        peintFleche.shader = LinearGradient(px, py - t * 1.35f, px, py, 0xFF7FD8FF.toInt(), 0xFF1E6BFF.toInt(), Shader.TileMode.CLAMP)
+        peintFleche.setShadowLayer(t * .25f, 0f, 0f, 0xFF3EA8FF.toInt())
+        c.drawPath(p, peintFleche)
+        peintBordFleche.strokeWidth = t * .06f
+        c.drawPath(p, peintBordFleche)
     }
 
     /** Un rectangle du decor, ramene aux pixels de l'ecran. */
@@ -670,6 +697,12 @@ class VueChambre(ctx: Context) : View(ctx) {
                 surObjet?.invoke("serrure"); return
             }
             if (zone(Decor.LIVRE).contains(x, y))   { surObjet?.invoke("livre"); return }
+        } else if (vue == 2) {
+            // la fleche bleue ou le lit : « Voulez-vous dormir ? »
+            val px = decX + Decor.FLECHE_LIT_X * largeurMur; val py = decY + Decor.FLECHE_LIT_Y * hauteurMur
+            val t = largeurMur * 0.075f
+            val surFleche = RectF(px - t, py - t * 1.6f, px + t, py + t * .3f).contains(x, y)
+            if (litLibre() && (surFleche || zone(Decor.LIT).contains(x, y))) { surObjet?.invoke("lit"); return }
         }
     }
 
