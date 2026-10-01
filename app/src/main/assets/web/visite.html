@@ -751,6 +751,7 @@ function menu(){
   const choix=mode==='lit'
     ?[["💬 Discuter",discuter],[`🌃 Sortir avec ${P.nom}`,sortir],[`🏠 Laisser ${P.nom} rentrer chez elle`,renvoyer],["💤 Je veux que tu dormes ici ce soir",dormir]]
     :[["💬 Discuter",discuter],[`🛋️ Inviter ${P.nom} à s'asseoir`,asseoir],[`🌃 Sortir avec ${P.nom}`,sortir],[`🏠 Laisser ${P.nom} rentrer chez elle`,renvoyer],["💤 Je veux que tu dormes ici ce soir",dormir]];
+  if(FILM[ici]&&COEUR[ici]>=50) choix.push(["🎬 Regarder un film",regarderFilm]);   // à partir de 50 % de cœur
   choix.push(["Annuler",()=>{ fermeMenus(); occupee=false; }]);
   choix.forEach(([t,fn],i)=>{
     const b=document.createElement('button'); b.className='opt'+(i===choix.length-1?' doux':''); b.textContent=t; b.addEventListener('click',fn); m.appendChild(b); });
@@ -1143,6 +1144,35 @@ const auHasard=L=>L[Math.floor(Math.random()*L.length)];
 /* ses rires (les mêmes qu'au restaurant) */
 const RIRES=[1,2,3,4].map(n=>'/assets/web/visite/rires/rire_'+n+'.mp3'); let dernierRire=-1;
 function rire(vol=.85){ try{ let i; do{ i=Math.floor(Math.random()*RIRES.length); }while(i===dernierRire); dernierRire=i; const a=new Audio(RIRES[i]); a.volume=vol; const p=a.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} }
+/* ---------- « Regarder un film » (à partir de 50 % de cœur) ----------
+   Elle propose, Rudy répond « Pourquoi pas », elle choisit le film : Oui / Non.
+   Non : « Dommage… » et −5 % de cœur. Oui : la vidéo, et à la fin elle est partie. */
+const FILM={
+ gisele:{video:'/assets/web/visite/gisele_film.mp4',
+   avant:["Et dis-moi… ça te dit de regarder un film ? 🍿","J'ai vu que tu avais un salon… ça va avec une belle télé 📺"],
+   choix:"C'est moi qui choisis le film !", non:"Dommage…"}
+};
+function ditRudy(t,ms=2400){ const b=$('bulle'); b.innerHTML='<span class="qui">Rudy</span>'; b.appendChild(document.createTextNode(t)); b.style.display='block';
+  const ir=cible().getBoundingClientRect(), sc=$('scene').getBoundingClientRect();
+  b.style.left=Math.max(4,Math.min(ir.left-sc.left+ir.width*.35, sc.width-b.offsetWidth-6))+'px';
+  b.style.top=Math.max(40,ir.top-sc.top-b.offsetHeight+ir.height*.03)+'px';
+  parle=true; clearTimeout(b._t); b._t=setTimeout(()=>{ b.style.display='none'; parle=false; },ms); }
+function regarderFilm(){
+  fermeMenus(); contact(); const id=ici, F=FILM[id]; if(!F) return; occupee=true;
+  const etapes=[()=>{ humeur(8,3000); dit(F.avant[0],3000); },
+                ()=>{ humeur(3,3000); dit(F.avant[1],3000); },
+                ()=>{ ditRudy("Pourquoi pas.",2400); },
+                ()=>{ humeur(9,3000); dit(F.choix,3000); }];
+  let i=0; const suite=()=>{ if(ici!==id) return; if(i<etapes.length){ etapes[i++](); setTimeout(suite,i===3?2500:3100); return; }
+    // Oui / Non
+    const m=$('menu'); m.innerHTML=`<div class="titre">${PERSO[id].nom} choisit le film</div>`;
+    [["Oui",()=>{ fermeMenus(); tait(); contact();
+        ouvreNuit(F.video,()=>{ img.style.transition='none'; img.style.opacity='0'; depart(); },true); }],
+     ["Non",()=>{ fermeMenus(); contact(); humeur(5,3000); dit(F.non,3000); gagne(id,-5); setTimeout(()=>{ occupee=false; },3000); }]]
+    .forEach(([t,fn],k)=>{ const b=document.createElement('button'); b.className='opt'+(k===1?' doux':''); b.textContent=t; b.addEventListener('click',fn); m.appendChild(b); });
+    m.style.display='flex'; contact(); };
+  suite();
+}
 function dormir(){
   fermeMenus(); contact(); const id=ici, N=NUIT[id];
   if(!N){ occupee=false; toast("« Je veux que tu dormes ici ce soir » : pour elle, cette partie arrive bientôt."); return; }
@@ -1174,7 +1204,7 @@ function noteVideoTel(src,titre,v){
 function titreVideo(src){
   const m=src.match(/\/([a-z]+)_([a-z0-9]+)\.mp4$/); if(!m) return 'Vidéo';
   const nom=(PERSO[m[1]]&&PERSO[m[1]].nom)||m[1];
-  const T={moto:'Moto (aller)',retour:'Moto (retour)',nuit:'Nuit',nuit60:'Nuit',nuit80:'Nuit',nuit90:'Nuit',resto:'Restaurant',homerun:'Home Run',discuter:'On discute'}[m[2]]||'Vidéo';
+  const T={moto:'Moto (aller)',retour:'Moto (retour)',nuit:'Nuit',nuit60:'Nuit',nuit80:'Nuit',nuit90:'Nuit',resto:'Restaurant',homerun:'Home Run',discuter:'On discute',film:'Film'}[m[2]]||'Vidéo';
   return T+' — '+nom;
 }
 function ouvreNuit(src,fin,garderRadioCoupee){

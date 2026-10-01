@@ -1,4 +1,8 @@
-version 241 — Déverrouillage : toutes les vidéos des mini-jeux
+version 242 — Chambre : « Regarder un film » (Gisèle)
 
-  Deux dossiers en plus dans l'appli Déverrouillage :
-    😴 DreamtoSleep (les 8 filles) et 🔴 Balle au prisonnier (victoire, défaite).
+  Quand Gisèle est dans la chambre et que son cœur est à 50 % ou plus, un
+    nouveau choix « 🎬 Regarder un film » apparaît dans son menu.
+  Elle propose le film, Rudy dit « Pourquoi pas », elle choisit le film :
+    Oui → la vidéo, et à la fin elle n'est plus dans la chambre ;
+    Non → « Dommage… » et −5 % de cœur.
+  Aussi dans l'appli Déverrouillage (nouveau dossier Films).
