@@ -1,5 +1,4 @@
-version 254 — Shinato Soccer Z : l'image de la victoire
+version 255 — Téléphone : 1 photo et 1 vidéo
 
-  Fin du match, si l'équipe de Rudy gagne : l'image « VICTOIRE ! » s'affiche
-    en plein écran, puis « Continuer » mène à l'écran « Fin du match ».
-  (Si les filles gagnent, leur vidéo passe toujours.)
+  Galerie du téléphone : une photo en plus (Photos) et une vidéo en plus
+    (Vidéos, album « Vidéos »). La vidéo est aussi dans Déverrouillage.
