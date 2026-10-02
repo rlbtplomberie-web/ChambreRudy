@@ -1,8 +1,11 @@
-version 247 — Chambre : « Regarder un film » avec Ameline
+version 248 — Chambre : « Regarder un film » avec Faty (et ses excuses)
 
-  Ameline à 50 % de cœur ou plus : « 🎬 Regarder un film » dans son menu.
-    « Qu'est-ce que tu veux faire, mon grand ? » / Rudy : « Je sais pas… » /
-    « Alors c'est moi qui choisis : on regarde un film » puis Oui / Non.
+  Faty à 50 % de cœur ou plus : « 🎬 Regarder un film » dans son menu.
+    « Hey ! J'aimerais bien regarder un film » puis Oui / Non.
     Oui → la vidéo, et à la fin elle n'est plus dans la chambre ;
-    Non → « Vraiment… tu sais pas ce que tu veux » et −5 % de cœur.
+    Non → « Ah… c'est comme ça que tu me considères ? » / « Je m'en vais. »,
+      −5 % de cœur, et elle part de la chambre.
+  Téléphone : après ce refus, le texto suivant à Faty devient une discussion
+    pour s'excuser (elle était déçue) ; une fois pardonné, ses textos
+    redeviennent normaux.
   Aussi dans Déverrouillage (dossier Films).

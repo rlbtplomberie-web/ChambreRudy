@@ -1159,7 +1159,10 @@ const FILM={
    avant:["Je suis fatiguée…","J'aimerais bien regarder un film 🎬"], non:"De toute façon, tu penses qu'à toi 😒", oui:"Super ! 🥰"},
  ameline:{video:'/assets/web/visite/ameline_film.mp4',
    avant:["Qu'est-ce que tu veux faire, mon grand ?"], rudy:"Je sais pas…",
-   choix:"Alors c'est moi qui choisis : on regarde un film 🎬", non:"Vraiment… tu sais pas ce que tu veux 🙄"}
+   choix:"Alors c'est moi qui choisis : on regarde un film 🎬", non:"Vraiment… tu sais pas ce que tu veux 🙄"},
+ faty:{video:'/assets/web/visite/faty_film.mp4',
+   avant:["Hey ! J'aimerais bien regarder un film 🎬"],
+   non:"Ah… c'est comme ça que tu me considères ? 😤", nonPart:"Je m'en vais.", fache:true}
 };
 function ditRudy(t,ms=2400){ const b=$('bulle'); b.innerHTML='<span class="qui">Rudy</span>'; b.appendChild(document.createTextNode(t)); b.style.display='block';
   const ir=cible().getBoundingClientRect(), sc=$('scene').getBoundingClientRect();
@@ -1178,7 +1181,11 @@ function regarderFilm(){
     [["Oui",()=>{ fermeMenus(); contact();
         const lance=()=>{ if(ici!==id) return; tait(); ouvreNuit(F.video,()=>{ img.style.transition='none'; img.style.opacity='0'; depart(); },true); };
         if(F.oui){ humeur(8,1900); dit(F.oui,1900); setTimeout(lance,2000); } else { tait(); lance(); } }],
-     ["Non",()=>{ fermeMenus(); contact(); humeur(5,3000); dit(F.non,3000); gagne(id,-5); setTimeout(()=>{ occupee=false; },3000); }]]
+     ["Non",()=>{ fermeMenus(); contact(); humeur(5,3000); dit(F.non,3000); gagne(id,-5);
+        // elle le prend mal : elle s'en va, et elle s'en souviendra par texto
+        if(F.fache){ try{ const R=JSON.parse(localStorage.getItem('rudy_film_refus')||'{}')||{}; R[id]=Date.now(); localStorage.setItem('rudy_film_refus',JSON.stringify(R)); }catch(e){}
+          setTimeout(()=>{ if(ici!==id) return; humeur(5,2400); dit(F.nonPart,2400); setTimeout(()=>{ occupee=false; depart(); },2500); },3100); return; }
+        setTimeout(()=>{ occupee=false; },3000); }]]
     .forEach(([t,fn],k)=>{ const b=document.createElement('button'); b.className='opt'+(k===1?' doux':''); b.textContent=t; b.addEventListener('click',fn); m.appendChild(b); });
     m.style.display='flex'; contact(); };
   suite();
