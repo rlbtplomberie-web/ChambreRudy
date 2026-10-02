@@ -1,4 +1,7 @@
-version 266 — Téléphone : 1 nouvelle vidéo
+version 272 — Foot Course : les 6 vidéos de victoire, en une seule archive
 
-  Galerie du téléphone, onglet Vidéos (album « Vidéos ») : 1 vidéo en plus.
-  Aussi dans l'appli Déverrouillage, dossier « Vidéos du téléphone ».
+  Mifa, Faty, Karine, Katila, Rose et Sophie : quand l'une d'elles arrive
+    première, sa vidéo passe d'abord, puis son image de victoire et le
+    classement. Le téléphone (appli Déverrouillage, dossier Foot Course) est
+    à jour avec les 6 vidéos.
+  Remplace les archives maj-57 à maj-62.

@@ -1112,17 +1112,31 @@ function update(dt){
 }
 function finishOne(r){if(r===P){sfx.cheer();crowd(.26,.3)}}
 document.addEventListener('click',e=>{if(e.target&&e.target.id==='winBtn'){$('winView').classList.add('hidden');$('againBtn').focus();}});
+/* ---------- les vidéos quand une fille gagne la course ---------- */
+const FC_VIDS={ MIFA:'/assets/shinato/m/fc_gagne_mifa.mp4', FATY:'/assets/shinato/m/fc_gagne_faty.mp4', KARINE:'/assets/shinato/m/fc_gagne_karine.mp4', KATILA:'/assets/shinato/m/fc_gagne_katila.mp4', ROSE:'/assets/shinato/m/fc_gagne_rose.mp4', SOPHIE:'/assets/shinato/m/fc_gagne_sophie.mp4' };
+function videoGagnante(src,apres){
+  const box=document.createElement('div'); box.style.cssText='position:fixed;inset:0;z-index:9999;background:#000';
+  box.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000"></video>'+
+    '<button style="position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:12px;padding:9px 15px;border-radius:999px;border:0;background:rgba(255,255,255,.18);color:#fff;font-weight:800;font-size:15px">✕ Fermer</button>';
+  document.body.appendChild(box);
+  const v=box.querySelector('video'); let fini=false;
+  const ferme=()=>{ if(fini) return; fini=true; try{ v.pause(); }catch(e){} box.remove(); apres(); };
+  v.addEventListener('ended',ferme); v.addEventListener('error',ferme); box.querySelector('button').addEventListener('click',ferme);
+  v.src=src; const q=v.play(); if(q&&q.catch) q.catch(()=>{});
+}
 function endRace(){
   if(S.done)return;S.done=true;running=false;crowd(.06,1.5);
   const res=runners.slice().sort((a,b)=>(b.d-a.d)||(a.time-b.time));
   $('resTable').innerHTML='<tr><th>Place</th><th>Coureur</th><th>Temps</th></tr>'+
     res.map((r,i)=>`<tr${r===P?' class="me"':''}><td>${i+1}e</td><td>${r.name}</td><td>${r.done?r.time.toFixed(2)+' s':'—'}</td></tr>`).join('');
   const mine=res.findIndex(r=>r===P)+1;
-  try{window.parent.postMessage({type:'foot:fin',gagne:mine===1},'*')}catch(e){}   // l'argent de la course
+  if(!S.argentFait){ S.argentFait=true; try{window.parent.postMessage({type:'foot:fin',gagne:mine===1},'*')}catch(e){} }   // l'argent de la course (une seule fois)
   $('resTitle').textContent=mine===1?'Victoire !':mine+'e place';
   const win=res[0],WINS=window.__WINS||(window.__WINS=JSON.parse(document.getElementById('wins').textContent));
   const wv=$('winView');
   const wk=win===P?'RUDY':(win&&win.key);
+  // la gagnante a sa vidéo : elle passe d'abord, puis l'image et le classement
+  if(!S.videoVue&&wk&&FC_VIDS[wk]){ S.videoVue=true; videoGagnante(FC_VIDS[wk],()=>{ S.done=false; endRace(); }); return; }
   if(win&&wk&&WINS[wk]){
     $('winImg').src=WINS[wk];
     $('winName').textContent=(win===P?'Rudy':win.name)+' gagne !';
