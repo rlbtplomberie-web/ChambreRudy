@@ -1,7 +1,7 @@
-version 243 — Chambre : « Regarder un film » avec Rose
+version 244 — Valia : l'appel à 50 % (« jour de travaux »)
 
-  Rose à 50 % de cœur ou plus : « 🎬 Regarder un film » dans son menu.
-    « Ça te dit de regarder un film avec moi ? » puis Oui / Non.
-    Oui → la vidéo, et à la fin elle n'est plus dans la chambre ;
-    Non → « Dommage… » et −5 % de cœur.
-  Gisèle garde son dialogue. Aussi dans Déverrouillage (dossier Films).
+  Téléphone, appel à Valia avec 50 % de cœur ou plus : elle ne travaille pas,
+    il y a des travaux au club ; « Et du coup, tu fais quoi ? » → « Ben… j'arrive ! »
+    « Je suis occupé » : elle s'énerve et raccroche au nez.
+    « Super, avec plaisir » : « J'arrive tout de suite ! », puis la vidéo.
+  Aussi dans l'appli Déverrouillage (dossier Valia Club).
