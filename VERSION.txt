@@ -1,7 +1,8 @@
-version 246 — Chambre : « Regarder un film » avec Katila
+version 247 — Chambre : « Regarder un film » avec Ameline
 
-  Katila à 50 % de cœur ou plus : « 🎬 Regarder un film » dans son menu.
-    « Je suis fatiguée… » / « J'aimerais bien regarder un film » puis Oui / Non.
-    Oui → « Super ! », la vidéo, et à la fin elle n'est plus dans la chambre ;
-    Non → « De toute façon, tu penses qu'à toi » et −5 % de cœur.
+  Ameline à 50 % de cœur ou plus : « 🎬 Regarder un film » dans son menu.
+    « Qu'est-ce que tu veux faire, mon grand ? » / Rudy : « Je sais pas… » /
+    « Alors c'est moi qui choisis : on regarde un film » puis Oui / Non.
+    Oui → la vidéo, et à la fin elle n'est plus dans la chambre ;
+    Non → « Vraiment… tu sais pas ce que tu veux » et −5 % de cœur.
   Aussi dans Déverrouillage (dossier Films).

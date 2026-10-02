@@ -1156,7 +1156,10 @@ const FILM={
  mifa:{video:'/assets/web/visite/mifa_film.mp4',
    avant:["Bon… on fait quoi ?","T'as pas un film à regarder ? 🎬"], non:"Tant pis…", oui:"Super ! 😍"},
  katila:{video:'/assets/web/visite/katila_film.mp4',
-   avant:["Je suis fatiguée…","J'aimerais bien regarder un film 🎬"], non:"De toute façon, tu penses qu'à toi 😒", oui:"Super ! 🥰"}
+   avant:["Je suis fatiguée…","J'aimerais bien regarder un film 🎬"], non:"De toute façon, tu penses qu'à toi 😒", oui:"Super ! 🥰"},
+ ameline:{video:'/assets/web/visite/ameline_film.mp4',
+   avant:["Qu'est-ce que tu veux faire, mon grand ?"], rudy:"Je sais pas…",
+   choix:"Alors c'est moi qui choisis : on regarde un film 🎬", non:"Vraiment… tu sais pas ce que tu veux 🙄"}
 };
 function ditRudy(t,ms=2400){ const b=$('bulle'); b.innerHTML='<span class="qui">Rudy</span>'; b.appendChild(document.createTextNode(t)); b.style.display='block';
   const ir=cible().getBoundingClientRect(), sc=$('scene').getBoundingClientRect();
