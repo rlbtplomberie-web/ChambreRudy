@@ -1535,7 +1535,11 @@ function endGame(win){
     };
     const seules=G.cfg.girls||(G.cfg.opp?[G.cfg.opp]:[]);
     const tireuse=G.rudy&&G.rudy.lastHitBy&&!G.rudy.lastHitBy.human?G.rudy.lastHitBy.id:(seules.length===1?seules[0]:null);
-    const vid=!win&&tireuse&&(['1v1','1v3','1v6','royal'].includes(G.cfg.mode)?WWIN_VIDS[tireuse]:(G.cfg.mode==='1v8'?WWIN8_VIDS[tireuse]:null));
+    // 1 contre 3 : une vidéo à part pour celles qui en ont une (Rose), sinon la même que les autres modes
+    const WWIN3_VIDS={
+      rose:['/assets/shinato/m/eau3_rose.mp4','/assets/shinato/m/eau3_rose.mp4',1248/704],
+    };
+    const vid=!win&&tireuse&&((G.cfg.mode==='1v3'&&WWIN3_VIDS[tireuse])||(['1v1','1v3','1v6','royal'].includes(G.cfg.mode)?WWIN_VIDS[tireuse]:(G.cfg.mode==='1v8'?WWIN8_VIDS[tireuse]:null)));
     if(vid){
       const v=$('wWinVid'), l=vid;
       const src=v.canPlayType('video/mp4; codecs="avc1.4D401F, mp4a.40.2"')?l[0]:l[1];

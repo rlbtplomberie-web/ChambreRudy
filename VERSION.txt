@@ -1,4 +1,5 @@
-version 255 — Téléphone : 1 photo et 1 vidéo
+version 256 — Pistolet à eau : nouvelle vidéo de Rose en 1 contre 3
 
-  Galerie du téléphone : une photo en plus (Photos) et une vidéo en plus
-    (Vidéos, album « Vidéos »). La vidéo est aussi dans Déverrouillage.
+  En 1 contre 3, si c'est Rose qui trempe Rudy, sa nouvelle vidéo passe.
+  1 contre 1, 1 contre 6, Royal et 1 contre 8 : rien ne change.
+  Aussi dans l'appli Déverrouillage (dossier Pistolet à eau).
