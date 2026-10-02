@@ -1,7 +1,6 @@
-version 272 — Foot Course : les 6 vidéos de victoire, en une seule archive
+version 273 — Valia Club : « Grand combat » et « Combat final »
 
-  Mifa, Faty, Karine, Katila, Rose et Sophie : quand l'une d'elles arrive
-    première, sa vidéo passe d'abord, puis son image de victoire et le
-    classement. Le téléphone (appli Déverrouillage, dossier Foot Course) est
-    à jour avec les 6 vidéos.
-  Remplace les archives maj-57 à maj-62.
+  « Combat » montre maintenant 4 choix : Petit, Gros, Grand et Combat final.
+  Grand combat : 3 bulles, Oui / Non ; Oui → 3 bulles, +200 €, sa vidéo.
+  Combat final : 3 bulles, Oui / Non ; Oui → 3 bulles, +500 €, sa vidéo.
+  Aussi dans l'appli Déverrouillage (dossier Valia Club).

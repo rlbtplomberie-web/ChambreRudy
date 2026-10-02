@@ -173,7 +173,9 @@ function draw(now){
 #combatV{right:calc(10px + env(safe-area-inset-right,0px))!important;width:136px;box-sizing:border-box;padding:8px 8px!important;bottom:calc(266px + env(safe-area-inset-bottom,0px))!important}
 #petitV{right:calc(156px + env(safe-area-inset-right,0px));bottom:calc(266px + env(safe-area-inset-bottom,0px))}
 #grosV{right:calc(156px + env(safe-area-inset-right,0px));bottom:calc(316px + env(safe-area-inset-bottom,0px))}
-#combatV,#petitV,#grosV{position:fixed;z-index:25;display:none;border:2px solid #ffd7c2;border-radius:999px;padding:8px 14px;
+#grandV{right:calc(156px + env(safe-area-inset-right,0px));bottom:calc(366px + env(safe-area-inset-bottom,0px))}
+#finalV{right:calc(156px + env(safe-area-inset-right,0px));bottom:calc(416px + env(safe-area-inset-bottom,0px))}
+#combatV,#petitV,#grosV,#grandV,#finalV{position:fixed;z-index:25;display:none;border:2px solid #ffd7c2;border-radius:999px;padding:8px 14px;
   background:radial-gradient(circle at 40% 30%,#ffb08a,#e0482a 60%,#7a1608);color:#fff;font-weight:900;font-size:14px;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(255,90,50,.7);cursor:pointer}
 #ouiNonV{position:fixed;z-index:46;left:50%;bottom:calc(120px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:none;gap:14px}
 #ouiNonV button{padding:12px 28px;border-radius:999px;border:2px solid #fff;font-weight:900;font-size:17px;color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.4);cursor:pointer}
@@ -191,6 +193,8 @@ function draw(now){
 <button id="combatV">🥊 Combat</button>
 <button id="petitV">Petit combat</button>
 <button id="grosV">Gros combat</button>
+<button id="grandV">Grand combat</button>
+<button id="finalV">Combat final</button>
 <div id="ouiNonV"><button id="ouiV">Oui</button><button id="nonV">Non</button></div>
 <button class="uiV" id="pauseV">☕ C'est la pause</button>
 <button class="uiV" id="chambreV">🛏️ Réserver une chambre<span class="prixV">100 €</span></button>
@@ -241,7 +245,7 @@ function avanceRudy(){
   document.getElementById('chambreV').style.display=devant?'block':'none';
   document.getElementById('pauseV').style.display=devant?'block':'none';
   document.getElementById('combatV').style.display=devant?'block':'none';
-  if(!devant){ document.getElementById('petitV').style.display='none'; document.getElementById('grosV').style.display='none'; }
+  if(!devant) cacheChoixCombat();
   // tout en bas de la salle : la sortie
   document.getElementById('sortirV').style.display=(!videoOuverte&&!window.ARRET&&RUDY.y>=SOL_V.y1-18)?'block':'none';
 }
@@ -279,7 +283,7 @@ function noteVideoTel(src,titre,v){
   setTimeout(enregistre,1200);
 }
 function ouvreVideo(fichier){ videoOuverte=true; musV.pause(); boiteVid.style.display='flex'; vid.src='/assets/shinato/m/'+fichier; try{ vid.currentTime=0; }catch(e){} const q=vid.play(); if(q&&q.catch) q.catch(()=>{});
-  noteVideoTel('/assets/shinato/m/'+fichier,'Valia Club — '+({'valia_danse.mp4':'la danse','valia_reserve.mp4':'la réservation','valia_chambre.mp4':'la chambre','valia_pause.mp4':'la pause','valia_combat.mp4':'le petit combat','valia_gros_combat.mp4':'le gros combat'}[fichier]||'vidéo'),vid); }
+  noteVideoTel('/assets/shinato/m/'+fichier,'Valia Club — '+({'valia_danse.mp4':'la danse','valia_reserve.mp4':'la réservation','valia_chambre.mp4':'la chambre','valia_pause.mp4':'la pause','valia_combat.mp4':'le petit combat','valia_gros_combat.mp4':'le gros combat','valia_grand_combat.mp4':'le grand combat','valia_combat_final.mp4':'le combat final'}[fichier]||'vidéo'),vid); }
 function fermeVideo(){ window.ARRET=null; videoOuverte=false; try{ vid.pause(); }catch(e){} boiteVid.style.display='none'; joueV(); }
 document.getElementById('regarderV').addEventListener('click',()=>{ toastV(txtCoeur(2),1400); setTimeout(()=>ouvreVideo('valia_danse.mp4'),700); });
 document.getElementById('pauseV').addEventListener('click',()=>{ toastV(txtCoeur(5),1400); setTimeout(()=>ouvreVideo('valia_pause.mp4'),700); });   // « C'est la pause » : gratuit
@@ -308,14 +312,17 @@ function gagner(n){ const p=pont(); try{ if(p&&p.ajouterArgent) p.ajouterArgent(
 function bulleV(t){ document.getElementById('bulleDt').textContent=t; document.getElementById('bulleD').style.display='block'; }
 function cacheBulleV(){ document.getElementById('bulleD').style.display='none'; }
 // « Combat » montre (ou cache) les deux choix : petit et gros combat
-document.getElementById('combatV').addEventListener('click',()=>{ const b=document.getElementById('petitV'), g=document.getElementById('grosV');
-  const montre=b.style.display!=='block'; b.style.display=g.style.display=montre?'block':'none'; });
+const CHOIX_COMBAT=['petitV','grosV','grandV','finalV'];
+function cacheChoixCombat(){ CHOIX_COMBAT.forEach(i=>{ const e=document.getElementById(i); if(e) e.style.display='none'; }); }
+document.getElementById('combatV').addEventListener('click',()=>{
+  const montre=document.getElementById('petitV').style.display!=='block';
+  CHOIX_COMBAT.forEach(i=>{ document.getElementById(i).style.display=montre?'block':'none'; }); });
 // ses phrases une par une, chacune dans sa bulle, puis on continue
 function bulles(P,apres){ let i=0; const suite=()=>{ if(i<P.length){ bulleV(P[i++]); setTimeout(suite,2800); } else apres(); }; suite(); }
 let modeCombat='petit';
 document.getElementById('petitV').addEventListener('click',()=>{
   modeCombat='petit';
-  document.getElementById('petitV').style.display='none'; document.getElementById('grosV').style.display='none';
+  cacheChoixCombat();
   dir=RUDY.x<x?-1:1; window.ARRET=cur;                               // elle s'arrête de danser pour lui parler
   const P=["Tu sais ce que c'est, une fille ?",
            "Si tu veux gagner un peu d'argent, va falloir te battre contre moi… et ça va pas être facile !",
@@ -327,7 +334,7 @@ document.getElementById('petitV').addEventListener('click',()=>{
 /* ---------- « Gros combat » : elle prévient, on accepte ou pas ---------- */
 document.getElementById('grosV').addEventListener('click',()=>{
   modeCombat='gros';
-  document.getElementById('petitV').style.display='none'; document.getElementById('grosV').style.display='none';
+  cacheChoixCombat();
   dir=RUDY.x<x?-1:1; window.ARRET=cur;
   try{ vid.src='/assets/shinato/m/valia_gros_combat.mp4'; vid.load(); }catch(e){}
   bulles(["Tu en es sûr ?",
@@ -335,7 +342,32 @@ document.getElementById('grosV').addEventListener('click',()=>{
           "… même si tu crois le contraire 😏"],
          ()=>{ document.getElementById('ouiNonV').style.display='flex'; });
 });
+/* ---------- « Grand combat » et « Combat final » : une vidéo chacun ---------- */
+const COMBATS={
+  grand:{video:'valia_grand_combat.mp4', gain:200,
+    avant:["Le grand combat ?","Là, je vais pas retenir mes coups…","T'es vraiment prêt ? 😈"],
+    oui:["Très bien…","Prépare-toi à souffrir 😈","Mais la paie sera à la hauteur 💶"],
+    non:"Sage décision…"},
+  final:{video:'valia_combat_final.mp4', gain:500,
+    avant:["Le combat final…","Personne ne m'a jamais battue à ce niveau.","Tu veux vraiment tenter ta chance ?"],
+    oui:["Alors c'est l'heure de vérité.","Donne tout ce que t'as, Rudy ! 🔥","Gagnant ou perdant, tu repars les poches pleines 💰"],
+    non:"Reviens quand tu seras prêt… 😏"}
+};
+['grand','final'].forEach(k=>{
+  document.getElementById(k+'V').addEventListener('click',()=>{
+    modeCombat=k; cacheChoixCombat();
+    dir=RUDY.x<x?-1:1; window.ARRET=cur;
+    try{ vid.src='/assets/shinato/m/'+COMBATS[k].video; vid.load(); }catch(e){}
+    bulles(COMBATS[k].avant,()=>{ document.getElementById('ouiNonV').style.display='flex'; });
+  });
+});
 document.getElementById('ouiV').addEventListener('click',()=>{
+  const C=COMBATS[modeCombat];
+  if(C){
+    document.getElementById('ouiNonV').style.display='none';
+    bulles(C.oui,()=>{ gagner(C.gain); toastV("+"+C.gain+" € 💶",1800); setTimeout(()=>{ cacheBulleV(); ouvreVideo(C.video); },900); });
+    return;
+  }
   if(modeCombat==='gros'){
     document.getElementById('ouiNonV').style.display='none';
     bulles(["Tu l'auras voulu…",
@@ -350,7 +382,7 @@ document.getElementById('ouiV').addEventListener('click',()=>{
 });
 document.getElementById('nonV').addEventListener('click',()=>{
   document.getElementById('ouiNonV').style.display='none';
-  bulleV(modeCombat==='gros'?"C'est une bonne décision.":"Trouillard… reviens quand tu seras prêt 😏");
+  bulleV(COMBATS[modeCombat]?COMBATS[modeCombat].non:modeCombat==='gros'?"C'est une bonne décision.":"Trouillard… reviens quand tu seras prêt 😏");
   setTimeout(()=>{ cacheBulleV(); window.ARRET=null; },2200);
 });
 document.getElementById('reserverV').addEventListener('click',()=>reserver(50,'valia_reserve.mp4'));
