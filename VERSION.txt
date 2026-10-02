@@ -1,11 +1,9 @@
-version 248 — Chambre : « Regarder un film » avec Faty (et ses excuses)
+version 250 — Chambre : « Regarder un film » avec Karine (combat ou romance)
 
-  Faty à 50 % de cœur ou plus : « 🎬 Regarder un film » dans son menu.
-    « Hey ! J'aimerais bien regarder un film » puis Oui / Non.
-    Oui → la vidéo, et à la fin elle n'est plus dans la chambre ;
-    Non → « Ah… c'est comme ça que tu me considères ? » / « Je m'en vais. »,
-      −5 % de cœur, et elle part de la chambre.
-  Téléphone : après ce refus, le texto suivant à Faty devient une discussion
-    pour s'excuser (elle était déçue) ; une fois pardonné, ses textos
-    redeviennent normaux.
+  Karine à 50 % de cœur ou plus : « 🎬 Regarder un film » dans son menu.
+    « J'aimerais regarder un film… » / « Qu'est-ce que tu me proposes ? »
+    puis 🥊 Combat / 💕 Romance / Non.
+    Romance → la vidéo, et à la fin elle n'est plus dans la chambre.
+    Combat → bientôt (vidéo à venir).
+    Non → « Dommage… » et −5 % de cœur.
   Aussi dans Déverrouillage (dossier Films).

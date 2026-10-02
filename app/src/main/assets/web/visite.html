@@ -1162,7 +1162,13 @@ const FILM={
    choix:"Alors c'est moi qui choisis : on regarde un film 🎬", non:"Vraiment… tu sais pas ce que tu veux 🙄"},
  faty:{video:'/assets/web/visite/faty_film.mp4',
    avant:["Hey ! J'aimerais bien regarder un film 🎬"],
-   non:"Ah… c'est comme ça que tu me considères ? 😤", nonPart:"Je m'en vais.", fache:true}
+   non:"Ah… c'est comme ça que tu me considères ? 😤", nonPart:"Je m'en vais.", fache:true},
+ sophie:{video:'/assets/web/visite/sophie_film.mp4',
+   avant:["Et… ça te dit de regarder un film d'horreur ? 👻"],
+   relance:"T'es d'accord ou quoi ? 😏", non:"T'es pas drôle 😒", sansPerte:true},
+ // Karine : c'est Rudy qui choisit le genre ; la vidéo « combat » arrivera plus tard
+ karine:{avant:["J'aimerais regarder un film…","Qu'est-ce que tu me proposes ? 😏"],
+   genres:[["🥊 Combat",null],["💕 Romance",'/assets/web/visite/karine_film_romance.mp4']], non:"Dommage…"}
 };
 function ditRudy(t,ms=2400){ const b=$('bulle'); b.innerHTML='<span class="qui">Rudy</span>'; b.appendChild(document.createTextNode(t)); b.style.display='block';
   const ir=cible().getBoundingClientRect(), sc=$('scene').getBoundingClientRect();
@@ -1176,18 +1182,27 @@ function regarderFilm(){
   if(F.rudy) etapes.push([()=>{ ditRudy(F.rudy,2400); },2500]);
   if(F.choix) etapes.push([()=>{ humeur(9,3000); dit(F.choix,3000); },3100]);
   let i=0; const suite=()=>{ if(ici!==id) return; if(i<etapes.length){ const [fn,ms]=etapes[i++]; fn(); setTimeout(suite,ms); return; }
-    // Oui / Non
+    // Oui / Non (certaines insistent une fois avant d'accepter un non)
+    let relanceFaite=false;
+    const ouiNon=()=>{
     const m=$('menu'); m.innerHTML=`<div class="titre">${PERSO[id].nom} choisit le film</div>`;
-    [["Oui",()=>{ fermeMenus(); contact();
-        const lance=()=>{ if(ici!==id) return; tait(); ouvreNuit(F.video,()=>{ img.style.transition='none'; img.style.opacity='0'; depart(); },true); };
-        if(F.oui){ humeur(8,1900); dit(F.oui,1900); setTimeout(lance,2000); } else { tait(); lance(); } }],
-     ["Non",()=>{ fermeMenus(); contact(); humeur(5,3000); dit(F.non,3000); gagne(id,-5);
+    const lanceFilm=v=>{ fermeMenus(); contact();
+        const lance=()=>{ if(ici!==id) return; tait(); ouvreNuit(v,()=>{ img.style.transition='none'; img.style.opacity='0'; depart(); },true); };
+        if(F.oui){ humeur(8,1900); dit(F.oui,1900); setTimeout(lance,2000); } else { tait(); lance(); } };
+    const boutons=F.genres
+      ? F.genres.map(([t,v])=>[t,()=>{ if(v){ lanceFilm(v); return; } fermeMenus(); contact(); occupee=false; toast(`Le film « ${t.replace(/^\S+\s/,'')} » avec ${PERSO[id].nom} arrive bientôt.`); }])
+      : [["Oui",()=>lanceFilm(F.video)]];
+    boutons.concat([
+     ["Non",()=>{ fermeMenus(); contact();
+        if(F.relance&&!relanceFaite){ relanceFaite=true; humeur(9,2800); dit(F.relance,2800); setTimeout(()=>{ if(ici===id) ouiNon(); },2900); return; }
+        humeur(5,3000); dit(F.non,3000); if(!F.sansPerte) gagne(id,-5);
         // elle le prend mal : elle s'en va, et elle s'en souviendra par texto
         if(F.fache){ try{ const R=JSON.parse(localStorage.getItem('rudy_film_refus')||'{}')||{}; R[id]=Date.now(); localStorage.setItem('rudy_film_refus',JSON.stringify(R)); }catch(e){}
           setTimeout(()=>{ if(ici!==id) return; humeur(5,2400); dit(F.nonPart,2400); setTimeout(()=>{ occupee=false; depart(); },2500); },3100); return; }
-        setTimeout(()=>{ occupee=false; },3000); }]]
-    .forEach(([t,fn],k)=>{ const b=document.createElement('button'); b.className='opt'+(k===1?' doux':''); b.textContent=t; b.addEventListener('click',fn); m.appendChild(b); });
+        setTimeout(()=>{ occupee=false; },3000); }]])
+    .forEach(([t,fn],k,L)=>{ const b=document.createElement('button'); b.className='opt'+(k===L.length-1?' doux':''); b.textContent=t; b.addEventListener('click',fn); m.appendChild(b); });
     m.style.display='flex'; contact(); };
+    ouiNon(); };
   suite();
 }
 function dormir(){
