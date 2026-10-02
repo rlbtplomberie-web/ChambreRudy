@@ -903,7 +903,17 @@ function endMatch(){ mode='end'; whistle(3); $('controls').style.display='none';
   $('eMsg').textContent=score[0]>score[1]?'Victoire de ton équipe !':score[0]<score[1]?'Les filles gagnent le match.':'Match nul.';
   // les filles gagnent : leur vidéo passe d'abord, puis l'écran de fin
   if(score[0]<score[1]){ videoFin('/assets/shinato/m/soccer_filles_gagnent.mp4',()=>{ $('end').style.display='flex'; }); return; }
+  // l'équipe de Rudy gagne : l'image de la victoire, puis l'écran de fin
+  if(score[0]>score[1]){ imageFin('/assets/shinato/m/soccer_victoire.webp',()=>{ $('end').style.display='flex'; }); return; }
   $('end').style.display='flex'; }
+function imageFin(src,apres){
+  const box=document.createElement('div'); box.style.cssText='position:fixed;inset:0;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .5s';
+  box.innerHTML='<img alt="Victoire !" style="max-width:100%;max-height:100%;object-fit:contain">'+
+    '<button style="position:absolute;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);padding:11px 26px;border-radius:999px;border:2px solid #ffd76a;background:rgba(0,0,0,.55);color:#ffd76a;font-weight:900;font-size:16px">Continuer</button>';
+  box.querySelector('img').src=src; document.body.appendChild(box); requestAnimationFrame(()=>{ box.style.opacity='1'; });
+  let fini=false; const ferme=()=>{ if(fini) return; fini=true; box.remove(); apres(); };
+  box.querySelector('button').addEventListener('click',ferme);
+}
 function videoFin(src,apres){
   try{ if(AC&&AC.state==='running') AC.suspend(); }catch(e){}
   const box=document.createElement('div'); box.style.cssText='position:fixed;inset:0;z-index:9999;background:#000';
