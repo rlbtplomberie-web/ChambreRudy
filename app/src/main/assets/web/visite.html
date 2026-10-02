@@ -1152,7 +1152,11 @@ const FILM={
    avant:["Et dis-moi… ça te dit de regarder un film ? 🍿","J'ai vu que tu avais un salon… ça va avec une belle télé 📺"],
    rudy:"Pourquoi pas.", choix:"C'est moi qui choisis le film !", non:"Dommage…"},
  rose:{video:'/assets/web/visite/rose_film.mp4',
-   avant:["Ça te dit de regarder un film avec moi ? 🍿"], non:"Dommage…"}
+   avant:["Ça te dit de regarder un film avec moi ? 🍿"], non:"Dommage…"},
+ mifa:{video:'/assets/web/visite/mifa_film.mp4',
+   avant:["Bon… on fait quoi ?","T'as pas un film à regarder ? 🎬"], non:"Tant pis…", oui:"Super ! 😍"},
+ katila:{video:'/assets/web/visite/katila_film.mp4',
+   avant:["Je suis fatiguée…","J'aimerais bien regarder un film 🎬"], non:"De toute façon, tu penses qu'à toi 😒", oui:"Super ! 🥰"}
 };
 function ditRudy(t,ms=2400){ const b=$('bulle'); b.innerHTML='<span class="qui">Rudy</span>'; b.appendChild(document.createTextNode(t)); b.style.display='block';
   const ir=cible().getBoundingClientRect(), sc=$('scene').getBoundingClientRect();
@@ -1168,8 +1172,9 @@ function regarderFilm(){
   let i=0; const suite=()=>{ if(ici!==id) return; if(i<etapes.length){ const [fn,ms]=etapes[i++]; fn(); setTimeout(suite,ms); return; }
     // Oui / Non
     const m=$('menu'); m.innerHTML=`<div class="titre">${PERSO[id].nom} choisit le film</div>`;
-    [["Oui",()=>{ fermeMenus(); tait(); contact();
-        ouvreNuit(F.video,()=>{ img.style.transition='none'; img.style.opacity='0'; depart(); },true); }],
+    [["Oui",()=>{ fermeMenus(); contact();
+        const lance=()=>{ if(ici!==id) return; tait(); ouvreNuit(F.video,()=>{ img.style.transition='none'; img.style.opacity='0'; depart(); },true); };
+        if(F.oui){ humeur(8,1900); dit(F.oui,1900); setTimeout(lance,2000); } else { tait(); lance(); } }],
      ["Non",()=>{ fermeMenus(); contact(); humeur(5,3000); dit(F.non,3000); gagne(id,-5); setTimeout(()=>{ occupee=false; },3000); }]]
     .forEach(([t,fn],k)=>{ const b=document.createElement('button'); b.className='opt'+(k===1?' doux':''); b.textContent=t; b.addEventListener('click',fn); m.appendChild(b); });
     m.style.display='flex'; contact(); };

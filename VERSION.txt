@@ -1,7 +1,7 @@
-version 244 — Valia : l'appel à 50 % (« jour de travaux »)
+version 246 — Chambre : « Regarder un film » avec Katila
 
-  Téléphone, appel à Valia avec 50 % de cœur ou plus : elle ne travaille pas,
-    il y a des travaux au club ; « Et du coup, tu fais quoi ? » → « Ben… j'arrive ! »
-    « Je suis occupé » : elle s'énerve et raccroche au nez.
-    « Super, avec plaisir » : « J'arrive tout de suite ! », puis la vidéo.
-  Aussi dans l'appli Déverrouillage (dossier Valia Club).
+  Katila à 50 % de cœur ou plus : « 🎬 Regarder un film » dans son menu.
+    « Je suis fatiguée… » / « J'aimerais bien regarder un film » puis Oui / Non.
+    Oui → « Super ! », la vidéo, et à la fin elle n'est plus dans la chambre ;
+    Non → « De toute façon, tu penses qu'à toi » et −5 % de cœur.
+  Aussi dans Déverrouillage (dossier Films).
