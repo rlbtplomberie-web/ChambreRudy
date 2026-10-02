@@ -1,5 +1,4 @@
-version 264 — Pistolet à eau : nouvelle vidéo de Karine en 1 contre 3
+version 265 — Téléphone : 1 nouvelle vidéo
 
-  En 1 contre 3, si c'est Karine qui trempe Rudy, sa nouvelle vidéo passe.
-  Les 8 filles ont maintenant leur propre vidéo en 1 contre 3.
-  Aussi dans Déverrouillage.
+  Galerie du téléphone, onglet Vidéos (album « Vidéos ») : 1 vidéo en plus.
+  Aussi dans l'appli Déverrouillage, dossier « Vidéos du téléphone ».
