@@ -703,6 +703,7 @@ else carte.addEventListener("load",demarre);
  <div class="choix" id="versShinato">SHINATO</div>
  <div class="choix" id="versDelabree">VILLE DÉLABRÉE</div>
  <div class="choix" id="versVaviel">VAVIEL</div>
+ <div class="choix" id="versBoulevard">BOULEVARD</div>
 </div></div>
 <script>
 /* ---------- tout à gauche de la plage : « Où voulez-vous aller ? » ---------- */
@@ -726,6 +727,9 @@ else carte.addEventListener("load",demarre);
   cache(); try{ window.parent.postMessage({type:"plage:destination",dest:"vaviel"},"*"); }catch(e){}
  });
  // VILLE DÉLABRÉE : on reprend la moto jusqu'à la ville délabrée
+ window.appuiSur(document.getElementById("versBoulevard"),function(){
+  cache(); try{ window.parent.postMessage({type:"plage:destination",dest:"boulevard"},"*"); }catch(e){}
+ });
  window.appuiSur(document.getElementById("versDelabree"),function(){
   cache(); try{ window.parent.postMessage({type:"plage:destination",dest:"delabree"},"*"); }catch(e){}
  });

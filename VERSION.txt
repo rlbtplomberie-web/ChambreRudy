@@ -1,6 +1,5 @@
-version 273 — Valia Club : « Grand combat » et « Combat final »
+version 274 — Shinato : « BOULEVARD » dans « Où voulez-vous aller ? »
 
-  « Combat » montre maintenant 4 choix : Petit, Gros, Grand et Combat final.
-  Grand combat : 3 bulles, Oui / Non ; Oui → 3 bulles, +200 €, sa vidéo.
-  Combat final : 3 bulles, Oui / Non ; Oui → 3 bulles, +500 €, sa vidéo.
-  Aussi dans l'appli Déverrouillage (dossier Valia Club).
+  Au bout de la rue de Shinato, à la plage, à Vaviel et dans la ville
+    délabrée, le choix « BOULEVARD » s'ajoute aux autres villes : on fait
+    le trajet en moto, puis on arrive au boulevard.

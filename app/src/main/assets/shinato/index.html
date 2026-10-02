@@ -1195,6 +1195,7 @@ else carte.addEventListener("load",demarre);
  <button class="choix" id="versPlage">À LA PLAGE</button>
  <button class="choix" id="versDelabree" style="margin-top:2.4vmin">VILLE DÉLABRÉE</button>
  <button class="choix" id="versVaviel" style="margin-top:2.4vmin">VAVIEL</button>
+ <button class="choix" id="versBoulevard" style="margin-top:2.4vmin">BOULEVARD</button>
 </div></div>
 <script>
 /* ---------- au bout de la rue, tout à droite : « Où voulez-vous aller ? » ---------- */
@@ -1231,6 +1232,7 @@ else carte.addEventListener("load",demarre);
  window.appuiSur(document.getElementById("versPlage"),function(){ partEnMoto("plage"); });
  window.appuiSur(document.getElementById("versDelabree"),function(){ partEnMoto("delabree"); });
  window.appuiSur(document.getElementById("versVaviel"),function(){ partEnMoto("vaviel"); });
+ window.appuiSur(document.getElementById("versBoulevard"),function(){ partEnMoto("boulevard"); });
 
  // arrivée de la moto : c'est ici qu'on enchaînera sur la plage (fichier à venir)
  window.addEventListener("message",function(e){
@@ -1270,7 +1272,7 @@ else carte.addEventListener("load",demarre);
    window.minuterieLibre(function(){ try{ cv.focus(); }catch(err){} },300);
    return;
   }
-  if(e.data && (e.data.type==="delabree:destination"||e.data.type==="vaviel:destination") && (e.data.dest==="shinato"||e.data.dest==="plage"||e.data.dest==="delabree"||e.data.dest==="vaviel")){
+  if(e.data && (e.data.type==="delabree:destination"||e.data.type==="vaviel:destination") && (e.data.dest==="shinato"||e.data.dest==="plage"||e.data.dest==="delabree"||e.data.dest==="vaviel"||e.data.dest==="boulevard")){
    // depuis le bout gauche de la ville délabrée : la moto, vers Shinato (bout droit de la ville) ou vers la plage (bout gauche)
    window.DESTINATION_MOTO=e.data.dest==="shinato"?"ville":e.data.dest;
    var cmv=document.getElementById("moto"); if(!cmv) return;
@@ -1279,7 +1281,7 @@ else carte.addEventListener("load",demarre);
    window.minuterieLibre(function(){ try{ cmv.focus(); }catch(err){} },300);
    return;
   }
-  if(e.data && e.data.type==="plage:destination" && (e.data.dest==="shinato"||e.data.dest==="delabree"||e.data.dest==="vaviel")){
+  if(e.data && e.data.type==="plage:destination" && (e.data.dest==="shinato"||e.data.dest==="delabree"||e.data.dest==="vaviel"||e.data.dest==="boulevard")){
    // depuis la plage : on reprend la moto (vers Shinato, la ville, ou vers la ville délabrée)
    window.DESTINATION_MOTO=e.data.dest==="shinato"?"ville":e.data.dest;
    var cm=document.getElementById("moto"); if(!cm) return;
@@ -1301,6 +1303,16 @@ else carte.addEventListener("load",demarre);
   // musique de la ville : coupée pendant un jeu qui a sa propre musique (Premier verre), puis remise
   if(e.data && e.data.type==="musique:pause"){ try{ if(window.RUDY_AUDIO) window.RUDY_AUDIO.pause(); }catch(err){} return; }
   if(e.data && e.data.type==="musique:reprise"){ try{ if(window.RUDY_AUDIO){ var pr=window.RUDY_AUDIO.play(); if(pr&&pr.catch) pr.catch(function(){}); } }catch(err){} return; }
+  if(e.data && e.data.type==="rudyMoto:arrivee" && window.DESTINATION_MOTO==="boulevard"){
+   // « Arrivé » : on arrive au boulevard (la moto est déchargée)
+   window.minuterieLibre(function(){
+    var cadre=document.getElementById("moto"); if(!cadre) return;
+    var o=LIEU_OCTETS("lieux/boulevard.html");
+    cadre.srcdoc=new TextDecoder("utf-8").decode(o);
+    window.minuterieLibre(function(){ try{ cadre.focus(); }catch(e){} },300);
+   },2200);
+   return;
+  }
   if(e.data && e.data.type==="rudyMoto:arrivee" && window.DESTINATION_MOTO==="vaviel"){
    // « Arrivé » : on arrive tout à gauche de Vaviel (la moto est déchargée)
    window.minuterieLibre(function(){
