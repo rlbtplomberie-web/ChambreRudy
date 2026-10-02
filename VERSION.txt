@@ -1,5 +1,4 @@
-version 252 — Shinato Soccer Z : vidéo quand les filles gagnent
+version 253 — Téléphone : 1 nouvelle vidéo
 
-  Fin du match, si l'équipe des filles gagne : leur vidéo passe d'abord
-    (✕ pour la passer), puis l'écran « Fin du match ».
-  Aussi dans l'appli Déverrouillage (nouveau dossier Shinato Soccer).
+  Galerie du téléphone, onglet Vidéos (album « Vidéos ») : 1 vidéo en plus.
+  Aussi dans l'appli Déverrouillage, dossier « Vidéos du téléphone ».
