@@ -1113,7 +1113,7 @@ function update(dt){
 function finishOne(r){if(r===P){sfx.cheer();crowd(.26,.3)}}
 document.addEventListener('click',e=>{if(e.target&&e.target.id==='winBtn'){$('winView').classList.add('hidden');$('againBtn').focus();}});
 /* ---------- les vidéos quand une fille gagne la course ---------- */
-const FC_VIDS={ MIFA:'/assets/shinato/m/fc_gagne_mifa.mp4', FATY:'/assets/shinato/m/fc_gagne_faty.mp4', KARINE:'/assets/shinato/m/fc_gagne_karine.mp4', KATILA:'/assets/shinato/m/fc_gagne_katila.mp4', ROSE:'/assets/shinato/m/fc_gagne_rose.mp4', SOPHIE:'/assets/shinato/m/fc_gagne_sophie.mp4' };
+const FC_VIDS={ MIFA:'/assets/shinato/m/fc_gagne_mifa.mp4', FATY:'/assets/shinato/m/fc_gagne_faty.mp4', KARINE:'/assets/shinato/m/fc_gagne_karine.mp4', KATILA:'/assets/shinato/m/fc_gagne_katila.mp4', ROSE:'/assets/shinato/m/fc_gagne_rose.mp4', SOPHIE:'/assets/shinato/m/fc_gagne_sophie.mp4', AMELINE:'/assets/shinato/m/fc_gagne_ameline.mp4' };
 function videoGagnante(src,apres){
   const box=document.createElement('div'); box.style.cssText='position:fixed;inset:0;z-index:9999;background:#000';
   box.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000"></video>'+
