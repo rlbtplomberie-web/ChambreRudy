@@ -1,4 +1,4 @@
-version 265 — Téléphone : 1 nouvelle vidéo
+version 266 — Téléphone : 1 nouvelle vidéo
 
   Galerie du téléphone, onglet Vidéos (album « Vidéos ») : 1 vidéo en plus.
   Aussi dans l'appli Déverrouillage, dossier « Vidéos du téléphone ».
