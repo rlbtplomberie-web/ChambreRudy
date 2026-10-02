@@ -1,9 +1,5 @@
-version 250 — Chambre : « Regarder un film » avec Karine (combat ou romance)
+version 252 — Shinato Soccer Z : vidéo quand les filles gagnent
 
-  Karine à 50 % de cœur ou plus : « 🎬 Regarder un film » dans son menu.
-    « J'aimerais regarder un film… » / « Qu'est-ce que tu me proposes ? »
-    puis 🥊 Combat / 💕 Romance / Non.
-    Romance → la vidéo, et à la fin elle n'est plus dans la chambre.
-    Combat → bientôt (vidéo à venir).
-    Non → « Dommage… » et −5 % de cœur.
-  Aussi dans Déverrouillage (dossier Films).
+  Fin du match, si l'équipe des filles gagne : leur vidéo passe d'abord
+    (✕ pour la passer), puis l'écran « Fin du match ».
+  Aussi dans l'appli Déverrouillage (nouveau dossier Shinato Soccer).

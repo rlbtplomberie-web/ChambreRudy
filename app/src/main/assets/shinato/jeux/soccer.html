@@ -900,7 +900,21 @@ function updHUD(){
   const sp=has&&ctrl.gauge>=100; $('bShoot').classList.toggle('sp',sp); $('bShoot').textContent=sp?'Super tir':'Tir';
 }
 function endMatch(){ mode='end'; whistle(3); $('controls').style.display='none'; $('e0').textContent=score[0]; $('e1').textContent=score[1];
-  $('eMsg').textContent=score[0]>score[1]?'Victoire de ton équipe !':score[0]<score[1]?'Les filles gagnent le match.':'Match nul.'; $('end').style.display='flex'; }
+  $('eMsg').textContent=score[0]>score[1]?'Victoire de ton équipe !':score[0]<score[1]?'Les filles gagnent le match.':'Match nul.';
+  // les filles gagnent : leur vidéo passe d'abord, puis l'écran de fin
+  if(score[0]<score[1]){ videoFin('/assets/shinato/m/soccer_filles_gagnent.mp4',()=>{ $('end').style.display='flex'; }); return; }
+  $('end').style.display='flex'; }
+function videoFin(src,apres){
+  try{ if(AC&&AC.state==='running') AC.suspend(); }catch(e){}
+  const box=document.createElement('div'); box.style.cssText='position:fixed;inset:0;z-index:9999;background:#000';
+  box.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000"></video>'+
+    '<button style="position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:12px;padding:9px 15px;border-radius:999px;border:0;background:rgba(255,255,255,.18);color:#fff;font-weight:800;font-size:15px">✕ Fermer</button>';
+  document.body.appendChild(box);
+  const v=box.querySelector('video'); let fini=false;
+  const ferme=()=>{ if(fini) return; fini=true; try{ v.pause(); }catch(e){} box.remove(); try{ if(AC) AC.resume(); }catch(e){} apres(); };
+  v.addEventListener('ended',ferme); v.addEventListener('error',ferme); box.querySelector('button').addEventListener('click',ferme);
+  v.src=src; const q=v.play(); if(q&&q.catch) q.catch(()=>{});
+}
 
 /* ---------- commandes ---------- */
 function handleInput(){
