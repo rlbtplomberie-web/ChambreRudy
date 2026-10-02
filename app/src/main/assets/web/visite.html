@@ -1150,7 +1150,9 @@ function rire(vol=.85){ try{ let i; do{ i=Math.floor(Math.random()*RIRES.length)
 const FILM={
  gisele:{video:'/assets/web/visite/gisele_film.mp4',
    avant:["Et dis-moi… ça te dit de regarder un film ? 🍿","J'ai vu que tu avais un salon… ça va avec une belle télé 📺"],
-   choix:"C'est moi qui choisis le film !", non:"Dommage…"}
+   rudy:"Pourquoi pas.", choix:"C'est moi qui choisis le film !", non:"Dommage…"},
+ rose:{video:'/assets/web/visite/rose_film.mp4',
+   avant:["Ça te dit de regarder un film avec moi ? 🍿"], non:"Dommage…"}
 };
 function ditRudy(t,ms=2400){ const b=$('bulle'); b.innerHTML='<span class="qui">Rudy</span>'; b.appendChild(document.createTextNode(t)); b.style.display='block';
   const ir=cible().getBoundingClientRect(), sc=$('scene').getBoundingClientRect();
@@ -1159,11 +1161,11 @@ function ditRudy(t,ms=2400){ const b=$('bulle'); b.innerHTML='<span class="qui">
   parle=true; clearTimeout(b._t); b._t=setTimeout(()=>{ b.style.display='none'; parle=false; },ms); }
 function regarderFilm(){
   fermeMenus(); contact(); const id=ici, F=FILM[id]; if(!F) return; occupee=true;
-  const etapes=[()=>{ humeur(8,3000); dit(F.avant[0],3000); },
-                ()=>{ humeur(3,3000); dit(F.avant[1],3000); },
-                ()=>{ ditRudy("Pourquoi pas.",2400); },
-                ()=>{ humeur(9,3000); dit(F.choix,3000); }];
-  let i=0; const suite=()=>{ if(ici!==id) return; if(i<etapes.length){ etapes[i++](); setTimeout(suite,i===3?2500:3100); return; }
+  // ses phrases, la réponse de Rudy s'il y en a une, puis « c'est moi qui choisis » s'il y en a un
+  const etapes=F.avant.map((t,k)=>[()=>{ humeur(k?3:8,3000); dit(t,3000); },3100]);
+  if(F.rudy) etapes.push([()=>{ ditRudy(F.rudy,2400); },2500]);
+  if(F.choix) etapes.push([()=>{ humeur(9,3000); dit(F.choix,3000); },3100]);
+  let i=0; const suite=()=>{ if(ici!==id) return; if(i<etapes.length){ const [fn,ms]=etapes[i++]; fn(); setTimeout(suite,ms); return; }
     // Oui / Non
     const m=$('menu'); m.innerHTML=`<div class="titre">${PERSO[id].nom} choisit le film</div>`;
     [["Oui",()=>{ fermeMenus(); tait(); contact();

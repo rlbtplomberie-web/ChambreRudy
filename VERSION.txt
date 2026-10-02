@@ -1,8 +1,7 @@
-version 242 — Chambre : « Regarder un film » (Gisèle)
+version 243 — Chambre : « Regarder un film » avec Rose
 
-  Quand Gisèle est dans la chambre et que son cœur est à 50 % ou plus, un
-    nouveau choix « 🎬 Regarder un film » apparaît dans son menu.
-  Elle propose le film, Rudy dit « Pourquoi pas », elle choisit le film :
+  Rose à 50 % de cœur ou plus : « 🎬 Regarder un film » dans son menu.
+    « Ça te dit de regarder un film avec moi ? » puis Oui / Non.
     Oui → la vidéo, et à la fin elle n'est plus dans la chambre ;
     Non → « Dommage… » et −5 % de cœur.
-  Aussi dans l'appli Déverrouillage (nouveau dossier Films).
+  Gisèle garde son dialogue. Aussi dans Déverrouillage (dossier Films).
