@@ -1,5 +1,4 @@
-version 275 — Foot Course : vidéo quand Ameline gagne
+version 276 — Téléphone : 2 nouvelles vidéos
 
-  Fin de course, si Ameline arrive première : sa vidéo passe d'abord (✕ pour la
-    passer), puis son image de victoire et le classement.
-  Aussi dans l'appli Déverrouillage (dossier Foot Course).
+  Galerie du téléphone, onglet Vidéos (album « Vidéos ») : 2 vidéos en plus.
+  Aussi dans l'appli Déverrouillage, dossier « Vidéos du téléphone ».
