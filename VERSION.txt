@@ -1,3 +1,6 @@
-version 299 — Mifa : nouvelle vidéo pour « Offrir un cadeau »
+version 300 — Chambre : « Offrir un cadeau » pour Sophie
 
-  La vidéo du cadeau de Mifa est remplacée par la bonne. Le reste ne change pas.
+  Sophie à 20 % de cœur ou plus : « 🎁 Offrir un cadeau » → −100 €,
+    « Oh ! Un cadeau ?! » / « T'es vraiment le plus mignon, Rudy… » /
+    « Attends… moi aussi, j'ai quelque chose pour toi », puis la vidéo.
+  Aussi dans l'appli Déverrouillage (dossier Cadeaux).
