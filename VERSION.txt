@@ -1,11 +1,6 @@
-version 304 — Barding et supermarché : Rudy dans les 4 directions, sorties par flèche
+version 305 — Rue de nuit : la fumeuse aux cheveux rouges contre le mur
 
-  Barding et supermarché : Rudy (planche du Pixel Bar) marche vers la gauche,
-    la droite, le haut (vers le fond) et le bas (vers nous) ; il grandit quand
-    il s'approche.
-  Barding : on arrive en bas de la salle ; à cet endroit, flèche jaune
-    brillante vers le bas + SORTIR pour revenir dans la rue de nuit.
-    S'ASSEOIR / SE LEVER aux tabourets du comptoir (en remontant vers le bar).
-  Supermarché : on arrive tout à gauche, devant les portes vitrées ; à cet
-    endroit, flèche jaune brillante vers la gauche + SORTIR.
-  Les boutons « ◀ LA RUE » en haut à gauche sont remplacés par ces sorties.
+  Une nouvelle passante, adossée au mur du Barding (pied contre le mur),
+    juste derrière l'endroit où marche Rudy : elle allume sa cigarette, fume,
+    souffle la fumée, en boucle, avec les mêmes transitions fluides que les
+    autres personnages.
