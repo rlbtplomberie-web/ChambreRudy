@@ -1,8 +1,7 @@
-version 290 — Shinato : entrée vers « la rue de nuit »
+version 291 — La rue de nuit : entrée dans le bar « Le Barding »
 
-  Dans la rue de Shinato, devant l'escalier (mur « GOOD PEOPLE GOOD GAMES »,
-    à côté du distributeur Coca), une flèche jaune brillante vers le haut et
-    un bouton ENTRER : on arrive dans la rue de nuit (supermarché, Barding,
-    hôtel, avec les 6 personnages animés).
-  La musique de Shinato continue. « ◀ SHINATO » (en haut à gauche) ramène
-    devant l'escalier ; on peut faire l'aller-retour autant qu'on veut.
+  Dans la rue de nuit, quand on arrive devant le Barding, une flèche jaune
+    brillante vers le haut apparaît dans la porte et un bouton ENTRER :
+    on entre dans le bar (la barmaid et la fille qui mange).
+  « ◀ LA RUE » (en haut à gauche dans le bar) ramène devant le Barding ;
+    aller-retour autant qu'on veut. La musique de Shinato continue.
