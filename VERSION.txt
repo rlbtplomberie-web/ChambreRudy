@@ -1,4 +1,6 @@
-version 277 — Téléphone : 3 nouvelles vidéos
+version 278 — Faty : vidéo de nuit 50 %
 
-  Galerie du téléphone, onglet Vidéos (album « Vidéos ») : 3 vidéos en plus.
-  Aussi dans l'appli Déverrouillage, dossier « Vidéos du téléphone ».
+  « Je veux que tu dormes ici ce soir » avec Faty : elle accepte maintenant
+    dès 50 % de cœur (après un resto ce soir-là) ; de 50 à 59 %, sa nouvelle
+    vidéo ; 60, 80 et 90 % ne changent pas.
+  Aussi dans l'appli Déverrouillage (dossier Nuits).
