@@ -1,4 +1,7 @@
-version 293 — Barding : Rudy plus grand
+version 294 — Chambre : « Offrir un cadeau » (Faty)
 
-  Au Barding, Rudy est un peu plus grand, debout (environ +20 %) comme assis
-    au comptoir. Le reste ne change pas.
+  Quand Faty est dans la chambre avec 20 % de cœur ou plus, un choix
+    « 🎁 Offrir un cadeau » apparaît : −100 €, puis « C'est pour moi ?! » /
+    « Mais qu'est-ce que c'est gentil, ça… » / « J'ai une surprise, moi aussi,
+    pour toi », et la vidéo. Sans 100 €, un message le dit.
+  Aussi dans l'appli Déverrouillage (nouveau dossier Cadeaux).
