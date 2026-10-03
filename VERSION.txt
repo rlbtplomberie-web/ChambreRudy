@@ -1,7 +1,11 @@
-version 303 — La rue de nuit : entrée dans le supermarché
+version 304 — Barding et supermarché : Rudy dans les 4 directions, sorties par flèche
 
-  Rue de nuit : devant les portes vitrées du supermarché, la flèche jaune
-    brillante vers le haut et ENTRER (comme pour le Barding).
-  Supermarché : Rudy avec la planche du Pixel Bar, au joystick ; la vue le
-    suit dans les rayons. « ◀ LA RUE » ramène devant les portes du supermarché.
-  Aller-retour autant qu'on veut ; la musique de Shinato continue.
+  Barding et supermarché : Rudy (planche du Pixel Bar) marche vers la gauche,
+    la droite, le haut (vers le fond) et le bas (vers nous) ; il grandit quand
+    il s'approche.
+  Barding : on arrive en bas de la salle ; à cet endroit, flèche jaune
+    brillante vers le bas + SORTIR pour revenir dans la rue de nuit.
+    S'ASSEOIR / SE LEVER aux tabourets du comptoir (en remontant vers le bar).
+  Supermarché : on arrive tout à gauche, devant les portes vitrées ; à cet
+    endroit, flèche jaune brillante vers la gauche + SORTIR.
+  Les boutons « ◀ LA RUE » en haut à gauche sont remplacés par ces sorties.
