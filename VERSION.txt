@@ -1,11 +1,5 @@
-version 288 — « Manger » pour Faty, Karine et Sophie + Valia à 40 % par texto
+version 289 — Bras de fer, mode Parier : vidéo de Karine
 
-  « 🍽️ Manger » (à partir de 40 % de cœur) : Faty, Karine et Sophie ont
-    maintenant leur dialogue et leur vidéo. Les 8 filles l'ont.
-    Oui → la vidéo du repas ; Non → elle s'énerve et −5 % de cœur.
-  Aussi dans l'appli Déverrouillage (dossier Repas).
-  Téléphone, Valia de 40 à 49 % : elle est en pause et meurt de faim ;
-    « Je peux passer chez toi manger un morceau ? » Oui → la vidéo ;
-    Non → elle s'énerve et −5 % de cœur.
-  Bras de fer, mode Parier : une vidéo passe seulement si la fille sur qui
-    on a misé gagne (Shana, Sophie, Ameline, Faty, Katila, Mifa, Rose). Participer ne change pas.
+  Si on a misé sur Karine et qu'elle gagne, sa vidéo passe.
+  Les 8 filles du mode Parier ont maintenant leur vidéo.
+  Aussi dans l'appli Déverrouillage (dossier Bras de fer).
