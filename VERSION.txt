@@ -1,6 +1,3 @@
-version 298 — Chambre : « Offrir un cadeau » pour Ameline
+version 299 — Mifa : nouvelle vidéo pour « Offrir un cadeau »
 
-  Ameline à 20 % de cœur ou plus : « 🎁 Offrir un cadeau » → −100 €,
-    « Oh… mon grand, tu n'aurais pas dû » / « C'est vraiment adorable de ta
-    part. » / « Ferme les yeux… c'est mon tour de te faire plaisir », puis la vidéo.
-  Aussi dans l'appli Déverrouillage (dossier Cadeaux).
+  La vidéo du cadeau de Mifa est remplacée par la bonne. Le reste ne change pas.
