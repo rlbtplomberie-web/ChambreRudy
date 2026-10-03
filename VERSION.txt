@@ -1,7 +1,9 @@
-version 291 — La rue de nuit : entrée dans le bar « Le Barding »
+version 292 — Rudy jouable dans la rue de nuit et au Barding
 
-  Dans la rue de nuit, quand on arrive devant le Barding, une flèche jaune
-    brillante vers le haut apparaît dans la porte et un bouton ENTRER :
-    on entre dans le bar (la barmaid et la fille qui mange).
-  « ◀ LA RUE » (en haut à gauche dans le bar) ramène devant le Barding ;
-    aller-retour autant qu'on veut. La musique de Shinato continue.
+  Rue de nuit : on dirige Rudy avec le joystick, avec la même planche qu'à
+    Shinato (marcher, FUMER, JETER, marcher la cigarette à la main) ; la vue
+    le suit. Devant la porte du Barding : flèche jaune au-dessus de lui et
+    ENTRER. « ◀ SHINATO » ramène à Shinato.
+  Barding : Rudy avec la planche du Pixel Bar (il marche, s'assoit à un des
+    5 tabourets du comptoir avec S'ASSEOIR, enchaîne ses gestes assis, puis
+    SE LEVER). « ◀ LA RUE » ramène devant la porte.
