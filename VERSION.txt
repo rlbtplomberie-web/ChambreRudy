@@ -1,6 +1,6 @@
-version 283 — Ameline : vidéo de nuit 50 %
+version 284 — Mifa : vidéo de nuit 50 %
 
-  « Je veux que tu dormes ici ce soir » avec Ameline : elle accepte maintenant
+  « Je veux que tu dormes ici ce soir » avec Mifa : elle accepte maintenant
     dès 50 % de cœur (après un resto ce soir-là) ; de 50 à 59 %, sa nouvelle
     vidéo ; 60, 80 et 90 % ne changent pas.
   Aussi dans l'appli Déverrouillage (dossier Nuits).
