@@ -1,6 +1,6 @@
-version 279 — Katila : vidéo de nuit 50 %
+version 280 — Rose : vidéo de nuit 50 %
 
-  « Je veux que tu dormes ici ce soir » avec Katila : elle accepte maintenant
+  « Je veux que tu dormes ici ce soir » avec Rose : elle accepte maintenant
     dès 50 % de cœur (après un resto ce soir-là) ; de 50 à 59 %, sa nouvelle
     vidéo ; 60, 80 et 90 % ne changent pas.
   Aussi dans l'appli Déverrouillage (dossier Nuits).
