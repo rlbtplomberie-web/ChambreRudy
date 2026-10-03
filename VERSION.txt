@@ -1,7 +1,8 @@
-version 286 — Gisèle : vidéo de nuit 50 %
+version 287 — Chambre : « Manger » (à partir de 40 % de cœur)
 
-  « Je veux que tu dormes ici ce soir » avec Gisèle : elle accepte maintenant
-    dès 50 % de cœur (après un resto ce soir-là) ; de 50 à 59 %, sa nouvelle
-    vidéo ; 60, 80 et 90 % ne changent pas.
-  Les 8 filles ont maintenant leurs vidéos de nuit à 50, 60, 80 et 90 %.
-  Aussi dans l'appli Déverrouillage (dossier Nuits).
+  Quand une fille est dans la chambre avec 40 % de cœur ou plus, un choix
+    « 🍽️ Manger » apparaît. Elle dit qu'elle a faim (2 phrases), puis Oui / Non.
+    Oui → la vidéo du repas (elle reste dans la chambre).
+    Non → elle s'énerve et −5 % de cœur.
+  Filles : Rose, Ameline, Katila, Gisèle, Mifa.
+  Aussi dans l'appli Déverrouillage (nouveau dossier Repas).
