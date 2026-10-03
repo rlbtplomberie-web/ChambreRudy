@@ -75,8 +75,8 @@ const RB={"droite": {"img": ["/assets/shinato/m/ef1f0b8c2cc9473b.webp", "/assets
 const charge=s=>{const i=new Image();i.src=s;return i};
 for(const k in RB) RB[k].fr=RB[k].img.map(charge);
 const toile=document.getElementById('toile'), ctx=toile.getContext('2d');
-const LARG=2172, SOL=612, DEBOUT=330;                 // le sol du bar, et la taille de Rudy debout
-const TABOURETS=[190,466,714,960,1170], ASSISE=398, ASSIS=222;   // les 5 tabourets du comptoir
+const LARG=2172, SOL=618, DEBOUT=400;                 // le sol du bar, et la taille de Rudy debout
+const TABOURETS=[190,466,714,960,1170], ASSISE=398, ASSIS=268;   // les 5 tabourets du comptoir
 const RUDY={x:1350,dir:'bas',pas:0,etat:'debout',tab:null,t0:0,idx:0,bouge:false};
 let joyX=0;
 function dessineDebout(set,i,x,y,al,phase){

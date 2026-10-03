@@ -1,9 +1,4 @@
-version 292 — Rudy jouable dans la rue de nuit et au Barding
+version 293 — Barding : Rudy plus grand
 
-  Rue de nuit : on dirige Rudy avec le joystick, avec la même planche qu'à
-    Shinato (marcher, FUMER, JETER, marcher la cigarette à la main) ; la vue
-    le suit. Devant la porte du Barding : flèche jaune au-dessus de lui et
-    ENTRER. « ◀ SHINATO » ramène à Shinato.
-  Barding : Rudy avec la planche du Pixel Bar (il marche, s'assoit à un des
-    5 tabourets du comptoir avec S'ASSEOIR, enchaîne ses gestes assis, puis
-    SE LEVER). « ◀ LA RUE » ramène devant la porte.
+  Au Barding, Rudy est un peu plus grand, debout (environ +20 %) comme assis
+    au comptoir. Le reste ne change pas.
