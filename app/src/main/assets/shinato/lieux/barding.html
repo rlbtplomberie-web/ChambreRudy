@@ -165,7 +165,7 @@ appui(bL,()=>{ if(RUDY.etat!=='assis') return; RUDY.etat='seleve'; RUDY.t0=perfo
   addEventListener('blur',lache); document.addEventListener('visibilitychange',lache);
 })();
 // on revient dans le bar : Rudy est debout, dans l'entrée
-addEventListener('message',e=>{ if(e.data&&e.data.type==='barding:entree') Object.assign(RUDY,{x:1350,dir:'bas',etat:'debout',tab:null,bouge:false}); });
+addEventListener('message',e=>{ if(e.data&&(e.data.type==='barding:entree'||e.data.type==='lieu:entree')) Object.assign(RUDY,{x:1350,dir:'bas',etat:'debout',tab:null,bouge:false}); });
 requestAnimationFrame(()=>{ w.scrollLeft=(w.scrollWidth-w.clientWidth)*0.55; });
 // SORTIR : retour dans la rue de nuit, devant le Barding
 (function(){ const b=document.getElementById('sortir'); let t=0;

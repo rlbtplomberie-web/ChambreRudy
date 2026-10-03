@@ -1,7 +1,7 @@
-version 302 — Chambre : « Offrir un cadeau » pour Katila
+version 303 — La rue de nuit : entrée dans le supermarché
 
-  Katila à 20 % de cœur ou plus : « 🎁 Offrir un cadeau » → −100 €,
-    « Un cadeau ? Pour ton infirmière préférée ? » / « T'es adorable… ça me
-    fait tellement plaisir. » / « Laisse-moi te soigner à ma façon, pour te
-    remercier », puis la vidéo.
-  Les 8 filles ont maintenant leur cadeau. Aussi dans Déverrouillage (Cadeaux).
+  Rue de nuit : devant les portes vitrées du supermarché, la flèche jaune
+    brillante vers le haut et ENTRER (comme pour le Barding).
+  Supermarché : Rudy avec la planche du Pixel Bar, au joystick ; la vue le
+    suit dans les rayons. « ◀ LA RUE » ramène devant les portes du supermarché.
+  Aller-retour autant qu'on veut ; la musique de Shinato continue.
