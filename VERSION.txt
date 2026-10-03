@@ -1,6 +1,6 @@
-version 284 — Mifa : vidéo de nuit 50 %
+version 285 — Valia à 50 % par texto
 
-  « Je veux que tu dormes ici ce soir » avec Mifa : elle accepte maintenant
-    dès 50 % de cœur (après un resto ce soir-là) ; de 50 à 59 %, sa nouvelle
-    vidéo ; 60, 80 et 90 % ne changent pas.
-  Aussi dans l'appli Déverrouillage (dossier Nuits).
+  Téléphone, Valia de 50 à 59 % de cœur : une petite discussion (elle sort
+    de son numéro) puis elle t'envoie « un petit souvenir de ce soir » : la
+    vidéo se lance.
+  60, 80 et 90 % ne changent pas. Aussi dans Déverrouillage (Valia Club).
