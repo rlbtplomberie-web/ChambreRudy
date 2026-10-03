@@ -1,8 +1,11 @@
-version 287 — Chambre : « Manger » (à partir de 40 % de cœur)
+version 288 — « Manger » pour Faty, Karine et Sophie + Valia à 40 % par texto
 
-  Quand une fille est dans la chambre avec 40 % de cœur ou plus, un choix
-    « 🍽️ Manger » apparaît. Elle dit qu'elle a faim (2 phrases), puis Oui / Non.
-    Oui → la vidéo du repas (elle reste dans la chambre).
+  « 🍽️ Manger » (à partir de 40 % de cœur) : Faty, Karine et Sophie ont
+    maintenant leur dialogue et leur vidéo. Les 8 filles l'ont.
+    Oui → la vidéo du repas ; Non → elle s'énerve et −5 % de cœur.
+  Aussi dans l'appli Déverrouillage (dossier Repas).
+  Téléphone, Valia de 40 à 49 % : elle est en pause et meurt de faim ;
+    « Je peux passer chez toi manger un morceau ? » Oui → la vidéo ;
     Non → elle s'énerve et −5 % de cœur.
-  Filles : Rose, Ameline, Katila, Gisèle, Mifa.
-  Aussi dans l'appli Déverrouillage (nouveau dossier Repas).
+  Bras de fer, mode Parier : une vidéo passe seulement si la fille sur qui
+    on a misé gagne (Shana, Sophie, Ameline, Faty, Katila, Mifa, Rose). Participer ne change pas.

@@ -597,8 +597,20 @@ const WINPICS = {"shana": "/assets/shinato/m/492e02d44762e291.webp", "theo": "/a
 // vidéos de victoire (à la place de l'image) : .mp4 sur le téléphone, .webm en secours
 const WINVIDS = {"karine": ["/assets/shinato/m/bdf_karine_victoire.mp4", "/assets/shinato/m/bdf_karine_victoire.webm"], "rose": ["/assets/shinato/m/bdf_rose_victoire.mp4", "/assets/shinato/m/bdf_rose_victoire.webm"], "mifa": ["/assets/shinato/m/bdf_mifa_victoire.mp4", "/assets/shinato/m/bdf_mifa_victoire.webm"], "sophie": ["/assets/shinato/m/bdf_sophie_victoire.mp4", "/assets/shinato/m/bdf_sophie_victoire.webm"], "katila": ["/assets/shinato/m/bdf_katila_victoire.mp4", "/assets/shinato/m/bdf_katila_victoire.webm"], "ameline": ["/assets/shinato/m/bdf_ameline_victoire.mp4", "/assets/shinato/m/bdf_ameline_victoire.webm"], "faty": ["/assets/shinato/m/bdf_faty_victoire.mp4", "/assets/shinato/m/bdf_faty_victoire.webm"]};
 function stopVictoire(){ const v=$('winVid'); if(!v) return; try{ v.pause(); }catch(e){} v.onerror=null; v.removeAttribute('src'); try{ v.load(); }catch(e){} $('end').classList.remove('vid'); }
+/* mode Parier : une vidéo seulement si la fille sur qui on a misé gagne */
+const BETVIDS = {
+  shana:["/assets/shinato/m/bdf_pari_shana.mp4","/assets/shinato/m/bdf_pari_shana.mp4"],
+  sophie:["/assets/shinato/m/bdf_pari_sophie.mp4","/assets/shinato/m/bdf_pari_sophie.mp4"],
+  ameline:["/assets/shinato/m/bdf_pari_ameline.mp4","/assets/shinato/m/bdf_pari_ameline.mp4"],
+  faty:["/assets/shinato/m/bdf_pari_faty.mp4","/assets/shinato/m/bdf_pari_faty.mp4"],
+  katila:["/assets/shinato/m/bdf_pari_katila.mp4","/assets/shinato/m/bdf_pari_katila.mp4"],
+  mifa:["/assets/shinato/m/bdf_pari_mifa.mp4","/assets/shinato/m/bdf_pari_mifa.mp4"],
+  rose:["/assets/shinato/m/bdf_pari_rose.mp4","/assets/shinato/m/bdf_pari_rose.mp4"],
+};
 function joueVictoire(who){
-  const v=$('winVid'), l=WINVIDS[who]; stopVictoire(); if(!v||!l) return;
+  const v=$('winVid'); stopVictoire();
+  const l = S.cpu ? (who===S.bet ? BETVIDS[who] : null) : WINVIDS[who];
+  if(!v||!l) return;
   const src = v.canPlayType('video/mp4') ? l[0] : l[1];
   let secours = src===l[0];
   v.onerror=()=>{ if(secours){ secours=false; v.src=l[1]; v.play().catch(()=>{}); } else $('end').classList.remove('vid'); };   // sinon l'image reste
