@@ -1,6 +1,6 @@
-version 300 — Chambre : « Offrir un cadeau » pour Sophie
+version 301 — Chambre : « Offrir un cadeau » pour Rose
 
-  Sophie à 20 % de cœur ou plus : « 🎁 Offrir un cadeau » → −100 €,
-    « Oh ! Un cadeau ?! » / « T'es vraiment le plus mignon, Rudy… » /
-    « Attends… moi aussi, j'ai quelque chose pour toi », puis la vidéo.
+  Rose à 20 % de cœur ou plus : « 🎁 Offrir un cadeau » → −100 €,
+    « Un cadeau ? Pour moi ? » / « Personne ne m'a jamais gâtée comme ça… » /
+    « Viens… je vais te montrer à quel point ça me fait plaisir », puis la vidéo.
   Aussi dans l'appli Déverrouillage (dossier Cadeaux).
