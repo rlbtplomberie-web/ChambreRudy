@@ -409,7 +409,23 @@ window.RUDY=RUDY;
     {nom:'✨ Clochette', video:'/assets/shinato/m/barding_reve_clochette.mp4'},
     {nom:'✨ Jasmine', video:'/assets/shinato/m/barding_reve_jasmine.mp4'},
     {nom:'✨ Esmeralda', video:'/assets/shinato/m/barding_reve_esmeralda.mp4'},
-    {nom:'✨ Ondine', video:'/assets/shinato/m/barding_reve_ondine.mp4'}
+    {nom:'✨ Ondine', video:'/assets/shinato/m/barding_reve_ondine.mp4'},
+    {nom:'✨ Belle', video:'/assets/shinato/m/barding_reve_belle.mp4'},
+    {nom:'✨ Tiffany', video:'/assets/shinato/m/barding_reve_tiffany.mp4'},
+    {nom:'✨ Chun-Li', video:'/assets/shinato/m/barding_reve_chunli.mp4'},
+    {nom:'✨ Dame blanche', video:'/assets/shinato/m/barding_reve_dameblanche.mp4'},
+    {nom:'✨ Videl', video:'/assets/shinato/m/barding_reve_videl.mp4'},
+    {nom:'✨ Poison Ivy', video:'/assets/shinato/m/barding_reve_poisonivy.mp4'},
+    {nom:'✨ Harley Quinn', video:'/assets/shinato/m/barding_reve_harley.mp4'},
+    {nom:'✨ Ranfan', video:'/assets/shinato/m/barding_reve_ranfan.mp4'},
+    {nom:'✨ Nyotengu', video:'/assets/shinato/m/barding_reve_nyotengu.mp4'},
+    {nom:'✨ Rouge', video:'/assets/shinato/m/barding_reve_rouge.mp4'},
+    {nom:'✨ Kristal', video:'/assets/shinato/m/barding_reve_kristal.mp4'},
+    {nom:'✨ Amy', video:'/assets/shinato/m/barding_reve_amy.mp4'},
+    {nom:"✨ Femme d'eau", video:'/assets/shinato/m/barding_reve_femmedeau.mp4'},
+    {nom:'✨ Anju', video:'/assets/shinato/m/barding_reve_anju.mp4'},
+    {nom:'✨ Impa', video:'/assets/shinato/m/barding_reve_impa.mp4'},
+    {nom:'💋 Toi', video:'/assets/shinato/m/barding_reve_toi.mp4', sansIntro:true, hopital:true}   // le dernier : elle-même, sans intro, puis l'hôpital
   ];
   const bD=document.getElementById('bDiscuter'), actions=document.getElementById('actions'), bulle=document.getElementById('bulleBar');
   const choix=document.createElement('div'); choix.id='choixReve'; document.body.appendChild(choix);
@@ -436,7 +452,13 @@ window.RUDY=RUDY;
       REVES.forEach(R=>bouton(R.nom,()=>{ fin();
         if(vieLire()<=VIE_PRISE){ dit("Tu n'as plus assez de vie pour rêver… 😶",2600); return; }
         vieEcrire(vieLire()-VIE_PRISE); bulle.style.display='none';
-        if(!INTRO){ window.joueVideoBar&&window.joueVideoBar(R.video);
+        if(R.hopital){                    // « Toi » : directement sa vidéo, puis Rudy finit à l'hôpital
+          window.joueVideoBar&&window.joueVideoBar(R.video);
+          const vh=document.querySelector('#videoBar video'), vbh=document.getElementById('videoBar');
+          const va=()=>{ vh.removeEventListener('ended',va); vh.removeEventListener('error',va); if(vbh) vbh.style.display='none';
+            try{ parent.postMessage({type:'barding:hopital'},'*'); }catch(e){} };
+          vh.addEventListener('ended',va); vh.addEventListener('error',va); return; }
+        if(!INTRO||R.sansIntro){ window.joueVideoBar&&window.joueVideoBar(R.video);
           const v0=document.querySelector('#videoBar video'), fin0=()=>{ v0.removeEventListener('ended',fin0); setTimeout(()=>dit("J'espère que tu as aimé… Reviens me voir si tu veux retenter 😏",4000),250); };
           v0.addEventListener('ended',fin0); return; }
         // d'abord la vidéo d'entrée dans le rêve, puis la vidéo du rêve choisi
