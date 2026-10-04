@@ -57,7 +57,7 @@ body{background:var(--bg);overflow:hidden;touch-action:none;overscroll-behavior:
 </style>
 <div id="zoneJoy"></div>
 <div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="btnParler">PARLER</div><div class="btn" id="btnOui">OUI</div><div class="btn" id="btnNon">NON</div><div class="btn" id="btnSortir">SORTIR</div></div>
+<div id="actions"><div class="btn" id="btnDiscuter" style="display:none">DISCUTER</div><div class="btn" id="btnParler">PARLER</div><div class="btn" id="btnOui">OUI</div><div class="btn" id="btnNon">NON</div><div class="btn" id="btnSortir">SORTIR</div></div>
 <iframe id="jeuSoin" style="position:fixed;inset:0;width:100%;height:100%;border:0;z-index:70;background:#dff0ea;display:none"></iframe>
 <script>
 /* ================= Rudy dans l'accueil de l'infirmerie (même planche qu'au Pixel Bar et au Dragon d'Or) ================= */
@@ -100,6 +100,17 @@ body{background:var(--bg);overflow:hidden;touch-action:none;overscroll-behavior:
  var INF={x:300,y:470};                                  // l'infirmière, derrière son comptoir
  var bulle=null, bulleFin=0, question=false, enSoin=false;
  function pres(){ return R.x<680&&R.y<600; }             // devant le comptoir d'accueil
+ // DISCUTER (à côté de PARLER) : la vidéo, sans dialogue
+ var bD=document.getElementById("btnDiscuter"), enVideo=false;
+ var vbD=document.createElement("div"); vbD.style.cssText="position:fixed;inset:0;z-index:70;background:#000;display:none";
+ vbD.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+ document.body.appendChild(vbD); var vD=vbD.querySelector("video");
+ function fermeD(){ try{ vD.pause(); }catch(e){} vbD.style.display="none"; enVideo=false; }
+ vD.addEventListener("ended",fermeD); vD.addEventListener("error",fermeD);
+ (function(){ var t0=0; function go(e){ if(e&&e.cancelable) e.preventDefault(); var n=performance.now(); if(n-t0<400) return; t0=n;
+   if(question||enSoin||!pres()) return; enVideo=true; bD.style.display="none"; try{ jx=jy=0; }catch(err){}
+   vD.src="/assets/shinato/m/infirmerie_discuter.mp4"; vbD.style.display="block"; var q=vD.play(); if(q&&q.catch) q.catch(function(){}); }
+  bD.addEventListener("touchstart",go,{passive:false}); bD.addEventListener("click",go); })();
  function dit(txt,duree){ bulle=txt; bulleFin=duree?performance.now()/1000+duree:0; }
  function bulleDessin(){
   if(!bulle) return;
@@ -145,6 +156,7 @@ body{background:var(--bg);overflow:hidden;touch-action:none;overscroll-behavior:
   bulleDessin();
   bS.style.display=ici?"block":"none";
   bP.style.display=(!question&&!enSoin&&pres())?"block":"none";
+  bD.style.display=(!question&&!enSoin&&!enVideo&&pres())?"block":"none";
   bO.style.display=bN.style.display=(question&&!enSoin)?"block":"none";
   camera();
  }

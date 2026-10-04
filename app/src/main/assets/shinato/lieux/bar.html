@@ -97,6 +97,7 @@ window.addEventListener('load',()=>requestAnimationFrame(frame));
  <div class="btn" id="btnLever">SE LEVER</div>
  <div class="btn" id="btnJouer">JOUER</div>
  <div class="btn" id="btnBiere" style="display:none">🍺 COMMANDER UNE BIÈRE</div>
+ <div class="btn" id="btnParlerCanape" style="display:none">PARLER</div>
  <div class="btn" id="btnSortir">SORTIR</div>
 </div>
 <script>
@@ -360,6 +361,24 @@ window.addEventListener("blur",r);document.addEventListener("visibilitychange",r
   let t0=0;
   const go=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t0<400) return; t0=n;
     occupe=true; b.style.display='none'; v.src='/assets/shinato/m/pixelbar_biere.mp4'; vb.style.display='block';
+    const q=v.play(); if(q&&q.catch) q.catch(()=>{}); };
+  b.addEventListener('touchstart',go,{passive:false}); b.addEventListener('click',go);
+})();
+
+/* ================= PARLER à la fille sur le canapé (à droite) : la vidéo, sans dialogue ================= */
+(function(){
+  const b=document.getElementById('btnParlerCanape');
+  const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:70;background:#000;display:none';
+  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+  document.body.appendChild(vb); const v=vb.querySelector('video'); let occupe=false;
+  function ferme(){ try{ v.pause(); }catch(e){} vb.style.display='none'; occupe=false; }
+  v.addEventListener('ended',ferme); v.addEventListener('error',ferme);
+  // dès que Rudy arrive dans la partie droite du bar, près des tables et du canapé
+  setInterval(()=>{ const pres=!occupe&&RUDY.etat==='debout'&&RUDY.x>=980;
+    b.style.display=pres?'block':'none'; },150);
+  let t0=0;
+  const go=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t0<400) return; t0=n;
+    occupe=true; b.style.display='none'; v.src='/assets/shinato/m/pixelbar_canape.mp4'; vb.style.display='block';
     const q=v.play(); if(q&&q.catch) q.catch(()=>{}); };
   b.addEventListener('touchstart',go,{passive:false}); b.addEventListener('click',go);
 })();

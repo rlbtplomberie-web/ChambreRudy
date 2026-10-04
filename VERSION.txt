@@ -1,9 +1,11 @@
-version 318 — Pixel Bar, la plage et la plage de Gisèle : nouvelles vidéos
+version 319 — Vaviel, Pixel Bar et infirmerie : nouvelles vidéos
 
-  Pixel Bar : en face du barman, « 🍺 COMMANDER UNE BIÈRE » → sa vidéo.
-  La plage : PARLER à la fille qui se promène (le bouton la suit pendant
-    qu'elle marche) et au vieux et à la vieille sur leur banc → leur vidéo.
-  Plage de Gisèle : nouveau bouton DISCUTER au-dessus de PARLER → sa vidéo
-    (PARLER garde le dialogue et le jeu).
+  Vaviel : PARLER à la fille au pantalon rouge (grille du karting) et au
+    monsieur qui lit sur le banc → leur vidéo (le plus proche de Rudy
+    garde le bouton).
+  Pixel Bar : PARLER à la fille sur le canapé, dès que Rudy est dans la
+    partie droite du bar → sa vidéo. La bière au barman est gardée.
+  Accueil de l'infirmerie : nouveau bouton DISCUTER à côté de PARLER →
+    sa vidéo (PARLER garde les soins à 10 €).
   Pas de dialogue avant ni après ces vidéos. Elles sont aussi dans l'appli
-    Déverrouillage (dossiers Pixel Bar et La plage).
+    Déverrouillage (dossiers Vaviel et Pixel Bar).

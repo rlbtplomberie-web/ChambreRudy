@@ -108,6 +108,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
 
 <div id="joy"><div id="stick"></div></div>
 <div id="actions">
+ <div class="btn" id="btnParlerVav" style="display:none">PARLER</div>
+ <div class="btn" id="btnParlerLecteur" style="display:none">PARLER</div>
  <div class="btn" id="btnFumer">FUMER</div>
  <div class="btn off" id="btnJeter">JETER</div>
 </div>
@@ -770,6 +772,32 @@ window.addEventListener("message",function(e){
   try{ localStorage.setItem("rudy_argent",String(Math.max(0,lire()+n))); }catch(e){}
   maj();
  };
+})();
+
+/* ---------- PARLER aux passants de Vaviel : leur vidéo, sans dialogue ---------- */
+(function(){
+ var PASSANTS=[
+  {btn:"btnParlerVav",     pos:1716/2172, video:"/assets/shinato/m/vaviel_fumeuse.mp4"},   // la fille au pantalon rouge, grille du karting
+  {btn:"btnParlerLecteur", pos:1525/2172, video:"/assets/shinato/m/vaviel_lecteur.mp4"}    // le monsieur qui lit sur le banc
+ ];
+ var PRES=95/2172, occupe=false;
+ var vb=document.createElement("div"); vb.style.cssText="position:fixed;inset:0;z-index:70;background:#000;display:none";
+ vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+ document.body.appendChild(vb); var v=vb.querySelector("video");
+ function ferme(){ try{ v.pause(); }catch(e){} vb.style.display="none"; occupe=false; }
+ v.addEventListener("ended",ferme); v.addEventListener("error",ferme);
+ PASSANTS.forEach(function(P){
+  var btn=document.getElementById(P.btn), t0=0;
+  setInterval(function(){
+   if(typeof x==="undefined"||!largeurMonde||occupe){ btn.style.display="none"; return; }
+   var d=Math.abs(x-largeurMonde*P.pos), proche=PASSANTS.every(function(Q){ return Q===P||Math.abs(x-largeurMonde*Q.pos)>=d; });
+   btn.style.display=(d<largeurMonde*PRES&&proche)?"block":"none";
+  },110);
+  function parle(e){ if(e&&e.cancelable) e.preventDefault(); var n=performance.now(); if(n-t0<400) return; t0=n;
+   occupe=true; try{ dir=0; }catch(err){} btn.style.display="none"; v.src=P.video; vb.style.display="block";
+   var q=v.play(); if(q&&q.catch) q.catch(function(){}); }
+  btn.addEventListener("touchstart",parle,{passive:false}); btn.addEventListener("click",parle);
+ });
 })();
 </script></body>
 </html>
