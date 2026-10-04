@@ -37,7 +37,8 @@ background:url(data:image/webp;base64,UklGRnSSAwBXRUJQVlA4IGiSAwDQBQudASp8CNQCPj
 #choixCoffre .btn{display:block}
 .bulleManga.droite:after{left:auto;right:-18px;border:12px solid transparent;border-left:20px solid #111}
 .bulleManga.droite:before{left:auto;right:-11px;border:9px solid transparent;border-left:15px solid #fff}
-#choixReve{position:fixed;z-index:25;right:4.5vmin;bottom:6vmin;display:none;flex-direction:column;gap:1.8vmin;min-width:48vmin}
+#choixReve{position:fixed;z-index:25;right:4.5vmin;bottom:6vmin;display:none;flex-direction:column;gap:1.8vmin;min-width:48vmin;max-height:52vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:1vmin;touch-action:pan-y}
+#choixReve .btn{flex:none}
 #choixReve .btn{display:block}
 #choixBocal{position:fixed;z-index:25;right:4.5vmin;bottom:6vmin;display:none;flex-direction:column;gap:1.8vmin;min-width:48vmin}
 #choixBocal .btn{display:block}
@@ -384,12 +385,31 @@ window.RUDY=RUDY;
 /* ================= DISCUTER avec la barmaid : les rêves (chaque rêve prend un peu de la vie de Rudy) ================= */
 (function(){
   const BARMAID_X=600, VIE_PRISE=10;                 // chaque rêve : −10 % de vie
+  const INTRO='/assets/shinato/m/barding_reve_intro.mp4';   // la vidéo qui passe AVANT chaque rêve
   const REVES=[                                       // un rêve par vidéo
     {nom:'✨ Tina Armstrong', video:'/assets/shinato/m/barding_reve_tina.mp4'},
     {nom:'✨ Elizabeth (BioShock)', video:'/assets/shinato/m/barding_reve_elizabeth.mp4'},
     {nom:'✨ C-18', video:'/assets/shinato/m/barding_reve_c18.mp4'},
     {nom:'✨ CYA', video:'/assets/shinato/m/barding_reve_cya.mp4'},
-    {nom:'✨ Bulma', video:'/assets/shinato/m/barding_reve_bulma.mp4'}
+    {nom:'✨ Bulma', video:'/assets/shinato/m/barding_reve_bulma.mp4'},
+    {nom:'✨ Malon', video:'/assets/shinato/m/barding_reve_malon.mp4'},
+    {nom:'✨ Twinrova 1', video:'/assets/shinato/m/barding_reve_twinrova1.mp4'},
+    {nom:'✨ Twinrova 2', video:'/assets/shinato/m/barding_reve_twinrova2.mp4'},
+    {nom:'✨ Rito', video:'/assets/shinato/m/barding_reve_rito.mp4'},
+    {nom:'✨ Reine Marika', video:'/assets/shinato/m/barding_reve_marika.mp4'},
+    {nom:'✨ Great Fairy', video:'/assets/shinato/m/barding_reve_greatfairy.mp4'},
+    {nom:'✨ Lockpin', video:'/assets/shinato/m/barding_reve_lockpin.mp4'},
+    {nom:'✨ Midna', video:'/assets/shinato/m/barding_reve_midna.mp4'},
+    {nom:'✨ Pocahontas', video:'/assets/shinato/m/barding_reve_pocahontas.mp4'},
+    {nom:'✨ Zelda', video:'/assets/shinato/m/barding_reve_zelda.mp4'},
+    {nom:'✨ Megara', video:'/assets/shinato/m/barding_reve_megara.mp4'},
+    {nom:'✨ Jessica Rabbit', video:'/assets/shinato/m/barding_reve_jessica.mp4'},
+    {nom:'✨ Lola Bunny', video:'/assets/shinato/m/barding_reve_lola.mp4'},
+    {nom:'✨ Gothel', video:'/assets/shinato/m/barding_reve_gothel.mp4'},
+    {nom:'✨ Clochette', video:'/assets/shinato/m/barding_reve_clochette.mp4'},
+    {nom:'✨ Jasmine', video:'/assets/shinato/m/barding_reve_jasmine.mp4'},
+    {nom:'✨ Esmeralda', video:'/assets/shinato/m/barding_reve_esmeralda.mp4'},
+    {nom:'✨ Ondine', video:'/assets/shinato/m/barding_reve_ondine.mp4'}
   ];
   const bD=document.getElementById('bDiscuter'), actions=document.getElementById('actions'), bulle=document.getElementById('bulleBar');
   const choix=document.createElement('div'); choix.id='choixReve'; document.body.appendChild(choix);
@@ -416,7 +436,16 @@ window.RUDY=RUDY;
       REVES.forEach(R=>bouton(R.nom,()=>{ fin();
         if(vieLire()<=VIE_PRISE){ dit("Tu n'as plus assez de vie pour rêver… 😶",2600); return; }
         vieEcrire(vieLire()-VIE_PRISE); bulle.style.display='none';
-        window.joueVideoBar&&window.joueVideoBar(R.video); }));
+        if(!INTRO){ window.joueVideoBar&&window.joueVideoBar(R.video);
+          const v0=document.querySelector('#videoBar video'), fin0=()=>{ v0.removeEventListener('ended',fin0); setTimeout(()=>dit("J'espère que tu as aimé… Reviens me voir si tu veux retenter 😏",4000),250); };
+          v0.addEventListener('ended',fin0); return; }
+        // d'abord la vidéo d'entrée dans le rêve, puis la vidéo du rêve choisi
+        window.joueVideoBar&&window.joueVideoBar(INTRO);
+        const v=document.querySelector('#videoBar video'), vb=document.getElementById('videoBar');
+        const ensuite=()=>{ v.removeEventListener('ended',ensuite); setTimeout(()=>{ window.joueVideoBar(R.video); v.addEventListener('ended',apres); },60); };
+        // à la fin du rêve, la barmaid dit toujours la même chose
+        const apres=()=>{ v.removeEventListener('ended',apres); setTimeout(()=>dit("J'espère que tu as aimé… Reviens me voir si tu veux retenter 😏",4000),250); };
+        v.addEventListener('ended',ensuite); }));
       bouton('Finalement non',()=>{ fin(); dit("Tu rates quelque chose… 😏",2200); },true);
       montre();
     });

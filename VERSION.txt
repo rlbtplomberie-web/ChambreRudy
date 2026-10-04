@@ -1,5 +1,5 @@
-version 328 — Barding : les rêves de la barmaid (1/11)
+version 333 — Barding : les rêves de la barmaid (6/11)
 
-  DISCUTER avec la barmaid (« Est-ce que tu veux rêver ?… » → OUI/NON, −10 % de vie par rêve) + rêves Tina Armstrong, Elizabeth, C-18, CYA, Bulma
-  À déposer dans l'ordre : maj-118 → maj-128 (celle-ci est la n° 118).
+  Rêves Clochette, Jasmine, Esmeralda, Ondine + la liste des rêves qui défile
+  À déposer dans l'ordre : maj-118 → maj-128 (celle-ci est la n° 123).
   Les vidéos sont aussi dans l'appli Déverrouillage (dossier Barding).
