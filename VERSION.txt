@@ -1,8 +1,8 @@
-version 312 — Rue de nuit : parler à la blonde à casquette
+version 313 — Supermarché : la fille aux cheveux roses
 
-  Rue de nuit, près de la blonde à casquette (devant le supermarché) :
-    PARLER → bulle manga « Hey toi ! Tu m'offres un petit quelque chose ? »
-    et le choix : Donner 50 €, 100 €, 150 € ou 200 € (l'argent est retiré
-    avant la vidéo ; s'il n'y en a pas assez, elle le dit) ou Rien.
-  Garde la fumeuse rousse (310) et la fille en noir (311).
-  Les 4 vidéos sont aussi dans l'appli Déverrouillage (dossier Rue de nuit).
+  Au supermarché, près de la fille aux cheveux roses (rayon épicerie) :
+    PARLER → bulle manga « Oh, salut… tu veux quelque chose ? » et le choix :
+    Donner 50 €, 100 € ou 150 € (l'argent est retiré avant la vidéo ; les
+    3 vidéos sont réparties au hasard sur les 3 choix) ou Rien.
+  Garde la fumeuse (308) et la caissière (309).
+  Les 3 vidéos sont aussi dans l'appli Déverrouillage (dossier Supermarché).

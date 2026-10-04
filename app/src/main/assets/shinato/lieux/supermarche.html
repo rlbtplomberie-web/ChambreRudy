@@ -49,6 +49,9 @@ background:radial-gradient(closest-side,rgba(255,40,40,.95),rgba(255,0,0,.35) 55
  background:linear-gradient(rgba(12,12,14,.9),rgba(30,30,34,.9));border:2px solid rgba(255,226,122,.95);box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 14px rgba(255,214,60,.4);user-select:none;-webkit-user-select:none}
 .btn:active{transform:scale(.94)}
 
+#choixRose{position:fixed;z-index:25;right:4.5vmin;bottom:6vmin;display:none;flex-direction:column;gap:2vmin;min-width:44vmin}
+#choixRose .btn{display:block}
+#bulleRose{left:52%;top:15%}
 #choixCaisse{position:fixed;z-index:25;right:4.5vmin;bottom:6vmin;display:none;flex-direction:column;gap:2vmin;min-width:44vmin}
 #choixCaisse .btn{display:block}
 #bulleC{left:auto;right:16%;top:16%}
@@ -61,7 +64,7 @@ background:radial-gradient(closest-side,rgba(255,40,40,.95),rgba(255,0,0,.35) 55
  font:800 clamp(12px,2.6vmin,22px)/1.25 'Comic Sans MS','Chalkboard SE','Marker Felt',Arial,sans-serif;box-shadow:4px 4px 0 rgba(0,0,0,.55);display:none}
 </style></head><body>
 <div id="zoneJoy"></div><div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="bParlerF">PARLER</div><div class="btn" id="bParlerC">PARLER</div><div class="btn" id="bSortir">SORTIR</div></div>
+<div id="actions"><div class="btn" id="bParlerF">PARLER</div><div class="btn" id="bParlerC">PARLER</div><div class="btn" id="bParlerRose">PARLER</div><div class="btn" id="bSortir">SORTIR</div></div>
 <div class="wrap" id="wrap"><div class="scene">
 <div class="ombre" style="left:24.5876%;top:67.0870%;width:4.4665%;height:1.8916%"></div>
 <div class="perso" id="c0">
@@ -109,6 +112,7 @@ background:radial-gradient(closest-side,rgba(255,40,40,.95),rgba(255,0,0,.35) 55
 <div class="laser" id="laser" style="left:83.0055%;top:44.3884%"></div>
 <div class="bulleManga" id="bulleF"></div>
 <div class="bulleManga" id="bulleC"></div>
+<div class="bulleManga" id="bulleRose"></div>
 <canvas id="toile" width="1983" height="793"></canvas>
 </div></div>
 <script>
@@ -382,6 +386,40 @@ window.RUDY=RUDY;
         dit(A.dit,1700); setTimeout(()=>{ bulle.style.display='none'; window.joueVideoLieu&&window.joueVideoLieu(A.video); },1300); }); });
     const non=document.createElement('div'); non.className='btn'; non.textContent='Rien, merci'; non.style.opacity='.75'; choix.appendChild(non);
     appui(non,()=>{ fin(); dit("Bonne soirée ! 👋",2000); });
+    choix.style.display='flex'; actions.style.visibility='hidden';
+  });
+})();
+
+/* ================= La fille aux cheveux roses (rayon épicerie) : PARLER → donner 50, 100 ou 150 € ================= */
+(function(){
+  const ROSE_X=1188;
+  const CHOIX=[
+    {nom:'💶 Donner 50 €',  prix:50,  video:'/assets/shinato/m/super_rose_50.mp4',  dit:"50 € ? Oh, merci ! 😊"},
+    {nom:'💶 Donner 100 €', prix:100, video:'/assets/shinato/m/super_rose_100.mp4', dit:"100 € ?! T'es trop gentil 🥰"},
+    {nom:'💶 Donner 150 €', prix:150, video:'/assets/shinato/m/super_rose_150.mp4', dit:"150 € ?! Tu me gâtes… 😍"}
+  ];
+  const bP=document.getElementById('bParlerRose'), bulle=document.getElementById('bulleRose'), actions=document.getElementById('actions');
+  const choix=document.createElement('div'); choix.id='choixRose'; document.body.appendChild(choix);
+  function pont(){ for(const w of [window,parent,top]){ try{ if(w.Chambre&&w.Chambre.argent) return w.Chambre; }catch(e){} } return null; }
+  function argent(){ const p=pont(); try{ return p?p.argent():null; }catch(e){ return null; } }
+  function payer(n){ const p=pont(); try{ if(p&&p.ajouterArgent) p.ajouterArgent(-n); }catch(e){} }
+  function dit(t,ms){ bulle.textContent=t; bulle.style.display='block'; clearTimeout(bulle._t); if(ms) bulle._t=setTimeout(()=>{ bulle.style.display='none'; },ms); }
+  function appui(el,fn){ let t=0; const go=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t<350) return; t=n; fn(); };
+    el.addEventListener('touchstart',go,{passive:false}); el.addEventListener('click',go); }
+  let parle=false;
+  setInterval(()=>{ const R=window.RUDY; if(!R) return;
+    bP.style.display=(!parle&&Math.abs(R.x-ROSE_X)<170)?'block':'none'; },150);
+  function fin(){ parle=false; choix.style.display='none'; actions.style.visibility=''; }
+  appui(bP,()=>{
+    parle=true; dit("Oh, salut… tu veux quelque chose ? 😳");
+    choix.innerHTML='';
+    CHOIX.forEach(C=>{ const b=document.createElement('div'); b.className='btn'; b.textContent=C.nom; choix.appendChild(b);
+      appui(b,()=>{ fin();
+        const a=argent(); if(a!==null&&a<C.prix){ dit("T'as pas "+C.prix+" €… 😕",2400); return; }
+        payer(C.prix); dit(C.dit,1900);
+        setTimeout(()=>{ bulle.style.display='none'; window.joueVideoLieu&&window.joueVideoLieu(C.video); },1500); }); });
+    const non=document.createElement('div'); non.className='btn'; non.textContent='Rien'; non.style.opacity='.75'; choix.appendChild(non);
+    appui(non,()=>{ fin(); dit("D'accord… 😶",1800); });
     choix.style.display='flex'; actions.style.visibility='hidden';
   });
 })();
