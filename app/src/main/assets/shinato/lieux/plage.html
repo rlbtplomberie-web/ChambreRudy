@@ -707,6 +707,7 @@ else carte.addEventListener("load",demarre);
  <div class="choix" id="versDelabree">VILLE DÉLABRÉE</div>
  <div class="choix" id="versVaviel">VAVIEL</div>
  <div class="choix" id="versBoulevard">BOULEVARD</div>
+ <div class="choix" id="versMitsuda">MITSUDA</div>
 </div></div>
 <script>
 /* ---------- tout à gauche de la plage : « Où voulez-vous aller ? » ---------- */
@@ -730,6 +731,9 @@ else carte.addEventListener("load",demarre);
   cache(); try{ window.parent.postMessage({type:"plage:destination",dest:"vaviel"},"*"); }catch(e){}
  });
  // VILLE DÉLABRÉE : on reprend la moto jusqu'à la ville délabrée
+ window.appuiSur(document.getElementById("versMitsuda"),function(){
+  cache(); try{ window.parent.postMessage({type:"plage:destination",dest:"mitsuda"},"*"); }catch(e){}
+ });
  window.appuiSur(document.getElementById("versBoulevard"),function(){
   cache(); try{ window.parent.postMessage({type:"plage:destination",dest:"boulevard"},"*"); }catch(e){}
  });

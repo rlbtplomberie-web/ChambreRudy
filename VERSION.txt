@@ -1,7 +1,12 @@
-version 339 — Barding : la liste des rêves en pages
+version 340 — Mitsuda, le chapiteau, le salon de thé ; le monsieur en blanc du boulevard
 
-  DISCUTER → OUI : les rêves sont rangés 10 par page (2 colonnes), avec une
-    barre ◀ 1 / 4 ▶ pour passer d'une liste à l'autre, et « Finalement non »
-    en bas. Plus rien ne défile : un rêve ne se lance que sur un vrai appui.
-  Garde les 39 rêves, l'introduction, la phrase de fin et « Toi » (hôpital).
-  À déposer seule, en dernier, et attendre la coche verte.
+  Mitsuda (rue du cirque) : on y va par la MAP du téléphone ou en moto depuis
+    Shinato, la plage, Vaviel et la ville délabrée (MITSUDA dans les menus).
+    Rudy (planche du fumeur : marcher, FUMER, JETER) arrive tout à gauche,
+    va dans toutes les directions mais reste sur la route ; tout à gauche,
+    « Où voulez-vous aller ? ». La musique de Shinato continue.
+  Devant le cirque : flèche jaune ↑ + ENTRER → le chapiteau (Rudy du Pixel Bar,
+    arrivée en bas ; en bas, flèche ↓ + SORTIR → devant le cirque).
+  Devant le salon de thé : flèche jaune ↑ + ENTRER → le salon (arrivée tout à
+    droite ; tout à droite, flèche → + SORTIR → devant le salon).
+  Boulevard : PARLER au monsieur en costume blanc → sa vidéo, sans dialogue.

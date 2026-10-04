@@ -511,7 +511,7 @@ function drawFlic(now){
 
 // ---------- tout à gauche de la ville délabrée : « Où voulez-vous aller ? » ----------
 const depart=document.createElement('div');depart.id='departVD';
-depart.innerHTML='<div class="carte"><div class="fermer">✕</div><h2>OÙ VOULEZ-VOUS ALLER&nbsp;?</h2><div class="choix" data-d="plage">À LA PLAGE</div><div class="choix" data-d="shinato">SHINATO</div><div class="choix" data-d="vaviel">VAVIEL</div><div class="choix" data-d="boulevard">BOULEVARD</div></div>';
+depart.innerHTML='<div class="carte"><div class="fermer">✕</div><h2>OÙ VOULEZ-VOUS ALLER&nbsp;?</h2><div class="choix" data-d="plage">À LA PLAGE</div><div class="choix" data-d="shinato">SHINATO</div><div class="choix" data-d="vaviel">VAVIEL</div><div class="choix" data-d="boulevard">BOULEVARD</div><div class="choix" data-d="mitsuda">MITSUDA</div></div>';
 document.body.appendChild(depart);
 (()=>{const st=document.createElement('style');st.textContent=`#departVD{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-family:system-ui,sans-serif}
  #departVD.show{display:flex}
