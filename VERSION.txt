@@ -1,8 +1,10 @@
-version 313 — Supermarché : la fille aux cheveux roses
+version 314 — Rue de nuit : retour à Shinato par la gauche + la fille cachée
 
-  Au supermarché, près de la fille aux cheveux roses (rayon épicerie) :
-    PARLER → bulle manga « Oh, salut… tu veux quelque chose ? » et le choix :
-    Donner 50 €, 100 € ou 150 € (l'argent est retiré avant la vidéo ; les
-    3 vidéos sont réparties au hasard sur les 3 choix) ou Rien.
-  Garde la fumeuse (308) et la caissière (309).
-  Les 3 vidéos sont aussi dans l'appli Déverrouillage (dossier Supermarché).
+  Tout à gauche de la rue de nuit (là où on arrive de Shinato) : flèche
+    jaune brillante vers la gauche + SORTIR → retour à Shinato, devant
+    l'escalier. L'ancien bouton « ◀ SHINATO » du haut est retiré.
+  Nouvelle passante : une fille cachée derrière le coin du supermarché
+    (entre la fin du supermarché et le lampadaire), qui passe la tête,
+    se montre un peu, se penche, puis se recache.
+  Garde les dialogues de la fumeuse rousse, de la fille en noir et de la
+    blonde à casquette.
