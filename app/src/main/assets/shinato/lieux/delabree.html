@@ -174,6 +174,7 @@ const SCENES={
     size(y){return 230+(y-428)/(905-428)*290},
     zone(p){
       if(p.x<620&&p.y<660)return{label:'Parler',arrow:'up',carlos:true};        // Carlos, sur la banquette de gauche
+      if(p.y<640&&Math.abs(p.x-793)<120)return{label:'Parler',arrow:'up',danseuse:true};   // devant la scène, face à la danseuse
       return p.y>838&&p.x>545&&p.x<1130?{label:'Sortir',arrow:'down',go:'rue',door:3195}:null}},
   prison:{w:1671,h:941,speed:3.2,vspeed:.6,rain:false,refl:.2,
     draw(){if(CELLULE.complete)ctx.drawImage(CELLULE,0,0)},
@@ -275,7 +276,7 @@ addEventListener('message',e=>{if(e.data&&e.data.type==='brasdefer:sortie'){clos
  if(e.data&&e.data.type==='premierVerre:partir'){P.x=640;P.y=600;P.dir4='h';snap=true;closeGame();if(premierOuvert)musiqueVille(true);setTimeout(()=>{quit.textContent=QUIT_TXT},700)}});
 quit.addEventListener('click',()=>{if(evasionEnCours)return;if(premierOuvert)musiqueVille(true);if(scene===SCENES.rencontre){P.x=640;P.y=600;P.dir4='h';snap=true}setTimeout(()=>{quit.textContent=QUIT_TXT},700)});
 
-function doAction(){if(busy||!zoneNow)return;if(zoneNow.relais){ouvreRelais();return}if(zoneNow.carlos){parlerCarlos();return}if(zoneNow.evasion){evasion();return}if(zoneNow.talk){parler();return}if(zoneNow.play){openGame(zoneNow.play);return}busy=true;fade.style.opacity=1;
+function doAction(){if(busy||!zoneNow)return;if(zoneNow.relais){ouvreRelais();return}if(zoneNow.carlos){parlerCarlos();return}if(zoneNow.danseuse){parlerDanseuse();return}if(zoneNow.evasion){evasion();return}if(zoneNow.talk){parler();return}if(zoneNow.play){openGame(zoneNow.play);return}busy=true;fade.style.opacity=1;
   const z=zoneNow;setTimeout(()=>{if(z.go!=='rue'){scene=SCENES[z.go];P.x=836;P.y=872;P.face=1;P.dir4='h'}else{scene=SCENES.rue;P.x=z.door;P.y=ROAD_TOP+3;P.face=1}
     P.speed=0;snap=true;fade.style.opacity=0;setTimeout(()=>busy=false,300)},320)}
 act.addEventListener('click',doAction);
@@ -653,4 +654,32 @@ requestAnimationFrame(frame);
   maj();
  };
 })();
+
+/* ---------- la danseuse du Désir : PARLER → donner 50, 100 ou 150 € → sa vidéo ---------- */
+function parlerDanseuse(){
+  const CHOIX=[{prix:50,video:'/assets/shinato/m/desir_danseuse_50.mp4'},{prix:100,video:'/assets/shinato/m/desir_danseuse_100.mp4'},{prix:150,video:'/assets/shinato/m/desir_danseuse_150.mp4'}];
+  function pont(){ for(const w of [window,parent,top]){ try{ if(w.Chambre&&w.Chambre.argent) return w.Chambre; }catch(e){} } return null; }
+  function argent(){ const p=pont(); try{ return p?p.argent():null; }catch(e){ return null; } }
+  function payer(n){ const p=pont(); try{ if(p&&p.ajouterArgent) p.ajouterArgent(-n); }catch(e){} }
+  let ch=document.getElementById('choixDanseuse');
+  if(!ch){ ch=document.createElement('div'); ch.id='choixDanseuse';
+    ch.style.cssText='position:fixed;z-index:40;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px));display:none;flex-direction:column;gap:10px';
+    document.body.appendChild(ch); }
+  let vb=document.getElementById('videoDanseuse');
+  if(!vb){ vb=document.createElement('div'); vb.id='videoDanseuse'; vb.style.cssText='position:fixed;inset:0;z-index:80;background:#000;display:none';
+    vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+    const v=vb.querySelector('video'); const f=()=>{ try{ v.pause(); }catch(e){} vb.style.display='none'; busy=false; };
+    v.addEventListener('ended',f); v.addEventListener('error',f); }
+  const v=vb.querySelector('video');
+  const style='padding:13px 22px;border-radius:999px;border:2px solid #fff3b0;font:900 16px system-ui,sans-serif;color:#3a2300;background:radial-gradient(circle at 40% 30%,#ffe98a,#ffc21a 60%,#b77a00);box-shadow:0 4px 0 rgba(0,0,0,.4)';
+  busy=true; act.style.display='none'; ch.innerHTML='';
+  const fin=()=>{ ch.style.display='none'; };
+  CHOIX.forEach(C=>{ const b=document.createElement('button'); b.textContent='💶 Donner '+C.prix+' €'; b.style.cssText=style; ch.appendChild(b);
+    b.addEventListener('click',()=>{ fin();
+      const a=argent(); if(a!==null&&a<C.prix){ busy=false; try{ (window.argentMessage||parent.argentMessage)("Il te faut "+C.prix+" €"); }catch(e){} return; }
+      payer(C.prix); v.src=C.video; vb.style.display='block'; const q=v.play(); if(q&&q.catch) q.catch(()=>{}); }); });
+  const non=document.createElement('button'); non.textContent='Rien'; non.style.cssText=style+';background:#3a3560;color:#fff;border-color:rgba(255,255,255,.6)'; ch.appendChild(non);
+  non.addEventListener('click',()=>{ fin(); busy=false; });
+  ch.style.display='flex';
+}
 </script></body></html>

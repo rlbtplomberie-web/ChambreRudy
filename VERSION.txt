@@ -1,10 +1,6 @@
-version 321 — Boulevard : la dame en blanc ; Barding : le petit coffre
+version 323 — Le Désir : la danseuse
 
-  Boulevard (Rudy seul) : en face de la dame âgée en tailleur blanc,
-    « 💬 Parler » → Donner 100 €, 200 € ou 300 € (l'argent est retiré,
-    elle dit « Je suis peut-être vieille… mais je peux te donner beaucoup de
-    plaisir », puis la vidéo ; 3 vidéos réparties au hasard) ou Rien.
-  Barding : un petit coffre au sol, juste à droite du bout du comptoir,
-    qui tremble de temps en temps.
-  Les 3 vidéos sont aussi dans l'appli Déverrouillage (dossier Boulevard).
-  Garde la barmaid et la cliente du Barding.
+  Au Désir (ville délabrée), devant la scène, face à la danseuse : Parler →
+    Donner 50 €, 100 € ou 150 € (l'argent est retiré, puis la vidéo ; 3 vidéos
+    réparties au hasard) ou Rien. Carlos garde son Parler.
+  Les 3 vidéos sont aussi dans l'appli Déverrouillage (dossier Le Désir).
