@@ -1,7 +1,8 @@
-version 308 — Supermarché : la fumeuse contre le pilier
+version 309 — Supermarché : la caissière
 
-  Au supermarché, près de la femme qui fume contre le pilier (à côté des
-    fruits et légumes), Rudy tourné vers elle : PARLER → bulle manga
-    « Tu veux quoi, toi ? » et le choix : Regarder, Donner 50 €, Donner 100 €
-    (l'argent est retiré juste avant la vidéo) ou Rien.
-  Les 3 vidéos sont aussi dans l'appli Déverrouillage (nouveau dossier Supermarché).
+  Au supermarché, près de la caisse n°1 : PARLER → bulle manga « Bonsoir !
+    Qu'est-ce qu'il vous faut ? » et le choix : Acheter des légumes, Acheter
+    des pâtes, Acheter de la viande (chacun avec sa phrase et sa vidéo) ou
+    « Rien, merci ». Les achats sont gratuits pour l'instant.
+  Garde la fumeuse contre le pilier (version 308).
+  Les 3 vidéos sont aussi dans l'appli Déverrouillage (dossier Supermarché).

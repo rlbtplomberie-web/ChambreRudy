@@ -49,6 +49,9 @@ background:radial-gradient(closest-side,rgba(255,40,40,.95),rgba(255,0,0,.35) 55
  background:linear-gradient(rgba(12,12,14,.9),rgba(30,30,34,.9));border:2px solid rgba(255,226,122,.95);box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 14px rgba(255,214,60,.4);user-select:none;-webkit-user-select:none}
 .btn:active{transform:scale(.94)}
 
+#choixCaisse{position:fixed;z-index:25;right:4.5vmin;bottom:6vmin;display:none;flex-direction:column;gap:2vmin;min-width:44vmin}
+#choixCaisse .btn{display:block}
+#bulleC{left:auto;right:16%;top:16%}
 #choixFumeuse{position:fixed;z-index:25;right:4.5vmin;bottom:6vmin;display:none;flex-direction:column;gap:2vmin;min-width:44vmin}
 #choixFumeuse .btn{display:block}
 #videoLieu{position:fixed;inset:0;z-index:60;background:#000;display:none}
@@ -58,7 +61,7 @@ background:radial-gradient(closest-side,rgba(255,40,40,.95),rgba(255,0,0,.35) 55
  font:800 clamp(12px,2.6vmin,22px)/1.25 'Comic Sans MS','Chalkboard SE','Marker Felt',Arial,sans-serif;box-shadow:4px 4px 0 rgba(0,0,0,.55);display:none}
 </style></head><body>
 <div id="zoneJoy"></div><div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="bParlerF">PARLER</div><div class="btn" id="bSortir">SORTIR</div></div>
+<div id="actions"><div class="btn" id="bParlerF">PARLER</div><div class="btn" id="bParlerC">PARLER</div><div class="btn" id="bSortir">SORTIR</div></div>
 <div class="wrap" id="wrap"><div class="scene">
 <div class="ombre" style="left:24.5876%;top:67.0870%;width:4.4665%;height:1.8916%"></div>
 <div class="perso" id="c0">
@@ -105,6 +108,7 @@ background:radial-gradient(closest-side,rgba(255,40,40,.95),rgba(255,0,0,.35) 55
 </div>
 <div class="laser" id="laser" style="left:83.0055%;top:44.3884%"></div>
 <div class="bulleManga" id="bulleF"></div>
+<div class="bulleManga" id="bulleC"></div>
 <canvas id="toile" width="1983" height="793"></canvas>
 </div></div>
 <script>
@@ -335,6 +339,7 @@ window.RUDY=RUDY;
   function joue(src){ vid.src=src; vb.style.display='block'; const q=vid.play(); if(q&&q.catch) q.catch(()=>{}); }
   function ferme(){ try{ vid.pause(); }catch(e){} vb.style.display='none'; bulle.style.display='none'; }
   vid.addEventListener('ended',ferme); appui(vb.querySelector('button'),ferme);
+  window.joueVideoLieu=joue;
   function fin(){ parle=false; choix.style.display='none'; actions.style.visibility=''; }
   appui(bP,()=>{
     parle=true; dit("Tu veux quoi, toi ? 😏");
@@ -346,6 +351,37 @@ window.RUDY=RUDY;
         bulle.style.display='none'; joue(C.video); }); });
     const non=document.createElement('div'); non.className='btn'; non.textContent='Rien'; non.style.opacity='.75'; choix.appendChild(non);
     appui(non,()=>{ fin(); dit("Comme tu veux… 💨",2000); });
+    choix.style.display='flex'; actions.style.visibility='hidden';
+  });
+})();
+
+/* ================= La caissière : PARLER → acheter des légumes, des pâtes, de la viande ================= */
+(function(){
+  const CAISSE_X=1690;                  // la caisse n°1
+  const ACHATS=[                        // vidéo de chaque achat (null = vidéo pas encore fournie)
+    {nom:'🥦 Acheter des légumes', video:'/assets/shinato/m/super_caisse_legumes.mp4', dit:"Des bons légumes frais, voilà ! 🥦"},
+    {nom:'🍝 Acheter des pâtes',   video:'/assets/shinato/m/super_caisse_pates.mp4', dit:"Des pâtes, très bon choix ! 🍝"},
+    {nom:'🥩 Acheter de la viande', video:'/assets/shinato/m/super_caisse_viande.mp4', dit:"De la viande, pour un homme qui a faim ! 🥩"}
+  ];
+  const bP=document.getElementById('bParlerC'), bulle=document.getElementById('bulleC'), actions=document.getElementById('actions');
+  const choix=document.createElement('div'); choix.id='choixCaisse'; document.body.appendChild(choix);
+  function dit(t,ms){ bulle.textContent=t; bulle.style.display='block'; clearTimeout(bulle._t); if(ms) bulle._t=setTimeout(()=>{ bulle.style.display='none'; },ms); }
+  function appui(el,fn){ let t=0; const go=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t<350) return; t=n; fn(); };
+    el.addEventListener('touchstart',go,{passive:false}); el.addEventListener('click',go); }
+  let parle=false;
+  setInterval(()=>{ const R=window.RUDY; if(!R) return;
+    const pres=!parle&&Math.abs(R.x-CAISSE_X)<230;
+    bP.style.display=pres?'block':'none'; },150);
+  function fin(){ parle=false; choix.style.display='none'; actions.style.visibility=''; }
+  appui(bP,()=>{
+    parle=true; dit("Bonsoir ! Qu'est-ce qu'il vous faut ? 😊");
+    choix.innerHTML='';
+    ACHATS.forEach(A=>{ const b=document.createElement('div'); b.className='btn'; b.textContent=A.nom; choix.appendChild(b);
+      appui(b,()=>{ fin();
+        if(!A.video){ dit("Désolée, il n'y en a plus ce soir 😅",2400); return; }
+        dit(A.dit,1700); setTimeout(()=>{ bulle.style.display='none'; window.joueVideoLieu&&window.joueVideoLieu(A.video); },1300); }); });
+    const non=document.createElement('div'); non.className='btn'; non.textContent='Rien, merci'; non.style.opacity='.75'; choix.appendChild(non);
+    appui(non,()=>{ fin(); dit("Bonne soirée ! 👋",2000); });
     choix.style.display='flex'; actions.style.visibility='hidden';
   });
 })();
