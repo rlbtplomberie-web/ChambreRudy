@@ -1,9 +1,9 @@
-version 317 — Shinato : PARLER à la blonde et au grand noir, à Shana, à l'afro et la rousse
+version 318 — Pixel Bar, la plage et la plage de Gisèle : nouvelles vidéos
 
-  Rue de Shinato : PARLER → leur vidéo, sans dialogue, pour
-    · la blonde et le grand noir (devant la machine Coca, au pied de l'escalier),
-    · Shana (assise en tailleur sur le banc, avec son livre),
-    · la fille afro et la rousse (assises sous « BALLE AU PRISONNIER »).
-  Quand deux personnes sont proches, le PARLER va à la plus proche de Rudy.
-  Garde Théo, Mathis et Mody (versions 315 et 316).
-  Les 3 vidéos sont aussi dans l'appli Déverrouillage (dossier Shinato).
+  Pixel Bar : en face du barman, « 🍺 COMMANDER UNE BIÈRE » → sa vidéo.
+  La plage : PARLER à la fille qui se promène (le bouton la suit pendant
+    qu'elle marche) et au vieux et à la vieille sur leur banc → leur vidéo.
+  Plage de Gisèle : nouveau bouton DISCUTER au-dessus de PARLER → sa vidéo
+    (PARLER garde le dialogue et le jeu).
+  Pas de dialogue avant ni après ces vidéos. Elles sont aussi dans l'appli
+    Déverrouillage (dossiers Pixel Bar et La plage).

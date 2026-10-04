@@ -108,6 +108,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
 
 <div id="joy"><div id="stick"></div></div>
 <div id="actions">
+ <div class="btn" id="btnParlerFille" style="display:none">PARLER</div>
+ <div class="btn" id="btnParlerVieux" style="display:none">PARLER</div>
  <div class="btn" id="btnFumer">FUMER</div>
  <div class="btn off" id="btnJeter">JETER</div>
 </div>
@@ -682,6 +684,7 @@ else carte.addEventListener("load",demarre);
    }
   }
  }
+ window.FILLE_X=function(){ return x; };          // sa position dans le décor (pour le bouton PARLER)
  regle("droite"); place(); nouvelleCible(); requestAnimationFrame(boucle);
 })();
 </script>
@@ -823,6 +826,49 @@ else carte.addEventListener("load",demarre);
   try{ localStorage.setItem("rudy_argent",String(Math.max(0,lire()+n))); }catch(e){}
   maj();
  };
+})();
+
+/* ---------- PARLER à la fille qui se promène : le bouton la suit, la vidéo passe sans dialogue ---------- */
+(function(){
+ var btn=document.getElementById("btnParlerFille"), occupe=false, LS=2115;
+ var vb=document.createElement("div"); vb.style.cssText="position:fixed;inset:0;z-index:70;background:#000;display:none";
+ vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+ document.body.appendChild(vb); var v=vb.querySelector("video");
+ function ferme(){ try{ v.pause(); }catch(e){} vb.style.display="none"; occupe=false; }
+ v.addEventListener("ended",ferme); v.addEventListener("error",ferme);
+ setInterval(function(){
+  if(typeof x==="undefined"||!largeurMonde||!window.FILLE_X||occupe){ btn.style.display="none"; return; }
+  var rudy=x/largeurMonde*LS;                       // Rudy, dans les mêmes unités que la fille
+  var df=Math.abs(rudy-window.FILLE_X()), dv=Math.abs(x/largeurMonde-0.6602)*LS;
+  btn.style.display=(df<95&&!(dv<LS*0.05&&dv<=df))?"block":"none";
+ },80);
+ var t0=0;
+ function parle(e){ if(e&&e.cancelable) e.preventDefault(); var n=performance.now(); if(n-t0<400) return; t0=n;
+  occupe=true; try{ dir=0; }catch(err){} btn.style.display="none"; v.src="/assets/shinato/m/plage_fille.mp4"; vb.style.display="block";
+  var q=v.play(); if(q&&q.catch) q.catch(function(){}); }
+ btn.addEventListener("touchstart",parle,{passive:false}); btn.addEventListener("click",parle);
+})();
+
+/* ---------- PARLER au vieux et à la vieille sur leur banc : la vidéo, sans dialogue ---------- */
+(function(){
+ var btn=document.getElementById("btnParlerVieux"), occupe=false, POS=0.6602;
+ var vb=document.createElement("div"); vb.style.cssText="position:fixed;inset:0;z-index:70;background:#000;display:none";
+ vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+ document.body.appendChild(vb); var v=vb.querySelector("video");
+ function ferme(){ try{ v.pause(); }catch(e){} vb.style.display="none"; occupe=false; }
+ v.addEventListener("ended",ferme); v.addEventListener("error",ferme);
+ setInterval(function(){
+  if(typeof x==="undefined"||!largeurMonde||occupe){ btn.style.display="none"; return; }
+  var pres=Math.abs(x-largeurMonde*POS)<largeurMonde*0.05;
+  // si la fille qui se promène passe juste là, c'est le plus proche qui garde le bouton PARLER
+  if(pres&&window.FILLE_X){ var df=Math.abs(x/largeurMonde*2115-window.FILLE_X()), dv=Math.abs(x/largeurMonde-POS)*2115; if(df<95&&df<dv) pres=false; }
+  btn.style.display=pres?"block":"none";
+ },100);
+ var t0=0;
+ function parle(e){ if(e&&e.cancelable) e.preventDefault(); var n=performance.now(); if(n-t0<400) return; t0=n;
+  occupe=true; try{ dir=0; }catch(err){} btn.style.display="none"; v.src="/assets/shinato/m/plage_vieux.mp4"; vb.style.display="block";
+  var q=v.play(); if(q&&q.catch) q.catch(function(){}); }
+ btn.addEventListener("touchstart",parle,{passive:false}); btn.addEventListener("click",parle);
 })();
 </script></body>
 </html>

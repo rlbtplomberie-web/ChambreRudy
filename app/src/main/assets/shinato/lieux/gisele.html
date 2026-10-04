@@ -61,6 +61,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--night);font-fami
  box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 14px rgba(255,214,60,.35)}
 .btn:active{transform:scale(.94)}
 .choix{border-color:rgba(255,226,122,.95);box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 16px rgba(255,214,60,.55)}
+#btnDiscuter{border-color:rgba(255,226,122,.95);box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 16px rgba(255,214,60,.55)}
 #btnParler{border-color:rgba(255,226,122,.95);box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 16px rgba(255,214,60,.55)}
 #bulle{position:fixed;left:0;top:0;z-index:18;display:none;max-width:min(74vw,62vmin);padding:2.2vmin 3.2vmin;border-radius:3.4vmin;
  background:#fffdf4;border:.55vmin solid #1b1330;box-shadow:.8vmin .9vmin 0 rgba(10,6,30,.55);pointer-events:none;
@@ -83,7 +84,7 @@ body.dialogue #joy{opacity:.3}
 </div></div>
 <div id="titre">RUDY STYLE<small>LA PLAGE DE GISÈLE</small></div>
 <div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="btnParler">PARLER</div><div class="btn" id="btnSortir">RETOUR</div>
+<div id="actions"><div class="btn" id="btnDiscuter" style="display:none">DISCUTER</div><div class="btn" id="btnParler">PARLER</div><div class="btn" id="btnSortir">RETOUR</div>
  <div class="btn choix" id="ch1"></div><div class="btn choix" id="ch2"></div></div>
 <div id="bulle"><p id="bulleTxt"></p><i id="queue"></i></div>
 <script>
@@ -322,6 +323,7 @@ function boucleRudy(){
  CAM.x=DIALOGUE?(RUDY.x+GIS.x)/2:RUDY.x; CAM.y=RUDY.y; fit(false);
  bS.style.display=(!DIALOGUE&&procheSortie())?'block':'none';
  bP.style.display=(!DIALOGUE&&procheGisele())?'block':'none';
+ const bD=document.getElementById('btnDiscuter'); if(bD) bD.style.display=(!DIALOGUE&&!window.VIDEO_GIS&&procheGisele())?'block':'none';
  placeBulle();
 }
 requestAnimationFrame(boucleRudy);
@@ -417,6 +419,22 @@ relache(bS,()=>{joyX=joyY=0;try{window.parent.postMessage({type:'gisele:sortie'}
   try{ localStorage.setItem("rudy_argent",String(Math.max(0,lire()+n))); }catch(e){}
   maj();
  };
+})();
+
+/* ---------- DISCUTER avec Gisèle (au-dessus de PARLER) : la vidéo, sans dialogue ---------- */
+(function(){
+  const bD=document.getElementById('btnDiscuter');
+  const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:70;background:#000;display:none';
+  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+  document.body.appendChild(vb); const v=vb.querySelector('video');
+  function ferme(){ try{ v.pause(); }catch(e){} vb.style.display='none'; window.VIDEO_GIS=false; }
+  v.addEventListener('ended',ferme); v.addEventListener('error',ferme);
+  let t0=0;
+  const go=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t0<400) return; t0=n;
+    if(DIALOGUE||!procheGisele()) return;
+    window.VIDEO_GIS=true; joyX=joyY=0; bD.style.display='none'; v.src='/assets/shinato/m/gisele_discuter.mp4'; vb.style.display='block';
+    const q=v.play(); if(q&&q.catch) q.catch(()=>{}); };
+  bD.addEventListener('touchstart',go,{passive:false}); bD.addEventListener('click',go);
 })();
 </script>
 </body>
