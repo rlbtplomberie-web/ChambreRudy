@@ -1,6 +1,7 @@
-version 306 — Barding : parler à la barmaid (4 boissons)
+version 307 — Barding : la cliente qui mange
 
-  Au Barding, devant la barmaid : bouton PARLER → bulle manga « Qu'est-ce que
-    je vous sers, beau gosse ? » et le choix : Jus de pomme, Coca-Cola,
-    Jus frappé, Bière (chacun avec sa phrase et sa vidéo) ou « Rien, merci ».
-  Les 4 vidéos sont aussi dans l'appli Déverrouillage (nouveau dossier Barding).
+  Au Barding, près de la femme qui mange à la table de droite : REGARDER,
+    DONNER 50 € et DONNER 100 € (l'argent est retiré juste avant la vidéo ;
+    s'il n'y en a pas assez, elle le dit et rien n'est retiré).
+  Les 3 vidéos sont aussi dans l'appli Déverrouillage (dossier Barding).
+  Garde la barmaid et ses 4 boissons (version 306).
