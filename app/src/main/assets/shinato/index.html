@@ -170,6 +170,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  <div class="btn" id="btnParlerTheo" style="display:none">PARLER</div>
  <div class="btn" id="btnParlerMathis" style="display:none">PARLER</div>
  <div class="btn" id="btnParlerMody" style="display:none">PARLER</div>
+ <div class="btn" id="btnParlerSophie" style="display:none">PARLER</div>
+ <div class="btn" id="btnParlerShana" style="display:none">PARLER</div>
+ <div class="btn" id="btnParlerAfro" style="display:none">PARLER</div>
  <div class="btn" id="btnFumer">FUMER</div>
  <div class="btn off" id="btnJeter">JETER</div>
 </div>
@@ -1410,7 +1413,10 @@ else carte.addEventListener("load",demarre);
  var PASSANTS=[
   {btn:"btnParlerTheo",   pos:0.1434, video:"/assets/shinato/m/shinato_theo.mp4"},    // Théo, débardeur rouge, rideau « FIGHT »
   {btn:"btnParlerMathis", pos:0.5979, video:"/assets/shinato/m/shinato_mathis.mp4"},  // Mathis, en beige, sur le terrain de foot
-  {btn:"btnParlerMody",   pos:0.2537, video:"/assets/shinato/m/shinato_mody.mp4"}     // Mody, torse nu, saute à la corde sous le panneau Shibuya
+  {btn:"btnParlerMody",   pos:0.2537, video:"/assets/shinato/m/shinato_mody.mp4"},    // Mody, torse nu, saute à la corde sous le panneau Shibuya
+  {btn:"btnParlerSophie", pos:0.8099, video:"/assets/shinato/m/shinato_sophie_mec.mp4"},// la blonde et le grand noir, devant la machine à boissons
+  {btn:"btnParlerShana",  pos:0.9551, video:"/assets/shinato/m/shinato_shana.mp4"},     // Shana, assise en tailleur sur le banc, lit son livre
+  {btn:"btnParlerAfro",   pos:0.9300, video:"/assets/shinato/m/shinato_afro_rousse.mp4"} // la fille afro et la rousse, assises entre les deux bancs
  ];
  var PRES=95/7078, occupe=false;
  var vb=document.createElement("div"); vb.style.cssText="position:fixed;inset:0;z-index:70;background:#000;display:none";
@@ -1422,7 +1428,8 @@ else carte.addEventListener("load",demarre);
   var btn=document.getElementById(P.btn), t0=0;
   setInterval(function(){
    if(typeof x==="undefined"||!largeurMonde||window.PAUSE_RUE||occupe){ btn.style.display="none"; return; }
-   btn.style.display=Math.abs(x-largeurMonde*P.pos)<largeurMonde*PRES?"block":"none";
+   var d=Math.abs(x-largeurMonde*P.pos), plusProche=PASSANTS.every(function(Q){ return Q===P||Math.abs(x-largeurMonde*Q.pos)>=d; });
+   btn.style.display=(d<largeurMonde*PRES&&plusProche)?"block":"none";
   },120);
   function parle(e){ if(e&&e.cancelable) e.preventDefault(); var n=performance.now(); if(n-t0<400) return; t0=n;
    occupe=true; dir=0; btn.style.display="none"; v.src=P.video; vb.style.display="block";

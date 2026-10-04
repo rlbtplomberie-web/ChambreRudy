@@ -1,5 +1,9 @@
-version 316 — Shinato : parler à Mody
+version 317 — Shinato : PARLER à la blonde et au grand noir, à Shana, à l'afro et la rousse
 
-  Rue de Shinato : PARLER à Mody (torse nu, corde à sauter, sous le panneau
-    Shibuya) → sa vidéo, sans dialogue. Garde Théo et Mathis (version 315).
-  Aussi dans l'appli Déverrouillage (dossier Shinato).
+  Rue de Shinato : PARLER → leur vidéo, sans dialogue, pour
+    · la blonde et le grand noir (devant la machine Coca, au pied de l'escalier),
+    · Shana (assise en tailleur sur le banc, avec son livre),
+    · la fille afro et la rousse (assises sous « BALLE AU PRISONNIER »).
+  Quand deux personnes sont proches, le PARLER va à la plus proche de Rudy.
+  Garde Théo, Mathis et Mody (versions 315 et 316).
+  Les 3 vidéos sont aussi dans l'appli Déverrouillage (dossier Shinato).
