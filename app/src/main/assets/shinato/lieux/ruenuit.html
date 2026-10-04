@@ -367,4 +367,12 @@ mesure(); majBoutons(); pose(IMG.fumer[0]); requestAnimationFrame(()=>{ cadre(tr
     choix.style.display='flex'; act.style.visibility='hidden';
   });
 })();
+
+/* ---------- blessé au Barding (le bocal) : on quitte le bar, puis l'hôpital ---------- */
+addEventListener('message',e=>{
+  if(!e.data||e.data.type!=='barding:hopital') return;
+  document.querySelectorAll('.lieuR').forEach(fr=>fr.style.display='none');
+  dedans=false; x=1432; sens=1; etat='repos'; f=0; tPrec=0;
+  try{ parent.postMessage({type:'ruenuit:hopital'},'*'); }catch(err){}
+});
 </script></body></html>
