@@ -1,5 +1,7 @@
-version 338 — Barding : les rêves de la barmaid (11/11)
+version 339 — Barding : la liste des rêves en pages
 
-  Dernier rêve « Toi » (la barmaid) : sans intro, puis l'hôpital
-  À déposer dans l'ordre : maj-118 → maj-128 (celle-ci est la n° 128).
-  Les vidéos sont aussi dans l'appli Déverrouillage (dossier Barding).
+  DISCUTER → OUI : les rêves sont rangés 10 par page (2 colonnes), avec une
+    barre ◀ 1 / 4 ▶ pour passer d'une liste à l'autre, et « Finalement non »
+    en bas. Plus rien ne défile : un rêve ne se lance que sur un vrai appui.
+  Garde les 39 rêves, l'introduction, la phrase de fin et « Toi » (hôpital).
+  À déposer seule, en dernier, et attendre la coche verte.

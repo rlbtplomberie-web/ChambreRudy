@@ -37,8 +37,17 @@ background:url(data:image/webp;base64,UklGRnSSAwBXRUJQVlA4IGiSAwDQBQudASp8CNQCPj
 #choixCoffre .btn{display:block}
 .bulleManga.droite:after{left:auto;right:-18px;border:12px solid transparent;border-left:20px solid #111}
 .bulleManga.droite:before{left:auto;right:-11px;border:9px solid transparent;border-left:15px solid #fff}
-#choixReve{position:fixed;z-index:25;right:4.5vmin;bottom:6vmin;display:none;flex-direction:column;gap:1.8vmin;min-width:48vmin;max-height:52vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:1vmin;touch-action:pan-y}
-#choixReve .btn{flex:none}
+#choixReve{position:fixed;z-index:25;left:3vmin;right:3vmin;bottom:4vmin;display:none;flex-wrap:wrap;justify-content:center;align-content:flex-start;gap:1.6vmin;max-height:58vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:2vmin;touch-action:pan-y;background:rgba(10,6,18,.82);border:1px solid rgba(255,226,122,.35);border-radius:3vmin}
+#choixReve .btn{flex:0 0 calc(50% - 1.6vmin);min-width:0;box-sizing:border-box;padding:2.2vmin 1.4vmin;font-size:clamp(11px,2.7vmin,20px);letter-spacing:.5px;white-space:normal;line-height:1.15}
+#choixReve .btn.large{flex-basis:100%}
+#choixReve{overflow-y:visible!important;max-height:none!important}
+#choixReve .navReve{flex:0 0 100%;display:flex;align-items:center;justify-content:space-between;gap:2vmin}
+#choixReve .navReve .btn.nav{flex:0 0 28%;display:block;font-size:clamp(16px,5vmin,30px);padding:1.6vmin 0}
+#choixReve .navReve .btn.nav.off{opacity:.25;pointer-events:none}
+#choixReve .pageReve{color:#ffe27a;font:900 clamp(13px,3.4vmin,22px)/1 Arial,sans-serif;letter-spacing:2px}
+#defileReve{position:fixed;z-index:26;right:3vmin;bottom:calc(4vmin + 58vh + 1.5vmin);display:none;gap:2vmin}
+#defileReve div{width:13vmin;height:9vmin;border-radius:2.2vmin;display:flex;align-items:center;justify-content:center;font:900 5vmin/1 Arial,sans-serif;color:#2a1a00;
+ background:radial-gradient(circle at 40% 30%,#ffe98a,#ffc21a 60%,#b77a00);border:2px solid #fff3b0;box-shadow:0 4px 0 rgba(0,0,0,.4);user-select:none;-webkit-user-select:none}
 #choixReve .btn{display:block}
 #choixBocal{position:fixed;z-index:25;right:4.5vmin;bottom:6vmin;display:none;flex-direction:column;gap:1.8vmin;min-width:48vmin}
 #choixBocal .btn{display:block}
@@ -435,21 +444,26 @@ window.RUDY=RUDY;
     clearTimeout(bulle._t5); bulle._t5=setTimeout(()=>{ bulle.style.display='none'; },ms||60000); }
   function appui(el,fn){ let t=0; const go=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t<350) return; t=n; fn(); };
     el.addEventListener('touchstart',go,{passive:false}); el.addEventListener('click',go); }
-  function bouton(txt,fn,pale){ const b=document.createElement('div'); b.className='btn'; b.textContent=txt; if(pale) b.style.opacity='.75'; choix.appendChild(b); appui(b,fn); }
+  function bouton(txt,fn,pale){ const b=document.createElement('div'); b.className='btn'+(/^(OUI|NON|Finalement non)$/.test(txt)?' large':''); b.textContent=txt; if(pale) b.style.opacity='.75'; choix.appendChild(b);
+    // un vrai « appui » seulement si le doigt n'a presque pas bougé : sinon c'est qu'on fait défiler la liste
+    let x0=0,y0=0,bouge=false,t=0;
+    let tDeb=0;
+    b.addEventListener('touchstart',e=>{ const p=e.touches[0]; x0=p.clientX; y0=p.clientY; bouge=false; tDeb=performance.now(); },{passive:true});
+    b.addEventListener('touchmove',e=>{ const p=e.touches[0]; if(Math.abs(p.clientX-x0)>10||Math.abs(p.clientY-y0)>10) bouge=true; },{passive:true});
+    b.addEventListener('touchend',e=>{ if(bouge||performance.now()-tDeb>500){ if(e.cancelable) e.preventDefault(); t=performance.now(); return; } if(e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t<350) return; t=n; fn(); });
+    b.addEventListener('click',()=>{ const n=performance.now(); if(n-t<350) return; t=n; fn(); }); }
   let ouvert=false;
   // DISCUTER s'affiche avec PARLER, en face d'elle
   setInterval(()=>{ const R=window.RUDY; if(!R) return;
     const bP=document.getElementById('bParler');
     bD.style.display=(!ouvert&&R.etat==='debout'&&Math.abs(R.x-BARMAID_X)<170&&R.y<645&&bP&&bP.style.display==='block')?'block':'none'; },150);
   function fin(){ ouvert=false; choix.style.display='none'; actions.style.visibility=''; }
-  function montre(){ choix.style.display='flex'; actions.style.visibility='hidden'; }
-  appui(bD,()=>{
-    ouvert=true; choix.innerHTML='';
-    dit("Est-ce que tu veux rêver ? Je peux accomplir tous tes rêves… mais je vais forcément prendre un peu de ta vie 😈");
-    bouton('OUI',()=>{
-      choix.innerHTML='';
-      dit("Alors… de quoi veux-tu rêver ? 😏");
-      REVES.forEach(R=>bouton(R.nom,()=>{ fin();
+  // deux grosses flèches ▲ ▼ au-dessus de la liste : elles font défiler sans jamais lancer de vidéo
+  const fl=document.createElement('div'); fl.id='defileReve'; fl.innerHTML='<div data-s="-1">▲</div><div data-s="1">▼</div>'; document.body.appendChild(fl);
+  fl.querySelectorAll('div').forEach(d=>appui(d,()=>{ choix.scrollBy({top:(+d.dataset.s)*choix.clientHeight*0.8,behavior:'smooth'}); }));
+  fl.style.display='none';
+  function montre(){ choix.style.display='flex'; choix.scrollTop=0; actions.style.visibility='hidden'; }
+  function rever(R){ fin();
         if(vieLire()<=VIE_PRISE){ dit("Tu n'as plus assez de vie pour rêver… 😶",2600); return; }
         vieEcrire(vieLire()-VIE_PRISE); bulle.style.display='none';
         if(R.hopital){                    // « Toi » : directement sa vidéo, puis Rudy finit à l'hôpital
@@ -467,9 +481,29 @@ window.RUDY=RUDY;
         const ensuite=()=>{ v.removeEventListener('ended',ensuite); setTimeout(()=>{ window.joueVideoBar(R.video); v.addEventListener('ended',apres); },60); };
         // à la fin du rêve, la barmaid dit toujours la même chose
         const apres=()=>{ v.removeEventListener('ended',apres); setTimeout(()=>dit("J'espère que tu as aimé… Reviens me voir si tu veux retenter 😏",4000),250); };
-        v.addEventListener('ended',ensuite); }));
-      bouton('Finalement non',()=>{ fin(); dit("Tu rates quelque chose… 😏",2200); },true);
-      montre();
+        v.addEventListener('ended',ensuite);   }
+  const PAR_PAGE=10;
+  function page(n){
+    const total=Math.ceil(REVES.length/PAR_PAGE); n=Math.max(0,Math.min(total-1,n));
+    choix.innerHTML='';
+    REVES.slice(n*PAR_PAGE,(n+1)*PAR_PAGE).forEach(R=>bouton(R.nom,()=>rever(R)));
+    // la barre du bas : ◀ liste d'avant · page · liste suivante ▶
+    const barre=document.createElement('div'); barre.className='navReve';
+    const g=document.createElement('div'); g.className='btn nav'; g.textContent='◀'; if(n===0) g.classList.add('off');
+    const m=document.createElement('div'); m.className='pageReve'; m.textContent=(n+1)+' / '+total;
+    const d=document.createElement('div'); d.className='btn nav'; d.textContent='▶'; if(n>=total-1) d.classList.add('off');
+    barre.appendChild(g); barre.appendChild(m); barre.appendChild(d); choix.appendChild(barre);
+    appui(g,()=>{ if(n>0) page(n-1); }); appui(d,()=>{ if(n<total-1) page(n+1); });
+    bouton('Finalement non',()=>{ fin(); dit("Tu rates quelque chose… 😏",2200); },true);
+    montre();
+  }
+  appui(bD,()=>{
+    ouvert=true; choix.innerHTML='';
+    dit("Est-ce que tu veux rêver ? Je peux accomplir tous tes rêves… mais je vais forcément prendre un peu de ta vie 😈");
+    bouton('OUI',()=>{
+      choix.innerHTML='';
+      dit("Alors… de quoi veux-tu rêver ? 😏");
+      page(0);
     });
     bouton('NON',()=>{ fin(); dit("Tu rates quelque chose… 😏",2200); },true);
     montre();
