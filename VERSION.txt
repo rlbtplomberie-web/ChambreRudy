@@ -1,6 +1,6 @@
-version 305 — Rue de nuit : la fumeuse aux cheveux rouges contre le mur
+version 306 — Barding : parler à la barmaid (4 boissons)
 
-  Une nouvelle passante, adossée au mur du Barding (pied contre le mur),
-    juste derrière l'endroit où marche Rudy : elle allume sa cigarette, fume,
-    souffle la fumée, en boucle, avec les mêmes transitions fluides que les
-    autres personnages.
+  Au Barding, devant la barmaid : bouton PARLER → bulle manga « Qu'est-ce que
+    je vous sers, beau gosse ? » et le choix : Jus de pomme, Coca-Cola,
+    Jus frappé, Bière (chacun avec sa phrase et sa vidéo) ou « Rien, merci ».
+  Les 4 vidéos sont aussi dans l'appli Déverrouillage (nouveau dossier Barding).
