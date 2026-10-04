@@ -163,6 +163,14 @@ v.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){v.scrol
 #fumerS{bottom:calc(92px + env(safe-area-inset-bottom,0px));background:radial-gradient(circle at 40% 30%,#ffb56b,#d9731f 60%,#7a3a08)}
 #jeterS{bottom:calc(30px + env(safe-area-inset-bottom,0px));background:radial-gradient(circle at 40% 30%,#9aa3b8,#4d566b 60%,#232838)}
 .btnS.off{opacity:.35;pointer-events:none}
+#parlerDame{bottom:calc(216px + env(safe-area-inset-bottom,0px));background:radial-gradient(circle at 40% 30%,#ffe98a,#ffc21a 60%,#b77a00);color:#3a2300;border-color:#fff3b0;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(255,200,40,.7)}
+#choixDame{right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(30px + env(safe-area-inset-bottom,0px));display:none;flex-direction:column;gap:10px;z-index:25}
+#choixDame button{padding:13px 22px;border-radius:999px;border:2px solid #fff3b0;font-weight:900;font-size:16px;color:#3a2300;background:radial-gradient(circle at 40% 30%,#ffe98a,#ffc21a 60%,#b77a00);box-shadow:0 4px 0 rgba(0,0,0,.4)}
+#choixDame button.non{background:#3a3560;color:#fff;border-color:rgba(255,255,255,.6)}
+#bulleDame{left:50%;top:16%;transform:translateX(-50%);display:none;max-width:min(86vw,360px);padding:12px 16px;border-radius:20px;background:#fff;color:#111;border:3px solid #111;
+ font:800 17px/1.3 'Comic Sans MS','Chalkboard SE','Marker Felt',system-ui,sans-serif;box-shadow:4px 4px 0 rgba(0,0,0,.55);z-index:26;text-align:center}
+#videoDame{inset:0;display:none;background:#000;z-index:60}
+#videoDame video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 #flecheV{position:absolute;z-index:6;display:none;width:0;height:0;pointer-events:none}
 #flecheV svg{position:absolute;left:-22px;top:-44px;width:44px;height:44px;filter:drop-shadow(0 0 8px #ffd23f) drop-shadow(0 0 16px #ffb000);animation:sauteV .7s ease-in-out infinite alternate}
 @keyframes sauteV{from{transform:translateY(0)}to{transform:translateY(-10px)}}
@@ -183,6 +191,10 @@ v.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){v.scrol
 <iframe id="clubV" title="Valia Club" allow="autoplay"></iframe>
 <div id="clubCharge">✨ Valia Club…</div>
 <div id="rentrerQ" role="dialog" aria-label="Rentrer"><b>🏠 Voulez-vous rentrer ?</b><div class="l"><button id="rentrerOui">Oui</button><button id="rentrerNon">Non</button></div></div>
+<button class="uiB btnS" id="parlerDame" style="display:none">💬 Parler</button>
+<div id="choixDame" class="uiB"></div>
+<div id="bulleDame" class="uiB"></div>
+<div id="videoDame" class="uiB"><video playsinline></video></div>
 <button class="uiB btnS" id="fumerS">🚬 Fumer</button>
 <button class="uiB btnS off" id="jeterS">Jeter</button>
 <script>
@@ -206,6 +218,7 @@ function place(){
 }
 im.addEventListener('load',()=>{ el.style.visibility='visible'; },{once:true});
 montre(IMG.fumer[0]); place();
+window.RUDY_BX=()=>x;                     // la position de Rudy (pour PARLER à la dame)
 
 // ---------- stick et clavier ----------
 const joy=document.getElementById('joyS'), knob=document.getElementById('knobS'); let doigt=null;
@@ -299,6 +312,41 @@ try{ if(parent&&parent.RUDY_AUDIO&&!parent.RUDY_AUDIO.paused) parent.RUDY_AUDIO.
 joue(); ['pointerdown','touchstart','keydown'].forEach(t=>addEventListener(t,()=>{ if(mus.paused&&!dansClub) joue(); },{passive:true}));
 document.addEventListener('visibilitychange',()=>{ if(document.hidden) mus.pause(); else if(!dansClub) joue(); });
 addEventListener('pagehide',()=>{ try{ mus.pause(); }catch(e){} });
+})();
+
+/* ---------- la dame en blanc (devant le restaurant) : PARLER → donner 100, 200 ou 300 € ----------
+   Seulement quand Rudy est seul (ici, sur le boulevard, il se promène toujours seul). */
+(function(){
+  const DAME_X=1110, PRES=70;
+  const CHOIX=[ {prix:100,video:'/assets/shinato/m/blvd_dame_100.mp4'}, {prix:200,video:'/assets/shinato/m/blvd_dame_200.mp4'}, {prix:300,video:'/assets/shinato/m/blvd_dame_300.mp4'} ];
+  const bP=document.getElementById('parlerDame'), ch=document.getElementById('choixDame'), bu=document.getElementById('bulleDame'),
+        vb=document.getElementById('videoDame'), v=vb.querySelector('video'), bF=document.getElementById('fumerS'), bJ=document.getElementById('jeterS');
+  function pont(){ for(const w of [window,parent,top]){ try{ if(w.Chambre&&w.Chambre.argent) return w.Chambre; }catch(e){} } return null; }
+  function argent(){ const p=pont(); try{ return p?p.argent():null; }catch(e){ return null; } }
+  function payer(n){ const p=pont(); try{ if(p&&p.ajouterArgent) p.ajouterArgent(-n); }catch(e){} }
+  function dit(t,ms){ bu.textContent=t; bu.style.display='block'; clearTimeout(bu._t); if(ms) bu._t=setTimeout(()=>{ bu.style.display='none'; },ms); }
+  let occupe=false;
+  function seul(){ return !window.FILLE_AVEC_RUDY; }          // jamais quand une fille accompagne Rudy
+  setInterval(()=>{ const X=window.RUDY_BX?window.RUDY_BX():-9999;
+    bP.style.display=(!occupe&&seul()&&Math.abs(X-DAME_X)<PRES)?'block':'none'; },120);
+  function cacheBoutons(c){ [bF,bJ].forEach(b=>b.style.visibility=c?'hidden':''); }
+  function fin(){ ch.style.display='none'; cacheBoutons(false); }
+  function ferme(){ try{ v.pause(); }catch(e){} vb.style.display='none'; occupe=false; }
+  v.addEventListener('ended',ferme); v.addEventListener('error',ferme);
+  function app(el,fn){ let t=0; const go=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t<350) return; t=n; fn(); };
+    el.addEventListener('touchstart',go,{passive:false}); el.addEventListener('click',go); }
+  app(bP,()=>{
+    occupe=true; bP.style.display='none'; ch.innerHTML='';
+    CHOIX.forEach(C=>{ const b=document.createElement('button'); b.textContent='💶 Donner '+C.prix+' €'; ch.appendChild(b);
+      app(b,()=>{ fin();
+        const a=argent(); if(a!==null&&a<C.prix){ dit("Il te faut "+C.prix+" €, mon chéri… 😏",2400); occupe=false; return; }
+        payer(C.prix);
+        dit("Je suis peut-être vieille… mais je peux te donner beaucoup de plaisir 😏",2800);
+        setTimeout(()=>{ bu.style.display='none'; v.src=C.video; vb.style.display='block'; const q=v.play(); if(q&&q.catch) q.catch(()=>{}); },2900); }); });
+    const non=document.createElement('button'); non.className='non'; non.textContent='Rien'; ch.appendChild(non);
+    app(non,()=>{ fin(); occupe=false; });
+    ch.style.display='flex'; cacheBoutons(true);
+  });
 })();
 </script>
 </body></html>
