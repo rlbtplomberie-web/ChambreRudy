@@ -1,10 +1,5 @@
-version 314 — Rue de nuit : retour à Shinato par la gauche + la fille cachée
+version 316 — Shinato : parler à Mody
 
-  Tout à gauche de la rue de nuit (là où on arrive de Shinato) : flèche
-    jaune brillante vers la gauche + SORTIR → retour à Shinato, devant
-    l'escalier. L'ancien bouton « ◀ SHINATO » du haut est retiré.
-  Nouvelle passante : une fille cachée derrière le coin du supermarché
-    (entre la fin du supermarché et le lampadaire), qui passe la tête,
-    se montre un peu, se penche, puis se recache.
-  Garde les dialogues de la fumeuse rousse, de la fille en noir et de la
-    blonde à casquette.
+  Rue de Shinato : PARLER à Mody (torse nu, corde à sauter, sous le panneau
+    Shibuya) → sa vidéo, sans dialogue. Garde Théo et Mathis (version 315).
+  Aussi dans l'appli Déverrouillage (dossier Shinato).

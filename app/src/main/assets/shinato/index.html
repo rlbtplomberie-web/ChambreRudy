@@ -167,6 +167,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
 
 <div id="joy"><div id="stick"></div></div>
 <div id="actions">
+ <div class="btn" id="btnParlerTheo" style="display:none">PARLER</div>
+ <div class="btn" id="btnParlerMathis" style="display:none">PARLER</div>
+ <div class="btn" id="btnParlerMody" style="display:none">PARLER</div>
  <div class="btn" id="btnFumer">FUMER</div>
  <div class="btn off" id="btnJeter">JETER</div>
 </div>
@@ -1402,6 +1405,31 @@ else carte.addEventListener("load",demarre);
 #ruenuit{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:60;background:#000;display:none}
 </style>
 <script>
+/* ---------- PARLER à un passant de la rue → sa vidéo, sans dialogue (Théo, Mathis) ---------- */
+(function(){
+ var PASSANTS=[
+  {btn:"btnParlerTheo",   pos:0.1434, video:"/assets/shinato/m/shinato_theo.mp4"},    // Théo, débardeur rouge, rideau « FIGHT »
+  {btn:"btnParlerMathis", pos:0.5979, video:"/assets/shinato/m/shinato_mathis.mp4"},  // Mathis, en beige, sur le terrain de foot
+  {btn:"btnParlerMody",   pos:0.2537, video:"/assets/shinato/m/shinato_mody.mp4"}     // Mody, torse nu, saute à la corde sous le panneau Shibuya
+ ];
+ var PRES=95/7078, occupe=false;
+ var vb=document.createElement("div"); vb.style.cssText="position:fixed;inset:0;z-index:70;background:#000;display:none";
+ vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+ document.body.appendChild(vb); var v=vb.querySelector("video");
+ function ferme(){ try{ v.pause(); }catch(e){} vb.style.display="none"; occupe=false; }
+ v.addEventListener("ended",ferme); v.addEventListener("error",ferme);
+ PASSANTS.forEach(function(P){
+  var btn=document.getElementById(P.btn), t0=0;
+  setInterval(function(){
+   if(typeof x==="undefined"||!largeurMonde||window.PAUSE_RUE||occupe){ btn.style.display="none"; return; }
+   btn.style.display=Math.abs(x-largeurMonde*P.pos)<largeurMonde*PRES?"block":"none";
+  },120);
+  function parle(e){ if(e&&e.cancelable) e.preventDefault(); var n=performance.now(); if(n-t0<400) return; t0=n;
+   occupe=true; dir=0; btn.style.display="none"; v.src=P.video; vb.style.display="block";
+   var q=v.play(); if(q&&q.catch) q.catch(function(){}); }
+  btn.addEventListener("touchstart",parle,{passive:false}); btn.addEventListener("click",parle);
+ });
+})();
 /* ---------- devant l'escalier (mur « GOOD PEOPLE GOOD GAMES ») : flèche jaune + ENTRER -> la rue de nuit ----------
    La musique de Shinato continue ; « ◀ SHINATO » dans la rue de nuit ramène ici. */
 (function(){
@@ -1432,6 +1460,16 @@ else carte.addEventListener("load",demarre);
  }
  btn.addEventListener("pointerdown",entre); btn.addEventListener("touchstart",entre,{passive:false}); btn.addEventListener("click",entre);
  window.addEventListener("message",function(e){
+  if(e.data && e.data.type==="ruenuit:hopital"){
+   // blessé dans la rue de nuit : la chambre d'hôpital (l'infirmière), puis devant l'hôpital de Vaviel
+   var fr=document.getElementById("ruenuit"); if(fr){ fr.style.pointerEvents="none"; fr.blur(); fr.style.display="none"; }
+   dedans=false; dir=0;
+   var ch=document.getElementById("moto");
+   if(!ch){ ch=document.createElement("iframe"); ch.id="moto"; ch.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(ch); }
+   ch.style.pointerEvents="auto"; ch.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/hopital.html")); ch.style.display="block";
+   window.minuterieLibre(function(){ try{ ch.focus(); }catch(err){} },300);
+   return;
+  }
   if(e.data && e.data.type==="ruenuit:sortie"){
    var f=document.getElementById("ruenuit"); if(f){ f.style.pointerEvents="none"; f.blur(); f.style.display="none"; }
    dedans=false; dir=0; window.repriseRue();
