@@ -329,6 +329,15 @@ appui(document.getElementById('usineOui'),()=>{
   setTimeout(()=>{ try{ fr.focus(); }catch(e){} },300);
 });
 appui(quitU,fermeUsine);
+// la victoire contre la boss : la vidéo (sans la musique de Balrog), puis Rudy devant la porte du labo
+addEventListener('message',e=>{
+  if(!e.data||e.data.type!=='usine:victoire') return;
+  usineSon(false); { const g=document.getElementById('usineJeu'); if(g) g.style.display='none'; quitU.style.display='none'; }
+  const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:95;background:#000';
+  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+  const v=vb.querySelector('video'); const fin=()=>{ v.removeEventListener('ended',fin); v.removeEventListener('error',fin); vb.remove(); fermeUsine(); };
+  v.addEventListener('ended',fin); v.addEventListener('error',fin); v.src='/assets/shinato/m/usine_victoire.mp4'; const q=v.play(); if(q&&q.catch) q.catch(()=>{});
+});
 // les vidéos de K.O. : selon la poupée (et la prise) qui a vidé toute la vie de Rudy
 const KO_VIDEOS={
   g_gia_hug:'/assets/shinato/m/usine_ko_viper.mp4',     // Viper : elle l'attrape debout et pompe toute sa vie
@@ -362,6 +371,7 @@ const KO_VIDEOS={
 };
 addEventListener('message',e=>{
   if(!e.data||e.data.type!=='usine:ko') return;
+  usineSon(false); { const g=document.getElementById('usineJeu'); if(g) g.style.display='none'; quitU.style.display='none'; }
   // Rudy est K.O. : (sa vidéo s'il y en a une) puis l'hôpital de Vaviel (la scène de l'infirmière), puis devant l'hôpital
   // après le K.O. : la vidéo de l'hôpital (à la place de la scène avec les questions), puis Rudy devant l'hôpital de Vaviel
   const hopital=()=>{

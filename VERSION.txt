@@ -1,4 +1,8 @@
-version 350 — Rudy contre l'usine (10/10)
+version 351 — Rudy contre l'usine : la victoire, la musique, Bila
 
-  La musique de l'usine pendant le jeu ; la musique de Shinato reprend en sortant.
-  À déposer UNE PAR UNE dans l'ordre maj-131 → maj-140, en attendant la coche verte à chaque fois.
+  Victoire contre Astra : la musique de Balrog s'arrête, la vidéo de victoire,
+    puis Rudy revient devant la porte du Laboratoire Mécanique (musique de Shinato).
+  K.O. : la musique de Balrog s'arrête dès le début des vidéos (K.O. puis hôpital).
+  Bila : plus de trous transparents dans sa robe (marche, attaques, saut, chute).
+  La vidéo de victoire est aussi dans l'appli Déverrouillage (dossier Mitsuda).
+  À déposer APRÈS la maj-140, en attendant la coche verte.
