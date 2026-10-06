@@ -1,12 +1,6 @@
-version 353 — Salon de thé : la femme chat et la barmaid
+version 354 — Le cirque (1/2) : les vidéos
 
-  La femme chat : PARLER → « Nous ne sommes plus en guerre entre nos races… »
-    → « Tu as raison » / « J'ai pas le temps de t'écouter » (« Dommage pour toi… »)
-    → « T'es pas mal… pour un humain. » → Tu t'es vue ? / Toi, tu es
-    resplendissante / Tu es une belle chatte → « Toi… tu me plais. » → la vidéo.
-  La barmaid : PARLER → On va dans la réserve ? (« J'aime les hommes avenants… »)
-    / Je t'emmène au cinéma (« Quelle galanterie… ») / Tu es trop belle (vidéo
-    directe) / Rien.
-  Garde Rosa et la dame en blanc (version 352).
-  Les 6 vidéos sont aussi dans l'appli Déverrouillage (dossier Mitsuda).
-  À déposer APRÈS la maj-142, en attendant la coche verte.
+  Les vidéos de la jongleuse (non, comment refuser), de la fille au cerceau
+    (ma fête, canon) et de la dompteuse sur l'éléphant (oui, pourquoi pas).
+  Les dialogues arrivent avec la maj-145 : déposer les deux, dans l'ordre.
+  À déposer APRÈS la maj-143, en attendant la coche verte.
