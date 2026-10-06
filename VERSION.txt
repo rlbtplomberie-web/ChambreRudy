@@ -1,4 +1,4 @@
-version 349 — Rudy contre l'usine (9/10)
+version 350 — Rudy contre l'usine (10/10)
 
-  Le jeu final (repère du laser, la projection compte comme un coup, vidéo avant le combat de la boss) ; K.O. d'Astra (laser) ; vidéo de l'hôpital après un K.O. puis devant l'hôpital de Vaviel ; nouvelle vidéo des coups de Miki ; Vidéo 37 dans la galerie.
+  La musique de l'usine pendant le jeu ; la musique de Shinato reprend en sortant.
   À déposer UNE PAR UNE dans l'ordre maj-131 → maj-140, en attendant la coche verte à chaque fois.
