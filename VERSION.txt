@@ -1,12 +1,4 @@
-version 340 — Mitsuda, le chapiteau, le salon de thé ; le monsieur en blanc du boulevard
+version 341 — Rudy contre l'usine (1/10)
 
-  Mitsuda (rue du cirque) : on y va par la MAP du téléphone ou en moto depuis
-    Shinato, la plage, Vaviel et la ville délabrée (MITSUDA dans les menus).
-    Rudy (planche du fumeur : marcher, FUMER, JETER) arrive tout à gauche,
-    va dans toutes les directions mais reste sur la route ; tout à gauche,
-    « Où voulez-vous aller ? ». La musique de Shinato continue.
-  Devant le cirque : flèche jaune ↑ + ENTRER → le chapiteau (Rudy du Pixel Bar,
-    arrivée en bas ; en bas, flèche ↓ + SORTIR → devant le cirque).
-  Devant le salon de thé : flèche jaune ↑ + ENTRER → le salon (arrivée tout à
-    droite ; tout à droite, flèche → + SORTIR → devant le salon).
-  Boulevard : PARLER au monsieur en costume blanc → sa vidéo, sans dialogue.
+  Mitsuda : la porte du Laboratoire Mécanique (flèche ↑ + ENTRER → « Êtes-vous sûr ? ») lance « Rudy contre l'usine » (vidéo d'entrée, pas d'écran titre, ✕ MITSUDA pour sortir) ; K.O. de Viper (debout, au sol, coups).
+  À déposer UNE PAR UNE dans l'ordre maj-131 → maj-140, en attendant la coche verte à chaque fois.

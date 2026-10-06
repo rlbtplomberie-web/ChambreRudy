@@ -73,6 +73,12 @@ body{height:100%}
 #flecheCirque{position:absolute;z-index:31;display:none;width:2.4%;aspect-ratio:100/120;transform:translate(-50%,0);pointer-events:none;
  filter:drop-shadow(0 0 6px rgba(255,225,40,1)) drop-shadow(0 0 16px rgba(255,200,0,.8));animation:clignC .7s ease-in-out infinite alternate}
 @keyframes clignC{from{opacity:1}to{opacity:.55}}
+.confirme{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);font-family:Arial,Helvetica,sans-serif}
+.confirme .carte{min-width:60vmin;padding:5vmin 6vmin;border-radius:3vmin;text-align:center;background:linear-gradient(#1c1408,#0d0a05);border:2px solid rgba(255,226,122,.9);box-shadow:0 10px 40px rgba(0,0,0,.7)}
+.confirme h2{margin:0 0 4vmin;color:#fff;font:900 clamp(16px,4.4vmin,34px)/1.2 Arial,sans-serif;letter-spacing:1px}
+.confirme .rang{display:flex;gap:4vmin;justify-content:center}
+#usineJeu{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:85;background:#000;display:none}
+#usineQuitter{position:fixed;z-index:86;top:calc(10px + env(safe-area-inset-top,0px));left:10px;display:none;padding:9px 14px;border-radius:999px;background:rgba(0,0,0,.6);color:#ffe27a;border:2px solid rgba(255,226,122,.8);font:900 14px Arial,sans-serif;letter-spacing:1px}
 .interieur{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:80;background:#000;display:none}
 </style>
 </head>
@@ -82,6 +88,8 @@ body{height:100%}
 
 <div id="zoneJoy"></div><div id="joy"><div id="stick"></div></div>
 <div id="actions"><div class="btn" id="btnEntrer">ENTRER</div><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
+<div class="confirme" id="confUsine"><div class="carte"><h2>Êtes-vous sûr&nbsp;?</h2><div class="rang"><div class="btn" id="usineOui">OUI</div><div class="btn" id="usineNon">NON</div></div></div></div>
+<div id="usineQuitter">&#10005; MITSUDA</div>
 <div id="depart"><div class="carte">
  <div class="fermer" id="departFermer">&#10005;</div>
  <h2>OÙ VOULEZ-VOUS ALLER&nbsp;?</h2>
@@ -273,7 +281,8 @@ appui(btnF,rudyFume); appui(btnJ,rudyJette);
 /* ---------- le chapiteau du cirque : ENTRER → l'intérieur (Rudy du Pixel Bar) ; SORTIR → retour devant le cirque ---------- */
 const ENTREES=[
   {x:400,  fichier:'chapiteau.html', id:'chapiteau', sortie:'chapiteau:sortie'},   // l'entrée du cirque
-  {x:1955, fichier:'salon.html',     id:'salonThe',  sortie:'salon:sortie'}        // la porte du salon de thé
+  {x:1955, fichier:'salon.html',     id:'salonThe',  sortie:'salon:sortie'},       // la porte du salon de thé
+  {x:1300, jeu:true}                                                               // la porte du Laboratoire Mécanique : le jeu « Rudy contre l'usine »
 ];
 let entreeIci=null;
 const btnE=document.getElementById('btnEntrer');
@@ -282,6 +291,7 @@ flC.innerHTML='<svg viewBox="0 0 100 120" width="100%" height="100%"><path d="M5
 pano.appendChild(flC);
 appui(btnE,()=>{
   const E=entreeIci; if(!E) return;
+  if(E.jeu){ demandeUsine(); return; }
   let fr=document.getElementById(E.id);
   if(!fr){ fr=document.createElement('iframe'); fr.id=E.id; fr.className='interieur'; fr.setAttribute('allow','autoplay; fullscreen'); document.body.appendChild(fr); }
   if(!fr.getAttribute('data-charge')){
@@ -290,6 +300,48 @@ appui(btnE,()=>{
   } else { try{ fr.contentWindow.postMessage({type:'lieu:entree'},'*'); }catch(e){} }
   fr.style.display='block'; dedans=true; dir=dirY=0; flC.style.display=btnE.style.display='none';
   setTimeout(()=>{ try{ fr.focus(); }catch(e){} },300);
+});
+/* ---------- « Rudy contre l'usine » : Êtes-vous sûr ? → le jeu ; K.O. → l'hôpital de Vaviel ---------- */
+const confU=document.getElementById('confUsine'), quitU=document.getElementById('usineQuitter');
+function musique(joue){ try{ const a=parent.RUDY_AUDIO; if(!a) return; if(joue){ const q=a.play(); if(q&&q.catch) q.catch(()=>{}); } else a.pause(); }catch(e){} }
+const USINE_INTRO='/assets/shinato/m/usine_entree.mp4';   // la vidéo qui passe avant le jeu
+function demandeUsine(){ dir=dirY=0; confU.style.display='flex'; }
+function fermeUsine(){ const fr=document.getElementById('usineJeu'); if(fr){ fr.style.display='none'; fr.src='about:blank'; } quitU.style.display='none'; dedans=false; tPrec=0; x=1300; y=YMIN+6; cadrer(true); musique(true); }
+appui(document.getElementById('usineNon'),()=>{ confU.style.display='none'; });
+appui(document.getElementById('usineOui'),()=>{
+  confU.style.display='none';
+  let fr=document.getElementById('usineJeu');
+  if(!fr){ fr=document.createElement('iframe'); fr.id='usineJeu'; fr.setAttribute('allow','autoplay; fullscreen'); document.body.appendChild(fr); }
+  musique(false);                                    // le jeu a sa propre musique
+  dedans=true; dir=dirY=0; flC.style.display=btnE.style.display='none';
+  const lance=()=>{ fr.src='/assets/shinato/jeux/usine.html'; fr.style.display='block'; quitU.style.display='block'; };
+  if(!USINE_INTRO){ lance(); }
+  else{                                              // d'abord la vidéo, puis le jeu démarre directement
+    const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:90;background:#000';
+    vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+    const v=vb.querySelector('video'); const fin=()=>{ v.removeEventListener('ended',fin); v.removeEventListener('error',fin); vb.remove(); lance(); };
+    v.addEventListener('ended',fin); v.addEventListener('error',fin); v.src=USINE_INTRO; const q=v.play(); if(q&&q.catch) q.catch(()=>{});
+  }
+  dedans=true; dir=dirY=0; flC.style.display=btnE.style.display='none';
+  setTimeout(()=>{ try{ fr.focus(); }catch(e){} },300);
+});
+appui(quitU,fermeUsine);
+// les vidéos de K.O. : selon la poupée (et la prise) qui a vidé toute la vie de Rudy
+const KO_VIDEOS={
+  g_gia_hug:'/assets/shinato/m/usine_ko_viper.mp4',     // Viper : elle l'attrape debout et pompe toute sa vie
+  g_gia_bite:'/assets/shinato/m/usine_ko_viper_sol.mp4', // Viper : elle l'attrape au sol et pompe toute sa vie
+  coups_gia:'/assets/shinato/m/usine_ko_viper_coups.mp4'  // Viper : elle le met K.O. avec ses coups, sans l'attraper
+};
+addEventListener('message',e=>{
+  if(!e.data||e.data.type!=='usine:ko') return;
+  // Rudy est K.O. : (sa vidéo s'il y en a une) puis l'hôpital de Vaviel (la scène de l'infirmière), puis devant l'hôpital
+  const hopital=()=>{ fermeUsine(); musique(true); try{ parent.postMessage({type:'ruenuit:hopital'},'*'); }catch(err){} };
+  const src=e.data.prise&&KO_VIDEOS[e.data.prise];
+  if(!src){ hopital(); return; }
+  const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:95;background:#000';
+  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+  const v=vb.querySelector('video'); const fin=()=>{ v.removeEventListener('ended',fin); v.removeEventListener('error',fin); vb.remove(); hopital(); };
+  v.addEventListener('ended',fin); v.addEventListener('error',fin); v.src=src; const q=v.play(); if(q&&q.catch) q.catch(()=>{});
 });
 addEventListener('message',e=>{
   const E=e.data&&ENTREES.find(E=>E.sortie===e.data.type); if(!E) return;
