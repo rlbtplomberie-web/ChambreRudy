@@ -1,6 +1,13 @@
-version 354 — Le cirque (1/2) : les vidéos
+version 355 — Le cirque (2/2) : les dialogues
 
-  Les vidéos de la jongleuse (non, comment refuser), de la fille au cerceau
-    (ma fête, canon) et de la dompteuse sur l'éléphant (oui, pourquoi pas).
-  Les dialogues arrivent avec la maj-145 : déposer les deux, dans l'ordre.
-  À déposer APRÈS la maj-143, en attendant la coche verte.
+  La jongleuse : « Prêt à t'amuser ? Ça fera 100 €… » → Comment refuser ? (100 €,
+    « J'en étais sûre… », vidéo, « À très vite… ») / Non (« … je te laisse pas le
+    choix », vidéo, « Maintenant, je sais que tu vas revenir… »).
+  La fille au cerceau : « J'ai pas le temps de te parler… » → Que tu me fasses ma
+    fête / Tu es canon, toi → « … sors 200 €, je te fais ta fête » → 200 € → vidéo.
+  La dompteuse sur l'éléphant : « Tu veux monter ? » → Oui / Pourquoi pas
+    (« D'accord, ça te fera 100 € », vidéo, « Viens me voir quand tu veux… ») / Non.
+  La fille sur le ballon : corps splendide (100 €) / magnifique (100 €) / sortir
+    avec moi (20 €) / Non (« Tu ne résisteras pas longtemps… »).
+  Toutes les vidéos sont aussi dans l'appli Déverrouillage (dossier Mitsuda).
+  À déposer APRÈS la maj-144, en attendant la coche verte.
