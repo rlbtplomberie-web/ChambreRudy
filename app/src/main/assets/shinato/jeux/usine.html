@@ -363,6 +363,19 @@ function loadMap(i) {
   } else {
     boss = makeBoss(1240, (f[0] + f[1]) / 2 + 6); ents.push(boss);
     banner('Combat final');
+    // dans l'appli : la vidéo d'arrivée dans le bureau de la boss, puis le combat commence
+    try {
+      if (window.parent && window.parent !== window) {
+        scene = 'cine';
+        const vb = document.createElement('div'); vb.style.cssText = 'position:fixed;inset:0;z-index:200;background:#000';
+        vb.innerHTML = '<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+        document.body.appendChild(vb);
+        const v = vb.querySelector('video');
+        const fin = () => { v.removeEventListener('ended', fin); v.removeEventListener('error', fin); vb.remove(); if (scene === 'cine') scene = 'play'; };
+        v.addEventListener('ended', fin); v.addEventListener('error', fin);
+        v.src = '/assets/shinato/m/usine_boss_intro.mp4'; const q = v.play(); if (q && q.catch) q.catch(() => {});
+      }
+    } catch (e) { scene = 'play'; }
   }
   updateButtons();
 }
@@ -803,7 +816,7 @@ function updBoss(b, dt) {
         const d = b.gflip;
         r.state = 'down'; r.st = 0; r.hp = Math.max(0, r.hp - 16); r.x = clamp(b.gx + b.face * 95, 40, WW - 40); r.y = b.gy;
         setAnim(r, 'rudy_fall', [5], 1, true); shake = 8; SFX.throw();
-        if (r.hp <= 0) { r.state = 'dead'; r.st = 0; SFX.ko(); }
+        if (r.hp <= 0) { window.KO_PRISE = 'coups_boss'; r.state = 'dead'; r.st = 0; SFX.ko(); }   // la projection compte comme un coup
         b.x = b.gx - b.face * 20; b.cd = 1.2; idle();
       }
       break;
@@ -890,7 +903,7 @@ function update(dt) {
     const r = rudy;
     if (!b.hit && b.t < b.dur * 0.8) {
       const ahead = (r.x - b.x) * b.dir > -20;
-      if (ahead && Math.abs(r.y - b.gy) < 20) { if (hitRudy(14, { x: b.x - b.dir * 10 }, true)) b.hit = true; }
+      if (ahead && Math.abs(r.y - b.gy) < 20) { if (hitRudy(14, { x: b.x - b.dir * 10, kind: 'laser' }, true)) b.hit = true; }
     }
   }
   beams = beams.filter(b => b.t < b.dur);

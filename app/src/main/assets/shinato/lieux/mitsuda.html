@@ -354,12 +354,23 @@ const KO_VIDEOS={
   g_rose:'/assets/shinato/m/usine_ko_vesper.mp4',            // Vesper (porcelaine gothique, visage fêlé) : elle l'attrape et pompe toute son énergie
   coups_rose:'/assets/shinato/m/usine_ko_vesper_coups.mp4',  // Vesper : elle le met K.O. avec ses coups, sans l'attraper
   g_boss_ground:'/assets/shinato/m/usine_ko_astra.mp4',      // Astra, la boss : elle le plaque et pompe toute son énergie (pas la projection)
-  coups_boss:'/assets/shinato/m/usine_ko_astra_coups.mp4'    // Astra : elle le met K.O. avec ses coups de poing / de pied
+  coups_boss:'/assets/shinato/m/usine_ko_astra_coups.mp4',   // Astra : elle le met K.O. avec ses coups de poing / de pied
+  coups_laser:'/assets/shinato/m/usine_ko_astra_laser.mp4'   // Astra : elle le tue avec son arme laser
 };
 addEventListener('message',e=>{
   if(!e.data||e.data.type!=='usine:ko') return;
   // Rudy est K.O. : (sa vidéo s'il y en a une) puis l'hôpital de Vaviel (la scène de l'infirmière), puis devant l'hôpital
-  const hopital=()=>{ fermeUsine(); musique(true); try{ parent.postMessage({type:'ruenuit:hopital'},'*'); }catch(err){} };
+  // après le K.O. : la vidéo de l'hôpital (à la place de la scène avec les questions), puis Rudy devant l'hôpital de Vaviel
+  const hopital=()=>{
+    fermeUsine(); musique(false);
+    const hb=document.createElement('div'); hb.style.cssText='position:fixed;inset:0;z-index:96;background:#000';
+    hb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(hb);
+    const hv=hb.querySelector('video');
+    const fini=()=>{ hv.removeEventListener('ended',fini); hv.removeEventListener('error',fini); musique(true);
+      try{ parent.postMessage({type:'hopital:fin'},'*'); }catch(err){} setTimeout(()=>hb.remove(),400); };
+    hv.addEventListener('ended',fini); hv.addEventListener('error',fini); hv.src='/assets/shinato/m/usine_hopital.mp4';
+    const q=hv.play(); if(q&&q.catch) q.catch(()=>{});
+  };
   const src=e.data.prise&&KO_VIDEOS[e.data.prise];
   if(!src){ hopital(); return; }
   const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:95;background:#000';
