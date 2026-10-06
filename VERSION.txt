@@ -1,12 +1,12 @@
-version 352 — Salon de thé : Rosa et la dame en blanc
+version 353 — Salon de thé : la femme chat et la barmaid
 
-  Rosa (grosse robe rose) : PARLER → « Bonjour… Qui êtes-vous ? » →
-    « Je m'appelle Rudy » / « Rien, je passais juste par là » →
-    « Moi, c'est Rosa. Que me voulez-vous ? » → magnifique / belle /
-    la femme de ma vie (3 vidéos réparties au hasard).
-  La dame en blanc : PARLER → Rudy : « Madame, vous avez un corps de rêve
-    pour votre âge… » → elle : « … Tu veux faire quelque chose avec moi ? Mais
-    tu payes. » → 50 € / 100 € / 200 € (l'argent est retiré, puis la vidéo)
-    ou Non merci.
+  La femme chat : PARLER → « Nous ne sommes plus en guerre entre nos races… »
+    → « Tu as raison » / « J'ai pas le temps de t'écouter » (« Dommage pour toi… »)
+    → « T'es pas mal… pour un humain. » → Tu t'es vue ? / Toi, tu es
+    resplendissante / Tu es une belle chatte → « Toi… tu me plais. » → la vidéo.
+  La barmaid : PARLER → On va dans la réserve ? (« J'aime les hommes avenants… »)
+    / Je t'emmène au cinéma (« Quelle galanterie… ») / Tu es trop belle (vidéo
+    directe) / Rien.
+  Garde Rosa et la dame en blanc (version 352).
   Les 6 vidéos sont aussi dans l'appli Déverrouillage (dossier Mitsuda).
-  À déposer APRÈS la maj-141, en attendant la coche verte.
+  À déposer APRÈS la maj-142, en attendant la coche verte.
