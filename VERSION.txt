@@ -1,6 +1,11 @@
-version 356 — Le cirque : Monsieur Loyal et la boudeuse (1/2)
+version 357 — Le cirque : la boudeuse complète et Monsieur Loyal DISCUTER (2/2)
 
-  Monsieur Loyal : PARLER → sa vidéo directement.
-  La boudeuse : PARLER → Bonjour (vidéo, puis « La prochaine fois, dis pas
-    bonjour à une inconnue. ») / Rien.
-  À déposer APRÈS la maj-145, en attendant la coche verte.
+  La boudeuse : Bonjour / Loyal a dit que tu boudais tout le temps (« Quoi ?
+    Il t'a dit ça ?… », vidéo, « C'est bien fait pour lui. ») / Faire un bras de
+    fer (« T'es sûr ? », vidéo) / Fais-moi ce que tu as fait à Loyal… (100 €,
+    vidéo, « Tu as eu ce que tu voulais… ») / Et pour 300 €, j'ai quoi ? (300 €,
+    vidéo) / Rien.
+  Monsieur Loyal : DISCUTER se débloque après le choix « Loyal a dit… » :
+    « Pourquoi tu m'as balancé ?! … Je suis fichu ! » (reste débloqué).
+  Toutes les vidéos sont aussi dans l'appli Déverrouillage (dossier Mitsuda).
+  À déposer APRÈS la maj-146, en attendant la coche verte.
