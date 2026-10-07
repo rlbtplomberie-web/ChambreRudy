@@ -87,7 +87,7 @@ body{height:100%}
 <div class="vitre the" style="left:90.93001841620627%;top:35.35911602209944%;width:2.6703499079189688%;height:8.56353591160221%"><svg style="left:24%;top:30%;width:56%;height:113%" viewBox="0 0 40 100" preserveAspectRatio="none"><g fill="#120d14"><path d="M20 0.5 C25 0.5 27 4.5 26.6 9 C26.3 13 24.5 16 22.6 17.2 L22.8 21 C27 22.2 31.5 23 34.5 25.5 C37.5 28 38 33 38.4 40 L39 66 C39.2 70 37 71 36 68 L35 46 L34 100 L6 100 L5 46 L4 68 C3 71 0.8 70 1 66 L1.6 40 C2 33 2.5 28 5.5 25.5 C8.5 23 13 22.2 17.2 21 L17.4 17.2 C15.5 16 13.7 13 13.4 9 C13 4.5 15 0.5 20 0.5 Z"/></g></svg></div><div id="devant"></div></div></div>
 
 <div id="zoneJoy"></div><div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="btnDiscBeret" style="display:none">DISCUTER</div><div class="btn" id="btnParlerBeret" style="display:none">PARLER</div><div class="btn" id="btnParlerCarnet" style="display:none">PARLER</div><div class="btn" id="btnParlerCostume" style="display:none">PARLER</div><div class="btn" id="btnParlerAurore" style="display:none">PARLER</div><div class="btn" id="btnEntrer">ENTRER</div><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
+<div id="actions"><div class="btn" id="btnDiscBeret" style="display:none">DISCUTER</div><div class="btn" id="btnParlerBeret" style="display:none">PARLER</div><div class="btn" id="btnParlerCarnet" style="display:none">PARLER</div><div class="btn" id="btnParlerCostume" style="display:none">PARLER</div><div class="btn" id="btnParlerAurore" style="display:none">PARLER</div><div class="btn" id="btnDiscPolice" style="display:none">DISCUTER</div><div class="btn" id="btnParlerPolice" style="display:none">PARLER</div><div class="btn" id="btnEntrer">ENTRER</div><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
 <div class="confirme" id="confUsine"><div class="carte"><h2>Êtes-vous sûr&nbsp;?</h2><div class="rang"><div class="btn" id="usineOui">OUI</div><div class="btn" id="usineNon">NON</div></div></div></div>
 <div id="usineQuitter">&#10005; MITSUDA</div>
 <div id="depart"><div class="carte">
@@ -243,7 +243,7 @@ function boucleRudy(t){
   }
   // tout à gauche : « Où voulez-vous aller ? » (seulement après être reparti un peu vers la droite)
   // face au cirque : la flèche jaune vers le haut et ENTRER
-  entreeIci=ENTREES.find(E=>Math.abs(x-E.x)<95)||null;
+  entreeIci=ENTREES.find(E=>Math.abs(x-E.x)<95&&(!E.jeu||usineOuverte()))||null;
   const devant=!menu&&!!entreeIci&&y<=YMIN+22;
   flC.style.display=btnE.style.display=devant?'block':'none';
   if(devant){ flC.style.left=(x/PW*100)+'%'; flC.style.top=((y-h*1.45)/PH*100)+'%'; }
@@ -285,6 +285,7 @@ const ENTREES=[
   {x:1300, jeu:true}                                                               // la porte du Laboratoire Mécanique : le jeu « Rudy contre l'usine »
 ];
 let entreeIci=null;
+function usineOuverte(){ try{ return localStorage.getItem('mitsuda_usine_ok')==='1'; }catch(e){ return false; } }
 const btnE=document.getElementById('btnEntrer');
 const flC=document.createElement('div'); flC.id='flecheCirque';
 flC.innerHTML='<svg viewBox="0 0 100 120" width="100%" height="100%"><path d="M50 4 L94 52 L66 52 L66 116 L34 116 L34 52 L6 52 Z" fill="#ffe400" stroke="#fff7b0" stroke-width="5" stroke-linejoin="round"/></svg>';
@@ -332,6 +333,7 @@ appui(quitU,fermeUsine);
 // la victoire contre la boss : la vidéo (sans la musique de Balrog), puis Rudy devant la porte du labo
 addEventListener('message',e=>{
   if(!e.data||e.data.type!=='usine:victoire') return;
+  try{ localStorage.setItem('mitsuda_usine_gagnee','1'); }catch(err){}   // la mission est réussie : DISCUTER apparaît sur la policière
   usineSon(false); { const g=document.getElementById('usineJeu'); if(g) g.style.display='none'; quitU.style.display='none'; }
   const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:95;background:#000';
   vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
@@ -553,8 +555,8 @@ majBoutons(); pose(IMG.fumer[0]); requestAnimationFrame(()=>{ cadrer(true); requ
   function dit(t,ms){ bulle.textContent=t; bulle.style.display='block'; clearTimeout(bulle._t); if(ms) bulle._t=setTimeout(()=>{ bulle.style.display='none'; },ms); }
   function ferme(){ choixA.style.display='none'; act.style.visibility=''; }
   function bouton(t,fn,pale){ const b=document.createElement('div'); b.className='btn'; b.textContent=t; if(pale) b.style.opacity='.8'; choixA.appendChild(b); appui(b,fn); }
-  function joue(src,apres,prix){ bulle.style.display='none'; dir=dirY=0; v.src=src; vb.style.display='block';
-    const f=()=>{ v.removeEventListener('ended',f); v.removeEventListener('error',f); vb.style.display='none'; v.removeAttribute('src'); occupe=false; tPrec=0; if(apres) dit(apres,4200); if(prix){ payer(prix); toastA('−'+prix+' €'); } };
+  function joue(src,apres,prix,marque){ bulle.style.display='none'; dir=dirY=0; v.src=src; vb.style.display='block';
+    const f=()=>{ v.removeEventListener('ended',f); v.removeEventListener('error',f); vb.style.display='none'; v.removeAttribute('src'); occupe=false; tPrec=0; if(apres) dit(apres,4200); if(prix){ payer(prix); toastA('−'+prix+' €'); } if(marque){ try{ localStorage.setItem(marque,'1'); }catch(e){} } };
     v.addEventListener('ended',f); v.addEventListener('error',f); const q=v.play(); if(q&&q.catch) q.catch(()=>{}); }
   const CHOIX=[
     {nom:"J'aimerais qu'on aille s'asseoir, rester avec toi",
@@ -569,17 +571,59 @@ majBoutons(); pose(IMG.fumer[0]); requestAnimationFrame(()=>{ cadrer(true); requ
      avant:"Avec plaisir, j'ai très faim ! 😋",
      video:'/assets/shinato/m/mitsuda_aurore_resto.mp4',
      apres:"C'était génial ! On se refait ça quand tu veux. 🥰", prix:50},
-    {nom:"Avoir des informations", video:'/assets/shinato/m/mitsuda_aurore_infos.mp4'}
+    {nom:"Avoir des informations", video:'/assets/shinato/m/mitsuda_aurore_infos.mp4', marque:'mitsuda_aurore_infos'}
   ];
   appui(bP,()=>{
     occupe=true; dir=dirY=0; choixA.innerHTML='';
     CHOIX.forEach(C=>bouton(C.nom,()=>{
       if(C.prix){ const a=argent(); if(a!==null&&a<C.prix){ toastA("Il te faut "+C.prix+" € pour ça. Tu n'as que "+a+" €."); return; } }
-      ferme(); if(!C.avant){ joue(C.video,C.apres,C.prix); return; }
-      dit(C.avant,3400); setTimeout(()=>joue(C.video,C.apres,C.prix),3500); }));
+      ferme(); if(!C.avant){ joue(C.video,C.apres,C.prix,C.marque); return; }
+      dit(C.avant,3400); setTimeout(()=>joue(C.video,C.apres,C.prix,C.marque),3500); }));
     bouton('Rien',()=>{ ferme(); occupe=false; },true);
     choixA.style.display='flex'; act.style.visibility='hidden';
   });
+})();
+/* ---------- la policière (devant le cirque) ----------
+   PARLER n'apparaît qu'après « Avoir des informations » avec Aurore → vidéo → elle parle d'Astra
+   → à partir de là, la porte du Laboratoire Mécanique (le jeu de l'usine) s'ouvre */
+(function(){
+  const PX=548;
+  const bP=document.getElementById('btnParlerPolice'), bD=document.getElementById('btnDiscPolice');
+  const gagnee=()=>{ try{ return localStorage.getItem('mitsuda_usine_gagnee')==='1'; }catch(e){ return false; } };
+  const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:90;background:#000;display:none';
+  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+  const v=vb.querySelector('video');
+  const bulle=document.createElement('div');
+  bulle.style.cssText="position:absolute;z-index:32;display:none;transform:translateX(-30%);width:min(50vw,300px);padding:10px 14px;background:#fff;color:#111;border:3px solid #111;border-radius:22px;font:800 clamp(12px,2.6vmin,20px)/1.25 'Comic Sans MS','Chalkboard SE',Arial,sans-serif;box-shadow:4px 4px 0 rgba(0,0,0,.55)";
+  pano.appendChild(bulle); bulle.style.left=(PX/PW*100)+'%'; bulle.style.top=(420/PH*100)+'%';
+  const toast=document.createElement('div');
+  toast.style.cssText="position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:95;display:none;padding:9px 16px;border-radius:999px;background:rgba(20,60,30,.92);color:#fff;font:800 15px Arial,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.5)";
+  document.body.appendChild(toast);
+  const infosAurore=()=>{ try{ return localStorage.getItem('mitsuda_aurore_infos')==='1'; }catch(e){ return false; } };
+  let occupe=false;
+  setInterval(()=>{
+    const pres=!occupe&&!dedans&&!menu&&infosAurore()&&x>500&&x<600;
+    bP.style.display=pres?'block':'none';
+    bD.style.display=(pres&&gagnee())?'block':'none';
+  },150);
+  // DISCUTER (après la victoire contre Astra) : elle parle, puis la vidéo
+  appui(bD,()=>{ occupe=true; dir=dirY=0;
+    const dit=(t,ms)=>{ bulle.textContent=t; bulle.style.display='block'; clearTimeout(bulle._t); bulle._t=setTimeout(()=>{ bulle.style.display='none'; },ms); };
+    dit("Quoi ?! Tu as réussi ? Tu es blessé de partout… Tu as réussi à abattre Astra ! Je n'arrive pas à le croire !",3800);
+    setTimeout(()=>dit("J'ai envie de… J'hésite à te le dire… Je vais plutôt agir. 😳",3200),3900);
+    setTimeout(()=>{ bulle.style.display='none'; v.src='/assets/shinato/m/mitsuda_policiere_victoire.mp4'; vb.style.display='block';
+      const f=()=>{ v.removeEventListener('ended',f); v.removeEventListener('error',f); vb.style.display='none'; v.removeAttribute('src'); occupe=false; tPrec=0; };
+      v.addEventListener('ended',f); v.addEventListener('error',f); const q=v.play(); if(q&&q.catch) q.catch(()=>{}); },7200);
+  });
+  appui(bP,()=>{ occupe=true; dir=dirY=0; bulle.style.display='none'; v.src='/assets/shinato/m/mitsuda_policiere.mp4'; vb.style.display='block';
+    const f=()=>{ v.removeEventListener('ended',f); v.removeEventListener('error',f); vb.style.display='none'; v.removeAttribute('src'); occupe=false; tPrec=0;
+      bulle.textContent="Tout ça, c'est à cause d'Astra ! C'est son laboratoire. Elle a créé ces robots métalliques et ces poupées pour semer la terreur.";
+      bulle.style.display='block'; clearTimeout(bulle._t); bulle._t=setTimeout(()=>{ bulle.style.display='none'; },6500);
+      const deja=usineOuverte();
+      try{ localStorage.setItem('mitsuda_usine_ok','1'); }catch(e){}
+      if(!deja){ setTimeout(()=>{ toast.textContent='🔓 Le Laboratoire Mécanique est ouvert'; toast.style.display='block';
+        clearTimeout(toast._t); toast._t=setTimeout(()=>{ toast.style.display='none'; },3200); },6600); } };
+    v.addEventListener('ended',f); v.addEventListener('error',f); const q=v.play(); if(q&&q.catch) q.catch(()=>{}); });
 })();
 </script>
 </body>
