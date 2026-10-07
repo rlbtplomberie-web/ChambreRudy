@@ -166,5 +166,18 @@ Promise.all([load(D.room),load(D.fg),...D.poses.map(p=>load(p.src))]).then(([r,f
   maj();
  };
 })();
-</script></body>
+</script><script>
+/* ---------- contacts du téléphone : la première fois que Rudy parle à une des filles, elle arrive dans ses contacts ---------- */
+(function(){
+  const QUI={};
+  function marque(ids){ try{ const D=JSON.parse(localStorage.getItem('rudy_contacts')||'{}')||{}; let n=false;
+    ids.forEach(id=>{ if(!D[id]){ D[id]=Date.now(); n=true; } }); if(n) localStorage.setItem('rudy_contacts',JSON.stringify(D)); }catch(e){} }
+  marque(['katila']);   // à l'hôpital, l'infirmière lui parle dès qu'il se réveille
+  const sel=Object.keys(QUI).map(k=>'#'+k).join(',');
+  if(!sel) return;
+  const f=e=>{ const b=e.target&&e.target.closest&&e.target.closest(sel); if(b) marque(QUI[b.id]); };
+  document.addEventListener('touchstart',f,{capture:true,passive:true}); document.addEventListener('click',f,true);
+})();
+</script>
+</body>
 </html>

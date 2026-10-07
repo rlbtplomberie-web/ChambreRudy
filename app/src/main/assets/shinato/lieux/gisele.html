@@ -437,5 +437,18 @@ relache(bS,()=>{joyX=joyY=0;try{window.parent.postMessage({type:'gisele:sortie'}
   bD.addEventListener('touchstart',go,{passive:false}); bD.addEventListener('click',go);
 })();
 </script>
+<script>
+/* ---------- contacts du téléphone : la première fois que Rudy parle à une des filles, elle arrive dans ses contacts ---------- */
+(function(){
+  const QUI={"btnParler": ["gisele"], "btnDiscuter": ["gisele"]};
+  function marque(ids){ try{ const D=JSON.parse(localStorage.getItem('rudy_contacts')||'{}')||{}; let n=false;
+    ids.forEach(id=>{ if(!D[id]){ D[id]=Date.now(); n=true; } }); if(n) localStorage.setItem('rudy_contacts',JSON.stringify(D)); }catch(e){} }
+  
+  const sel=Object.keys(QUI).map(k=>'#'+k).join(',');
+  if(!sel) return;
+  const f=e=>{ const b=e.target&&e.target.closest&&e.target.closest(sel); if(b) marque(QUI[b.id]); };
+  document.addEventListener('touchstart',f,{capture:true,passive:true}); document.addEventListener('click',f,true);
+})();
+</script>
 </body>
 </html>

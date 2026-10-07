@@ -87,7 +87,7 @@ body{height:100%}
 <div class="vitre the" style="left:90.93001841620627%;top:35.35911602209944%;width:2.6703499079189688%;height:8.56353591160221%"><svg style="left:24%;top:30%;width:56%;height:113%" viewBox="0 0 40 100" preserveAspectRatio="none"><g fill="#120d14"><path d="M20 0.5 C25 0.5 27 4.5 26.6 9 C26.3 13 24.5 16 22.6 17.2 L22.8 21 C27 22.2 31.5 23 34.5 25.5 C37.5 28 38 33 38.4 40 L39 66 C39.2 70 37 71 36 68 L35 46 L34 100 L6 100 L5 46 L4 68 C3 71 0.8 70 1 66 L1.6 40 C2 33 2.5 28 5.5 25.5 C8.5 23 13 22.2 17.2 21 L17.4 17.2 C15.5 16 13.7 13 13.4 9 C13 4.5 15 0.5 20 0.5 Z"/></g></svg></div><div id="devant"></div></div></div>
 
 <div id="zoneJoy"></div><div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="btnEntrer">ENTRER</div><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
+<div id="actions"><div class="btn" id="btnDiscBeret" style="display:none">DISCUTER</div><div class="btn" id="btnParlerBeret" style="display:none">PARLER</div><div class="btn" id="btnParlerCarnet" style="display:none">PARLER</div><div class="btn" id="btnParlerCostume" style="display:none">PARLER</div><div class="btn" id="btnEntrer">ENTRER</div><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
 <div class="confirme" id="confUsine"><div class="carte"><h2>Êtes-vous sûr&nbsp;?</h2><div class="rang"><div class="btn" id="usineOui">OUI</div><div class="btn" id="usineNon">NON</div></div></div></div>
 <div id="usineQuitter">&#10005; MITSUDA</div>
 <div id="depart"><div class="carte">
@@ -405,6 +405,126 @@ boiteD.querySelectorAll('.choix').forEach(b=>appui(b,()=>{ boiteD.style.display=
   try{ parent.postMessage({type:'mitsuda:destination',dest:b.getAttribute('data-d')},'*'); }catch(e){} }));
 addEventListener('resize',()=>{ cadrer(true); });
 majBoutons(); pose(IMG.fumer[0]); requestAnimationFrame(()=>{ cadrer(true); requestAnimationFrame(boucleRudy); });
+
+/* ---------- Aline, la brune au béret (devant la vitrine du labo) ----------
+   PARLER → sa vidéo (et elle arrive dans les contacts du téléphone) ; ensuite DISCUTER apparaît */
+(function(){
+  const BX=1000;
+  const bP=document.getElementById('btnParlerBeret'), bD=document.getElementById('btnDiscBeret'), act=document.getElementById('actions');
+  const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:90;background:#000;display:none';
+  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+  const v=vb.querySelector('video');
+  const bulle=document.createElement('div');
+  bulle.style.cssText="position:absolute;z-index:32;display:none;transform:translateX(-50%);width:min(46vw,260px);padding:10px 14px;background:#fff;color:#111;border:3px solid #111;border-radius:22px;font:800 clamp(12px,2.6vmin,20px)/1.25 'Comic Sans MS','Chalkboard SE',Arial,sans-serif;box-shadow:4px 4px 0 rgba(0,0,0,.55)";
+  pano.appendChild(bulle); bulle.style.left=(BX/PW*100)+'%'; bulle.style.top=(470/PH*100)+'%';
+  const choixB=document.createElement('div'); choixB.style.cssText='position:fixed;z-index:41;right:4.5vmin;bottom:6vmin;display:none;flex-direction:column;gap:2.4vmin;min-width:46vmin';
+  document.body.appendChild(choixB);
+  const dejaVue=()=>{ try{ return localStorage.getItem('mitsuda_beret_vu')==='1'; }catch(e){ return false; } };
+  function nouveauContact(id){ try{ const D=JSON.parse(localStorage.getItem('rudy_contacts')||'{}')||{}; if(!D[id]){ D[id]=Date.now(); localStorage.setItem('rudy_contacts',JSON.stringify(D)); } }catch(e){} }
+  let occupe=false;
+  setInterval(()=>{
+    const pres=!occupe&&!dedans&&!menu&&Math.abs(x-BX)<75&&Math.abs(x-BX)<Math.abs(x-1300);
+    bP.style.display=pres?'block':'none';
+    bD.style.display=(pres&&dejaVue())?'block':'none';
+  },150);
+  function dit(t,ms){ bulle.textContent=t; bulle.style.display='block'; clearTimeout(bulle._t); if(ms) bulle._t=setTimeout(()=>{ bulle.style.display='none'; },ms); }
+  const GAIN=10;                     // chaque vidéo avec Aline : +10 % de cœur
+  function coeur(d){ try{ const S=JSON.parse(localStorage.getItem('rudyphone')||'{}')||{}; S.love=S.love||{};
+    const val=Math.min(100,Math.round(((S.love.aline||0)+d)*10)/10); S.love.aline=val; localStorage.setItem('rudyphone',JSON.stringify(S)); return val; }catch(e){ return null; } }
+  const toastC=document.createElement('div');
+  toastC.style.cssText="position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:95;display:none;padding:9px 16px;border-radius:999px;background:rgba(150,20,60,.92);color:#fff;font:800 15px Arial,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.5)";
+  document.body.appendChild(toastC);
+  function joue(src,apres,marque){ bulle.style.display='none'; occupe=true; dir=dirY=0; v.src=src; vb.style.display='block';
+    const f=()=>{ v.removeEventListener('ended',f); v.removeEventListener('error',f); vb.style.display='none'; occupe=false; tPrec=0;
+      if(marque){ try{ localStorage.setItem('mitsuda_beret_vu','1'); }catch(e){} } if(apres) dit(apres,3000);
+      const val=coeur(GAIN); if(val!==null){ toastC.textContent='❤️ Aline +'+GAIN+' % ('+String(val).replace('.',',')+' %)'; toastC.style.display='block';
+        clearTimeout(toastC._t); toastC._t=setTimeout(()=>{ toastC.style.display='none'; },2600); } };
+    v.addEventListener('ended',f); v.addEventListener('error',f); const q=v.play(); if(q&&q.catch) q.catch(()=>{}); }
+  appui(bP,()=>{ nouveauContact('aline'); joue('/assets/shinato/m/mitsuda_beret.mp4',null,true); });
+  // DISCUTER
+  const DISC=[
+    {nom:'On va en boîte ?', avant:'Ouééé, super ! 🥳', video:'/assets/shinato/m/mitsuda_beret_boite.mp4', apres:"J'ai passé un super moment ! 😊"},
+    {nom:"L'écouter", question:"J'ai besoin d'une douche… Tu veux venir chez moi ? 😏", video:'/assets/shinato/m/mitsuda_beret_douche.mp4',
+     non:"Ah bon… Ça sera pour une prochaine fois. 😕"},
+    {nom:"J'aimerais que tu viennes chez moi", avant:"Bien sûr… Par contre, je vais tout te donner. J'espère que tu vas tenir le choc ! 😈",
+     video:'/assets/shinato/m/mitsuda_beret_chezmoi.mp4'}
+  ];
+  function ferme(){ choixB.style.display='none'; act.style.visibility=''; }
+  function bouton(t,fn,pale){ const b=document.createElement('div'); b.className='btn'; b.textContent=t; if(pale) b.style.opacity='.8'; choixB.appendChild(b); appui(b,fn); }
+  appui(bD,()=>{
+    occupe=true; dir=dirY=0; choixB.innerHTML='';
+    DISC.forEach(C=>bouton(C.nom,()=>{
+      if(C.question){
+        choixB.innerHTML=''; dit(C.question);
+        bouton('OUI',()=>{ ferme(); joue(C.video,C.apres); });
+        bouton('NON',()=>{ ferme(); occupe=false; dit(C.non,2600); },true);
+        return;
+      }
+      ferme(); const ms=C.avant.length>40?2900:1900; dit(C.avant,ms); setTimeout(()=>joue(C.video,C.apres),ms+100); }));
+    bouton('Rien',()=>{ ferme(); occupe=false; },true);
+    choixB.style.display='flex'; act.style.visibility='hidden';
+  });
+})();
+/* ---------- la fille au carnet (devant le salon de thé) ----------
+   PARLER → « Dégage ! » → Insister (vidéo, −100 €) ou Laisser tomber (fin de la conversation) */
+(function(){
+  const CX=2116;
+  const bP=document.getElementById('btnParlerCarnet'), act=document.getElementById('actions');
+  const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:90;background:#000;display:none';
+  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+  const v=vb.querySelector('video');
+  const bulle=document.createElement('div');
+  bulle.style.cssText="position:absolute;z-index:32;display:none;transform:translateX(-100%);width:min(40vw,230px);padding:10px 14px;background:#fff;color:#111;border:3px solid #111;border-radius:22px;font:800 clamp(12px,2.6vmin,20px)/1.25 'Comic Sans MS','Chalkboard SE',Arial,sans-serif;box-shadow:4px 4px 0 rgba(0,0,0,.55)";
+  pano.appendChild(bulle); bulle.style.left=((CX+30)/PW*100)+'%'; bulle.style.top=(440/PH*100)+'%';
+  const choixC=document.createElement('div'); choixC.style.cssText='position:fixed;z-index:41;right:4.5vmin;bottom:6vmin;display:none;flex-direction:column;gap:2.4vmin;min-width:46vmin';
+  document.body.appendChild(choixC);
+  const toast=document.createElement('div');
+  toast.style.cssText="position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:95;display:none;padding:9px 16px;border-radius:999px;background:rgba(20,20,30,.92);color:#fff;font:800 15px Arial,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.5)";
+  document.body.appendChild(toast);
+  function toastC(t){ toast.textContent=t; toast.style.display='block'; clearTimeout(toast._t); toast._t=setTimeout(()=>{ toast.style.display='none'; },2600); }
+  function pont(){ for(const w of [window,parent,top]){ try{ if(w.Chambre&&w.Chambre.argent) return w.Chambre; }catch(e){} } return null; }
+  function argent(){ const p=pont(); try{ return p?p.argent():null; }catch(e){ return null; } }
+  function payer(n){ const p=pont(); try{ if(p&&p.ajouterArgent) p.ajouterArgent(-n); }catch(e){} }
+  let occupe=false;
+  setInterval(()=>{
+    const pres=!occupe&&!dedans&&!menu&&Math.abs(x-CX)<75&&x>2052;
+    bP.style.display=pres?'block':'none';
+  },150);
+  function dit(t,ms){ bulle.textContent=t; bulle.style.display='block'; clearTimeout(bulle._t); if(ms) bulle._t=setTimeout(()=>{ bulle.style.display='none'; },ms); }
+  function ferme(){ choixC.style.display='none'; act.style.visibility=''; }
+  function bouton(t,fn,pale){ const b=document.createElement('div'); b.className='btn'; b.textContent=t; if(pale) b.style.opacity='.8'; choixC.appendChild(b); appui(b,fn); }
+  function joue(src){ bulle.style.display='none'; dir=dirY=0; v.src=src; vb.style.display='block';
+    const f=()=>{ v.removeEventListener('ended',f); v.removeEventListener('error',f); vb.style.display='none'; v.removeAttribute('src'); occupe=false; tPrec=0; };
+    v.addEventListener('ended',f); v.addEventListener('error',f); const q=v.play(); if(q&&q.catch) q.catch(()=>{}); }
+  appui(bP,()=>{
+    occupe=true; dir=dirY=0; dit('Dégage ! 😒'); choixC.innerHTML='';
+    bouton('Insister',()=>{
+      const a=argent();
+      if(a!==null&&a<100){ ferme(); occupe=false; dit('Dégage ! 😒',2000); toastC("Il te faut 100 € pour ça. Tu n'as que "+a+" €."); return; }
+      ferme(); payer(100); toastC('−100 €'); setTimeout(()=>joue('/assets/shinato/m/mitsuda_carnet.mp4'),700);
+    });
+    bouton('Laisser tomber',()=>{ ferme(); occupe=false; bulle.style.display='none'; },true);
+    choixC.style.display='flex'; act.style.visibility='hidden';
+  });
+})();
+/* ---------- le couple devant les grilles : l'homme en costume (à gauche du couple) ----------
+   la femme aux cheveux gris (à droite) est une zone à part, sans bouton pour l'instant.
+   PARLER à l'homme → sa vidéo directement */
+(function(){
+  const HX=646;                       // l'homme ; la femme est vers 682
+  const bP=document.getElementById('btnParlerCostume');
+  const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:90;background:#000;display:none';
+  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+  const v=vb.querySelector('video');
+  let occupe=false;
+  setInterval(()=>{
+    const pres=!occupe&&!dedans&&!menu&&x>612&&x<664;   // seulement devant l'homme, pas devant la femme
+    bP.style.display=pres?'block':'none';
+  },150);
+  appui(bP,()=>{ occupe=true; dir=dirY=0; v.src='/assets/shinato/m/mitsuda_costume.mp4'; vb.style.display='block';
+    const f=()=>{ v.removeEventListener('ended',f); v.removeEventListener('error',f); vb.style.display='none'; v.removeAttribute('src'); occupe=false; tPrec=0; };
+    v.addEventListener('ended',f); v.addEventListener('error',f); const q=v.play(); if(q&&q.catch) q.catch(()=>{}); });
+})();
 </script>
 </body>
 </html>
