@@ -87,7 +87,7 @@ body{height:100%}
 <div class="vitre the" style="left:90.93001841620627%;top:35.35911602209944%;width:2.6703499079189688%;height:8.56353591160221%"><svg style="left:24%;top:30%;width:56%;height:113%" viewBox="0 0 40 100" preserveAspectRatio="none"><g fill="#120d14"><path d="M20 0.5 C25 0.5 27 4.5 26.6 9 C26.3 13 24.5 16 22.6 17.2 L22.8 21 C27 22.2 31.5 23 34.5 25.5 C37.5 28 38 33 38.4 40 L39 66 C39.2 70 37 71 36 68 L35 46 L34 100 L6 100 L5 46 L4 68 C3 71 0.8 70 1 66 L1.6 40 C2 33 2.5 28 5.5 25.5 C8.5 23 13 22.2 17.2 21 L17.4 17.2 C15.5 16 13.7 13 13.4 9 C13 4.5 15 0.5 20 0.5 Z"/></g></svg></div><div id="devant"></div></div></div>
 
 <div id="zoneJoy"></div><div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="btnDiscBeret" style="display:none">DISCUTER</div><div class="btn" id="btnParlerBeret" style="display:none">PARLER</div><div class="btn" id="btnParlerCarnet" style="display:none">PARLER</div><div class="btn" id="btnParlerCostume" style="display:none">PARLER</div><div class="btn" id="btnParlerDame" style="display:none">PARLER</div><div class="btn" id="btnParlerAurore" style="display:none">PARLER</div><div class="btn" id="btnDiscPolice" style="display:none">DISCUTER</div><div class="btn" id="btnParlerPolice" style="display:none">PARLER</div><div class="btn" id="btnEntrer">ENTRER</div><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
+<div id="actions"><div class="btn" id="btnDiscBeret" style="display:none">DISCUTER</div><div class="btn" id="btnParlerBeret" style="display:none">PARLER</div><div class="btn" id="btnParlerCarnet" style="display:none">PARLER</div><div class="btn" id="btnParlerCostume" style="display:none">PARLER</div><div class="btn" id="btnParlerDame" style="display:none">PARLER</div><div class="btn" id="btnParlerVampire" style="display:none">PARLER</div><div class="btn" id="btnParlerAurore" style="display:none">PARLER</div><div class="btn" id="btnDiscPolice" style="display:none">DISCUTER</div><div class="btn" id="btnParlerPolice" style="display:none">PARLER</div><div class="btn" id="btnEntrer">ENTRER</div><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
 <div class="confirme" id="confUsine"><div class="carte"><h2>Êtes-vous sûr&nbsp;?</h2><div class="rang"><div class="btn" id="usineOui">OUI</div><div class="btn" id="usineNon">NON</div></div></div></div>
 <div id="usineQuitter">&#10005; MITSUDA</div>
 <div id="depart"><div class="carte">
@@ -125,7 +125,7 @@ taille();addEventListener('resize',taille);
 const pct=(v,t)=>(v/t*100)+'%';
 PERSOS.forEach(p=>{
  const imgs=FR[p.id];
- const el=document.createElement('div');el.className='perso';
+ const el=document.createElement('div');el.className='perso';el.dataset.perso=p.id;
  const probe=new Image();probe.src='data:image/webp;base64,'+imgs[0];
  const place=()=>{
   const ratio=probe.naturalWidth/probe.naturalHeight||.35;
@@ -667,6 +667,29 @@ majBoutons(); pose(IMG.fumer[0]); requestAnimationFrame(()=>{ cadrer(true); requ
     bouton('Rien',ferme,true);
     choixD.style.display='flex'; act.style.visibility='hidden'; }
   appui(bP,()=>{ occupe=true; joue('/assets/shinato/m/mitsuda_dame.mp4',choix); });
+})();
+/* ---------- la femme vampire (entre le labo et le salon de thé) : PARLER → sa vidéo directement ---------- */
+(function(){
+  const bP=document.getElementById('btnParlerVampire');
+  const lit=k=>{ try{ return localStorage.getItem(k)==='1'; }catch(e){ return false; } };
+  // après Astra : sa vidéo de départ, puis elle quitte Mitsuda pour de bon (elle reviendra ailleurs, en ennemie)
+  const partie=()=>lit('mitsuda_vampire_partie');
+  function cache(){ document.querySelectorAll('.perso[data-perso="vampire"]').forEach(e=>{ e.style.display='none'; }); }
+  if(partie()) cache();
+  const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:90;background:#000;display:none';
+  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+  const v=vb.querySelector('video');
+  let occupe=false;
+  setInterval(()=>{
+    const pres=!occupe&&!dedans&&!menu&&!partie()&&x>1458&&x<1560;
+    bP.style.display=pres?'block':'none';
+  },150);
+  appui(bP,()=>{ occupe=true; dir=dirY=0; const depart=lit('mitsuda_usine_gagnee');
+    v.src=depart?'/assets/shinato/m/mitsuda_vampire_depart.mp4':'/assets/shinato/m/mitsuda_vampire.mp4'; vb.style.display='block';
+    const f=()=>{ v.removeEventListener('ended',f); v.removeEventListener('error',f);
+      if(depart){ try{ localStorage.setItem('mitsuda_vampire_partie','1'); }catch(e){} cache(); }
+      vb.style.display='none'; v.removeAttribute('src'); occupe=false; tPrec=0; };
+    v.addEventListener('ended',f); v.addEventListener('error',f); const q=v.play(); if(q&&q.catch) q.catch(()=>{}); });
 })();
 </script>
 </body>
