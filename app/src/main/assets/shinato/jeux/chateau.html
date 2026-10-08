@@ -557,7 +557,10 @@ function killRudy(prise){
 }
 function bossDefeated(){
   SFX.win();
-  setTimeout(()=>{ game.state = 'win'; }, 1200);
+  setTimeout(()=>{ game.state = 'win';
+    // dans l'appli (Rembourg) : la Reine est vaincue → la vidéo de la victoire
+    try{ if (window.parent && window.parent !== window) window.parent.postMessage({type:'chateau:victoire'}, '*'); }catch(e){}
+  }, 1200);
 }
 function nextMap(){
   if (game.fadeDir) return;
@@ -885,8 +888,11 @@ addEventListener('keydown', e=>{
 
 // ================== BOUCLE ==================
 let last = performance.now();
+const DIRECT = /[?&]direct=1/.test(location.search);
 function loop(now){
   const dt = Math.min(0.05, (now-last)/1000); last = now;
+  // lancé depuis la porte de Rembourg (après la vidéo) : pas d'écran titre, le combat commence tout de suite
+  if (game.state==='title' && DIRECT && loaded>=total){ audio(); startMap(0); }
   if (game.state==='title'){ game.t += dt; ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H); if (loaded>=total) drawTitle(); else { ctx.font='22px Georgia,serif'; ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText('Chargement… '+Math.round(loaded/total*100)+' %', W/2, H/2); } }
   else {
     update(dt);

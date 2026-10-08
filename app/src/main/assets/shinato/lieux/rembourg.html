@@ -319,8 +319,12 @@ appui(btnE,()=>{
   if(!fr){ fr=document.createElement('iframe'); fr.id='chateauJeu'; fr.setAttribute('allow','autoplay; fullscreen'); document.body.appendChild(fr); }
   dedans=true; dir=dirY=0; flP.style.display=btnE.style.display='none';
   ambiance.coupe();                                   // le jeu a ses propres sons
-  fr.src='/assets/shinato/jeux/chateau.html'; fr.style.display='block'; quitC.style.display='block';
-  setTimeout(()=>{ try{ fr.focus(); }catch(e){} },300);
+  // d'abord la vidéo d'entrée dans le château, puis le combat commence directement (sans l'écran titre)
+  videoPleinEcran('/assets/shinato/m/chateau_entree.mp4',vb=>{
+    vb.remove();
+    fr.src='/assets/shinato/jeux/chateau.html?direct=1'; fr.style.display='block'; quitC.style.display='block';
+    setTimeout(()=>{ try{ fr.focus(); }catch(e){} },300);
+  });
 });
 appui(quitC,()=>{
   const fr=document.getElementById('chateauJeu'); if(fr){ fr.style.display='none'; fr.src='about:blank'; }
@@ -345,7 +349,9 @@ const KO_CHATEAU={
   g_h:'/assets/shinato/m/chateau_ko_fantome.mp4',             // le Fantôme : elle l'attrape et pompe toute son énergie
   coups_v:'/assets/shinato/m/chateau_ko_vampire_coups.mp4',   // la Vampire : elle le met K.O. avec ses coups, sans l'attraper
   g_v:'/assets/shinato/m/chateau_ko_vampire.mp4',             // la Vampire : elle l'attrape et pompe toute son énergie
-  g_k:'/assets/shinato/m/chateau_ko_reine.mp4'                // la Reine Vampire (la boss) : elle l'attrape et pompe toute son énergie
+  g_k:'/assets/shinato/m/chateau_ko_reine.mp4',               // la Reine Vampire (la boss) : elle l'attrape et pompe toute son énergie
+  coups_boule:'/assets/shinato/m/chateau_ko_reine_boule.mp4', // la Reine Vampire : une de ses boules de feu rouges l'achève
+  coups_k:'/assets/shinato/m/chateau_ko_reine_coups.mp4'      // la Reine Vampire : ses coups normaux (poings et pieds)
 };
 function videoPleinEcran(src,fin,z){
   const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:'+(z||95)+';background:#000';
@@ -364,6 +370,17 @@ addEventListener('message',e=>{
   const src=e.data.prise&&KO_CHATEAU[e.data.prise];
   if(!src){ hopital(); return; }
   videoPleinEcran(src,vb=>{ vb.remove(); hopital(); });
+});
+
+/* ---------- la Reine Vampire est vaincue : la vidéo de la victoire, puis Rudy devant la grande porte ---------- */
+addEventListener('message',e=>{
+  if(!e.data||e.data.type!=='chateau:victoire') return;
+  try{ localStorage.setItem('rembourg_chateau_gagne','1'); }catch(err){}
+  const fr=document.getElementById('chateauJeu'); if(fr){ fr.style.display='none'; fr.src='about:blank'; }
+  quitC.style.display='none'; dedans=true; dir=dirY=0; ambiance.coupe();
+  videoPleinEcran('/assets/shinato/m/chateau_victoire.mp4',vb=>{
+    vb.remove(); dedans=false; tPrec=0; x=PORTE_X; y=YMIN+4; sens=1; etat='repos'; f=0; cadrer(true); ambiance.demarre();
+  });
 });
 
 /* « Où voulez-vous aller ? » (tout à gauche) : on reprend la moto */
