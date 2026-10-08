@@ -200,6 +200,20 @@ function startMap(i, keepHp){
     k.st='intro'; k.t=0; game.ents.push(k); game.boss = k;
   } else game.boss = null;
   game.state = 'play'; game.fade = 1; game.fadeDir = -1;
+  // en arrivant dans la salle du trône (depuis la salle 2) : la vidéo d'avant le combat contre la Reine
+  if (MAPS[i].boss && keepHp!=null) videoAvantBoss();
+}
+function videoAvantBoss(){
+  game.state = 'video';                                  // le jeu attend la fin de la vidéo
+  const vb = document.createElement('div');
+  vb.style.cssText = 'position:fixed;inset:0;z-index:999;background:#000';
+  vb.innerHTML = '<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+  document.body.appendChild(vb);
+  const v = vb.querySelector('video');
+  const fin = ()=>{ v.removeEventListener('ended',fin); v.removeEventListener('error',fin); vb.remove(); if (game.state==='video') game.state = 'play'; };
+  v.addEventListener('ended',fin); v.addEventListener('error',fin);
+  v.src = '/assets/shinato/m/chateau_boss_intro.mp4';
+  const q = v.play(); if (q && q.catch) q.catch(()=>{});
 }
 
 function makeEnemy(kind, x, y){
