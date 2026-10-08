@@ -331,7 +331,14 @@ appui(quitC,()=>{
 /* ---------- Rudy K.O. dans « Nuit au Château » : (la vidéo de l'ennemie qui l'a eu, s'il y en a une)
    puis l'hôpital, exactement comme le jeu « Rudy contre l'usine » : la vidéo de l'hôpital, puis devant l'hôpital de Vaviel ---------- */
 const KO_CHATEAU={
-  g_b:'/assets/shinato/m/chateau_ko_nounours.mp4'      // Nounours : elle l'attrape et pompe toute son énergie
+  g_b:'/assets/shinato/m/chateau_ko_nounours.mp4',     // Nounours : elle l'attrape et pompe toute son énergie
+  coups_b:'/assets/shinato/m/chateau_ko_nounours_coups.mp4',  // Nounours : elle le met K.O. avec ses coups, sans l'attraper
+  g_g:'/assets/shinato/m/chateau_ko_gargouille.mp4',          // Gargouille : elle l'attrape et pompe toute son énergie
+  g_f:'/assets/shinato/m/chateau_ko_fee.mp4',                 // la Fée : elle l'attrape et pompe toute son énergie
+  coups_f:'/assets/shinato/m/chateau_ko_fee_coups.mp4',       // la Fée : elle le met K.O. avec ses coups, sans l'attraper
+  g_c:'/assets/shinato/m/chateau_ko_griffes.mp4',             // Griffes : elle l'attrape et pompe toute son énergie
+  coups_c:'/assets/shinato/m/chateau_ko_griffes_coups.mp4',   // Griffes : elle le met K.O. avec ses coups, sans l'attraper
+  coups_g:'/assets/shinato/m/chateau_ko_gargouille_coups.mp4' // Gargouille : elle le met K.O. avec ses coups, sans l'attraper
 };
 function videoPleinEcran(src,fin,z){
   const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:'+(z||95)+';background:#000';
