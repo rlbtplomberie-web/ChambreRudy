@@ -303,6 +303,12 @@ document.addEventListener('visibilitychange',()=>{ if(document.hidden) ambiance.
 
 /* ---------- la grande porte du château : flèche jaune + ENTRER → le mini-jeu « Nuit au Château » ---------- */
 const PORTE_X=1230;                                   // le milieu de la grande porte ouverte
+// la musique du château hanté : seulement pendant le combat, coupée pendant toutes les vidéos
+const musiqueChateau=new Audio('/assets/shinato/m/chateau_musique.mp3'); musiqueChateau.loop=true; musiqueChateau.volume=0.75;
+function chateauSon(joue,depuisDebut){ try{ if(joue){ if(depuisDebut) musiqueChateau.currentTime=0; const q=musiqueChateau.play(); if(q&&q.catch) q.catch(()=>{}); } else musiqueChateau.pause(); }catch(e){} }
+addEventListener('message',e=>{ if(e.data&&e.data.type==='chateau:video'){ const fr=document.getElementById('chateauJeu'); chateauSon(!e.data.on&&fr&&fr.style.display==='block'); } });
+document.addEventListener('visibilitychange',()=>{ const fr=document.getElementById('chateauJeu'); if(document.hidden) chateauSon(false); else if(fr&&fr.style.display==='block') chateauSon(true); });
+addEventListener('pagehide',()=>chateauSon(false));
 const btnE=document.getElementById('btnEntrer'), quitC=document.getElementById('chateauQuitter');
 const flP=document.createElement('div'); flP.id='flechePorte';
 flP.innerHTML='<svg viewBox="0 0 100 120" width="100%" height="100%"><path d="M50 4 L94 52 L66 52 L66 116 L34 116 L34 52 L6 52 Z" fill="#ffe400" stroke="#fff7b0" stroke-width="5" stroke-linejoin="round"/></svg>';
@@ -322,11 +328,12 @@ appui(btnE,()=>{
   // d'abord la vidéo d'entrée dans le château, puis le combat commence directement (sans l'écran titre)
   videoPleinEcran('/assets/shinato/m/chateau_entree.mp4',vb=>{
     vb.remove();
-    fr.src='/assets/shinato/jeux/chateau.html?direct=1'; fr.style.display='block'; quitC.style.display='block';
+    fr.src='/assets/shinato/jeux/chateau.html?direct=1'; fr.style.display='block'; quitC.style.display='block'; chateauSon(true,true);
     setTimeout(()=>{ try{ fr.focus(); }catch(e){} },300);
   });
 });
 appui(quitC,()=>{
+  chateauSon(false);
   const fr=document.getElementById('chateauJeu'); if(fr){ fr.style.display='none'; fr.src='about:blank'; }
   quitC.style.display='none'; dedans=false; tPrec=0; x=PORTE_X; y=YMIN+4; sens=1; etat='repos'; f=0; cadrer(true);
   ambiance.demarre();
@@ -361,6 +368,7 @@ function videoPleinEcran(src,fin,z){
 }
 addEventListener('message',e=>{
   if(!e.data||e.data.type!=='chateau:ko') return;
+  chateauSon(false);                                   // K.O. : la musique s'arrête avant la vidéo
   const fr=document.getElementById('chateauJeu'); if(fr){ fr.style.display='none'; fr.src='about:blank'; }
   quitC.style.display='none'; dedans=true; dir=dirY=0; ambiance.coupe();
   const hopital=()=>videoPleinEcran('/assets/shinato/m/usine_hopital.mp4',hb=>{
@@ -375,6 +383,7 @@ addEventListener('message',e=>{
 /* ---------- la Reine Vampire est vaincue : la vidéo de la victoire, puis Rudy devant la grande porte ---------- */
 addEventListener('message',e=>{
   if(!e.data||e.data.type!=='chateau:victoire') return;
+  chateauSon(false);
   try{ localStorage.setItem('rembourg_chateau_gagne','1'); }catch(err){}
   const fr=document.getElementById('chateauJeu'); if(fr){ fr.style.display='none'; fr.src='about:blank'; }
   quitC.style.display='none'; dedans=true; dir=dirY=0; ambiance.coupe();
