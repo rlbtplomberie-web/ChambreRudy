@@ -87,7 +87,7 @@ body{height:100%}
 <div class="vitre the" style="left:90.93001841620627%;top:35.35911602209944%;width:2.6703499079189688%;height:8.56353591160221%"><svg style="left:24%;top:30%;width:56%;height:113%" viewBox="0 0 40 100" preserveAspectRatio="none"><g fill="#120d14"><path d="M20 0.5 C25 0.5 27 4.5 26.6 9 C26.3 13 24.5 16 22.6 17.2 L22.8 21 C27 22.2 31.5 23 34.5 25.5 C37.5 28 38 33 38.4 40 L39 66 C39.2 70 37 71 36 68 L35 46 L34 100 L6 100 L5 46 L4 68 C3 71 0.8 70 1 66 L1.6 40 C2 33 2.5 28 5.5 25.5 C8.5 23 13 22.2 17.2 21 L17.4 17.2 C15.5 16 13.7 13 13.4 9 C13 4.5 15 0.5 20 0.5 Z"/></g></svg></div><div id="devant"></div></div></div>
 
 <div id="zoneJoy"></div><div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="btnDiscBeret" style="display:none">DISCUTER</div><div class="btn" id="btnParlerBeret" style="display:none">PARLER</div><div class="btn" id="btnParlerCarnet" style="display:none">PARLER</div><div class="btn" id="btnParlerCostume" style="display:none">PARLER</div><div class="btn" id="btnParlerDame" style="display:none">PARLER</div><div class="btn" id="btnParlerVampire" style="display:none">PARLER</div><div class="btn" id="btnParlerCafe" style="display:none">PARLER</div><div class="btn" id="btnParlerAurore" style="display:none">PARLER</div><div class="btn" id="btnDiscPolice" style="display:none">DISCUTER</div><div class="btn" id="btnParlerPolice" style="display:none">PARLER</div><div class="btn" id="btnEntrer">ENTRER</div><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
+<div id="actions"><div class="btn" id="btnDiscBeret" style="display:none">DISCUTER</div><div class="btn" id="btnParlerBeret" style="display:none">PARLER</div><div class="btn" id="btnEnvieCarnet" style="display:none">J'AI ENVIE DE TOI</div><div class="btn" id="btnAmiCarnet" style="display:none">JE SUIS UN AMI D'ANGE</div><div class="btn" id="btnParlerCarnet" style="display:none">PARLER</div><div class="btn" id="btnParlerCostume" style="display:none">PARLER</div><div class="btn" id="btnParlerDame" style="display:none">PARLER</div><div class="btn" id="btnParlerVampire" style="display:none">PARLER</div><div class="btn" id="btnParlerCafe" style="display:none">PARLER</div><div class="btn" id="btnParlerAurore" style="display:none">PARLER</div><div class="btn" id="btnDiscPolice" style="display:none">DISCUTER</div><div class="btn" id="btnParlerPolice" style="display:none">PARLER</div><div class="btn" id="btnEntrer">ENTRER</div><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
 <div class="confirme" id="confUsine"><div class="carte"><h2>Êtes-vous sûr&nbsp;?</h2><div class="rang"><div class="btn" id="usineOui">OUI</div><div class="btn" id="usineNon">NON</div></div></div></div>
 <div id="usineQuitter">&#10005; MITSUDA</div>
 <div id="depart"><div class="carte">
@@ -471,13 +471,23 @@ majBoutons(); pose(IMG.fumer[0]); requestAnimationFrame(()=>{ cadrer(true); requ
    PARLER → « Dégage ! » → Insister (vidéo, −100 €) ou Laisser tomber (fin de la conversation) */
 (function(){
   const CX=2116;
+  const bA=document.getElementById('btnAmiCarnet');
+  const lu=k=>{ try{ return localStorage.getItem(k)==='1'; }catch(e){ return false; } };
+  // « Je suis un ami d'Ange » : sa réponse et sa vidéo (à remplir quand elles arrivent)
+  const AMI={ video:'/assets/shinato/m/mitsuda_carnet_ami.mp4' };
+  // « J'ai envie de toi » : débloqué après « Je suis un ami d'Ange » (sa vidéo à ajouter quand elle arrive)
+  const bE=document.getElementById('btnEnvieCarnet');
+  const ENVIE={ video:'/assets/shinato/m/mitsuda_carnet_envie.mp4', apres:'À bientôt ! 😘' };
+  appui(bA,()=>{ occupe=true; dir=dirY=0; bulle.style.display='none';
+    joue(AMI.video); try{ localStorage.setItem('mitsuda_carnet_ami','1'); }catch(e){} });
+  appui(bE,()=>{ if(!ENVIE.video) return; occupe=true; dir=dirY=0; bulle.style.display='none'; joue(ENVIE.video,ENVIE.apres); });
   const bP=document.getElementById('btnParlerCarnet'), act=document.getElementById('actions');
   const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:90;background:#000;display:none';
   vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
   const v=vb.querySelector('video');
   const bulle=document.createElement('div');
   bulle.style.cssText="position:absolute;z-index:32;display:none;transform:translateX(-100%);width:min(40vw,230px);padding:10px 14px;background:#fff;color:#111;border:3px solid #111;border-radius:22px;font:800 clamp(12px,2.6vmin,20px)/1.25 'Comic Sans MS','Chalkboard SE',Arial,sans-serif;box-shadow:4px 4px 0 rgba(0,0,0,.55)";
-  pano.appendChild(bulle); bulle.style.left=((CX+30)/PW*100)+'%'; bulle.style.top=(440/PH*100)+'%';
+  pano.appendChild(bulle); bulle.style.left=((CX-40)/PW*100)+'%'; bulle.style.top=(250/PH*100)+'%';   // plus haut et plus à gauche : ne passe pas sous ses boutons
   const choixC=document.createElement('div'); choixC.style.cssText='position:fixed;z-index:41;right:4.5vmin;bottom:6vmin;display:none;flex-direction:column;gap:2.4vmin;min-width:46vmin';
   document.body.appendChild(choixC);
   const toast=document.createElement('div');
@@ -491,14 +501,17 @@ majBoutons(); pose(IMG.fumer[0]); requestAnimationFrame(()=>{ cadrer(true); requ
   setInterval(()=>{
     const pres=!occupe&&!dedans&&!menu&&Math.abs(x-CX)<75&&x>2052;
     bP.style.display=pres?'block':'none';
+    bA.style.display=(pres&&AMI.video&&lu('mitsuda_cafe_nerveuse'))?'block':'none';   // après avoir parlé d'elle à la fille au café
+    bE.style.display=(pres&&ENVIE.video&&lu('mitsuda_carnet_ami'))?'block':'none';     // après « Je suis un ami d'Ange »
   },150);
   function dit(t,ms){ bulle.textContent=t; bulle.style.display='block'; clearTimeout(bulle._t); if(ms) bulle._t=setTimeout(()=>{ bulle.style.display='none'; },ms); }
   function ferme(){ choixC.style.display='none'; act.style.visibility=''; }
   function bouton(t,fn,pale){ const b=document.createElement('div'); b.className='btn'; b.textContent=t; if(pale) b.style.opacity='.8'; choixC.appendChild(b); appui(b,fn); }
-  function joue(src){ bulle.style.display='none'; dir=dirY=0; v.src=src; vb.style.display='block';
-    const f=()=>{ v.removeEventListener('ended',f); v.removeEventListener('error',f); vb.style.display='none'; v.removeAttribute('src'); occupe=false; tPrec=0; };
+  function joue(src,apres){ bulle.style.display='none'; dir=dirY=0; v.src=src; vb.style.display='block';
+    const f=()=>{ v.removeEventListener('ended',f); v.removeEventListener('error',f); vb.style.display='none'; v.removeAttribute('src'); occupe=false; tPrec=0; if(apres) dit(apres,3000); };
     v.addEventListener('ended',f); v.addEventListener('error',f); const q=v.play(); if(q&&q.catch) q.catch(()=>{}); }
   appui(bP,()=>{
+    try{ localStorage.setItem('mitsuda_carnet_vu','1'); }catch(e){}   // débloque « la femme nerveuse » chez la fille au café
     occupe=true; dir=dirY=0; dit('Dégage ! 😒'); choixC.innerHTML='';
     bouton('Insister',()=>{
       const a=argent();
@@ -717,13 +730,16 @@ majBoutons(); pose(IMG.fumer[0]); requestAnimationFrame(()=>{ cadrer(true); requ
     v.addEventListener('ended',f); v.addEventListener('error',f); const q=v.play(); if(q&&q.catch) q.catch(()=>{}); }
   // les réponses de Rudy (une réponse sans vidéo n'est pas encore affichée)
   const REP=[
-    {nom:"Ça va, et toi ?", video:'/assets/shinato/m/mitsuda_cafe_1.mp4'},   // elle devient nerveuse
+    {nom:"Parler de la femme nerveuse", video:'/assets/shinato/m/mitsuda_cafe_1.mp4', bloque:'mitsuda_carnet_vu', marque:'mitsuda_cafe_nerveuse'},   // la fille au carnet, tout à droite
     {nom:"Tu m'as manqué", avant:"Moi aussi… Tu sais, il y a un hôtel à côté… hihi 😏", video:'/assets/shinato/m/mitsuda_cafe_2.mp4'}
   ];
   appui(bP,()=>{
     occupe=true; dir=dirY=0; choixC.innerHTML='';
     dit("Comment ça va, Rudy ? Ça fait longtemps ! Tu m'as manqué. 😊");
-    REP.filter(R=>R.video).forEach(R=>bouton(R.nom,()=>{ ferme(); if(!R.avant){ joue(R.video); return; } dit(R.avant,3200); setTimeout(()=>joue(R.video),3300); }));
+    const lit=k=>{ try{ return localStorage.getItem(k)==='1'; }catch(e){ return false; } };
+    REP.filter(R=>R.video&&(!R.bloque||lit(R.bloque))).forEach(R=>bouton(R.nom,()=>{ ferme();
+      if(R.marque){ try{ localStorage.setItem(R.marque,'1'); }catch(e){} }   // pour la suite avec la fille au carnet
+      if(!R.avant){ joue(R.video); return; } dit(R.avant,3200); setTimeout(()=>joue(R.video),3300); }));
     bouton('Rien',()=>{ ferme(); occupe=false; bulle.style.display='none'; },true);
     choixC.style.display='flex'; act.style.visibility='hidden';
   });
