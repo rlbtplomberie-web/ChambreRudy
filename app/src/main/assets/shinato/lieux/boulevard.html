@@ -395,10 +395,13 @@ addEventListener('pagehide',()=>{ try{ mus.pause(); }catch(e){} });
   });
 })();
 
-/* ---------- le monsieur en costume blanc (devant le restaurant) : PARLER → sa vidéo, sans dialogue ---------- */
+/* ---------- le monsieur en costume blanc (devant le restaurant) : PARLER → « Salut Rudy… » → Rudy parle des diamants → sa vidéo ---------- */
 (function(){
   const BOSS_X=1078, PRES=60;
-  const bP=document.getElementById('parlerBoss'), vb=document.getElementById('videoDame'), v=vb.querySelector('video');
+  const bP=document.getElementById('parlerBoss'), vb=document.getElementById('videoDame'), v=vb.querySelector('video'), bu=document.getElementById('bulleDame');
+  function dit(t,ms,rudy){ bu.textContent=t; bu.style.display='block';
+    bu.style.borderColor=rudy?'#1f6b3a':''; bu.style.background=rudy?'#eafbea':'';   // la réplique de Rudy : bulle verte
+    clearTimeout(bu._t); bu._t=setTimeout(()=>{ bu.style.display='none'; bu.style.borderColor=''; bu.style.background=''; },ms); }
   let occupe=false;
   setInterval(()=>{ const X=window.RUDY_BX?window.RUDY_BX():-9999;
     const pres=!occupe&&vb.style.display!=='block'&&Math.abs(X-BOSS_X)<PRES&&Math.abs(X-BOSS_X)<=Math.abs(X-1124);
@@ -406,8 +409,11 @@ addEventListener('pagehide',()=>{ try{ mus.pause(); }catch(e){} });
   function fini(){ occupe=false; v.removeEventListener('ended',fini); v.removeEventListener('error',fini); }
   let t=0;
   const go=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t<400) return; t=n;
-    occupe=true; bP.style.display='none'; v.src='/assets/shinato/m/blvd_boss.mp4'; vb.style.display='block';
-    v.addEventListener('ended',fini); v.addEventListener('error',fini); const q=v.play(); if(q&&q.catch) q.catch(()=>{}); };
+    occupe=true; bP.style.display='none';
+    dit("Salut Rudy ! Comment tu vas ? 😎",2600);
+    setTimeout(()=>dit("Rudy : Ça va, merci. Je voulais juste te poser quelques questions sur les diamants. 💎",3600,true),2700);
+    setTimeout(()=>{ bu.style.display='none'; v.src='/assets/shinato/m/blvd_boss_diamants.mp4'; vb.style.display='block';
+      v.addEventListener('ended',fini); v.addEventListener('error',fini); const q=v.play(); if(q&&q.catch) q.catch(()=>{}); },6400); };
   bP.addEventListener('touchstart',go,{passive:false}); bP.addEventListener('click',go);
 })();
 </script>

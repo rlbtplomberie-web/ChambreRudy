@@ -151,7 +151,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
 <script>
 /* Arrivée directe dans un lieu (MAP du téléphone depuis la chambre) : on cache la rue tout de suite,
    pour ne pas la voir une seconde avant le lieu. */
-(function(){ try{ var t=localStorage.getItem("rudy_teleport"), n={plage:"la plage",vaviel:"Vaviel",ville:"la ville délabrée",delabree:"la ville délabrée",boulevard:"le boulevard",mitsuda:"Mitsuda"}[t];
+(function(){ try{ var t=localStorage.getItem("rudy_teleport"), n={plage:"la plage",vaviel:"Vaviel",ville:"la ville délabrée",delabree:"la ville délabrée",boulevard:"le boulevard",mitsuda:"Mitsuda",rembourg:"Rembourg"}[t];
   if(n){ var c=document.getElementById("voyageCouv"); document.getElementById("voyageTxt").textContent="En route vers "+n+"…"; c.style.display="flex"; } }catch(e){} })();
 </script>
 <div id="vue">
@@ -1183,7 +1183,7 @@ else carte.addEventListener("load",demarre);
 <style>
 #depart{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;
  background:rgba(0,0,0,.55);font-family:Arial,Helvetica,sans-serif}
-#depart .carte{position:relative;min-width:62vmin;padding:5vmin 6vmin 5.5vmin;border-radius:3vmin;text-align:center;
+#depart .carte{position:relative;min-width:62vmin;max-height:92vh;overflow:auto;padding:5vmin 6vmin 5.5vmin;border-radius:3vmin;text-align:center;
  background:linear-gradient(rgba(14,14,18,.96),rgba(30,30,36,.96));border:2px solid rgba(255,226,122,.6);
  box-shadow:0 10px 40px rgba(0,0,0,.7)}
 #depart h2{margin:0 0 4vmin;color:#fff;font:900 clamp(16px,4.2vmin,34px)/1.2 Arial,sans-serif;letter-spacing:2px;
@@ -1204,6 +1204,7 @@ else carte.addEventListener("load",demarre);
  <button class="choix" id="versVaviel" style="margin-top:2.4vmin">VAVIEL</button>
  <button class="choix" id="versBoulevard" style="margin-top:2.4vmin">BOULEVARD</button>
  <button class="choix" id="versMitsuda" style="margin-top:2.4vmin">MITSUDA</button>
+ <button class="choix" id="versRembourg" style="margin-top:2.4vmin">REMBOURG</button>
 </div></div>
 <script>
 /* ---------- au bout de la rue, tout à droite : « Où voulez-vous aller ? » ---------- */
@@ -1242,6 +1243,7 @@ else carte.addEventListener("load",demarre);
  window.appuiSur(document.getElementById("versVaviel"),function(){ partEnMoto("vaviel"); });
  window.appuiSur(document.getElementById("versBoulevard"),function(){ partEnMoto("boulevard"); });
  window.appuiSur(document.getElementById("versMitsuda"),function(){ partEnMoto("mitsuda"); });
+ window.appuiSur(document.getElementById("versRembourg"),function(){ partEnMoto("rembourg"); });
 
  // arrivée de la moto : c'est ici qu'on enchaînera sur la plage (fichier à venir)
  window.addEventListener("message",function(e){
@@ -1281,7 +1283,7 @@ else carte.addEventListener("load",demarre);
    window.minuterieLibre(function(){ try{ cv.focus(); }catch(err){} },300);
    return;
   }
-  if(e.data && (e.data.type==="delabree:destination"||e.data.type==="vaviel:destination"||e.data.type==="mitsuda:destination") && (e.data.dest==="shinato"||e.data.dest==="plage"||e.data.dest==="delabree"||e.data.dest==="vaviel"||e.data.dest==="boulevard"||e.data.dest==="mitsuda")){
+  if(e.data && (e.data.type==="delabree:destination"||e.data.type==="vaviel:destination"||e.data.type==="mitsuda:destination"||e.data.type==="rembourg:destination") && (e.data.dest==="shinato"||e.data.dest==="plage"||e.data.dest==="delabree"||e.data.dest==="vaviel"||e.data.dest==="boulevard"||e.data.dest==="mitsuda"||e.data.dest==="rembourg")){
    // depuis le bout gauche de la ville délabrée : la moto, vers Shinato (bout droit de la ville) ou vers la plage (bout gauche)
    window.DESTINATION_MOTO=e.data.dest==="shinato"?"ville":e.data.dest;
    var cmv=document.getElementById("moto"); if(!cmv) return;
@@ -1290,7 +1292,7 @@ else carte.addEventListener("load",demarre);
    window.minuterieLibre(function(){ try{ cmv.focus(); }catch(err){} },300);
    return;
   }
-  if(e.data && e.data.type==="plage:destination" && (e.data.dest==="shinato"||e.data.dest==="delabree"||e.data.dest==="vaviel"||e.data.dest==="boulevard"||e.data.dest==="mitsuda")){
+  if(e.data && e.data.type==="plage:destination" && (e.data.dest==="shinato"||e.data.dest==="delabree"||e.data.dest==="vaviel"||e.data.dest==="boulevard"||e.data.dest==="mitsuda"||e.data.dest==="rembourg")){
    // depuis la plage : on reprend la moto (vers Shinato, la ville, ou vers la ville délabrée)
    window.DESTINATION_MOTO=e.data.dest==="shinato"?"ville":e.data.dest;
    var cm=document.getElementById("moto"); if(!cm) return;
@@ -1317,6 +1319,16 @@ else carte.addEventListener("load",demarre);
    window.minuterieLibre(function(){
     var cadre=document.getElementById("moto"); if(!cadre) return;
     var o=LIEU_OCTETS("lieux/boulevard.html");
+    cadre.srcdoc=new TextDecoder("utf-8").decode(o);
+    window.minuterieLibre(function(){ try{ cadre.focus(); }catch(e){} },300);
+   },2200);
+   return;
+  }
+  if(e.data && e.data.type==="rudyMoto:arrivee" && window.DESTINATION_MOTO==="rembourg"){
+   // « Arrivé » : on arrive tout à gauche de Rembourg, devant le château (la moto est déchargée, la musique de Shinato continue)
+   window.minuterieLibre(function(){
+    var cadre=document.getElementById("moto"); if(!cadre) return;
+    var o=LIEU_OCTETS("lieux/rembourg.html");
     cadre.srcdoc=new TextDecoder("utf-8").decode(o);
     window.minuterieLibre(function(){ try{ cadre.focus(); }catch(e){} },300);
    },2200);
@@ -1912,7 +1924,7 @@ else carte.addEventListener("load",demarre);
  /* MAP du téléphone : Rudy est téléporté là où il a choisi d'aller (la musique de la ville continue) */
  window.teleporteVers=function(lieu){
   telAncien=true;                                    // après le voyage, le téléphone se recharge à neuf
-  var dest={plage:"plage",vaviel:"vaviel",ville:"delabree",delabree:"delabree",boulevard:"boulevard",mitsuda:"mitsuda"}[lieu];
+  var dest={plage:"plage",vaviel:"vaviel",ville:"delabree",delabree:"delabree",boulevard:"boulevard",mitsuda:"mitsuda",rembourg:"rembourg"}[lieu];
   if(lieu==="home"){ try{ if(window.Chambre&&window.Chambre.rentrer) window.Chambre.rentrer(); }catch(e){} return; }
   try{ if(window.RUDY_AUDIO&&window.RUDY_AUDIO.paused){ var pr=window.RUDY_AUDIO.play(); if(pr&&pr.catch) pr.catch(function(){}); } }catch(e){}
   var cm=document.getElementById("moto");
@@ -1927,7 +1939,7 @@ else carte.addEventListener("load",demarre);
   window.DESTINATION_MOTO=dest; dir=0; window.pauseRue();
   if(!cm){ cm=document.createElement("iframe"); cm.id="moto"; cm.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(cm); }
   // un écran de voyage le temps que le lieu se dessine : la rue ne se montre plus entre les deux
-  if(couv){ document.getElementById("voyageTxt").textContent="En route vers "+({plage:"la plage",vaviel:"Vaviel",ville:"la ville délabrée",delabree:"la ville délabrée",boulevard:"le boulevard",mitsuda:"Mitsuda"}[lieu]||"là-bas")+"…"; couv.style.display="flex"; }
+  if(couv){ document.getElementById("voyageTxt").textContent="En route vers "+({plage:"la plage",vaviel:"Vaviel",ville:"la ville délabrée",delabree:"la ville délabrée",boulevard:"le boulevard",mitsuda:"Mitsuda",rembourg:"Rembourg"}[lieu]||"là-bas")+"…"; couv.style.display="flex"; }
   var fini=false, cache=function(){ if(fini) return; fini=true; window.minuterieLibre(function(){ if(couv) couv.style.display="none"; },250); };
   cm.onload=cache; window.minuterieLibre(cache,8000);
   cm.style.pointerEvents="auto"; cm.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/"+dest+".html")); cm.style.display="block";

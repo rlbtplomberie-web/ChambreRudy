@@ -690,7 +690,7 @@ else carte.addEventListener("load",demarre);
 </script>
 <style>
 #depart{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-family:Arial,Helvetica,sans-serif}
-#depart .carte{position:relative;min-width:62vmin;padding:5vmin 6vmin 5.5vmin;border-radius:3vmin;text-align:center;
+#depart .carte{position:relative;min-width:62vmin;max-height:92vh;overflow:auto;padding:5vmin 6vmin 5.5vmin;border-radius:3vmin;text-align:center;
  background:linear-gradient(rgba(14,14,18,.96),rgba(30,30,36,.96));border:2px solid rgba(255,226,122,.6);box-shadow:0 10px 40px rgba(0,0,0,.7)}
 #depart h2{margin:0 0 4vmin;color:#fff;font:900 clamp(16px,4.2vmin,34px)/1.2 Arial,sans-serif;letter-spacing:2px;text-shadow:0 3px 0 #000}
 #depart .choix{display:block;width:100%;margin-top:2.4vmin;padding:3vmin 4vmin;border-radius:2.4vmin;cursor:pointer;
@@ -708,6 +708,7 @@ else carte.addEventListener("load",demarre);
  <div class="choix" id="versVaviel">VAVIEL</div>
  <div class="choix" id="versBoulevard">BOULEVARD</div>
  <div class="choix" id="versMitsuda">MITSUDA</div>
+ <div class="choix" id="versRembourg">REMBOURG</div>
 </div></div>
 <script>
 /* ---------- tout à gauche de la plage : « Où voulez-vous aller ? » ---------- */
@@ -736,6 +737,10 @@ else carte.addEventListener("load",demarre);
  });
  window.appuiSur(document.getElementById("versBoulevard"),function(){
   cache(); try{ window.parent.postMessage({type:"plage:destination",dest:"boulevard"},"*"); }catch(e){}
+ });
+ // REMBOURG : on reprend la moto jusqu'au château
+ window.appuiSur(document.getElementById("versRembourg"),function(){
+  cache(); try{ window.parent.postMessage({type:"plage:destination",dest:"rembourg"},"*"); }catch(e){}
  });
  window.appuiSur(document.getElementById("versDelabree"),function(){
   cache(); try{ window.parent.postMessage({type:"plage:destination",dest:"delabree"},"*"); }catch(e){}

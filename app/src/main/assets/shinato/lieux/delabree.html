@@ -511,11 +511,11 @@ function drawFlic(now){
 
 // ---------- tout à gauche de la ville délabrée : « Où voulez-vous aller ? » ----------
 const depart=document.createElement('div');depart.id='departVD';
-depart.innerHTML='<div class="carte"><div class="fermer">✕</div><h2>OÙ VOULEZ-VOUS ALLER&nbsp;?</h2><div class="choix" data-d="plage">À LA PLAGE</div><div class="choix" data-d="shinato">SHINATO</div><div class="choix" data-d="vaviel">VAVIEL</div><div class="choix" data-d="boulevard">BOULEVARD</div><div class="choix" data-d="mitsuda">MITSUDA</div></div>';
+depart.innerHTML='<div class="carte"><div class="fermer">✕</div><h2>OÙ VOULEZ-VOUS ALLER&nbsp;?</h2><div class="choix" data-d="plage">À LA PLAGE</div><div class="choix" data-d="shinato">SHINATO</div><div class="choix" data-d="vaviel">VAVIEL</div><div class="choix" data-d="boulevard">BOULEVARD</div><div class="choix" data-d="mitsuda">MITSUDA</div><div class="choix" data-d="rembourg">REMBOURG</div></div>';
 document.body.appendChild(depart);
 (()=>{const st=document.createElement('style');st.textContent=`#departVD{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-family:system-ui,sans-serif}
  #departVD.show{display:flex}
- #departVD .carte{position:relative;min-width:min(78vw,380px);padding:22px 24px 24px;border-radius:18px;text-align:center;background:linear-gradient(#15151bf5,#26262ef5);border:3px solid #ffd23f;box-shadow:0 10px 30px #000c}
+ #departVD .carte{position:relative;max-height:92vh;overflow:auto;min-width:min(78vw,380px);padding:22px 24px 24px;border-radius:18px;text-align:center;background:linear-gradient(#15151bf5,#26262ef5);border:3px solid #ffd23f;box-shadow:0 10px 30px #000c}
  #departVD h2{margin:0 0 16px;color:#fff;font:900 clamp(17px,4.4vmin,28px)/1.2 system-ui,sans-serif;letter-spacing:1px;text-shadow:0 3px 0 #000}
  #departVD .choix{margin-top:12px;padding:14px 16px;border:3px solid #000;border-radius:14px;background:#ffd23f;color:#1b1400;font:900 clamp(15px,3.8vmin,22px)/1 system-ui,sans-serif;letter-spacing:1px;box-shadow:0 5px 0 #000;touch-action:none;cursor:pointer}
  #departVD .choix:active{transform:translateY(3px);box-shadow:0 2px 0 #000}
