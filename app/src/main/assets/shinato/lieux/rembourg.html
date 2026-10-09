@@ -233,11 +233,12 @@ appui(btnF,rudyFume); appui(btnJ,rudyJette);
 
 /* ---------- l'ambiance de Rembourg : pas de musique, mais le vent, les chauves-souris et des cris au loin ----------
    La musique de la ville est coupée en arrivant et revient dès qu'on part vers une autre map. */
-const musiqueVille=(()=>{ try{ return parent.RUDY_AUDIO||null; }catch(e){ return null; } })();
-function coupeMusique(){ try{ if(musiqueVille&&!musiqueVille.paused) musiqueVille.pause(); }catch(e){} }
-function remetMusique(){ try{ if(musiqueVille&&musiqueVille.paused){ const q=musiqueVille.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} }
+// la musique de la ville est relue à chaque fois : si elle a été (re)créée après l'arrivée à Rembourg, on la coupe quand même
+function musiqueVille(){ try{ return parent.RUDY_AUDIO||null; }catch(e){ return null; } }
+function coupeMusique(){ try{ const m=musiqueVille(); if(m&&!m.paused) m.pause(); }catch(e){} }
+function remetMusique(){ try{ const m=musiqueVille(); if(m&&m.paused){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} }
 let iciRembourg=true;
-coupeMusique(); const gardeMusique=setInterval(()=>{ if(iciRembourg) coupeMusique(); },800);   // si quelque chose la relance, on la recoupe
+coupeMusique(); const gardeMusique=setInterval(()=>{ if(iciRembourg) coupeMusique(); },300);   // si quelque chose la relance, on la recoupe
 addEventListener('pagehide',()=>{ iciRembourg=false; clearInterval(gardeMusique); remetMusique(); });
 const ambiance=(()=>{
   let a=null, maitre=null;

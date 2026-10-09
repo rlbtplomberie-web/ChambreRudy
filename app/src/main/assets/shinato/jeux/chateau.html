@@ -40,7 +40,7 @@ const KINDS = {
   g:{name:'Gargouille',hp:80,spd:1.6,dmg:12, hitF:[2,4], atkSpd:0.1,  reach:100,grabbable:true,  grabLoop:[4,5], pump:8},
   h:{name:'Fantôme', hp:55, spd:2.2, dmg:9,  hitF:[3,4], atkSpd:0.09, reach:100,grabbable:true,  grabLoop:[4,5], pump:7, ghost:true},
   t:{name:'Grande vampire',hp:90,spd:1.4,dmg:14,hitF:[2],atkSpd:0.14, reach:90, grabbable:false, grabLoop:[2,3], pump:9},
-  k:{name:'La Reine', hp:420,spd:2.4, dmg:11, hitF:[3,4], atkSpd:0.085,reach:105,grabbable:false, grabLoop:[4,5], pump:10, boss:true},
+  k:{name:'La Reine', hp:590,spd:2.9, dmg:17, hitF:[3,4], atkSpd:0.07, reach:115,grabbable:false, grabLoop:[4,5], pump:16, boss:true},
 };
 
 // ================== CANVAS ==================
@@ -396,7 +396,7 @@ function tryGrab(){
 function hurtEnemy(e, dmg, knock){
   e.hp -= dmg; e.hpShow = 2.2;
   addFx('spark', e.x - rudy.face*10, e.y - (e.K.fly?e.z:0) - 120);
-  if (e.K.boss) knock = knock && Math.random()<0.4;
+  if (e.K.boss) knock = knock && Math.random()<0.2;
   if (e.hp <= 0){ e.hp = 0; knockDown(e, true); return; }
   if (knock){ knockDown(e, false); return; }
   e.st = 'hurt'; e.t = 0; e.face = Math.sign(rudy.x-e.x)||e.face;
@@ -410,7 +410,7 @@ function enemyGrab(e){
   e.st = 'grab'; e.t = 0; e.fr = 0; e.face = Math.sign(rudy.x-e.x)||e.face;
   e.pairX = (rudy.x+e.x)/2; e.pairY = (rudy.y+e.y)/2;
   setR('grabbed'); rudy.hidden = true; rudy.mash = 0; rudy.grabber = e;
-  rudy.need = e.K.boss ? 12 : (e.kind==='t' ? 10 : 7);
+  rudy.need = e.K.boss ? 18 : (e.kind==='t' ? 10 : 7);
   SFX.grab();
 }
 
@@ -513,14 +513,14 @@ function updateEnemy(e, dt){
     if (!moved && k!=='t' && !K.fly) e.fr = 0;
     if (busy) break;
     // la reine tire de loin
-    if (K.boss && e.cd<=0 && adx > 260 && Math.abs(dy) < 40 && Math.random()<0.03){ e.st='cast'; e.t=0; e.cast=false; break; }
+    if (K.boss && e.cd<=0 && adx > 220 && Math.abs(dy) < 40 && Math.random()<0.06){ e.st='cast'; e.t=0; e.cast=false; break; }
     if (e.cd<=0 && adx < K.reach+15 && Math.abs(dy) < 20 && r.st!=='down' && r.inv<=0){
-      const grabChance = K.boss ? 0.3 : (k==='t' ? 0.38 : 0.32);
+      const grabChance = K.boss ? 0.4 : (k==='t' ? 0.38 : 0.32);
       if (game.grabCD<=0 && Math.random() < grabChance && !game.ents.some(o=>o.st==='grab')){ enemyGrab(e); break; }
       if (k==='t'){ e.st='headbutt'; e.t=0; e.hbHit=false; break; }
       e.st='attack'; e.t=0; e.lastHitF=-1; SFX.whoosh();
     }
-    if (K.boss && e.cd<=-2.5 && Math.random()<0.02){ e.st='cast'; e.t=0; e.cast=false; }
+    if (K.boss && e.cd<=-1.5 && Math.random()<0.04){ e.st='cast'; e.t=0; e.cast=false; }
     break; }
   }
 }
@@ -584,7 +584,7 @@ function updateBalls(dt){
     }
     const r = rudy;
     if (!b.done && Math.abs(b.x - r.x) < 40 && Math.abs(b.y - r.y) < 26 && !r.hidden){
-      if (r.inv<=0 && r.st!=='down' && r.st!=='dead'){ b.done = true; SFX.big(); hurtRudy(15, true, {x:b.x-b.vx}); addFx('burst', b.x, b.y-b.z); }
+      if (r.inv<=0 && r.st!=='down' && r.st!=='dead'){ b.done = true; SFX.big(); hurtRudy(24, true, {x:b.x-b.vx}); addFx('burst', b.x, b.y-b.z); }
     }
   }
   game.balls = game.balls.filter(b=>!b.done && b.x > game.cam-250 && b.x < game.cam+W+250);

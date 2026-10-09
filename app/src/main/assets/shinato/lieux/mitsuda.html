@@ -311,6 +311,8 @@ const USINE_INTRO='/assets/shinato/m/usine_entree.mp4';   // la vidéo qui passe
 const musiqueUsine=new Audio('/assets/shinato/m/usine_musique.mp3'); musiqueUsine.loop=true; musiqueUsine.volume=0.8;
 function usineSon(joue){ try{ if(joue){ musiqueUsine.currentTime=0; const q=musiqueUsine.play(); if(q&&q.catch) q.catch(()=>{}); } else musiqueUsine.pause(); }catch(e){} }
 function demandeUsine(){ dir=dirY=0; confU.style.display='flex'; }
+// pendant le jeu de l'usine : si la musique de la ville se relance (elle peut démarrer après coup), on la recoupe tout de suite
+setInterval(()=>{ const g=document.getElementById('usineJeu'); if(g&&g.style.display==='block'){ try{ const a=parent.RUDY_AUDIO; if(a&&!a.paused) a.pause(); }catch(e){} } },300);
 function fermeUsine(){ usineSon(false); const fr=document.getElementById('usineJeu'); if(fr){ fr.style.display='none'; fr.src='about:blank'; } quitU.style.display='none'; dedans=false; tPrec=0; x=1300; y=YMIN+6; cadrer(true); musique(true); }
 appui(document.getElementById('usineNon'),()=>{ confU.style.display='none'; });
 appui(document.getElementById('usineOui'),()=>{
