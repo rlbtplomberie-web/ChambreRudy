@@ -1,2 +1,9 @@
-ChambreRudy — mise à jour 178 (à déposer après la 177)
-- Boulevard : le PARLER du monsieur en costume blanc apparaît des deux côtés (avant : seulement à sa gauche) ; au-dessus de celui de la dame quand les deux sont affichés.
+ChambreRudy — mise à jour 179
+
+- Téléphone : l'application Test est retirée.
+- Téléphone : nouvelle application « Statue » (icône livre).
+  · Statue : argent, contacts, vidéos débloquées, personnages, mini-jeux,
+    diamants des boss vaincus (Astra, Vampa, Farah).
+  · Personnages : 11 pages, fiche de chaque personnage avec Rudy qui parle de lui/elle.
+  · Mini-jeux : liste des jeux et scores contre chaque personnage.
+Fichiers : web/telephone.html, web/statue.html, web/statue/ (images + police)

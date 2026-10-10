@@ -50,15 +50,11 @@ html,body{height:100%;margin:0;background:#07080c;overflow:hidden;font-family:So
 .ico.gal{background:linear-gradient(150deg,#f4c95d,#d9862b)}
 .ico.brk{background:linear-gradient(150deg,#ff6a3d,#b3261e)}
 .ico.con{background:linear-gradient(150deg,#34c46a,#17803f)}
+.ico.statue{background:linear-gradient(150deg,#e7b45a,#7a4a16)}
+#app-statue{background:#07060a}
+#app-statue iframe{position:absolute;left:0;right:0;top:34px;bottom:22px;width:100%;height:calc(100% - 56px);border:0;background:#07060a}
 .ico.map{background:linear-gradient(150deg,#2fb7a4,#1a6fd1)}
 .ico.dev{background:linear-gradient(150deg,#ff5f8f,#8a2be2)}
-.ico.test{background:linear-gradient(150deg,#7cff6b,#1f8a3a)}
-#testbox{padding:0 18px;display:flex;flex-direction:column;gap:14px}
-#testbox .td{display:flex;align-items:center;gap:14px;padding:16px;border-radius:18px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);cursor:pointer;font-size:17px;font-weight:700}
-#testbox .td:active{transform:scale(.97)}
-#testbox .td i{font-style:normal;font-size:30px}
-#testJeu{position:fixed;inset:0;width:100vw;height:100vh;border:0;z-index:2147483000;background:#000;display:none}
-#testQuit{position:fixed;z-index:2147483001;top:calc(10px + env(safe-area-inset-top,0px));left:10px;display:none;padding:9px 14px;border-radius:999px;background:rgba(0,0,0,.6);color:#ffe27a;border:2px solid rgba(255,226,122,.8);font:900 13px Arial,sans-serif;letter-spacing:1px}
 #devbox{position:absolute;left:0;right:0;top:118px;bottom:0;overflow:hidden;padding:0 14px 40px}
 #devbox .dvh{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;margin:2px 0 12px}
 #devbox .dvh i{font-style:normal;color:#ff7aa8;padding:6px 10px;border-radius:999px;background:rgba(255,122,168,.14)}
@@ -268,7 +264,7 @@ html,body{height:100%;margin:0;background:#07080c;overflow:hidden;font-family:So
         <div class="app" data-act="open:con"><div class="ico con"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg></div>Contacts</div>
         <div class="app" data-act="open:dev"><div class="ico dev"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2.2"/><path d="M8 11V7.5a4 4 0 0 1 7.6-1.7"/><path d="M12 15v2.4"/></svg></div>Déverrouillage</div>
         <div class="app" data-act="open:map"><div class="ico map"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></div>Plans</div>
-        <div class="app" data-act="open:test"><div class="ico test"><span style="font-size:30px;line-height:1">🧪</span></div>Test</div>
+        <div class="app" data-act="open:statue"><div class="ico statue"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 7.5h7M9 11h5"/></svg></div>Statue</div>
       </div>
       <div id="dock">
         <div data-act="open:cam"><div class="ico cam"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></div></div>
@@ -321,14 +317,8 @@ html,body{height:100%;margin:0;background:#07080c;overflow:hidden;font-family:So
         <div id="hang" data-act="hang"><svg width="30" height="30" viewBox="0 0 24 24" fill="#fff" style="transform:rotate(135deg)"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg></div></div>
     </div>
 
-    <div class="layer win" id="app-test">
-      <h1>Test</h1><div class="sub">Lancer un donjon directement, pour vérifier qu'il marche</div>
-      <div id="testbox">
-        <div class="td" data-act="test:usine"><i>🏭</i>Rudy dans l'usine</div>
-        <div class="td" data-act="test:chateau"><i>🦇</i>Le château hanté</div>
-        <div class="td" data-act="test:foret"><i>🌲</i>La forêt maudite</div>
-      </div>
-    </div>
+    <div class="layer win" id="app-statue"><iframe id="statueFrame" title="Statue"></iframe></div>
+
     <div class="layer win" id="app-map">
       <svg id="msvg" viewBox="0 0 360 770" preserveAspectRatio="xMidYMid slice">
         <rect width="360" height="770" fill="#1b2233"/>
@@ -488,7 +478,6 @@ function swipe(dir){
 function act(a){
   const [k,p]=a.split(':');
   if(k==='open')openApp(p);
-  else if(k==='test'){ if(window.lanceTest) window.lanceTest(p); }        // appli Test (provisoire)
   else if(k==='lockcam'){unlock(true);openApp('cam')}
   else if(k==='call')toast('Aucun appel en cours');
   else if(k==='pick')preview(/^\d+$/.test(p)?+p:p);
@@ -539,7 +528,10 @@ function openApp(n){
   if(n==='con'){majContacts();renderList();paintHearts();showCV('list');}
   if(n==='gal')renderGal();if(n==='walls')renderWalls();if(n==='set')renderSet();
   if(n==='dev')DEV.ouvrir();
+  if(n==='statue'){ const f=$('statueFrame'); if(!f.getAttribute('src')) f.src='/assets/web/statue.html'; else { try{ f.contentWindow.statueAccueil(); }catch(e){} } }
 }
+// la Statue (dans son cadre) demande à revenir au téléphone
+addEventListener('message',e=>{ const d=e.data; if(d&&d.type==='statue:fermer'&&app==='statue') closeApp(); });
 function closeApp(){if(!app)return;closeVideo();G.stop();MP.stop();hangUp(true);$('app-'+app).classList.remove('open');$('prev').classList.remove('open');$('big').classList.remove('open');app=null;view='home'}
 
 /* ---------- fonds d'écran ---------- */
@@ -2167,29 +2159,6 @@ scr2.addEventListener('pointermove',e=>{
   }
   ecran.addEventListener('pointerup',lache,true);
   ecran.addEventListener('pointercancel',()=>{ DEV.yPrec=null; cible=null; },true);
-})();
-</script>
-<iframe id="testJeu" allow="autoplay; fullscreen"></iframe><div id="testQuit">✕ QUITTER</div>
-<script>
-/* ---------- appli « Test » (provisoire) : lancer directement les trois donjons ---------- */
-(function(){
- var JEUX={ usine:{src:'/assets/shinato/jeux/usine.html', mus:'/assets/shinato/m/usine_musique.mp3'},
-            chateau:{src:'/assets/shinato/jeux/chateau.html?direct=1', mus:'/assets/shinato/m/chateau_musique.mp3'},
-            foret:{src:'/assets/shinato/jeux/foret.html?direct=1', mus:'/assets/shinato/m/foret_musique.mp3'} };
- var fr=document.getElementById('testJeu'), q=document.getElementById('testQuit'), mus=new Audio(); mus.loop=true; mus.volume=0.7;
- var ville=null;
- function musVille(){ for(var w of [window.parent,window.top]){ try{ if(w&&w.RUDY_AUDIO) return w.RUDY_AUDIO; }catch(e){} } return null; }
- function lance(k){ var J=JEUX[k]; if(!J) return;
-  ville=musVille(); try{ if(ville&&!ville.paused) ville.pause(); else ville=null; }catch(e){}
-  fr.src=J.src; fr.style.display='block'; q.style.display='block';
-  try{ mus.src=J.mus; mus.currentTime=0; var p=mus.play(); if(p&&p.catch) p.catch(function(){}); }catch(e){} }
- function quitte(){ try{ mus.pause(); }catch(e){} fr.style.display='none'; fr.src='about:blank'; q.style.display='none';
-  try{ if(ville){ var p=ville.play(); if(p&&p.catch) p.catch(function(){}); } }catch(e){} ville=null; }
- // le jeu prévient quand il montre une vidéo : la musique s'arrête puis reprend
- addEventListener('message',function(e){ var d=e.data; if(!d||fr.style.display!=='block') return;
-  if(d.type==='chateau:video'||d.type==='foret:video'){ try{ if(d.on) mus.pause(); else mus.play(); }catch(err){} } });
- window.lanceTest=lance;
- q.addEventListener('click',quitte); q.addEventListener('touchstart',function(e){ if(e.cancelable) e.preventDefault(); quitte(); },{passive:false});
 })();
 </script>
 </body>

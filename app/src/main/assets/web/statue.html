@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Statue</title>
+<style>
+:root{--fond:#07060a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--fond:#07060a}}
+:root[data-theme="dark"]{--fond:#07060a}
+*{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--fond);overflow:hidden;touch-action:manipulation;font-family:Georgia,"Times New Roman",serif}
+.ecran{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+.cadre{position:relative;width:min(100vw,calc(100vh*941/1672));aspect-ratio:941/1672;container-type:inline-size}
+.cadre>img.fond{position:absolute;inset:0;width:100%;height:100%;display:block}
+/* les losanges : les diamants des boss vaincus */
+.gem{position:absolute;width:18.6%;transform:translate(-50%,-50%);display:none;filter:drop-shadow(0 0 2.4cqw rgba(255,210,90,.55));animation:brille 2.6s ease-in-out infinite alternate}
+.gem.on{display:block}
+@keyframes brille{from{filter:drop-shadow(0 0 1.2cqw rgba(255,210,90,.35))}to{filter:drop-shadow(0 0 3.2cqw rgba(255,220,120,.85))}}
+/* les nombres */
+.val{position:absolute;display:flex;align-items:baseline;justify-content:center;font-weight:700;letter-spacing:.02em;white-space:nowrap;line-height:1;padding-top:.9cqw;
+ color:#f3c868;text-shadow:0 -.15cqw 0 #fff1b8,0 .3cqw .3cqw #000,0 0 1.6cqw rgba(255,190,70,.45)}
+.val small{font-size:.62em;opacity:.9;margin-left:.15em}
+.zone{position:absolute;cursor:pointer;border-radius:1.4cqw}
+.zone:active{background:rgba(255,215,120,.12)}
+#perso,#jeuxZone{box-shadow:0 0 0 .35cqw rgba(255,214,110,.0);animation:appel 2.2s ease-in-out infinite}
+@keyframes appel{0%,100%{box-shadow:0 0 0 .3cqw rgba(255,214,110,0)}50%{box-shadow:0 0 1.6cqw .3cqw rgba(255,214,110,.45)}}
+/* les pages des personnages */
+#pages{display:none;background:var(--fond)}
+#pages.on{display:flex}
+#pages .cadre{aspect-ratio:auto;height:auto}
+#pages img.page{width:100%;display:block}
+.nav{position:fixed;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;align-items:center;gap:14px;z-index:5;pointer-events:none}
+.nav button,.retour{pointer-events:auto;border:2px solid rgba(255,214,110,.85);background:rgba(10,8,6,.82);color:#ffd96e;font:700 16px Georgia,serif;border-radius:999px;padding:9px 16px;box-shadow:0 0 12px rgba(255,190,60,.35)}
+.nav span{pointer-events:none;color:#ffd96e;font:700 15px Georgia,serif;text-shadow:0 2px 4px #000;min-width:64px;text-align:center}
+.retour{position:fixed;z-index:6;top:calc(10px + env(safe-area-inset-top,0px));left:10px}
+#apercu{position:fixed;z-index:7;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));border:1px solid rgba(255,214,110,.4);background:rgba(0,0,0,.55);color:rgba(255,217,110,.75);font:600 11px system-ui,sans-serif;border-radius:999px;padding:6px 10px}
+#pages.on ~ #apercu{display:none}
+@font-face{font-family:"Statue";src:url(statue/99a7a8320c.ttf) format("truetype");font-weight:700}
+#jeux,#score{display:none;background:var(--fond)}
+#jeux.on,#score.on{display:flex}
+.titre{position:absolute;left:30%;width:40%;top:6.6%;height:4.4%;display:flex;align-items:center;justify-content:center;text-align:center;
+ font:700 5.6cqw/1 "Statue",Georgia,serif;letter-spacing:.04em;white-space:nowrap;
+ background:linear-gradient(#fff0b0,#f1c25a 45%,#b8761e 60%,#e7b14b);-webkit-background-clip:text;background-clip:text;color:transparent;
+ filter:drop-shadow(0 .3cqw .25cqw #000) drop-shadow(0 0 1.2cqw rgba(255,150,40,.45))}
+.titre.long{font-size:4.2cqw}.titre.tlong{font-size:3.4cqw}
+.liste{position:absolute;left:13.2%;width:73.6%;top:18.2%;height:73.6%;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:1.4cqw 1cqw 3cqw;scrollbar-width:none}
+.liste::-webkit-scrollbar{display:none}
+.grille{display:grid;grid-template-columns:1fr 1fr;gap:2.4cqw}
+.jeu{position:relative;border-radius:1.2cqw;padding:2.4cqw 1.6cqw 2cqw;text-align:center;cursor:pointer;
+ background:radial-gradient(120% 140% at 50% 0%,#2b2218,#120e0a 70%);
+ border:.45cqw solid #c99a3c;box-shadow:inset 0 0 0 .35cqw #1a120a,inset 0 0 0 .6cqw rgba(255,214,120,.55),0 .5cqw 1.4cqw rgba(0,0,0,.7)}
+.jeu:active{transform:scale(.97);filter:brightness(1.25)}
+.jeu .n{font:700 3.9cqw/1.1 "Statue",Georgia,serif;letter-spacing:.03em;
+ background:linear-gradient(#fff2bd,#f0c25b 50%,#b77520);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 .2cqw .15cqw #000)}
+.jeu .r{margin-top:1.2cqw;font:700 2.7cqw/1 "Statue",Georgia,serif;color:#cfb27a;letter-spacing:.02em}
+.jeu .r b{color:#8fe08a;font-weight:700}.jeu .r i{font-style:normal;color:#ff8a7a}
+.jeu.vide .r{color:#7d6a4c}
+.tab{width:100%;border-collapse:separate;border-spacing:0 1.2cqw;font-family:"Statue",Georgia,serif}
+.tab th{font:700 2.8cqw/1 "Statue",Georgia,serif;color:#d9b56a;letter-spacing:.05em;padding:0 1cqw 1cqw;text-align:center}
+.tab th:first-child{text-align:left}
+.tab td{padding:2cqw 1.4cqw;text-align:center;font:700 4.4cqw/1 "Statue",Georgia,serif;color:#f3d68f;
+ background:linear-gradient(#251c13,#140f0a);border-top:.3cqw solid #b98a33;border-bottom:.3cqw solid #6e4f1c}
+.tab td:first-child{text-align:left;border-left:.3cqw solid #b98a33;border-radius:1cqw 0 0 1cqw;font-size:3.9cqw;color:#fbe3a3}
+.tab td:last-child{border-right:.3cqw solid #b98a33;border-radius:0 1cqw 1cqw 0}
+.tab td.v{color:#8fe08a}.tab td.d{color:#ff8a7a}.tab td.nu{color:#d7c9a8}
+.tab tr.jamais td{opacity:.45}
+.tab tr.total td{background:linear-gradient(#3a2a14,#1d140a);border-color:#e0b04e}
+.note{margin:2.6cqw 1cqw 0;text-align:center;font:700 2.7cqw/1.35 "Statue",Georgia,serif;color:#a88d5e}
+#fiche{display:none;background:var(--fond)}#fiche.on{display:flex}
+.fzone{position:absolute;left:13.6%;width:72.8%;top:19.2%;height:72%;display:flex;flex-direction:column;align-items:center;gap:3.2cqw}
+.gcadre{position:relative;width:100%;padding:1.6cqw;border-radius:1.8cqw;
+ background:linear-gradient(135deg,#ffe9a8,#c58b2c 22%,#7a4f15 45%,#f3cf74 60%,#8b5a17 82%,#ffe3a0);
+ box-shadow:0 0 0 .5cqw #1a1209,0 0 0 .9cqw #a77a2b,0 1.5cqw 4cqw rgba(0,0,0,.8),0 0 5cqw rgba(255,180,60,.25)}
+.gcadre img{display:block;width:100%;max-height:44cqh;object-fit:cover;border-radius:1cqw;box-shadow:inset 0 0 0 .4cqw #000;background:#000}
+.gcadre::before,.gcadre::after{content:"";position:absolute;width:5cqw;height:5cqw;border:.6cqw solid #fff0b8;transform:rotate(45deg);background:#1a1209;z-index:2}
+.gcadre::before{left:-2.2cqw;top:-2.2cqw}.gcadre::after{right:-2.2cqw;top:-2.2cqw}
+.plaque{margin:1.6cqw auto 0;width:78%;text-align:center;padding:1.8cqw 1cqw 1.4cqw;border-radius:1cqw;background:linear-gradient(#1e1610,#0c0906);
+ box-shadow:inset 0 0 0 .35cqw #d9a94a,inset 0 0 0 .7cqw #1a1209;
+ font:700 6.4cqw/1 "Statue",Georgia,serif;letter-spacing:.05em;text-transform:uppercase}
+.plaque span{background:linear-gradient(#fff2bd,#f0c25b 50%,#b77520);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 .25cqw .2cqw #000)}
+.gcadre.rouge{background:linear-gradient(135deg,#ffb3a0,#b3241b 22%,#4d0a08 45%,#e4523e 60%,#5e0d0a 82%,#ffc0b0);box-shadow:0 0 0 .5cqw #1a0505,0 0 0 .9cqw #c0392b,0 1.5cqw 4cqw rgba(0,0,0,.8),0 0 6cqw rgba(255,40,30,.35)}
+.gcadre.rouge .plaque{box-shadow:inset 0 0 0 .35cqw #e2513f,inset 0 0 0 .7cqw #1a0505}
+.gcadre.rouge::before,.gcadre.rouge::after{border-color:#ffb3a0;background:#2a0606}
+.bulle{position:relative;width:100%;padding:3.6cqw 3.4cqw 3cqw;border-radius:2cqw;background:linear-gradient(#211913,#100c08);
+ border:.45cqw solid #c99a3c;box-shadow:inset 0 0 0 .35cqw #1a120a,inset 0 0 0 .6cqw rgba(255,214,120,.4),0 1cqw 3cqw rgba(0,0,0,.7);
+ font:700 4.1cqw/1.42 "Statue",Georgia,serif;color:#f6e3b4;text-shadow:0 .2cqw .2cqw #000}
+.bulle::before{content:"";position:absolute;left:50%;top:-2.6cqw;margin-left:-2.2cqw;border:2.2cqw solid transparent;border-bottom-color:#c99a3c;border-top:0}
+.bulle .qui{position:absolute;left:3cqw;top:-3.2cqw;padding:.9cqw 2.6cqw;border-radius:99px;background:linear-gradient(#3b5a2c,#1f3517);border:.35cqw solid #d6b25a;
+ font:700 3.2cqw/1 "Statue",Georgia,serif;color:#ffe9a6;letter-spacing:.08em;text-transform:uppercase}
+.bulle.court{text-align:center;font-size:4.4cqw}
+.fzone{overflow-y:auto;scrollbar-width:none;padding:2.4cqw 1.4cqw 4cqw}.fzone::-webkit-scrollbar{display:none}
+.bulle.long{font-size:3.6cqw;line-height:1.38}
+.fzone.long .gcadre img{max-height:46cqw}.fzone.long{gap:2.6cqw}
+.fzone.long .gcadre img{max-height:38cqw}.plaque.pl{font-size:4.8cqw}
+</style>
+</head>
+<body>
+<div class="ecran" id="statue">
+ <div class="cadre">
+  <img class="fond" alt="Statue de Rudy" src="statue/637198e9d0.webp">
+  <img class="gem" id="gemAstra" alt="Diamant bleu" style="left:12.97%;top:28.5%" src="statue/eaf2a7c6c3.webp">
+  <img class="gem" id="gemVampa" alt="Diamant tête de mort" style="left:30.82%;top:28.5%" src="statue/1e1c580db6.webp">
+  <img class="gem" id="gemFarah" alt="Diamant vert" style="left:48.57%;top:28.5%" src="statue/5b610aa6af.webp">
+  <div class="val" id="vArgent"  style="left:38.9%;top:54.9%;width:17.4%;height:4.2%;font-size:6.2cqw"></div>
+  <div class="val" id="vContacts" style="left:39.9%;top:63.3%;width:16.2%;height:4.2%;font-size:6.6cqw"></div>
+  <div class="val" id="vVideos"  style="left:39.9%;top:71.7%;width:16.2%;height:4.2%;font-size:5.6cqw"></div>
+  <div class="val" id="vPerso"   style="left:42.3%;top:79.7%;width:13.8%;height:4.2%;font-size:6.6cqw"></div>
+  <div class="zone" id="perso" style="left:4.6%;top:78.6%;width:52.6%;height:6.3%"></div>
+  <div class="val" id="vJeux"    style="left:42.3%;top:88.07%;width:13.8%;height:4.2%;font-size:6.6cqw"></div>
+  <div class="zone" id="jeuxZone" style="left:4.6%;top:86.97%;width:52.6%;height:6.3%"></div>
+ </div>
+</div>
+
+<div class="ecran" id="pages">
+ <div class="cadre" id="pcadre"><img class="page" id="pimg" alt="Personnages"></div>
+ <button class="retour" id="pRetour">‹ Statue</button>
+ <div class="nav"><button id="pPrec">‹</button><span id="pNum"></span><button id="pSuiv">›</button></div>
+</div>
+<div class="ecran" id="jeux">
+ <div class="cadre" id="jcadre">
+  <img class="fond" alt="" src="statue/595e7d5dcb.webp">
+  <div class="titre" id="jTitre">MINI-JEUX</div>
+  <div class="liste" id="jListe"></div>
+ </div>
+ <button class="retour" id="jRetour">‹ Statue</button>
+</div>
+<div class="ecran" id="score">
+ <div class="cadre">
+  <img class="fond" alt="" src="statue/595e7d5dcb.webp">
+  <div class="titre" id="sTitre"></div>
+  <div class="liste" id="sListe"></div>
+ </div>
+ <button class="retour" id="sRetour">‹ Mini-jeux</button>
+</div>
+<div class="ecran" id="fiche">
+ <div class="cadre">
+  <img class="fond" alt="" src="statue/595e7d5dcb.webp">
+  <div class="titre" id="fTitre"></div>
+  <div class="fzone">
+   <div class="gcadre" id="fCadre"><img id="fImg" alt=""><div class="plaque" id="fNom"></div></div>
+   <div class="bulle"><div class="qui">Rudy</div><div id="fTexte"></div></div>
+  </div>
+ </div>
+ <button class="retour" id="fRetour">‹ Personnages</button>
+ <div class="nav"><button id="fPrec">‹</button><span id="fNum"></span><button id="fSuiv">›</button></div>
+</div>
+<button class="retour" id="tel" style="display:none">‹ Téléphone</button>
+<button id="apercu">👁 aperçu</button>
+
+<script>
+/* ---------- Statue : l'appli du téléphone qui montre où en est Rudy ----------
+   (prototype en HTML : les nombres viennent de la partie quand la page tourne dans l'appli) */
+const PAGES=["statue/890d180b34.webp","statue/a3dd3c0457.webp","statue/e030d6cd4d.webp","statue/2a8ce3a127.webp","statue/0c7a0a26c7.webp","statue/bcb4d4aff7.webp","statue/7e7350bfa4.webp","statue/d3c3cbf6f9.webp","statue/0b360bb486.webp","statue/817e5ba814.webp","statue/19e73a0771.webp"];
+const NB_PERSOS=87;          // tous les personnages des pages (sans l'emblème)
+const NB_CONTACTS=10;      // les filles qu'on peut avoir dans le téléphone
+const NB_VIDEOS=479;          // toutes les vidéos du jeu (Déverrouillage)
+let APERCU=false;
+const $=id=>document.getElementById(id);
+function lit(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function argent(){
+ for(const w of [window,window.parent,window.top]){ try{ if(w&&w.Chambre&&w.Chambre.argent) return parseInt(w.Chambre.argent(),10)||0; }catch(e){} }
+ const v=lit('rudy_argent'); return v===null?1000:(parseInt(v,10)||0);
+}
+function contacts(){ try{ return Object.keys(JSON.parse(lit('rudy_contacts')||'{}')||{}).length; }catch(e){ return 0; } }
+function videos(){ const vu=new Set();   // les vidéos déjà vues / débloquées dans la partie
+ for(const k of ['rudy_vues','rudy_videos']){ try{ (JSON.parse(lit(k)||'[]')||[]).forEach(o=>{ const v=(o&&o.src)||o; if(v) vu.add(String(v)); }); }catch(e){} }
+ return Math.min(vu.size,NB_VIDEOS); }   // les vidéos vues dans la partie
+function deux(n){ return n<10?'0'+n:String(n); }
+function euros(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' '); }
+function maj(){
+ const A=APERCU;
+ $('vArgent').innerHTML=euros(A?1120:argent())+'<small>€</small>';
+ $('vContacts').innerHTML=deux(A?8:contacts())+'<small>/'+NB_CONTACTS+'</small>';
+ $('vVideos').innerHTML=(A?37:videos())+'<small>/'+NB_VIDEOS+'</small>';
+ $('vPerso').textContent=NB_PERSOS;
+ $('gemAstra').classList.toggle('on',A||lit('mitsuda_usine_gagnee')==='1');      // Astra vaincue (l'usine)
+ $('gemVampa').classList.toggle('on',A||lit('rembourg_chateau_gagne')==='1');    // la Reine des vampires vaincue (le château)
+ $('gemFarah').classList.toggle('on',A||lit('foret_gagnee')==='1');              // Farah la Rousse vaincue (la forêt)
+}
+maj(); setInterval(maj,1500); addEventListener('storage',maj);
+
+let ip=0;
+function page(i){ ip=(i+PAGES.length)%PAGES.length; $('pimg').src=PAGES[ip]; $('pNum').textContent=(ip+1)+' / '+PAGES.length; }
+function ouvre(){ ecran('pages'); page(0); }
+function ferme(){ ecran('statue'); }
+// petit son à chaque clic (fabriqué par le téléphone, pas de fichier)
+let AC=null;
+function son(){ try{
+ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume();
+ const t=AC.currentTime, o=AC.createOscillator(), o2=AC.createOscillator(), g=AC.createGain();
+ o.type='triangle'; o.frequency.setValueAtTime(1500,t); o.frequency.exponentialRampToValueAtTime(700,t+0.07);
+ o2.type='sine'; o2.frequency.setValueAtTime(2900,t);
+ g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.35,t+0.004); g.gain.exponentialRampToValueAtTime(0.0001,t+0.11);
+ o.connect(g); o2.connect(g); g.connect(AC.destination); o.start(t); o2.start(t); o.stop(t+0.12); o2.stop(t+0.05);
+}catch(e){} }
+function tap(el,f){ el.addEventListener('click',e=>{ e.stopPropagation(); son(); f(); }); }
+tap($('perso'),ouvre); tap($('pRetour'),ferme);
+tap($('pPrec'),()=>page(ip-1)); tap($('pSuiv'),()=>page(ip+1));
+// toucher la moitié droite / gauche de la page, ou glisser
+let x0=null;
+$('pcadre').addEventListener('pointerdown',e=>{ x0=e.clientX; });
+$('pcadre').addEventListener('pointerup',e=>{ if(x0===null) return; const dx=e.clientX-x0; x0=null;
+ if(Math.abs(dx)>40){ son(); page(ip+(dx<0?1:-1)); }
+ });
+tap($('apercu'),()=>{ APERCU=!APERCU; $('apercu').textContent=APERCU?'👁 vraie partie':'👁 aperçu'; maj(); });
+/* ---------- MINI-JEUX : les scores de Rudy contre chaque personnage ----------
+   Les jeux écrivent dans localStorage 'rudy_scores' : { idJeu: { "Nom": {v:victoires, d:défaites, n:nuls} } }
+   (les jeux de la chambre, qui ne sont pas en HTML, passeront par window.Chambre.scores()) */
+const R15=['Limon','Commissaire','Mody','Valor','Carlos','Katila','Mathis','Théo','Shanna','Ameline','Karine','Sophie','Faty','Rose','Mifa'];
+const F8=['Ameline','Faty','Rose','Karine','Mifa','Sophie','Katila','Gisèle'];
+const JEUX=[
+ {id:'brasdefer',   nom:'Bras de fer',        adv:R15},
+ {id:'dernierdebout',nom:'Dernier debout',    adv:R15.concat(['Gisèle'])},
+ {id:'premier',     nom:'Premier verre',      adv:['Faty','Rose','Sophie','Karine','Ameline']},
+ {id:'kart',        nom:'Kart Fury',          adv:R15},
+ {id:'footcourse',  nom:'Foot Course',        adv:R15},
+ {id:'soccer',      nom:'Shinato Soccer Z',   adv:['Les filles'], nul:true},
+ {id:'corde',       nom:'Tir à la corde',     adv:F8},
+ {id:'eau',         nom:'Pistolet à eau',     adv:F8},
+ {id:'volley',      nom:'Volley de Minuit',   adv:F8},
+ {id:'homerun',     nom:'Home Run',           adv:F8, nul:true},
+ {id:'resto',       nom:'Table pour deux',    adv:F8},
+ {id:'dream',       nom:'DreamtoSleep',       adv:F8},
+ {id:'pariboxe',    nom:'PariBoxe',           adv:['Théo','Valor','Mody']},
+ {id:'fivefight',   nom:'Five Fight',         adv:['Le rival']},
+ {id:'aura',        nom:'Aura Clash',         adv:['Nox'], nul:true},
+ {id:'smash',       nom:'Smash Court',        adv:["L'adversaire"]},
+ {id:'balle',       nom:'Balle au prisonnier',adv:["L'équipe de Shanna"]},
+ {id:'penalty',     nom:'Tir au but',         adv:['Le gardien']},
+ {id:'paniers',     nom:'Paniers',            adv:['Le défi des 7 paniers']},
+ {id:'infiltration',nom:'Infiltration',       adv:['Les gardes']},
+ {id:'glouton',     nom:'Le Glouton',         adv:['Le chrono']},
+ {id:'soin',        nom:'Serre les dents',    adv:['Katia']},
+ {id:'blackjack',   nom:'Blackjack',          adv:['Le croupier'], nul:true},
+ {id:'echecs',      nom:'Échecs',             adv:["L'ordinateur"]},
+ {id:'dames',       nom:'Dames',              adv:['Majora']},
+ {id:'monopoly',    nom:'Monopoly',           adv:['Camille','Hugo','Nadia','Ludo','Sacha'], nul:true}
+];
+function scores(){
+ let s={}; try{ s=JSON.parse(lit('rudy_scores')||'{}')||{}; }catch(e){}
+ for(const w of [window,window.parent,window.top]){ try{ if(w&&w.Chambre&&w.Chambre.scores){ const n=JSON.parse(w.Chambre.scores()||'{}');
+   for(const j in n){ s[j]=s[j]||{}; for(const a in n[j]){ const x=s[j][a]||{v:0,d:0,n:0}, y=n[j][a]; s[j][a]={v:(x.v||0)+(y.v||0),d:(x.d||0)+(y.d||0),n:(x.n||0)+(y.n||0)}; } } break; } }catch(e){} }
+ if(APERCU){ // des scores d'exemple, seulement pour voir à quoi ça ressemble
+  s={}; let k=7; const r=()=>{ k=(k*9301+49297)%233280; return k/233280; };
+  JEUX.forEach((J,i)=>{ if(i%5===4) return; s[J.id]={}; J.adv.forEach(a=>{ if(r()<.3) return; s[J.id][a]={v:Math.floor(r()*6),d:Math.floor(r()*5),n:J.nul?Math.floor(r()*2):0}; }); });
+ }
+ return s;
+}
+function bilan(t){ let v=0,d=0,n=0; for(const a in (t||{})){ v+=t[a].v||0; d+=t[a].d||0; n+=t[a].n||0; } return {v,d,n}; }
+function titre(el,txt){ el.textContent=txt; el.className='titre'+(txt.length>15?' tlong':txt.length>10?' long':''); }
+function ecran(id){ ['statue','pages','jeux','score'].forEach(e=>{ const el=$(e); if(e==='statue') el.style.display=(e===id?'flex':'none'); else el.classList.toggle('on',e===id); }); if($('apercu')) $('apercu').style.display=(id==='statue'?'':'none'); }
+function listeJeux(){
+ const S=scores(); let h='<div class="grille">';
+ JEUX.forEach((J,i)=>{ const b=bilan(S[J.id]); const joue=b.v+b.d+b.n>0;
+  h+='<div class="jeu'+(joue?'':' vide')+'" data-i="'+i+'"><div class="n">'+J.nom+'</div><div class="r">'+
+   (joue?'<b>'+b.v+'</b> gagné'+(b.v>1?'s':'')+' · <i>'+b.d+'</i> perdu'+(b.d>1?'s':'')+(J.nul&&b.n?' · '+b.n+' nul'+(b.n>1?'s':''):''):'Pas encore joué')+'</div></div>'; });
+ $('jListe').innerHTML=h+'</div>';
+}
+function ouvreJeu(i){
+ const J=JEUX[i], S=(scores()[J.id])||{}; titre($('sTitre'),J.nom);
+ let h='<table class="tab"><tr><th>Contre</th><th>Gagné</th><th>Perdu</th>'+(J.nul?'<th>Nul</th>':'')+'</tr>';
+ const noms=J.adv.slice(); for(const a in S) if(!noms.includes(a)) noms.push(a);
+ noms.forEach(a=>{ const x=S[a]||{v:0,d:0,n:0}; const jamais=!((x.v||0)+(x.d||0)+(x.n||0));
+  h+='<tr'+(jamais?' class="jamais"':'')+'><td>'+a+'</td><td class="v">'+(x.v||0)+'</td><td class="d">'+(x.d||0)+'</td>'+(J.nul?'<td class="nu">'+(x.n||0)+'</td>':'')+'</tr>'; });
+ const b=bilan(S);
+ if(noms.length>1) h+='<tr class="total"><td>Total</td><td class="v">'+b.v+'</td><td class="d">'+b.d+'</td>'+(J.nul?'<td class="nu">'+b.n+'</td>':'')+'</tr>';
+ h+='</table>';
+ if(!(b.v+b.d+b.n)) h+='<div class="note">Aucune partie jouée pour l\'instant.</div>';
+ $('sListe').innerHTML=h; $('sListe').scrollTop=0; ecran('score');
+}
+$('vJeux').textContent=JEUX.length;
+tap($('jeuxZone'),()=>{ listeJeux(); $('jListe').scrollTop=0; ecran('jeux'); });
+tap($('jRetour'),()=>ecran('statue'));
+tap($('sRetour'),()=>{ listeJeux(); ecran('jeux'); });
+$('jListe').addEventListener('click',e=>{ const c=e.target.closest('.jeu'); if(!c) return; son(); ouvreJeu(+c.dataset.i); });
+const PORTRAITS={"0_0": "statue/0ffbc2d36b.webp", "0_1": "statue/6d722f66bd.webp", "0_2": "statue/10cfd83f6f.webp", "0_3": "statue/2d1d8900c1.webp", "0_4": "statue/d933ef3e95.webp", "0_5": "statue/5a9a4a9d4a.webp", "0_6": "statue/239b3df1de.webp", "0_7": "statue/f263bf21f1.webp", "1_0": "statue/a8b349725b.webp", "1_1": "statue/5721cab448.webp", "1_2": "statue/5a0e802bbc.webp", "1_3": "statue/3b5e91c041.webp", "1_4": "statue/c3eb16e70d.webp", "1_5": "statue/141a80b457.webp", "1_6": "statue/8f0488b195.webp", "1_7": "statue/a3e2182b1e.webp", "2_0": "statue/c2bc48be93.webp", "2_1": "statue/aa32b2f4a7.webp", "2_2": "statue/29deb1fc56.webp", "2_3": "statue/08bef9ab7c.webp", "2_4": "statue/35c6ba4dc2.webp", "2_5": "statue/579a59afb2.webp", "2_6": "statue/0b7cfacda2.webp", "2_7": "statue/69f1d5b8ac.webp", "3_0": "statue/64ebb05501.webp", "3_1": "statue/c92fc1e70d.webp", "3_2": "statue/c191f8a43f.webp", "3_3": "statue/32df4a3c5c.webp", "3_4": "statue/a29fdbf03d.webp", "3_5": "statue/331a70a9fa.webp", "3_6": "statue/9fb1d330eb.webp", "3_7": "statue/88894edb57.webp", "4_0": "statue/87c0ec4d53.webp", "4_1": "statue/9009197505.webp", "4_2": "statue/3c3b80d4c3.webp", "4_3": "statue/d1053fdb1b.webp", "4_4": "statue/7138463cf6.webp", "4_5": "statue/fc18ed3d40.webp", "4_6": "statue/ab8827a9cf.webp", "4_7": "statue/eada6c1462.webp", "5_0": "statue/c187946dd1.webp", "5_1": "statue/7b12ab3e6d.webp", "5_2": "statue/79a594b6d7.webp", "5_3": "statue/b96eb4650a.webp", "5_4": "statue/247cf28410.webp", "5_5": "statue/a34e102b14.webp", "5_6": "statue/f0907529a6.webp", "5_7": "statue/5f873f978c.webp", "6_0": "statue/e287308eca.webp", "6_1": "statue/29d27d8a83.webp", "6_2": "statue/5c41e25f73.webp", "6_3": "statue/ded6845553.webp", "6_4": "statue/9c36da810c.webp", "6_5": "statue/98576af118.webp", "6_6": "statue/9959b7e41a.webp", "6_7": "statue/bd4858fd81.webp", "7_0": "statue/f323e29f22.webp", "7_1": "statue/884e96546d.webp", "7_2": "statue/15745b1ad7.webp", "7_3": "statue/0e7f42070b.webp", "7_4": "statue/d8aa9123ad.webp", "7_5": "statue/9160c3b343.webp", "7_6": "statue/6f137efbe1.webp", "7_7": "statue/0901cdd45e.webp", "8_0": "statue/53c346f4a2.webp", "8_1": "statue/e380abbd42.webp", "8_2": "statue/0da40256e2.webp", "8_3": "statue/fafcc06627.webp", "8_4": "statue/fb44132e78.webp", "8_5": "statue/95fd46ff17.webp", "8_6": "statue/1e9a25d050.webp", "8_7": "statue/f334aeeee7.webp", "9_0": "statue/8de100ca09.webp", "9_1": "statue/0d4b6a2fac.webp", "9_2": "statue/dfe33873a0.webp", "9_3": "statue/748fedf00c.webp", "9_4": "statue/12a3c208bc.webp", "9_5": "statue/29d663d74f.webp", "9_6": "statue/ad47f62848.webp", "9_7": "statue/4927fd03ae.webp", "10_0": "statue/7ca0341e63.webp", "10_1": "statue/ebe993154d.webp", "10_2": "statue/02932ff953.webp", "10_3": "statue/1f6473afa3.webp", "10_4": "statue/0a9b59f51d.webp", "10_5": "statue/c322a2daec.webp", "10_6": "statue/1d696d0439.webp"};
+/* ---------- FICHES : Rudy parle de chaque personnage ----------
+   clé "page_carte" (page 0 à 10, carte 0 à 7, de gauche à droite puis de haut en bas) */
+const SA="Une sous-fifre d'Astra, une de ses poupées de l'usine. Rien de plus.";
+const SV="Une sous-fifre de Vampa, au château de Rembourg. Rien de plus.";
+const SF="Une sous-fifre de Farah, dans la Forêt Maudite. Rien de plus.";
+const FICHES={
+ // page 1
+ '0_0':['Rudy',"Moi, c'est Rudy. Un sweat vert, une clope au bec et des rêves plein la tête. Shinato, c'est ma ville… et un jour, tout le monde connaîtra mon nom. 😎"],
+ '0_1':['Théo',"Théo, toujours en train de hurler devant son rideau « Fight for your dreams ». Il se dit imbattable à PariBoxe… la dernière fois, il a fini aux urgences. 😂 Mais c'est un vrai pote."],
+ '0_2':['Carlos',"Carlos, le roi du bras de fer au Désir. Une force de bœuf et un cœur en or… mais son poignet passe plus de temps à l'infirmerie qu'au comptoir. 💪"],
+ '0_3':['Valor',"Valor, les chaînes en or et l'air du patron. Il se prend pour un homme d'affaires et pour un dur… mais il pleure pour une piqûre. Sur le ring de PariBoxe, par contre, faut pas rigoler. 🥊"],
+ '0_4':['Mathis',"Mathis, mon coéquipier à la balle au prisonnier. Gentil comme tout… mais il drague tout ce qui bouge, même Sophie. Celui-là, je le surveille. 😒"],
+ '0_5':['Commissaire',"Le Commissaire. Lunettes noires, gilet de police… Avec lui, une bêtise et c'est direct la prison. Mieux vaut l'avoir dans son équipe au foot qu'en face. 🚔"],
+ '0_6':['Mody',"Mody, le barbare de Shinato. Il saute à la corde torse nu sous le grand panneau… et il mange pour trois. Au buffet, même Faty n'a pas réussi à suivre. 🍗"],
+ '0_7':['Limon',"Limon, le masqué de la salle d'arcade. Il bat tout le monde… en trichant, d'après Karine. Et il paraît qu'il raconte que je marche comme un pingouin. 🐧"],
+ // page 2
+ '1_0':['Ameline',"Ameline… hôtesse de l'air, mystérieuse et élégante. Je l'ai rencontrée sur le canapé du Pixel Bar. Avec elle, chaque message est une énigme… et j'adore ça. ✈️"],
+ '1_1':['Faty',"Faty… rien qu'en la voyant, mon cœur s'emballe. Drôle, cash, gourmande, et ce sourire… Elle me plaît vraiment beaucoup. Un jour, je l'emmène au Dragon d'Or : elle dit qu'ils font les meilleurs nems de Shinato. 😍"],
+ '1_2':['Rose',"Rose, une vraie flamme. Pétillante, rêveuse… et jalouse ! Si je regarde une autre fille devant elle, je suis un homme mort. 🔥"],
+ '1_3':['Karine',"Karine et ses couettes, la gameuse de la plage. Taquine et compétitive : elle m'a promis un bisou si je bats son score à Kart Fury. Et elle adore les armes… elle s'amuse à me faire peur avec, cette folle. 😅 Une fois, au cinéma, on n'a pas vraiment regardé le film… 🍿"],
+ '1_4':['Mifa',"Mifa, tresses rouges et caractère d'acier. « Le temps, c'est de l'argent, Rudy. » Sortir avec elle, ça se mérite… et je compte bien le mériter. 😤"],
+ '1_5':['Sophie',"Sophie… ma meilleure amie depuis toujours. Elle débarque avec des croissants, elle me fait rire, elle me connaît par cœur. Le problème, c'est que moi, j'aimerais être bien plus que son pote… Et des fois, j'ai l'impression qu'elle aussi. 💛"],
+ '1_6':['Katila',"Katila, mon infirmière préférée à Vaviel. Toujours là pour me soigner après mes bêtises. Elle m'appelle « son patient préféré »… je crois que je me blesse exprès. 💉"],
+ '1_7':['Gisèle',"Gisèle, le soleil de la plage. Volley, tir à la corde, pistolet à eau… c'est elle qui invente tous les jeux. Avec elle, c'est la fête tous les jours. ☀️"],
+ // page 3
+ '2_0':['Aurore',"Aurore, la belle blonde de Mitsuda. Un peu trop sûre d'elle… mais c'est grâce à ses informations que j'ai découvert le laboratoire d'Astra. 😏"],
+ '2_1':['Gala',"Gala, toujours couverte de bijoux. Elle a un pouvoir incroyable : un claquement de doigts, et n'importe quel homme craque et perd la tête de plaisir. Moi y compris. Avec elle, mieux vaut garder ses distances… ou pas. 💎✨"],
+ '2_2':['Alain',"Alain, le vendeur le plus nul de toute la ville. Il essaie de te vendre n'importe quoi, il se trompe dans les prix, il oublie la moitié de ce qu'il raconte… Mais impossible de lui en vouloir : il est tellement sympa que tu repars toujours avec un truc dont tu n'avais pas besoin. 😂"],
+ '2_3':['Ziggy',"Ziggy, la femme chat du salon de thé. C'est elle qui m'a parlé de la Rousse et de la Forêt Maudite. Elle trouve que je suis « pas mal… pour un humain ». Venant d'elle, c'est un vrai compliment. 😼"],
+ '2_4':['Jérôme',"Jérôme, le chauffeur du boulevard. Casquette, gants blancs, lunettes noires… Il voit passer tout le beau monde de Chez Valia, mais il ne dit jamais rien. 🚘"],
+ '2_5':['Cathy',"Cathy, toujours rêveuse, le menton dans la main. On dirait qu'elle attend quelqu'un… Et si c'était moi ? 😌"],
+ '2_6':['José',"José, le monsieur en costume blanc devant le RestoChic. Un vrai commerçant, toujours souriant et toujours classe… et une grande partie du boulevard lui appartient. Quand j'ai des questions sur les diamants, c'est lui que je vais voir. 💎"],
+ '2_7':['Kiara',"Kiara, la dame aux cheveux blancs. Elle a de l'expérience… et elle le fait savoir. Avec elle, c'est toujours elle qui décide quand on se voit. 😏"],
+ // page 4
+ '3_0':['Rosa',"Rosa et son grand chapeau rose. Une vraie dame, élégante jusqu'au bout des ongles. À côté d'elle, j'ai l'impression d'être mal habillé. 🌸"],
+ '3_1':['Stella',"Stella, la barmaid du salon de thé. Sa spéciale thé milk-shake me remet sur pied à chaque fois. Et elle aime les hommes galants… ça tombe bien. 🧋"],
+ '3_2':['Blanca',"Blanca, la dame en blanc du salon de thé. Elle a un charme fou pour son âge… mais avec elle, rien n'est gratuit. 💋"],
+ '3_3':['Luna',"Luna, toujours plongée dans son livre. La première fois, elle m'a envoyé balader… mais derrière ce regard sérieux, il y a une fille qui sait beaucoup de choses. 📖"],
+ '3_4':['Mr Lavette',"Monsieur Lavette, le père de Limon. Il passe ses journées sur le banc de la plage à ruminer : son fils est devenu un voyou, et il ne le supporte pas. Si tu prononces le nom de Limon devant lui, prépare-toi à l'entendre râler. 👴"],
+ '3_5':['Mdm Lavette',"Madame Lavette, la mère de Limon. Avec ses lunettes et son gilet rose, elle a l'air douce… mais depuis que son fils traîne avec des voyous, elle est furieuse. Elle veille quand même sur Monsieur Lavette comme au premier jour. 👵"],
+ '3_6':['Aline',"Aline, la fille au béret de Mitsuda. Je l'ai abordée dans la rue, et depuis elle m'écrit tous les jours. Douce, attentionnée… « Mitsuda la nuit, c'est notre endroit. » 💕"],
+ '3_7':['Ange',"Ange, la fille au café devant le labo. Ça faisait longtemps qu'on ne s'était pas vus… Et c'est en disant que j'étais son ami que j'ai pu entrer au château de Rembourg. ☕"],
+ // page 5
+ '4_0':['Mireille',"Mireille, toujours caché sous sa capuche rouge. En secret, il est fou amoureux de Faty… Le problème, c'est qu'elle ne veut absolument pas de lui. Le pauvre la regarde passer de loin. Entre nous, il n'a aucune chance. 💔"],
+ '4_1':['Monite',"Monite, de la police. Un regard derrière ses lunettes noires et tu comprends tout de suite qu'il faut filer droit. 🚨"],
+ '4_2':['Elsa',"Elsa, la belle rousse au regard perçant. Elle te fixe comme si elle lisait dans tes pensées… Dangereux. 🍷"],
+ '4_3':['Roma',"Roma, le colosse aux cheveux blancs, toujours une bière à la main. Il n'a pas l'air commode… mais il trinque avec tout le monde. 🍺"],
+ '4_4':['Éric',"Éric, costume blanc et or, lunettes noires. Il se promène dans la rue de nuit comme si elle lui appartenait. Je me demande d'où vient tout son argent… 🕶️"],
+ '4_5':['Antoine',"Antoine, des muscles partout et des tatouages jusqu'au cou. Ici, on ne cherche pas d'histoires avec lui. 💪"],
+ '4_6':['Vito',"Vito, le barman toujours tiré à quatre épingles. Gilet, nœud papillon… et toujours une bonne bière pour moi quand ça va mal. 🍸"],
+ '4_7':['Terry',"Terry, le gars à la veste noire devant l'hôtel. Quand je suis revenu de la Forêt Maudite, il n'en revenait pas que j'aie résisté à la Rousse… Lui, il aurait flanché ! 😳"],
+ // page 6
+ '5_0':['Mr Loyal',"Monsieur Loyal, le maître du chapiteau. Un grand sourire sous sa moustache… mais depuis que Katrina l'a obligé à lui faire un enfant pour garder son boulot, il est à ses pieds. Il tremble à l'idée que sa femme l'apprenne. 🎩😰"],
+ '5_1':['California',"California, la clown aux cheveux violets, perchée sur son ballon. Elle dit qu'elle n'appartient à personne… mais elle sait très bien me faire tourner la tête. 🤡"],
+ '5_2':['Colina',"Colina, la fille au cerceau. Toujours pressée, toujours à l'entraînement. « J'ai pas le temps de te parler »… c'est sa phrase préférée. 😒"],
+ '5_3':['Manhattan',"Manhattan, la jongleuse au nez rouge. Elle jongle avec tout… surtout avec mon argent. 🎪"],
+ '5_4':['Digula',"Digula, la dompteuse blonde, reine de l'éléphant. « Tu veux monter ? »… sur l'éléphant, j'espère. 🐘"],
+ '5_5':['Katrina',"Katrina, l'arlequin aux cheveux bleus. Très nerveuse, elle boude tout le temps… Elle a forcé Monsieur Loyal à lui faire un enfant pour garder sa place, et depuis, c'est elle qui commande au chapiteau. Et si on la cherche, elle te défie au bras de fer. 😤"],
+ '5_6':['Taliana',"Taliana, la danseuse en robe rouge du boulevard. Quand elle danse, tout le monde s'arrête pour la regarder… même si ça coûte 100 €. 💃"],
+ '5_7':['Corentin',"Corentin, costume noir et cravate. Toujours bien accompagné à Mitsuda… Je me demande ce qu'il fait vraiment dans la vie. 🤵"],
+ // page 7
+ '6_0':['Steve',"Steve, le collègue d'Amia. Un vrai policier, courageux jusqu'au bout. Il est mort au Laboratoire Mécanique en essayant de la protéger : une des poupées d'Astra s'est jetée sur lui et ne l'a jamais relâché. Je ne l'oublierai pas. 🕊️"],
+ '6_1':['Amia',"Amia, la policière de Mitsuda. Elle a survécu au Laboratoire Mécanique de justesse : une poupée s'en est prise à elle, et elle a réussi à s'enfuir… mais Steve, son collègue, y est resté. C'est elle qui m'a parlé d'Astra. Quand je suis revenu vainqueur, elle n'en croyait pas ses yeux. 😳"],
+ '6_2':['Vira',"Vira, la blonde à casquette devant le supermarché. Une clope, un sourire… et toujours la main tendue pour « un petit quelque chose ». 😋"],
+ '6_3':['Crusa',"Crusa, la fille en noir devant le supermarché. « T'as du feu… ou de l'argent ? » Avec elle, c'est souvent les deux. 💀"],
+ '6_4':['Boula',"Boula, la fumeuse aux cheveux rouges contre le mur du Barding. Je lui ai dit qu'elle était magnifique… et elle a rougi. Une première ! 🙈"],
+ '6_5':['Zombie',"La Zombie, cachée derrière le supermarché. Ne la regarde jamais de trop près… La dernière fois, je me suis réveillé à l'hôpital. 🧟‍♀️"],
+ '6_6':['Valia',"Valia, la patronne du Valia Club. Une danseuse incroyable… et une sacrée combattante : personne ne l'a jamais battue. Elle dit que je ne suis pas un client comme les autres. 🌙"],
+ '6_7':['Mr Lame',"Monsieur Lame, mon ancien prof de maths ! Toujours plongé dans sa lecture sur son banc à Vaviel. Il me disait que je ne ferais jamais rien de ma vie… J'aimerais bien voir sa tête s'il savait que j'ai battu Astra. 📐"],
+ // page 8
+ '7_0':['Gloria',"Gloria, une vampire du château de Rembourg, sous-fifre de Vampa. Surtout, ne jamais tomber entre ses mains. 🦇"], '7_1':['Levara',"Levara, la léoparde de la Forêt Maudite, sous-fifre de Farah. Hyper sexy… et c'est justement ça le piège. 🐆"], '7_2':['Liona',"Liona, la lionne de la Forêt Maudite. Une honte de la voir contrôlée par Farah la Rousse… Depuis, elle a toujours cet air triste. 🦁"], '7_3':['Tigresa',"Tigresa, la tigresse blanche, sous-fifre de Farah. Très vive et très forte : un coup de patte et tu vois des étoiles. 🐅"],
+ '7_4':['Vegara',"Vegara, la vache de la Forêt Maudite, sous-fifre de Farah. Elle a un corps de rêve… mais elle cogne comme un camion. 🐄"], '7_5':['Roca',"Roca, la crocodile, sous-fifre de Farah. Quand elle te maintient au sol, ça fait très, très mal. 🐊"], '7_6':['Siennas',"Siennas, la petite chienne, sous-fifre de Farah. Petite, mais elle sait faire chavirer les cœurs… Dès qu'elle voit un humain, elle veut s'amuser avec lui. 🐶"], '7_7':['Yeka',"Yeka, la hyène, sous-fifre de Farah. Une vraie malade mentale : elle rit pendant qu'elle te frappe. 😵"],
+ // page 9
+ '8_0':['Marita',"Marita, une poupée d'Astra. Ne jamais tomber entre ses mains… sinon, c'est la fin. 🪆"], '8_1':['Électriqua',"Électriqua, une poupée d'Astra. Surtout, qu'elle ne t'attrape pas : entre ses mains, tu finis électrocuté. ⚡"], '8_2':['Ganadi',"Ganadi, une créature d'Astra. Surtout, ne jamais se laisser embrasser par elle : elle aspire tout le sang du corps. 🩸"], '8_3':['Robocar',"Robocar, un robot d'Astra. Beaucoup trop de force pour un seul homme… Ne reste pas à sa portée. 🤖"],
+ '8_4':['Clitana',"Clitana, une poupée d'Astra. Une invention faite exprès pour que tous les hommes chavirent… Ne la regarde pas trop longtemps. 🔪"], '8_5':['Claudia',"Claudia, une créature d'Astra. C'était une vraie femme… Depuis sa mort, Astra l'a recréée en plusieurs exemplaires pour s'en prendre aux hommes et les vider de toutes leurs forces. 🦾"], '8_6':['Tita',"Tita, un nounours d'Astra… bizarrement sexy. Mais ne t'y fie pas : elle plante sans aucun scrupule. 🧸🔪"], '8_7':['Tiffania',"Tiffania, une poupée d'Astra. C'est elle qui a tué Steve… Elle s'en était d'abord prise à Amia, qui a réussi à s'enfuir. Steve, lui, n'a pas eu cette chance. Celle-là, je ne lui pardonnerai jamais. 😠"],
+ // page 10
+ '9_0':['Irona',"Irona, le robot d'Astra. Une force sensationnelle. Ne surtout pas tomber entre ses mains. 🤖"], '9_1':['Kita',"Kita, une créature d'Astra. Elle peut me pomper toute mon énergie en un instant. 😵"], '9_2':['Esmel',"Esmel, une marionnette d'Astra. Attention… je ne sais pas si je dois avoir peur ou tomber amoureux. Et pourtant, ce n'est qu'une marionnette. 🌹"], '9_3':['Fantomina',"Fantomina, le fantôme du château de Rembourg, sous-fifre de Vampa. La fuir à tout prix. 👻"],
+ '9_4':['Tortura',"Tortura, la gargouille du château, sous-fifre de Vampa. Elle adore jouer avec les humains… jusqu'à les briser en morceaux. 🗿"], '9_5':['Démembras',"Démembras, le nounours blanc du château, sous-fifre de Vampa. Cet ourson a vraiment un problème avec moi : j'ai l'impression qu'elle est amoureuse… et qu'en même temps, elle veut me tuer. 🧸"], '9_6':['Lilia',"Lilia, la petite fée du château, sous-fifre de Vampa. Une petite femme hyper sexy… mais avec une notion du meurtre très développée. 🧚"], '9_7':['Bisouza',"Bisouza, la griffue du château, sous-fifre de Vampa. Des lèvres de plus en plus pulpeuses : si elle t'embrasse, tu tombes amoureux d'elle sur-le-champ… mais tu n'as pas vraiment le temps d'en profiter, vu qu'elle te mange à la fin. 💋"],
+ // page 11 (BOSS)
+ '10_0':['Giria',"Giria, la girafe de la Forêt Maudite, sous-fifre de Farah. La fuir absolument : elle est beaucoup trop puissante. 🦒"], '10_1':['Eglaria',"Eglaria, la buse de la Forêt Maudite, sous-fifre de Farah. Elle adore picorer la tête des humains. 🦅"], '10_2':['Mira',"Mira, la panthère noire, sous-fifre de Farah. Extrêmement vive et nerveuse… La fuir absolument. Quand elle hurle, toute la forêt tremble. 🐈‍⬛"],
+ '10_3':['Santoriusa',"Santoriusa, la centaure de la Forêt Maudite, le bras droit de Farah. Une force incroyable… Si elle t'attrape, elle abuse de toi avant de te dévorer. Elle galopait avec la Rousse sur le dos, et j'ai bien cru que je n'en reviendrais pas. Mais je suis passé. 🏹",'boss'],
+ '10_4':['Astra',"Astra… peut-être l'une des femmes les plus dangereuses qui existent. C'est elle qui a créé le Laboratoire Mécanique, ses robots et ses poupées. Un corps parfait, capable de faire tomber amoureux n'importe quel homme… J'ai failli succomber. C'est peut-être la seule fois de ma vie où j'ai vraiment eu peur de mourir. Mais je l'ai battue. ⚡",'rouge'],
+ '10_5':['Vampa',"Vampa, la Reine des vampires. Une force incroyable… La première fois, elle a bien failli me tuer, et je n'ai dû mon salut qu'à la fuite. J'y suis retourné, plus fort, et cette fois, c'est moi qui l'ai battue. Même la blonde du Relais savait que j'y arriverais. 🦇",'rouge'],
+ '10_6':['Farah Larousse',"Farah la Rousse. Elle a pris possession de la forêt des animaux et elle déteste les humains. La dernière fois que j'y suis allé, la forêt était remplie de corps d'hommes massacrés… certains n'avaient même plus leurs membres. Je n'ose pas imaginer ce qu'elle en a fait. Et pourtant, avec son air si humain, elle est magnifique… Elle aurait pu me faire tout oublier. Mais je l'ai vaincue. 🍃",'rouge']
+};
+const CW=343,CH=300,XS=[118,480],YS=[297,611,925,1239];
+const ORDREF=Object.keys(FICHES).sort((a,b)=>{const[p,q]=a.split('_').map(Number),[r,s]=b.split('_').map(Number);return p-r||q-s;});
+let fi=0;
+function fiche(i){ fi=(i+ORDREF.length)%ORDREF.length; const key=ORDREF[fi], F=FICHES[key];
+ $('fImg').src=PORTRAITS[key]; $('fNom').innerHTML='<span>'+F[0]+'</span>'; $('fNom').classList.toggle('pl',F[0].length>10); titre($('fTitre'),F[0].toUpperCase());
+ $('fCadre').classList.toggle('rouge',F[2]==='rouge');
+ $('fTexte').textContent=F[1]; $('fTexte').parentNode.classList.toggle('court',F[1].length<80); $('fTexte').parentNode.classList.toggle('long',F[1].length>260); document.querySelector('.fzone').scrollTop=0; document.querySelector('.fzone').classList.toggle('long',F[1].length>260);
+ $('fNum').textContent=(fi+1)+' / '+ORDREF.length; ecran('fiche'); }
+const _ecran=ecran; ecran=function(id){ _ecran(id); $('fiche').classList.toggle('on',id==='fiche'); if(id==='fiche'){ $('pages').classList.remove('on'); } };
+// toucher une carte sur une page de personnages
+$('pcadre').addEventListener('click',e=>{ const r=$('pimg').getBoundingClientRect(); const x=(e.clientX-r.left)/r.width*941, y=(e.clientY-r.top)/r.height*1672;
+ for(let k=0;k<8;k++){ const cx=XS[k%2], cy=YS[k>>1]; if(x>=cx&&x<=cx+CW&&y>=cy&&y<=cy+CH){ const key=ip+'_'+k; if(FICHES[key]){ son(); fiche(ORDREF.indexOf(key)); } return; } } });
+tap($('fRetour'),()=>{ const p=+ORDREF[fi].split('_')[0]; ecran('pages'); $('pages').classList.add('on'); page(p); });
+tap($('fPrec'),()=>fiche(fi-1)); tap($('fSuiv'),()=>fiche(fi+1));
+let fx0=null; $('fiche').addEventListener('pointerdown',e=>{fx0=e.clientX;}); $('fiche').addEventListener('pointerup',e=>{ if(fx0===null)return; const dx=e.clientX-fx0; fx0=null; if(Math.abs(dx)>50){ son(); fiche(fi+(dx<0?1:-1)); } });
+
+// dans le téléphone de Rudy
+const DANS_TEL=(window.parent!==window);
+if(DANS_TEL){ $('apercu').remove(); $('tel').style.display=''; tap($('tel'),()=>{ try{ window.parent.postMessage({type:'statue:fermer'},'*'); }catch(e){} }); }
+const _ecr2=ecran; ecran=function(id){ _ecr2(id); if(DANS_TEL) $('tel').style.display=(id==='statue'?'':'none'); };
+window.statueAccueil=function(){ ecran('statue'); maj(); };
+</script>
+</body>
+</html>
