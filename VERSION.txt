@@ -1,6 +1,4 @@
-ChambreRudy — mise à jour 174 (à déposer après la 173)
-- Shinato : « Voulez-vous rentrer ? » OUI → vidéo, puis le bureau de la chambre ; PARLER au gars à la capuche rouge (banc de gauche).
-- Dragon d'Or : PARLER au cuisinier (en plus de MANGER).
-- Boulevard : REGARDER le couple qui danse (seulement seul) → vidéo, −100 €.
-- Mitsuda : PARLER au gars à la veste noire qui fume.
-- Déverrouillage : les nouvelles vidéos.
+ChambreRudy — mise à jour 175 (à déposer après la 174)
+- Shinato : PARLER à l'homme en costume devant la vitrine BRAND.
+- Mitsuda : PARLER au gars à la veste grise (devant le labo).
+- Déverrouillage : les deux nouvelles vidéos.
