@@ -1,4 +1,5 @@
-ChambreRudy — mise à jour 175 (à déposer après la 174)
-- Shinato : PARLER à l'homme en costume devant la vitrine BRAND.
-- Mitsuda : PARLER au gars à la veste grise (devant le labo).
-- Déverrouillage : les deux nouvelles vidéos.
+ChambreRudy — mise à jour 176 (à déposer après la 175)
+- Boulevard : l'homme au bord de l'eau (seulement seul) → PARLER → vidéo, puis il disparaît pour de bon.
+- Shinato : PARLER au policier de la ronde (le bouton le suit) ; PARLER au grand gars à côté de Sophie → vidéo, puis Rudy à côté du gars au sweat rouge.
+- Dragon d'Or : COMMANDER (au lieu de PARLER) → viande rosée 50 €, sushi 40 €, poulet rôti 60 € : on paye, la vie remonte à fond, puis la vidéo.
+- Déverrouillage : les nouvelles vidéos.

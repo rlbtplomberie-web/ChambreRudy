@@ -343,4 +343,8 @@ addEventListener('message',e=>{ if(e.data&&e.data.type==='discuter') document.ge
 document.getElementById('discuterB').addEventListener('click',()=>{ try{ parent.postMessage({type:'sortie:discuter'},'*'); }catch(e){} });
 })();
 </script>
+<script>
+/* l'homme au bord de l'eau : une fois que Rudy lui a parlé (seul), il a disparu du boulevard pour de bon */
+(function(){ try{ if(localStorage.getItem('blvd_reveur_parti')==='1') document.querySelectorAll('.perso.reveur').forEach(function(e){ e.style.display='none'; }); }catch(e){} })();
+</script>
 </body></html>

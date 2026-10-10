@@ -65,6 +65,8 @@ function cuisinier(t){
 #stick{position:absolute;left:50%;top:50%;width:13vmin;height:13vmin;margin:-6.5vmin 0 0 -6.5vmin;border-radius:50%;
  background:radial-gradient(circle at 42% 36%,#fbf0c6,#c9a33c 60%,#7d6118);box-shadow:0 4px 12px rgba(0,0,0,.6)}
 #actions{position:fixed;right:4.5vmin;bottom:6vmin;display:flex;flex-direction:column;gap:2.6vmin;z-index:20}
+#choixCmd{position:fixed;right:4.5vmin;bottom:6vmin;display:none;flex-direction:column;gap:2.2vmin;z-index:21}
+#choixCmd .btn{display:block}
 .btn{min-width:28vmin;padding:3vmin 3.4vmin;border-radius:3vmin;text-align:center;display:none;touch-action:none;user-select:none;
  font:900 clamp(13px,3.1vmin,26px)/1 Arial,sans-serif;letter-spacing:2px;color:#ffe27a;
  background:linear-gradient(rgba(12,12,14,.9),rgba(30,30,34,.9));border:2px solid rgba(255,226,122,.8);
@@ -76,7 +78,7 @@ function cuisinier(t){
 </style>
 <div id="titreR">DRAGON D'OR</div>
 <div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="btnParlerChef">PARLER</div><div class="btn" id="btnJouer">MANGER</div><div class="btn" id="btnSortir">SORTIR</div></div>
+<div id="actions"><div class="btn" id="btnParlerChef">COMMANDER</div><div class="btn" id="btnJouer">MANGER</div><div class="btn" id="btnSortir">SORTIR</div></div>
 <script>
 /* ================= Rudy dans le restaurant (mêmes planches qu'au Pixel Bar) ================= */
 const RB={"droite": {"img": ["/assets/shinato/m/ef1f0b8c2cc9473b.webp", "/assets/shinato/m/8f16b04582ccd18f.webp", "/assets/shinato/m/b76af52210dcf554.webp", "/assets/shinato/m/335b72042ef27bbc.webp", "/assets/shinato/m/50c8697489c2c907.webp", "/assets/shinato/m/cbd0a1ad22fab3ba.webp", "/assets/shinato/m/680d616f4c29d575.webp", "/assets/shinato/m/3316119779970e96.webp", "/assets/shinato/m/47efa18c2f9698a9.webp"], "w": 134, "h": 206, "ax": 63.612575574365174, "ay": 203.0}, "gauche": {"img": ["/assets/shinato/m/6f1bf8da705a8911.webp", "/assets/shinato/m/f02a3a5feed4f7c4.webp", "/assets/shinato/m/ede9f664436f25f2.webp", "/assets/shinato/m/51aa1ca8a5dd4922.webp", "/assets/shinato/m/9600fe3909581e0b.webp", "/assets/shinato/m/037ddbda857ff35b.webp", "/assets/shinato/m/946210da6e0395a1.webp", "/assets/shinato/m/ba4398dc080de701.webp", "/assets/shinato/m/70e4515f71136159.webp"], "w": 130, "h": 197, "ax": 63.97493036211699, "ay": 195.0}, "haut": {"img": ["/assets/shinato/m/8a8dcc61508e73cc.webp", "/assets/shinato/m/0625bc5499c17775.webp", "/assets/shinato/m/d130e78bd96cbf58.webp", "/assets/shinato/m/85e77196dae0a364.webp", "/assets/shinato/m/f112a083b3eac8ab.webp", "/assets/shinato/m/fe5eff60eeb2ac4d.webp", "/assets/shinato/m/6be13897791b903d.webp", "/assets/shinato/m/dd80719f53df96e6.webp", "/assets/shinato/m/38e6d2bce0ca6363.webp"], "w": 89, "h": 218, "ax": 44.04040242733951, "ay": 215.0}, "bas": {"img": ["/assets/shinato/m/d67456269af20e2b.webp", "/assets/shinato/m/d227cf6f358b0526.webp", "/assets/shinato/m/0f7f9a1e518986f4.webp", "/assets/shinato/m/0a266f69d86aa01d.webp", "/assets/shinato/m/d513893fbe84847c.webp", "/assets/shinato/m/6f705304ece6820d.webp", "/assets/shinato/m/ff9a36731da1dafd.webp", "/assets/shinato/m/4d7a4f90f39f828c.webp", "/assets/shinato/m/3e7f67122e98fbfb.webp"], "w": 100, "h": 241, "ax": 50.24630667345899, "ay": 238.0}};
@@ -129,16 +131,32 @@ function fleche(t){
  ctx.beginPath();ctx.moveTo(x-40,y-18);ctx.lineTo(x,y-18);ctx.lineTo(x,y-42);ctx.lineTo(x+48,y);ctx.lineTo(x,y+42);ctx.lineTo(x,y+18);ctx.lineTo(x-40,y+18);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
 }
 const bS=document.getElementById('btnSortir'),bJ=document.getElementById('btnJouer');
-// PARLER au cuisinier (en plus de MANGER) : sa vidéo
+// COMMANDER au cuisinier (en plus de MANGER) : 3 plats payants, chacun avec sa vidéo ; manger rend toute la vie
 const bPC=document.getElementById('btnParlerChef');
 (function(){
+ const PLATS=[
+  {nom:'🥩 Viande rosée', prix:50, video:'/assets/shinato/m/dragon_cuisinier.mp4'},
+  {nom:'🍣 Sushi',        prix:40, video:'/assets/shinato/m/dragon_sushi.mp4'},
+  {nom:'🍗 Poulet rôti',  prix:60, video:'/assets/shinato/m/dragon_poulet.mp4'}
+ ];
  const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:90;background:#000;display:none';
  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
  const v=vb.querySelector('video'); const ferme=()=>{ try{ v.pause(); }catch(e){} vb.style.display='none'; };
  v.addEventListener('ended',ferme); v.addEventListener('error',ferme);
- let t0=0; const go=e=>{ if(e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t0<400) return; t0=n; joyX=joyY=0;
-  v.src='/assets/shinato/m/dragon_cuisinier.mp4'; vb.style.display='block'; const q=v.play(); if(q&&q.catch) q.catch(()=>{}); };
- bPC.addEventListener('pointerdown',go); bPC.addEventListener('touchstart',go,{passive:false}); bPC.addEventListener('click',go);
+ const act=document.getElementById('actions');
+ const ch=document.createElement('div'); ch.id='choixCmd'; document.body.appendChild(ch);
+ function app(el,fn){ let t0=0; const go=e=>{ if(e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t0<400) return; t0=n; fn(); };
+  el.addEventListener('pointerdown',go); el.addEventListener('touchstart',go,{passive:false}); el.addEventListener('click',go); }
+ function fin(){ ch.style.display='none'; act.style.visibility=''; }
+ PLATS.forEach(P=>{ const b=document.createElement('div'); b.className='btn'; b.textContent=P.nom+' · '+P.prix+' €'; ch.appendChild(b);
+  app(b,()=>{ fin();
+   if(!window.argentPayer(P.prix,P.nom.slice(2).trim())) return;   // pas assez d'argent : rien
+   window.vieEcrire(100);                                           // le repas rend toute la vie
+   if(!P.video) return;
+   v.src=P.video; vb.style.display='block'; const q=v.play(); if(q&&q.catch) q.catch(()=>{}); }); });
+ const non=document.createElement('div'); non.className='btn'; non.textContent='Annuler'; non.style.opacity='.75'; ch.appendChild(non); app(non,fin);
+ app(bPC,()=>{ joyX=joyY=0; ch.style.display='flex'; act.style.visibility='hidden'; });
+ setInterval(()=>{ if(ch.style.display==='flex'&&!devantChef()) fin(); },200);       // s'il s'éloigne, le menu se ferme
 })();
 (function(){let t0=0;const go=e=>{if(e.cancelable)e.preventDefault();const n=performance.now();if(n-t0<400)return;t0=n;
   if(!window.argentPayer(20,'le repas'))return;          // manger coûte 20 €

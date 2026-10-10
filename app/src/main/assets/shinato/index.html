@@ -176,6 +176,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  <div class="btn" id="btnParlerBuveur" style="display:none">PARLER</div>
  <div class="btn" id="btnParlerCapuche" style="display:none">PARLER</div>
  <div class="btn" id="btnParlerVitrine" style="display:none">PARLER</div>
+ <div class="btn" id="btnParlerPolicier" style="display:none">PARLER</div>
+ <div class="btn" id="btnParlerMec" style="display:none">PARLER</div>
  <div class="btn" id="btnFumer">FUMER</div>
  <div class="btn off" id="btnJeter">JETER</div>
 </div>
@@ -820,6 +822,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  }
 
  var x=300, sens=1, etat="marche", cible=0, parcours=0;
+ window.POLICE_POS=function(){ return x/LARG; };   // où il est (pour le bouton PARLER, qui le suit)
  var arret=null, iArret=0, tArret=0, tPrec=0;
  var VITESSE=0.55;                  // en hauteurs de personnage par seconde (il marche tranquillement)
  var PAS=0.16;                      // distance au sol entre deux images de marche
@@ -1441,28 +1444,33 @@ else carte.addEventListener("load",demarre);
   {btn:"btnParlerTheo",   pos:0.1434, video:"/assets/shinato/m/shinato_theo.mp4"},    // Théo, débardeur rouge, rideau « FIGHT »
   {btn:"btnParlerMathis", pos:0.5979, video:"/assets/shinato/m/shinato_mathis.mp4"},  // Mathis, en beige, sur le terrain de foot
   {btn:"btnParlerMody",   pos:0.2537, video:"/assets/shinato/m/shinato_mody.mp4"},    // Mody, torse nu, saute à la corde sous le panneau Shibuya
-  {btn:"btnParlerSophie", pos:0.8099, video:"/assets/shinato/m/shinato_sophie_mec.mp4"},// la blonde et le grand noir, devant la machine à boissons
+  {btn:"btnParlerSophie", pos:0.8018, video:"/assets/shinato/m/shinato_sophie_mec.mp4"},// la blonde (Sophie), devant la machine à boissons
+  {btn:"btnParlerMec",    pos:0.8180, video:"/assets/shinato/m/shinato_mec.mp4", apres:0.915},// le grand noir à côté d'elle : après sa vidéo, Rudy se retrouve à côté du gars au sweat rouge
   {btn:"btnParlerShana",  pos:0.9551, video:"/assets/shinato/m/shinato_shana.mp4"},     // Shana, assise en tailleur sur le banc, lit son livre
   {btn:"btnParlerAfro",   pos:0.9300, video:"/assets/shinato/m/shinato_afro_rousse.mp4"},// la fille afro et la rousse, assises entre les deux bancs
   {btn:"btnParlerBuveur", pos:0.7269, video:"/assets/shinato/m/shinato_buveur.mp4"},    // le buveur de bière, sur la chaise haute devant le Pixel Bar
   {btn:"btnParlerCapuche",pos:0.9042, video:"/assets/shinato/m/shinato_capuche.mp4"},  // le gars au sweat à capuche rouge, assis sur le banc de gauche
-  {btn:"btnParlerVitrine",pos:0.4041, video:"/assets/shinato/m/shinato_vitrine.mp4"}   // l'homme en costume, de dos, devant la vitrine du magasin BRAND
+  {btn:"btnParlerVitrine",pos:0.4041, video:"/assets/shinato/m/shinato_vitrine.mp4"},  // l'homme en costume, de dos, devant la vitrine du magasin BRAND
+  {btn:"btnParlerPolicier",pos:function(){ return window.POLICE_POS?window.POLICE_POS():-1; }, video:"/assets/shinato/m/shinato_policier.mp4"}   // le policier qui fait sa ronde : le bouton le suit
  ];
+ function posDe(P){ return typeof P.pos==="function"?P.pos():P.pos; }
  var PRES=95/7078, occupe=false;
  var vb=document.createElement("div"); vb.style.cssText="position:fixed;inset:0;z-index:70;background:#000;display:none";
  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
  document.body.appendChild(vb); var v=vb.querySelector("video");
- function ferme(){ try{ v.pause(); }catch(e){} vb.style.display="none"; occupe=false; }
+ var apres=null;                       // où Rudy se retrouve après la vidéo (si le passant l'emmène ailleurs)
+ function ferme(){ try{ v.pause(); }catch(e){} vb.style.display="none"; occupe=false;
+  if(apres!==null){ try{ x=largeurMonde*apres; sens=1; dir=0; cadre(true); }catch(e){} apres=null; } }
  v.addEventListener("ended",ferme); v.addEventListener("error",ferme);
  PASSANTS.forEach(function(P){
   var btn=document.getElementById(P.btn), t0=0;
   setInterval(function(){
    if(typeof x==="undefined"||!largeurMonde||window.PAUSE_RUE||occupe){ btn.style.display="none"; return; }
-   var d=Math.abs(x-largeurMonde*P.pos), plusProche=PASSANTS.every(function(Q){ return Q===P||Math.abs(x-largeurMonde*Q.pos)>=d; });
+   var d=Math.abs(x-largeurMonde*posDe(P)), plusProche=PASSANTS.every(function(Q){ return Q===P||Math.abs(x-largeurMonde*posDe(Q))>=d; });
    btn.style.display=(d<largeurMonde*PRES&&plusProche)?"block":"none";
   },120);
   function parle(e){ if(e&&e.cancelable) e.preventDefault(); var n=performance.now(); if(n-t0<400) return; t0=n;
-   occupe=true; dir=0; btn.style.display="none"; v.src=P.video; vb.style.display="block";
+   occupe=true; dir=0; btn.style.display="none"; apres=(P.apres!==undefined)?P.apres:null; v.src=P.video; vb.style.display="block";
    var q=v.play(); if(q&&q.catch) q.catch(function(){}); }
   btn.addEventListener("touchstart",parle,{passive:false}); btn.addEventListener("click",parle);
  });
