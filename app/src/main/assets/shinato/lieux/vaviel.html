@@ -784,7 +784,7 @@ window.addEventListener("message",function(e){
   {btn:"btnParlerLecteur", pos:1525/2172, video:"/assets/shinato/m/vaviel_lecteur.mp4"}    // le monsieur qui lit sur le banc
  ];
  // la femme chat en larmes devant le karting : seulement après la victoire contre la Reine des vampires
- try{ if(localStorage.getItem("rembourg_chateau_gagne")==="1") PASSANTS.push({btn:"btnParlerChat", pos:1895/2172, video:"/assets/shinato/m/vaviel_chat.mp4"}); }catch(e){}
+ try{ if(localStorage.getItem("rembourg_chateau_gagne")==="1"&&localStorage.getItem("foret_gagnee")!=="1") PASSANTS.push({btn:"btnParlerChat", pos:1895/2172, video:"/assets/shinato/m/vaviel_chat.mp4"}); }catch(e){}
  var PRES=95/2172, occupe=false;
  var vb=document.createElement("div"); vb.style.cssText="position:fixed;inset:0;z-index:70;background:#000;display:none";
  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
@@ -820,19 +820,19 @@ window.addEventListener("message",function(e){
 <script>
 /* ---------- la femme chat, en larmes devant le karting : seulement après la victoire contre la Reine des vampires (Rembourg) ---------- */
 (function(){
- var la=false; try{ la=localStorage.getItem("rembourg_chateau_gagne")==="1"; }catch(e){}
+ var la=false; try{ la=localStorage.getItem("rembourg_chateau_gagne")==="1"&&localStorage.getItem("foret_gagnee")!=="1"; }catch(e){}   // après la Forêt Maudite, elle est retournée au salon de thé
  if(!la) return;
  var IMG=["/assets/shinato/m/chat_pleure_0.webp","/assets/shinato/m/chat_pleure_1.webp","/assets/shinato/m/chat_pleure_2.webp","/assets/shinato/m/chat_pleure_3.webp"];
  var FW=194, FH=559, ax=0.5;                           // taille des images de la planche
  var monde=document.getElementById("monde"), LS=2172, HS=724;
  IMG.forEach(function(s){ var i=new Image(); i.src=s; });
  var X=1895, Y=515, K=212/FH;                          // devant l'entrée du karting, sur le chemin, à peu près la taille de Rudy
- var boite=document.createElement("div");
+ var boite=document.createElement("div"); boite.id="chatPleure";
  boite.style.cssText="position:absolute;z-index:3;pointer-events:none;left:"+((X-FW*ax*K)/LS*100)+"%;top:"+((Y-FH*K)/HS*100)+"%;"+
   "height:"+(FH*K/HS*100)+"%;width:"+(FW*K/LS*100)+"%;filter:brightness(.82) contrast(1.03) saturate(.95)";
  function calque(abs){ var i=new Image(); i.alt=""; i.style.cssText="display:block;width:100%;height:100%"+(abs?";position:absolute;left:0;top:0":""); return i; }
  var A=calque(false), B=calque(true); B.style.opacity="0"; boite.appendChild(A); boite.appendChild(B); monde.appendChild(boite);
- var ombre=document.createElement("div");
+ var ombre=document.createElement("div"); ombre.id="chatOmbre";
  ombre.style.cssText="position:absolute;z-index:2;pointer-events:none;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.45),transparent);"+
   "left:"+((X-40)/LS*100)+"%;top:"+((Y-7)/HS*100)+"%;width:"+(80/LS*100)+"%;height:"+(14/HS*100)+"%";
  monde.appendChild(ombre);
@@ -950,7 +950,11 @@ window.addEventListener("message",function(e){
   cen:"/assets/shinato/m/foret_ko_centaure_coups.mp4",         // le Centaure : ses coups de poing
   cen_charge:"/assets/shinato/m/foret_ko_centaure_coups.mp4",  // le Centaure : sa charge au galop → même vidéo que ses coups
   rou:"/assets/shinato/m/foret_ko_rousse_coups.mp4",           // la Rousse : ses coups normaux
-  rou_prise:"/assets/shinato/m/foret_ko_rousse_prise.mp4"      // la Rousse : elle l'attrape
+  rou_prise:"/assets/shinato/m/foret_ko_rousse_prise.mp4",     // la Rousse : elle l'attrape
+  rou_tornade:"/assets/shinato/m/foret_ko_rousse_tornade.mp4", // la Rousse : la tornade
+  rou_prise_liane:"/assets/shinato/m/foret_ko_rousse_prise_liane.mp4", // la Rousse : elle l'attrape pendant qu'il est attaché
+  rou_prise_tp:"/assets/shinato/m/foret_ko_rousse_tp_lianes.mp4",    // la Rousse : la prise après la téléportation
+  rou_lianes:"/assets/shinato/m/foret_ko_rousse_tp_lianes.mp4"       // la Rousse : les lianes → même vidéo
  };
  addEventListener("message",function(e){
   if(!e.data||e.data.type!=="foret:ko") return;
@@ -964,6 +968,22 @@ window.addEventListener("message",function(e){
   var src=e.data.qui&&KO_FORET[e.data.qui];
   if(!src){ hopital(); return; }
   video(src,function(vb){ hopital(); setTimeout(function(){ vb.remove(); },300); });
+ });
+
+ /* la Rousse est vaincue : la vidéo de la victoire, puis Rudy devant le karting ; la femme chat n'est plus là (elle est retournée au salon de thé) */
+ addEventListener("message",function(e){
+  if(!e.data||e.data.type!=="foret:victoire") return;
+  son(false);
+  var fr=document.getElementById("foretJeu"); if(fr){ fr.style.display="none"; fr.src="about:blank"; }
+  quit.style.display="none"; dedans=true;
+  try{ localStorage.setItem("foret_gagnee","1"); }catch(err){}
+  ["chatPleure","chatOmbre","btnParlerChat"].forEach(function(id){ var el=document.getElementById(id); if(el) el.remove(); });
+  video("/assets/shinato/m/foret_victoire.mp4",function(vb){
+   dedans=false; enVideo=false; tPrec=0;
+   try{ dir=0; x=largeurMonde*1840/2172; sens=1; etat="repos"; f=0; }catch(err){}
+   cadre(true); remetVille();
+   setTimeout(function(){ vb.remove(); },250);
+  });
  });
 })();
 </script>

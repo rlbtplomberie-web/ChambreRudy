@@ -315,7 +315,8 @@ window.RUDY=RUDY;
   function bouton(txt,fn,pale){ const b=document.createElement('div'); b.className='btn'; b.textContent=txt; if(pale) b.style.opacity='.8'; choix.appendChild(b); appui(b,fn); }
   let parle=false;
   // après la victoire contre la Reine des vampires, la femme chat quitte le salon de thé (on la retrouve à Vaviel, devant le karting)
-  const partie=(()=>{ try{ return localStorage.getItem('rembourg_chateau_gagne')==='1'; }catch(e){ return false; } })();
+  // partie devant le karting de Vaviel après la victoire contre la Reine des vampires… revenue au salon après la victoire dans la Forêt Maudite
+  const partie=(()=>{ try{ return localStorage.getItem('rembourg_chateau_gagne')==='1'&&localStorage.getItem('foret_gagnee')!=='1'; }catch(e){ return false; } })();
   if(partie){ const el=document.querySelector('.perso[data-id="chat"]'); if(el) el.style.display='none'; }
   setInterval(()=>{ const R=window.RUDY; if(!R) return;
     bP.style.display=(!partie&&!parle&&R.etat==='debout'&&Math.abs(R.x-CH_X)<150&&Math.abs(R.x-CH_X)<=Math.abs(R.x-1250))?'block':'none'; },150);
