@@ -1,6 +1,2 @@
-ChambreRudy — mise à jour 177 (à déposer après la 176)
-- Salon de thé : la barmaid, COMMANDER → « spéciale thé milk-shake » → OUI (50 €, toute la vie, vidéo, « À bientôt ») / NON.
-- Shinato : la fille cachée derrière le poteau, REGARDER → bulle de Rudy → vidéo → −moitié de la vie et −200 €, bulle de Rudy.
-- Bar le Relais : le barman, LA BIÈRE NOIRE → 60 € → vidéo (OUI) / « Alors pour la prochaine fois » (NON).
-- Téléphone : appli « Test » (provisoire) pour lancer directement l'usine, le château hanté et la forêt maudite.
-- Déverrouillage : les nouvelles vidéos.
+ChambreRudy — mise à jour 178 (à déposer après la 177)
+- Boulevard : le PARLER du monsieur en costume blanc apparaît des deux côtés (avant : seulement à sa gauche) ; au-dessus de celui de la dame quand les deux sont affichés.

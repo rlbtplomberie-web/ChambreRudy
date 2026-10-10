@@ -445,8 +445,12 @@ addEventListener('pagehide',()=>{ try{ mus.pause(); }catch(e){} });
     clearTimeout(bu._t); bu._t=setTimeout(()=>{ bu.style.display='none'; bu.style.borderColor=''; bu.style.background=''; },ms); }
   let occupe=false;
   setInterval(()=>{ const X=window.RUDY_BX?window.RUDY_BX():-9999;
-    const pres=!occupe&&vb.style.display!=='block'&&Math.abs(X-BOSS_X)<PRES&&Math.abs(X-BOSS_X)<=Math.abs(X-1124);
-    bP.style.display=pres?'block':'none'; },120);
+    // près de lui, de n'importe quel côté (avant : seulement à sa gauche, le côté droit allait à la dame)
+    const pres=!occupe&&vb.style.display!=='block'&&Math.abs(X-BOSS_X)<PRES+20;
+    bP.style.display=pres?'block':'none';
+    // si le PARLER de la dame est aussi affiché, celui du monsieur passe au-dessus pour ne pas le cacher
+    const bD=document.getElementById('parlerDame');
+    bP.style.bottom=(bD&&bD.style.display==='block')?'calc(278px + env(safe-area-inset-bottom,0px))':''; },120);
   function fini(){ occupe=false; v.removeEventListener('ended',fini); v.removeEventListener('error',fini); }
   let t=0;
   const go=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t<400) return; t=n;
