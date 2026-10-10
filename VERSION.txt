@@ -1,6 +1,2 @@
-ChambreRudy — mise à jour 165
-- Après la victoire contre la Reine des vampires : la femme chat quitte le salon de thé et pleure devant le karting de Vaviel (4 poses), avec PARLER → sa vidéo.
-- Après avoir parlé à la femme chat : flèche jaune tout à droite de Vaviel, ENTRER → vidéo puis « La Forêt Maudite » directement en combat.
-- Musique de Vaviel coupée dans le jeu, musique de la forêt à la place, coupée pendant les vidéos.
-- K.O. dans la forêt : vidéo de l'ennemie (si elle en a une), puis vidéo de l'infirmière, puis devant l'hôpital de Vaviel.
-- Déverrouillage : vidéo de la femme chat (Vaviel) et nouveau dossier « La Forêt Maudite ».
+ChambreRudy — mise à jour 166 (à déposer après la 165)
+- Vidéos de K.O. de La Forêt Maudite : la femme vache, la panthère noire, la petite chienne, la hyène.
