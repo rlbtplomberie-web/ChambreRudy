@@ -944,7 +944,13 @@ window.addEventListener("message",function(e){
   // les boss : une vidéo par façon de battre Rudy
   //   Centaure : cen (coups de poing), cen_prise, cen_charge, cen_rayon, cen_feu
   //   Rousse   : rou (coups), rou_prise, rou_prise_liane, rou_lianes, rou_tornade
-  cen_rayon:"/assets/shinato/m/foret_ko_centaure_rayon.mp4"   // le Centaure : le rayon vert
+  cen_rayon:"/assets/shinato/m/foret_ko_centaure_rayon.mp4",  // le Centaure : le rayon vert
+  cen_prise:"/assets/shinato/m/foret_ko_centaure_prise.mp4",  // le Centaure : il l'attrape
+  cen_feu:"/assets/shinato/m/foret_ko_centaure_rayon.mp4",    // le Centaure : les tirs verts → même vidéo que le rayon
+  cen:"/assets/shinato/m/foret_ko_centaure_coups.mp4",         // le Centaure : ses coups de poing
+  cen_charge:"/assets/shinato/m/foret_ko_centaure_coups.mp4",  // le Centaure : sa charge au galop → même vidéo que ses coups
+  rou:"/assets/shinato/m/foret_ko_rousse_coups.mp4",           // la Rousse : ses coups normaux
+  rou_prise:"/assets/shinato/m/foret_ko_rousse_prise.mp4"      // la Rousse : elle l'attrape
  };
  addEventListener("message",function(e){
   if(!e.data||e.data.type!=="foret:ko") return;

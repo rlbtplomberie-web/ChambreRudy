@@ -1,3 +1,2 @@
-ChambreRudy — mise à jour 169 (à déposer après la 168)
-- La Forêt Maudite : vidéo avant les boss (4e carte), vidéo avant le combat final contre la Rousse, chaque façon de mourir des boss reconnue, victoire envoyée à Vaviel.
-- K.O. du Centaure par le rayon vert.
+ChambreRudy — mise à jour 170 (à déposer après la 169)
+- K.O. du Centaure (prise, coups, charge, tirs verts) et de la Rousse (coups, prise).
