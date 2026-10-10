@@ -173,6 +173,34 @@ requestAnimationFrame(frame);
  font:900 clamp(13px,3.5vmin,23px)/1.18 "Comic Sans MS","Chalkboard SE","Marker Felt","Arial Black",Arial,sans-serif}
 #videoBlonde{position:fixed;inset:0;z-index:110;background:#000;display:none}
 #videoBlonde video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+#bulleB{position:fixed;left:0;top:0;z-index:30;display:none;pointer-events:none;--queue:50%}
+#bulleB.on{display:block}
+#bulleB .corps{position:relative;pointer-events:auto;width:min(60vmin,330px);box-sizing:border-box;
+ padding:2.4vmin 3vmin 2.2vmin;background:#fff;color:#111;border:0.7vmin solid #111;border-radius:5vmin;
+ box-shadow:1vmin 1vmin 0 rgba(0,0,0,.55);text-align:center}
+/* queue de la bulle : vers le bas (au-dessus de la tête) ou vers la droite (à côté de la tête) */
+#bulleB .corps::after,#bulleB .corps::before{content:"";position:absolute;width:0;height:0}
+#bulleB:not(.cote) .corps::after{left:calc(var(--queue) - 2.4vmin);bottom:-4.3vmin;border-left:1.5vmin solid transparent;border-right:3.4vmin solid transparent;border-top:4.2vmin solid #111;transform:skewX(-14deg)}
+#bulleB:not(.cote) .corps::before{left:calc(var(--queue) - 1.7vmin);bottom:-3vmin;z-index:1;border-left:0.9vmin solid transparent;border-right:2.4vmin solid transparent;border-top:3.2vmin solid #fff;transform:skewX(-14deg)}
+#bulleB.cote .corps::after{right:-4.3vmin;top:calc(var(--queue) - 2vmin);border-top:1.4vmin solid transparent;border-bottom:3vmin solid transparent;border-left:4.2vmin solid #111}
+#bulleB.cote .corps::before{right:-3vmin;top:calc(var(--queue) - 1.3vmin);z-index:1;border-top:0.9vmin solid transparent;border-bottom:2vmin solid transparent;border-left:3.2vmin solid #fff}
+#bulleB .txt{font:900 clamp(13px,3.5vmin,23px)/1.18 "Comic Sans MS","Chalkboard SE","Marker Felt","Arial Black",Arial,sans-serif;min-height:2.36em}
+#bulleB .rep{display:flex;gap:2.4vmin;justify-content:center;margin-top:1.8vmin}
+#bulleB .rep[hidden]{display:none}
+#bulleB .rep div{min-width:16vmin;padding:1.5vmin 2.6vmin;border:0.6vmin solid #111;border-radius:2.4vmin;touch-action:none;
+ font:900 clamp(13px,3.3vmin,22px)/1 "Arial Black",Arial,sans-serif;letter-spacing:1px;box-shadow:0 0.8vmin 0 #111}
+#bulleB .rep div:active{transform:translateY(0.6vmin);box-shadow:0 0.2vmin 0 #111}
+#bulleB #ouiB{background:#ffd23a;color:#111}
+#bulleB #nonB{background:#fff;color:#111}
+#bulleB.pop .corps{animation:bullePop .42s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes bullePop{0%{transform:scale(.2) rotate(-6deg);opacity:0}100%{transform:none;opacity:1}}
+#bulleB .choc{position:absolute;left:-2.4vmin;top:-4.2vmin;font:900 clamp(18px,6vmin,40px)/1 "Arial Black",Arial,sans-serif;
+ color:#ffd23a;-webkit-text-stroke:0.45vmin #111;transform:rotate(-12deg)}
+#bulleBBlonde{position:fixed;z-index:30;display:none;width:min(60vmin,330px);box-sizing:border-box;padding:2.4vmin 3vmin 2.2vmin;background:#fff;color:#111;
+ border:0.7vmin solid #111;border-radius:5vmin;box-shadow:1vmin 1vmin 0 rgba(0,0,0,.55);text-align:center;pointer-events:none;
+ font:900 clamp(13px,3.5vmin,23px)/1.18 "Comic Sans MS","Chalkboard SE","Marker Felt","Arial Black",Arial,sans-serif}
+#videoBlonde{position:fixed;inset:0;z-index:110;background:#000;display:none}
+#videoBlonde video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 #titreBar{position:fixed;top:calc(2vmin + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:20;color:#fff;pointer-events:none;white-space:nowrap;
  font:900 clamp(14px,3vmin,26px)/1.15 Arial,sans-serif;letter-spacing:3px;text-shadow:0 3px 0 #000,0 0 14px rgba(0,0,0,.9)}
 *{-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}html,body{touch-action:none;overscroll-behavior:none}
@@ -185,6 +213,7 @@ requestAnimationFrame(frame);
  <div class="btn" id="btnLever">SE LEVER</div>
  <div class="btn" id="btnDiscBlonde">DISCUTER</div>
  <div class="btn" id="btnParlerBlonde">PARLER</div>
+ <div class="btn" id="btnBiere">LA BIÈRE NOIRE</div>
  <div class="btn" id="btnParler">PARLER</div>
  <div class="btn" id="btnSortir">SORTIR</div>
 </div>
@@ -481,6 +510,40 @@ addEventListener('message',e=>{if(e.data&&e.data.type==='relais:entree'){
  appuie(bD,()=>{ if(!proche()) return; joyX=joyY=0;
   bulle.textContent="Tu as battu Vampa ? Je ne suis pas étonnée… Il n'y a que moi qui te fais faiblir. 😏";
   bulle.style.display='block'; place(); clearTimeout(bulle._t); bulle._t=setTimeout(()=>{ bulle.style.display='none'; },5000); });
+})();
+</script>
+<div id="bulleB"><div class="corps"><span class="choc">!</span><div class="txt" id="bulleBTxt"></div><div class="rep" id="bulleBRep"><div id="ouiB">OUI</div><div id="nonB">NON</div></div></div></div>
+<script>
+/* ================= le barman : LA BIÈRE NOIRE → « Ça va te donner de l'énergie, ça te coûtera 60 € » → OUI (60 €, vidéo) / NON ================= */
+(function(){
+ const PRIX=60;
+ const bB=document.getElementById('btnBiere'), bulle=document.getElementById('bulleB'), corps=bulle.querySelector('.corps'),
+       txt=document.getElementById('bulleBTxt'), rep=document.getElementById('bulleBRep');
+ const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:110;background:#000;display:none';
+ vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+ const v=vb.querySelector('video');
+ let ouvert=false, enVideo=false;
+ function ferme(){ try{ v.pause(); }catch(e){} vb.style.display='none'; enVideo=false; }
+ v.addEventListener('ended',ferme); v.addEventListener('error',ferme);
+ function place(){ if(!ouvert) return;
+  const hx=OX+barman.x*S, hy=OY+(TETE-40)*S, bw=corps.offsetWidth, bh=corps.offsetHeight, m=8, q=Math.min(W,H)*0.05;
+  bulle.classList.remove('cote');
+  const left=Math.max(m,Math.min(W-bw-m,hx-bw*0.42));
+  bulle.style.left=left+'px'; bulle.style.top=Math.max(m,hy-bh-q)+'px';
+  bulle.style.setProperty('--queue',Math.max(28,Math.min(bw-40,hx-left))+'px'); }
+ function montre(t,reponses){ txt.textContent=t; rep.hidden=!reponses; ouvert=true; bulle.classList.remove('pop'); void bulle.offsetWidth; bulle.classList.add('on','pop'); place(); }
+ function cache(){ ouvert=false; bulle.classList.remove('on','pop'); window.DIALOGUE=false; window.CAM_DOUX=40; }
+ (function boucle(){ requestAnimationFrame(boucle);
+  const p=!ouvert&&!enVideo&&!window.DIALOGUE&&!window.PAUSE_BAR&&window.barmanProche&&window.barmanProche();
+  bB.style.display=p?'block':'none'; place(); })();
+ appuie(bB,()=>{ if(ouvert||!window.barmanProche()) return;
+  window.DIALOGUE=true; window.CAM_DOUX=40; joyX=joyY=0; RUDY.bouge=false; majBoutons();
+  montre("Ça va te donner de l'énergie… ça te coûtera "+PRIX+" € !",true); });
+ appuie(document.getElementById('ouiB'),()=>{ if(rep.hidden) return;
+  if(!window.argentPayer(PRIX,'la bière noire')){ montre("Reviens quand tu auras de quoi payer !",false); setTimeout(()=>{ cache(); majBoutons(); },1600); return; }
+  cache(); majBoutons(); enVideo=true; v.src='/assets/shinato/m/relais_biere_noire.mp4'; vb.style.display='block'; const q=v.play(); if(q&&q.catch) q.catch(()=>{}); });
+ appuie(document.getElementById('nonB'),()=>{ if(rep.hidden) return;
+  montre("Alors pour la prochaine fois !",false); setTimeout(()=>{ cache(); majBoutons(); },1600); });
 })();
 </script>
 </body>

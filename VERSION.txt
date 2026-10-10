@@ -1,5 +1,6 @@
-ChambreRudy — mise à jour 176 (à déposer après la 175)
-- Boulevard : l'homme au bord de l'eau (seulement seul) → PARLER → vidéo, puis il disparaît pour de bon.
-- Shinato : PARLER au policier de la ronde (le bouton le suit) ; PARLER au grand gars à côté de Sophie → vidéo, puis Rudy à côté du gars au sweat rouge.
-- Dragon d'Or : COMMANDER (au lieu de PARLER) → viande rosée 50 €, sushi 40 €, poulet rôti 60 € : on paye, la vie remonte à fond, puis la vidéo.
+ChambreRudy — mise à jour 177 (à déposer après la 176)
+- Salon de thé : la barmaid, COMMANDER → « spéciale thé milk-shake » → OUI (50 €, toute la vie, vidéo, « À bientôt ») / NON.
+- Shinato : la fille cachée derrière le poteau, REGARDER → bulle de Rudy → vidéo → −moitié de la vie et −200 €, bulle de Rudy.
+- Bar le Relais : le barman, LA BIÈRE NOIRE → 60 € → vidéo (OUI) / « Alors pour la prochaine fois » (NON).
+- Téléphone : appli « Test » (provisoire) pour lancer directement l'usine, le château hanté et la forêt maudite.
 - Déverrouillage : les nouvelles vidéos.
