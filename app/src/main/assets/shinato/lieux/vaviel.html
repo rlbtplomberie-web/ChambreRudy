@@ -110,6 +110,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
 <div id="actions">
  <div class="btn" id="btnParlerVav" style="display:none">PARLER</div>
  <div class="btn" id="btnParlerLecteur" style="display:none">PARLER</div>
+ <div class="btn" id="btnParlerChat" style="display:none">PARLER</div>
  <div class="btn" id="btnFumer">FUMER</div>
  <div class="btn off" id="btnJeter">JETER</div>
 </div>
@@ -782,6 +783,8 @@ window.addEventListener("message",function(e){
   {btn:"btnParlerVav",     pos:1716/2172, video:"/assets/shinato/m/vaviel_fumeuse.mp4"},   // la fille au pantalon rouge, grille du karting
   {btn:"btnParlerLecteur", pos:1525/2172, video:"/assets/shinato/m/vaviel_lecteur.mp4"}    // le monsieur qui lit sur le banc
  ];
+ // la femme chat en larmes devant le karting : seulement après la victoire contre la Reine des vampires
+ try{ if(localStorage.getItem("rembourg_chateau_gagne")==="1") PASSANTS.push({btn:"btnParlerChat", pos:1895/2172, video:"/assets/shinato/m/vaviel_chat.mp4"}); }catch(e){}
  var PRES=95/2172, occupe=false;
  var vb=document.createElement("div"); vb.style.cssText="position:fixed;inset:0;z-index:70;background:#000;display:none";
  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
@@ -812,6 +815,138 @@ window.addEventListener("message",function(e){
   if(!sel) return;
   const f=e=>{ const b=e.target&&e.target.closest&&e.target.closest(sel); if(b) marque(QUI[b.id]); };
   document.addEventListener('touchstart',f,{capture:true,passive:true}); document.addEventListener('click',f,true);
+})();
+</script>
+<script>
+/* ---------- la femme chat, en larmes devant le karting : seulement après la victoire contre la Reine des vampires (Rembourg) ---------- */
+(function(){
+ var la=false; try{ la=localStorage.getItem("rembourg_chateau_gagne")==="1"; }catch(e){}
+ if(!la) return;
+ var IMG=["/assets/shinato/m/chat_pleure_0.webp","/assets/shinato/m/chat_pleure_1.webp","/assets/shinato/m/chat_pleure_2.webp","/assets/shinato/m/chat_pleure_3.webp"];
+ var FW=194, FH=559, ax=0.5;                           // taille des images de la planche
+ var monde=document.getElementById("monde"), LS=2172, HS=724;
+ IMG.forEach(function(s){ var i=new Image(); i.src=s; });
+ var X=1895, Y=515, K=212/FH;                          // devant l'entrée du karting, sur le chemin, à peu près la taille de Rudy
+ var boite=document.createElement("div");
+ boite.style.cssText="position:absolute;z-index:3;pointer-events:none;left:"+((X-FW*ax*K)/LS*100)+"%;top:"+((Y-FH*K)/HS*100)+"%;"+
+  "height:"+(FH*K/HS*100)+"%;width:"+(FW*K/LS*100)+"%;filter:brightness(.82) contrast(1.03) saturate(.95)";
+ function calque(abs){ var i=new Image(); i.alt=""; i.style.cssText="display:block;width:100%;height:100%"+(abs?";position:absolute;left:0;top:0":""); return i; }
+ var A=calque(false), B=calque(true); B.style.opacity="0"; boite.appendChild(A); boite.appendChild(B); monde.appendChild(boite);
+ var ombre=document.createElement("div");
+ ombre.style.cssText="position:absolute;z-index:2;pointer-events:none;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.45),transparent);"+
+  "left:"+((X-40)/LS*100)+"%;top:"+((Y-7)/HS*100)+"%;width:"+(80/LS*100)+"%;height:"+(14/HS*100)+"%";
+ monde.appendChild(ombre);
+ var SEQ=[[0,1700],[1,1500],[0,900],[2,2200],[3,2600],[1,1400]], n=0, minuteur=null, enCours=null;
+ function montre(i,f){ var src=IMG[i]; clearTimeout(minuteur); if(enCours){A.src=enCours;enCours=null}
+  if(!f){A.src=src;return} enCours=src; B.style.transition="none"; B.style.opacity="0"; B.src=src; void B.offsetWidth;
+  B.style.transition="opacity "+f+"ms ease-in-out"; B.style.opacity="1";
+  minuteur=setTimeout(function(){A.src=src;enCours=null;B.style.transition="none";B.style.opacity="0"},f+10) }
+ function suite(){ var e=SEQ[n]; montre(e[0], A.getAttribute("src")?380:0); n=(n+1)%SEQ.length; setTimeout(suite,e[1]*(0.9+Math.random()*0.2)); }
+ suite();
+})();
+</script>
+<script>
+/* ---------- « La Forêt Maudite » : une fois que Rudy a parlé à la femme chat en larmes, une flèche jaune tout à droite de Vaviel
+   → ENTRER : la vidéo, puis le combat directement (sans écran titre). La musique de la ville est coupée, celle du jeu la remplace,
+   et elle s'arrête pendant toutes les vidéos ---------- */
+(function(){
+ var FLAG="vaviel_chat_parle";
+ function ouvert(){ try{ return localStorage.getItem(FLAG)==="1"; }catch(e){ return false; } }
+ // parler à la femme chat ouvre le chemin
+ var marque=function(e){ var b=e.target&&e.target.closest&&e.target.closest("#btnParlerChat"); if(b){ try{ localStorage.setItem(FLAG,"1"); }catch(err){} } };
+ document.addEventListener("touchstart",marque,{capture:true,passive:true}); document.addEventListener("click",marque,true);
+
+ var st=document.createElement("style");
+ st.textContent="#flecheForet{position:absolute;z-index:6;display:none;pointer-events:none;transform:translate(-100%,-50%);"+
+  "filter:drop-shadow(0 0 6px rgba(255,225,40,1)) drop-shadow(0 0 16px rgba(255,200,0,.8));animation:clignF .7s ease-in-out infinite alternate}"+
+  "@keyframes clignF{from{opacity:1}to{opacity:.55}}"+
+  "#btnEntrerForet{display:none;box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 16px rgba(255,214,60,.55)}"+
+  "#foretJeu{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:85;background:#000;display:none}"+
+  "#foretQuitter{position:fixed;z-index:86;top:calc(10px + env(safe-area-inset-top,0px));left:10px;display:none;padding:9px 14px;border-radius:999px;"+
+  "background:rgba(0,0,0,.6);color:#ffe27a;border:2px solid rgba(255,226,122,.8);font:900 13px Arial,sans-serif;letter-spacing:1px}";
+ document.head.appendChild(st);
+ var monde=document.getElementById("monde");
+ var fl=document.createElement("div"); fl.id="flecheForet";
+ fl.innerHTML='<svg viewBox="0 0 120 100" width="100%" height="100%"><path d="M116 50 L64 6 L64 34 L4 34 L4 66 L64 66 L64 94 Z" fill="#ffe400" stroke="#fff7b0" stroke-width="5" stroke-linejoin="round"/></svg>';
+ monde.appendChild(fl);
+ var btn=document.createElement("div"); btn.className="btn"; btn.id="btnEntrerForet"; btn.textContent="ENTRER";
+ var act=document.getElementById("actions"); act.insertBefore(btn,act.firstChild);
+ var quit=document.createElement("div"); quit.id="foretQuitter"; quit.textContent="✕ QUITTER"; document.body.appendChild(quit);
+
+ // la musique de la ville (relue à chaque fois, elle peut être recréée)
+ function ville(){ try{ return parent.RUDY_AUDIO||null; }catch(e){ return null; } }
+ function coupeVille(){ var m=ville(); try{ if(m&&!m.paused) m.pause(); }catch(e){} }
+ function remetVille(){ var m=ville(); try{ if(m&&m.paused){ var q=m.play(); if(q&&q.catch) q.catch(function(){}); } }catch(e){} }
+ // la musique de la forêt : seulement pendant le combat, jamais pendant une vidéo
+ var musique=new Audio("/assets/shinato/m/foret_musique.mp3"); musique.loop=true; musique.volume=0.6;
+ function son(joue,depuisDebut){ try{ if(joue){ if(depuisDebut) musique.currentTime=0; var q=musique.play(); if(q&&q.catch) q.catch(function(){}); } else musique.pause(); }catch(e){} }
+
+ var dedans=false, enVideo=false;
+ setInterval(function(){ if(dedans) coupeVille(); },300);           // si quelque chose relance la musique de la ville, on la recoupe
+ function jeuVisible(){ var fr=document.getElementById("foretJeu"); return !!(fr&&fr.style.display==="block"); }
+ // le jeu peut prévenir quand il montre une vidéo : la musique s'arrête, puis reprend
+ addEventListener("message",function(e){ if(e.data&&e.data.type==="foret:video"){ enVideo=!!e.data.on; son(!enVideo&&jeuVisible()); } });
+ document.addEventListener("visibilitychange",function(){ if(document.hidden) son(false); else if(jeuVisible()&&!enVideo) son(true); });
+ addEventListener("pagehide",function(){ son(false); if(dedans){ dedans=false; remetVille(); } });
+
+ function video(src,fin){
+  var vb=document.createElement("div"); vb.style.cssText="position:fixed;inset:0;z-index:90;background:#000";
+  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+  document.body.appendChild(vb); var v=vb.querySelector("video"), fait=false;
+  function finit(){ if(fait) return; fait=true; try{ v.pause(); }catch(e){} enVideo=false; fin(vb); }
+  v.addEventListener("ended",finit); v.addEventListener("error",finit);
+  enVideo=true; son(false); v.src=src; var q=v.play(); if(q&&q.catch) q.catch(function(){});
+ }
+
+ (function surveille(){
+  requestAnimationFrame(surveille);
+  if(!largeurMonde||!ouvert()||dedans){ fl.style.display=btn.style.display="none"; return; }
+  var hp=hautPerso();
+  fl.style.display="block";
+  fl.style.width=(hp*0.56)+"px"; fl.style.height=(hp*0.47)+"px";
+  fl.style.left=(largeurMonde-hp*0.16)+"px"; fl.style.top=(hauteurScene*SOL-hp*0.7)+"px";
+  btn.style.display=(x>largeurMonde-hp*1.6)?"block":"none";
+ })();
+
+ var t0=0;
+ function entre(e){ if(e&&e.cancelable) e.preventDefault(); var n=performance.now(); if(n-t0<400||dedans) return; t0=n;
+  dedans=true; try{ dir=0; }catch(err){} coupeVille(); fl.style.display=btn.style.display="none";
+  var fr=document.getElementById("foretJeu");
+  if(!fr){ fr=document.createElement("iframe"); fr.id="foretJeu"; fr.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(fr); }
+  // d'abord la vidéo, puis le combat commence directement
+  video("/assets/shinato/m/foret_entree.mp4",function(vb){
+   fr.src="/assets/shinato/jeux/foret.html?direct=1"; fr.style.display="block"; quit.style.display="block"; son(true,true);
+   setTimeout(function(){ vb.remove(); try{ fr.focus(); }catch(err){} },250);
+  });
+ }
+ btn.addEventListener("touchstart",entre,{passive:false}); btn.addEventListener("click",entre);
+ function sort(e){ if(e&&e.cancelable) e.preventDefault();
+  son(false); var fr=document.getElementById("foretJeu"); if(fr){ fr.style.display="none"; fr.src="about:blank"; }
+  quit.style.display="none"; dedans=false; enVideo=false; tPrec=0; cadre(true); remetVille();
+ }
+ quit.addEventListener("touchstart",sort,{passive:false}); quit.addEventListener("click",sort);
+
+ /* Rudy K.O. dans la forêt : la vidéo de celle qui l'a battu (s'il y en a une), puis l'hôpital, comme au château et à l'usine :
+    la vidéo de l'infirmière, puis Rudy devant l'hôpital de Vaviel */
+ var KO_FORET={
+  cow:"/assets/shinato/m/foret_ko_vache.mp4",     // la femme vache, peu importe comment elle l'a battu
+  pan:"/assets/shinato/m/foret_ko_panthere.mp4", // la panthère noire, peu importe comment elle l'a battu
+  dog:"/assets/shinato/m/foret_ko_chienne.mp4",   // la petite chienne, peu importe comment elle l'a battu
+  hye:"/assets/shinato/m/foret_ko_hyene.mp4"      // la hyène, peu importe comment elle l'a battu
+ };
+ addEventListener("message",function(e){
+  if(!e.data||e.data.type!=="foret:ko") return;
+  son(false);                                    // K.O. : la musique s'arrête avant la vidéo
+  var fr=document.getElementById("foretJeu"); if(fr){ fr.style.display="none"; fr.src="about:blank"; }
+  quit.style.display="none"; dedans=true;
+  function hopital(){ video("/assets/shinato/m/usine_hopital.mp4",function(hb){
+   try{ parent.postMessage({type:"hopital:fin"},"*"); }catch(err){}          // Rudy se réveille devant l'hôpital de Vaviel
+   setTimeout(function(){ hb.remove(); },400);
+  }); }
+  var src=e.data.qui&&KO_FORET[e.data.qui];
+  if(!src){ hopital(); return; }
+  video(src,function(vb){ hopital(); setTimeout(function(){ vb.remove(); },300); });
+ });
 })();
 </script>
 </body>
