@@ -1,9 +1,6 @@
-ChambreRudy — mise à jour 179
+ChambreRudy — mise à jour 180
 
-- Téléphone : l'application Test est retirée.
-- Téléphone : nouvelle application « Statue » (icône livre).
-  · Statue : argent, contacts, vidéos débloquées, personnages, mini-jeux,
-    diamants des boss vaincus (Astra, Vampa, Farah).
-  · Personnages : 11 pages, fiche de chaque personnage avec Rudy qui parle de lui/elle.
-  · Mini-jeux : liste des jeux et scores contre chaque personnage.
-Fichiers : web/telephone.html, web/statue.html, web/statue/ (images + police)
+- Boulevard : le monsieur en costume blanc (à côté de la dame) lance sa propre vidéo (blvd_boss.mp4).
+- Rue de nuit : le monsieur en costume blanc devant l'hôtel a son bouton PARLER
+  (« Salut Rudy… » → les diamants → blvd_boss_diamants.mp4).
+Fichiers : shinato/lieux/boulevard.html, shinato/lieux/ruenuit.html
