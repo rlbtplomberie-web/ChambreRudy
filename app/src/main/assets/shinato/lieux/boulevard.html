@@ -163,7 +163,7 @@ v.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){v.scrol
 #fumerS{bottom:calc(92px + env(safe-area-inset-bottom,0px));background:radial-gradient(circle at 40% 30%,#ffb56b,#d9731f 60%,#7a3a08)}
 #jeterS{bottom:calc(30px + env(safe-area-inset-bottom,0px));background:radial-gradient(circle at 40% 30%,#9aa3b8,#4d566b 60%,#232838)}
 .btnS.off{opacity:.35;pointer-events:none}
-#parlerBoss,#parlerBlonde,#parlerDame{bottom:calc(216px + env(safe-area-inset-bottom,0px));background:radial-gradient(circle at 40% 30%,#ffe98a,#ffc21a 60%,#b77a00);color:#3a2300;border-color:#fff3b0;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(255,200,40,.7)}
+#parlerBoss,#parlerBlonde,#parlerDame,#regarderDanse{bottom:calc(216px + env(safe-area-inset-bottom,0px));background:radial-gradient(circle at 40% 30%,#ffe98a,#ffc21a 60%,#b77a00);color:#3a2300;border-color:#fff3b0;box-shadow:0 4px 0 rgba(0,0,0,.4),0 0 18px rgba(255,200,40,.7)}
 #choixDame{right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(30px + env(safe-area-inset-bottom,0px));display:none;flex-direction:column;gap:10px;z-index:25}
 #choixDame button{padding:13px 22px;border-radius:999px;border:2px solid #fff3b0;font-weight:900;font-size:16px;color:#3a2300;background:radial-gradient(circle at 40% 30%,#ffe98a,#ffc21a 60%,#b77a00);box-shadow:0 4px 0 rgba(0,0,0,.4)}
 #choixDame button.non{background:#3a3560;color:#fff;border-color:rgba(255,255,255,.6)}
@@ -195,6 +195,7 @@ v.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){v.scrol
 <button class="uiB btnS" id="parlerDame" style="display:none">💬 Parler</button>
 <button class="uiB btnS" id="parlerBoss" style="display:none">💬 Parler</button>
 <button class="uiB btnS" id="parlerBlonde" style="display:none">💬 Parler</button>
+<button class="uiB btnS" id="regarderDanse" style="display:none">👀 Regarder</button>
 <div id="choixDame" class="uiB"></div>
 <div id="bulleDame" class="uiB"></div>
 <div id="videoDame" class="uiB"><video playsinline></video></div>
@@ -393,6 +394,25 @@ addEventListener('pagehide',()=>{ try{ mus.pause(); }catch(e){} });
     app(non,()=>{ fin(); dit("Tant pis pour toi… 💨",1800); occupe=false; });
     ch.style.display='flex'; cacheBoutons(true);
   });
+})();
+
+/* ---------- le couple qui danse (devant l'hôtel) : REGARDER → sa vidéo, et Rudy perd 100 € — seulement quand Rudy est seul ---------- */
+(function(){
+  const DANSE_X=290, PRES=70, PRIX=100;
+  const bR=document.getElementById('regarderDanse'), bu=document.getElementById('bulleDame'),
+        vb=document.getElementById('videoDame'), v=vb.querySelector('video'), ch=document.getElementById('choixDame');
+  function pont(){ for(const w of [window,parent,top]){ try{ if(w.Chambre&&w.Chambre.argent) return w.Chambre; }catch(e){} } return null; }
+  function argent(){ const p=pont(); try{ return p?p.argent():null; }catch(e){ return null; } }
+  function payer(n){ const p=pont(); try{ if(p&&p.ajouterArgent) p.ajouterArgent(-n); }catch(e){} }
+  function seul(){ return !window.FILLE_AVEC_RUDY; }          // jamais quand une fille accompagne Rudy
+  setInterval(()=>{ const X=window.RUDY_BX?window.RUDY_BX():-9999;
+    bR.style.display=(seul()&&vb.style.display!=='block'&&ch.style.display!=='flex'&&Math.abs(X-DANSE_X)<PRES)?'block':'none'; },120);
+  let t=0; const go=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t<400) return; t=n;
+    if(!seul()) return;
+    const a=argent(); if(a!==null&&a<PRIX){ bu.textContent="Il te faut "+PRIX+" € 💶"; bu.style.display='block'; clearTimeout(bu._t); bu._t=setTimeout(()=>{ bu.style.display='none'; },2200); return; }
+    payer(PRIX); bR.style.display='none'; bu.style.display='none';
+    v.src='/assets/shinato/m/blvd_danseurs.mp4'; vb.style.display='block'; const q=v.play(); if(q&&q.catch) q.catch(()=>{}); };
+  bR.addEventListener('touchstart',go,{passive:false}); bR.addEventListener('click',go);
 })();
 
 /* ---------- le monsieur en costume blanc (devant le restaurant) : PARLER → « Salut Rudy… » → Rudy parle des diamants → sa vidéo ---------- */

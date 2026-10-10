@@ -174,6 +174,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  <div class="btn" id="btnParlerShana" style="display:none">PARLER</div>
  <div class="btn" id="btnParlerAfro" style="display:none">PARLER</div>
  <div class="btn" id="btnParlerBuveur" style="display:none">PARLER</div>
+ <div class="btn" id="btnParlerCapuche" style="display:none">PARLER</div>
  <div class="btn" id="btnFumer">FUMER</div>
  <div class="btn off" id="btnJeter">JETER</div>
 </div>
@@ -1442,7 +1443,8 @@ else carte.addEventListener("load",demarre);
   {btn:"btnParlerSophie", pos:0.8099, video:"/assets/shinato/m/shinato_sophie_mec.mp4"},// la blonde et le grand noir, devant la machine à boissons
   {btn:"btnParlerShana",  pos:0.9551, video:"/assets/shinato/m/shinato_shana.mp4"},     // Shana, assise en tailleur sur le banc, lit son livre
   {btn:"btnParlerAfro",   pos:0.9300, video:"/assets/shinato/m/shinato_afro_rousse.mp4"},// la fille afro et la rousse, assises entre les deux bancs
-  {btn:"btnParlerBuveur", pos:0.7269, video:"/assets/shinato/m/shinato_buveur.mp4"}     // le buveur de bière, sur la chaise haute devant le Pixel Bar
+  {btn:"btnParlerBuveur", pos:0.7269, video:"/assets/shinato/m/shinato_buveur.mp4"},    // le buveur de bière, sur la chaise haute devant le Pixel Bar
+  {btn:"btnParlerCapuche",pos:0.9042, video:"/assets/shinato/m/shinato_capuche.mp4"}   // le gars au sweat à capuche rouge, assis sur le banc de gauche
  ];
  var PRES=95/7078, occupe=false;
  var vb=document.createElement("div"); vb.style.cssText="position:fixed;inset:0;z-index:70;background:#000;display:none";
@@ -1689,7 +1691,17 @@ else carte.addEventListener("load",demarre);
  function cache(){ ouvert=false; boite.style.display="none"; }
  window.appuiSur(document.getElementById("rentrerNon"),cache);                     // NON : on reste à Shinato
  window.appuiSur(document.getElementById("rentrerOui"),function(){                  // OUI : retour au bureau
-  cache(); try{ if(window.Chambre&&window.Chambre.rentrer) window.Chambre.rentrer(); }catch(e){}
+  cache(); dir=0;
+  // d'abord la vidéo du retour, puis Rudy arrive devant le bureau de la chambre
+  try{ if(window.RUDY_AUDIO) window.RUDY_AUDIO.pause(); }catch(e){}
+  var vb=document.createElement("div"); vb.style.cssText="position:fixed;inset:0;z-index:9999;background:#000";
+  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+  document.body.appendChild(vb); var v=vb.querySelector("video"), fait=false;
+  function suite(){ if(fait) return; fait=true; try{ v.pause(); }catch(e){}
+   try{ if(window.Chambre&&window.Chambre.rentrer) window.Chambre.rentrer(); }catch(e){}
+   setTimeout(function(){ vb.remove(); },600); }
+  v.addEventListener("ended",suite); v.addEventListener("error",suite);
+  v.src="/assets/shinato/m/shinato_rentrer.mp4"; var q=v.play(); if(q&&q.catch) q.catch(function(){});
  });
  window.minuterieLibre(function veille(){
   try{
