@@ -314,14 +314,28 @@ const btnE=document.getElementById('btnEntrer'), quitC=document.getElementById('
 const flP=document.createElement('div'); flP.id='flechePorte';
 flP.innerHTML='<svg viewBox="0 0 100 120" width="100%" height="100%"><path d="M50 4 L94 52 L66 52 L66 116 L34 116 L34 52 L6 52 Z" fill="#ffe400" stroke="#fff7b0" stroke-width="5" stroke-linejoin="round"/></svg>';
 pano.appendChild(flP);
+/* le château est fermé (cadenas) tant que Rudy n'a pas fait à Mitsuda : la vampire partie après la victoire contre Astra à l'usine,
+   ET « Je suis un ami d'Ange » à la fille au carnet */
+function chateauOuvert(){ try{ return localStorage.getItem('mitsuda_vampire_partie')==='1'&&localStorage.getItem('mitsuda_carnet_ami')==='1'; }catch(e){ return false; } }
+const cadenas=document.createElement('div');
+cadenas.style.cssText='position:absolute;z-index:31;display:none;transform:translate(-50%,0);pointer-events:none;font-size:clamp(26px,6vmin,54px);line-height:1;filter:drop-shadow(0 0 8px rgba(255,214,60,.9))';
+cadenas.textContent='🔒'; pano.appendChild(cadenas);
+const msgF=document.createElement('div');
+msgF.style.cssText='position:fixed;left:50%;top:18%;transform:translateX(-50%);z-index:60;display:none;max-width:80vw;padding:2.4vmin 4vmin;border-radius:2.4vmin;text-align:center;'+
+ 'background:rgba(10,10,14,.9);border:2px solid rgba(255,226,122,.8);color:#ffe27a;font:900 clamp(13px,3.2vmin,26px)/1.3 Arial,sans-serif;letter-spacing:1px';
+msgF.textContent='🔒 La porte du château est fermée…'; document.body.appendChild(msgF);
 (function surveille(){
   requestAnimationFrame(surveille);
-  const devant=!dedans&&!menu&&Math.abs(x-PORTE_X)<95;
-  flP.style.display=btnE.style.display=devant?'block':'none';
+  const devant=!dedans&&!menu&&Math.abs(x-PORTE_X)<95, ouvert=chateauOuvert();
+  cadenas.style.display=(devant&&!ouvert)?'block':'none';
+  if(devant&&!ouvert){ cadenas.style.left=(x/PW*100)+'%'; cadenas.style.top=((y-hRudy()*1.5)/PH*100)+'%'; }
+  btnE.textContent=ouvert?'ENTRER':'🔒 FERMÉ';
+  flP.style.display=(devant&&ouvert)?'block':'none'; btnE.style.display=devant?'block':'none';
   if(devant){ flP.style.left=(x/PW*100)+'%'; flP.style.top=((y-hRudy()*1.45)/PH*100)+'%'; }
 })();
 appui(btnE,()=>{
   if(dedans) return;
+  if(!chateauOuvert()){ msgF.style.display='block'; clearTimeout(msgF._t); msgF._t=setTimeout(()=>{ msgF.style.display='none'; },2200); return; }
   let fr=document.getElementById('chateauJeu');
   if(!fr){ fr=document.createElement('iframe'); fr.id='chateauJeu'; fr.setAttribute('allow','autoplay; fullscreen'); document.body.appendChild(fr); }
   dedans=true; dir=dirY=0; flP.style.display=btnE.style.display='none';

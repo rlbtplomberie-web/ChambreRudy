@@ -851,7 +851,8 @@ window.addEventListener("message",function(e){
    et elle s'arrête pendant toutes les vidéos ---------- */
 (function(){
  var FLAG="vaviel_chat_parle";
- function ouvert(){ try{ return localStorage.getItem(FLAG)==="1"; }catch(e){ return false; } }
+ // la forêt ne s'ouvre qu'une fois la Reine des vampires vaincue (Rembourg) ET la femme chat écoutée devant le karting
+ function ouvert(){ try{ return localStorage.getItem("rembourg_chateau_gagne")==="1"&&localStorage.getItem(FLAG)==="1"; }catch(e){ return false; } }
  // parler à la femme chat ouvre le chemin
  var marque=function(e){ var b=e.target&&e.target.closest&&e.target.closest("#btnParlerChat"); if(b){ try{ localStorage.setItem(FLAG,"1"); }catch(err){} } };
  document.addEventListener("touchstart",marque,{capture:true,passive:true}); document.addEventListener("click",marque,true);

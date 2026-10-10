@@ -1,3 +1,10 @@
-ChambreRudy — mise à jour 171 (à déposer après la 170)
-- K.O. de la Rousse : tornade, prise quand Rudy est attaché, prise après téléportation et lianes.
-- Victoire dans la Forêt Maudite : vidéo, Rudy devant le karting, la femme chat retourne au salon de thé.
+ChambreRudy — mise à jour 172 (à déposer après la 171)
+- Salon de thé : la femme chat, nouveau dialogue « Je l'ai vaincue » (après la Forêt Maudite) → vidéo.
+- Rembourg : la porte du château fermée (cadenas) tant que la vampire de Mitsuda n'est pas partie (après Astra) ET « Je suis un ami d'Ange ».
+- Vaviel : la flèche de la forêt seulement après la victoire contre la Reine des vampires.
+- Prison (hall) : PARLER au policier de la ronde → vidéo.
+- Rue de nuit : le monsieur à casquette (PARLER + DISCUTER après Astra), le gars à la veste noire (PARLER + DISCUTER après la forêt).
+- Bar le Relais : la blonde au tabouret (PARLER + DISCUTER après la Reine des vampires).
+- Salle d'arcade : PARLER au gérant → vidéo. Le Désir : DISCUTER avec Carlos → vidéo.
+- Salle des rencontres : PARLER mieux placé + INFORMATIONS → vidéo. Dialogues de la ville délabrée en petites bulles manga.
+- Déverrouillage : nouvelles vidéos, dossier « Ville délabrée ».

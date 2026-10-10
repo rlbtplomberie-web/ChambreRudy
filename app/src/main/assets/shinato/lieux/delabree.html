@@ -12,6 +12,8 @@ canvas{display:block;width:100vw;height:100vh}
 #run.on{background:#ff9a3c;transform:translateY(3px);box-shadow:0 2px 0 #000}
 #act{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);padding:12px 30px;border:3px solid #000;border-radius:16px;background:#ffd23f;color:#1b1400;font:800 19px system-ui,sans-serif;box-shadow:0 5px 0 #000;display:none;touch-action:none}
 #act.show{display:block}
+#act2{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);padding:12px 30px;border:3px solid #000;border-radius:16px;background:#ffd23f;color:#1b1400;font:800 19px system-ui,sans-serif;box-shadow:0 5px 0 #000;display:none;touch-action:none}
+#act2.show{display:block}
 #act:active{transform:translateX(-50%) translateY(3px);box-shadow:0 2px 0 #000}
 #fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .3s}
 #game{position:fixed;inset:0;z-index:20;background:#000;display:none}
@@ -32,7 +34,7 @@ canvas{display:block;width:100vw;height:100vh}
 <canvas id="c"></canvas>
 <div id="joy"><div id="knob"></div></div>
 <button id="run" aria-label="Courir">Courir</button>
-<button id="act">Entrer</button>
+<button id="act">Entrer</button><button id="act2">Discuter</button>
 <div id="fade"></div>
 <div id="fight"><div class="hp" id="hpR"><b>Rudy</b><div class="bar"><i></i></div></div><div class="hp" id="hpE"><b>Le voyou</b><div class="bar"><i></i></div></div></div>
 <button id="atk" aria-label="Attaque">ATTAQUE</button>
@@ -164,6 +166,8 @@ const SCENES={
       // devant les bornes du fond : 1re borne = Aura Clash, 2e borne = Smash Court
       if(p.y<575&&Math.abs(p.x-662)<78)return{label:'JOUER',arrow:'up',play:'aura'};
       if(p.y<575&&Math.abs(p.x-836)<78)return{label:'JOUER',arrow:'up',play:'smash'};
+      // au bout du comptoir, devant le gérant à la chemise rouge
+      if(p.x>1060&&p.y<720)return{label:'Parler',arrow:'up',gerant:true};
       return null}},
   /* la boîte : Carlos fume sur la banquette de gauche */
   desir_carlos:true,
@@ -187,13 +191,14 @@ const SCENES={
     // le hall de la prison : entre le bureau (gauche) et le banc (droite), devant les cellules
     clamp(p){p.y=Math.max(600,Math.min(905,p.y));p.x=Math.max(p.y<735?475:(p.y>790?215:120),Math.min(p.y<850?1330:1560,p.x))},
     size(y){return 290+(y-600)/(905-600)*150},
-    zone(p){return p.y>838&&p.x>480&&p.x<1180?{label:'Sortir',arrow:'down',go:'rue',door:4085}:null}},
+    zone(p){if(!RONDE_AR&&Math.abs(p.x-RONDE.x)<170&&Math.abs(p.y-RONDE.y)<95)return{label:'Parler',arrow:'up',policier:true};   // près du policier qui fait sa ronde
+      return p.y>838&&p.x>480&&p.x<1180?{label:'Sortir',arrow:'down',go:'rue',door:4085}:null}},
   rencontre:{w:1672,h:941,speed:3.8,vspeed:.6,rain:false,refl:.26,
     draw(camX,viewW,now){if(RDV.complete)ctx.drawImage(RDV,0,0);drawAccueil(now)},
     // le sol libre : entre l'accueil (gauche) et les canapés (droite), et devant la table basse jusqu'au bas
     clamp(p){p.y=Math.max(545,Math.min(905,p.y));p.x=Math.max(585,Math.min(p.y<785?905:1180,p.x))},
     size(y){return 290+(y-545)/(905-545)*150},
-    zone(p){if(p.y<640&&p.x<700)return{label:'Parler',arrow:'up',talk:true};   // devant le comptoir de l'accueil
+    zone(p){if(p.y<705&&p.x<760)return{label:'Parler',arrow:'up',talk:true,info:true};   // devant le comptoir de l'accueil (zone agrandie : dès le bout du comptoir)
       return p.y>838&&p.x>600&&p.x<1150?{label:'Sortir',arrow:'down',go:'rue',door:2950}:null}}};
 let scene=SCENES.rue;
 let W,H,S,DPR;function resize(){DPR=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0)}
@@ -243,11 +248,14 @@ addEventListener('message',e=>{if(!e.data||e.data.type!=='relais:sortie'||!gameF
 // ---------- dialogue avec le monsieur de l'accueil ----------
 const bulleAcc=document.createElement('div');bulleAcc.id='bulleAcc';document.body.appendChild(bulleAcc);
 const stB=document.createElement('style');stB.textContent=`
-#bulleAcc{position:fixed;z-index:15;display:none;transform:translate(-50%,-100%);max-width:min(72vw,340px);padding:12px 16px 14px;border-radius:18px;
- background:#fffdf7;color:#241a14;border:3px solid #1b1400;box-shadow:0 6px 0 #000a;font:800 clamp(14px,3.6vmin,19px)/1.25 system-ui,sans-serif;text-align:center}
-#bulleAcc:after{content:'';position:absolute;left:50%;bottom:-16px;margin-left:-12px;border:12px solid transparent;border-top:16px solid #1b1400;border-bottom:0}
-#bulleAcc .ch{display:flex;gap:10px;justify-content:center;margin-top:10px}
-#bulleAcc .ch div{padding:8px 20px;border:3px solid #000;border-radius:12px;background:#ffd23f;color:#1b1400;box-shadow:0 4px 0 #000;touch-action:none;cursor:pointer}
+#bulleAcc{position:fixed;z-index:15;display:none;transform:translate(-50%,-100%);max-width:min(54vw,270px);padding:8px 12px 9px;border-radius:20px;
+ background:#fff;color:#111;border:3px solid #111;box-shadow:4px 4px 0 rgba(0,0,0,.55);font:800 clamp(12px,2.6vmin,18px)/1.25 'Comic Sans MS','Chalkboard SE','Marker Felt',Arial,sans-serif;text-align:center;
+ animation:bullePopA .35s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes bullePopA{0%{transform:translate(-50%,-100%) scale(.3);opacity:0}100%{transform:translate(-50%,-100%);opacity:1}}
+#bulleAcc:after{content:'';position:absolute;left:50%;bottom:-15px;margin-left:-10px;border:10px solid transparent;border-top:15px solid #111;border-bottom:0}
+#bulleAcc:before{content:'';position:absolute;left:50%;bottom:-9px;margin-left:-7px;z-index:1;border:7px solid transparent;border-top:10px solid #fff;border-bottom:0}
+#bulleAcc .ch{display:flex;gap:8px;justify-content:center;margin-top:7px}
+#bulleAcc .ch div{padding:5px 14px;border:3px solid #111;border-radius:12px;background:#ffd23f;color:#111;box-shadow:0 3px 0 #111;touch-action:none;cursor:pointer;font:900 clamp(12px,2.6vmin,17px)/1.1 'Comic Sans MS','Chalkboard SE','Arial Black',Arial,sans-serif}
 #bulleAcc .ch div:active{transform:translateY(3px);box-shadow:0 1px 0 #000}`;document.head.appendChild(stB);
 let BULLE_X=ACC_X, BULLE_TOP=ACC_TOP;      // à qui appartient la bulle (le monsieur de l'accueil, ou Carlos)
 function placeBulle(){if(bulleAcc.style.display==='none')return;const bw=bulleAcc.offsetWidth/2+8;bulleAcc.style.left=Math.round(Math.max(bw,Math.min(innerWidth-bw,(BULLE_X-camX)*S)))+'px';bulleAcc.style.top=Math.round(Math.max(bulleAcc.offsetHeight+30,(BULLE_TOP-8-camY)*S))+'px'}
@@ -276,10 +284,15 @@ addEventListener('message',e=>{if(e.data&&e.data.type==='brasdefer:sortie'){clos
  if(e.data&&e.data.type==='premierVerre:partir'){P.x=640;P.y=600;P.dir4='h';snap=true;closeGame();if(premierOuvert)musiqueVille(true);setTimeout(()=>{quit.textContent=QUIT_TXT},700)}});
 quit.addEventListener('click',()=>{if(evasionEnCours)return;if(premierOuvert)musiqueVille(true);if(scene===SCENES.rencontre){P.x=640;P.y=600;P.dir4='h';snap=true}setTimeout(()=>{quit.textContent=QUIT_TXT},700)});
 
-function doAction(){if(busy||!zoneNow)return;if(zoneNow.relais){ouvreRelais();return}if(zoneNow.carlos){parlerCarlos();return}if(zoneNow.danseuse){parlerDanseuse();return}if(zoneNow.evasion){evasion();return}if(zoneNow.talk){parler();return}if(zoneNow.play){openGame(zoneNow.play);return}busy=true;fade.style.opacity=1;
+function doAction(){if(busy||!zoneNow)return;if(zoneNow.relais){ouvreRelais();return}if(zoneNow.carlos){parlerCarlos();return}if(zoneNow.policier){parlerPolicier();return}if(zoneNow.gerant){parlerPolicier('/assets/shinato/m/arcade_gerant.mp4');return}if(zoneNow.danseuse){parlerDanseuse();return}if(zoneNow.evasion){evasion();return}if(zoneNow.talk){parler();return}if(zoneNow.play){openGame(zoneNow.play);return}busy=true;fade.style.opacity=1;
   const z=zoneNow;setTimeout(()=>{if(z.go!=='rue'){scene=SCENES[z.go];P.x=836;P.y=872;P.face=1;P.dir4='h'}else{scene=SCENES.rue;P.x=z.door;P.y=ROAD_TOP+3;P.face=1}
     P.speed=0;snap=true;fade.style.opacity=0;setTimeout(()=>busy=false,300)},320)}
 act.addEventListener('click',doAction);
+// DISCUTER avec Carlos (en plus de PARLER) : sa vidéo
+const act2=document.getElementById('act2');
+// INFORMATIONS à l'accueil de la salle des rencontres (en plus de PARLER) : sa vidéo
+act2.addEventListener('click',()=>{if(busy||!zoneNow||!(zoneNow.carlos||zoneNow.info))return;act2.classList.remove('show');
+  parlerPolicier(zoneNow.info?'/assets/shinato/m/rencontre_informations.mp4':'/assets/shinato/m/desir_carlos_discuter.mp4')});
 // ---------- personnage ----------
 const P={x:420,y:284,face:1,speed:0,phase:0,mode:'idle'};
 let camX=0,camY=0,snap=true,last=performance.now();
@@ -599,7 +612,7 @@ function frame(now){if(gameFrame){last=now;requestAnimationFrame(frame);return} 
   zoneNow=busy?null:sc0.zone(P);
   if(zoneNow){if(zoneNow.arrow==='up')arrow(P.x,P.y-size*1.18,size*.21,true,now);else arrow(P.x,P.y-size*1.12,size*.12,false,now)}  // au-dessus de la tête, pointée vers le bas
   ctx.restore();
-  act.textContent=zoneNow?zoneNow.label:act.textContent;act.classList.toggle('show',!!zoneNow);
+  act.textContent=zoneNow?zoneNow.label:act.textContent;act.classList.toggle('show',!!zoneNow);act2.textContent=zoneNow&&zoneNow.info?'Informations':'Discuter';act2.classList.toggle('show',!!(zoneNow&&(zoneNow.carlos||zoneNow.info)));
   if(sc0.rain)rain(dt);
   const vg=ctx.createRadialGradient(W/2,H*.55,Math.min(W,H)*.35,W/2,H*.55,Math.max(W,H)*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,10,.45)');ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
   requestAnimationFrame(frame)}
@@ -681,5 +694,17 @@ function parlerDanseuse(){
   const non=document.createElement('button'); non.textContent='Rien'; non.style.cssText=style+';background:#3a3560;color:#fff;border-color:rgba(255,255,255,.6)'; ch.appendChild(non);
   non.addEventListener('click',()=>{ fin(); busy=false; });
   ch.style.display='flex';
+}
+
+/* ---------- le policier qui fait sa ronde dans le hall de la prison : PARLER → sa vidéo ---------- */
+function parlerPolicier(src){   // sert aussi pour le gérant de la salle d'arcade (src = sa vidéo)
+  let vb=document.getElementById('videoPolicier');
+  if(!vb){ vb=document.createElement('div'); vb.id='videoPolicier'; vb.style.cssText='position:fixed;inset:0;z-index:80;background:#000;display:none';
+    vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+    const v=vb.querySelector('video'); const f=()=>{ try{ v.pause(); }catch(e){} vb.style.display='none'; busy=false; };
+    v.addEventListener('ended',f); v.addEventListener('error',f); }
+  busy=true; P.speed=0; jx=jy=0;          // pendant la vidéo, le temps passé dans le hall ne compte pas
+  const v=vb.querySelector('video'); v.src=src||'/assets/shinato/m/prison_policier.mp4'; vb.style.display='block';
+  const q=v.play(); if(q&&q.catch) q.catch(()=>{});
 }
 </script></body></html>

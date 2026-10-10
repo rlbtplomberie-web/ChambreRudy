@@ -333,6 +333,9 @@ window.RUDY=RUDY;
         setTimeout(()=>{ bulle.style.display='none'; v.src=R.video; vb.style.display='block'; const q=v.play(); if(q&&q.catch) q.catch(()=>{}); },2000); }));
       montre();
     });
+    // après la victoire dans la Forêt Maudite : « Je l'ai vaincue » → la vidéo
+    let vaincue=false; try{ vaincue=localStorage.getItem('foret_gagnee')==='1'; }catch(e){}
+    if(vaincue) bouton("Je l'ai vaincue",()=>{ fin(); bulle.style.display='none'; v.src='/assets/shinato/m/salon_chat_vaincue.mp4'; vb.style.display='block'; const q=v.play(); if(q&&q.catch) q.catch(()=>{}); });
     bouton("J'ai pas le temps de t'écouter",()=>{ fin(); dit("Dommage pour toi… 😼",2200); },true);
     montre();
   });

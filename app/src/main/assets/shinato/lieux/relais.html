@@ -168,6 +168,11 @@ requestAnimationFrame(frame);
 @keyframes bullePop{0%{transform:scale(.2) rotate(-6deg);opacity:0}100%{transform:none;opacity:1}}
 #bulle .choc{position:absolute;left:-2.4vmin;top:-4.2vmin;font:900 clamp(18px,6vmin,40px)/1 "Arial Black",Arial,sans-serif;
  color:#ffd23a;-webkit-text-stroke:0.45vmin #111;transform:rotate(-12deg)}
+#bulleBlonde{position:fixed;z-index:30;display:none;width:min(60vmin,330px);box-sizing:border-box;padding:2.4vmin 3vmin 2.2vmin;background:#fff;color:#111;
+ border:0.7vmin solid #111;border-radius:5vmin;box-shadow:1vmin 1vmin 0 rgba(0,0,0,.55);text-align:center;pointer-events:none;
+ font:900 clamp(13px,3.5vmin,23px)/1.18 "Comic Sans MS","Chalkboard SE","Marker Felt","Arial Black",Arial,sans-serif}
+#videoBlonde{position:fixed;inset:0;z-index:110;background:#000;display:none}
+#videoBlonde video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 #titreBar{position:fixed;top:calc(2vmin + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:20;color:#fff;pointer-events:none;white-space:nowrap;
  font:900 clamp(14px,3vmin,26px)/1.15 Arial,sans-serif;letter-spacing:3px;text-shadow:0 3px 0 #000,0 0 14px rgba(0,0,0,.9)}
 *{-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}html,body{touch-action:none;overscroll-behavior:none}
@@ -178,6 +183,8 @@ requestAnimationFrame(frame);
 <div id="actions">
  <div class="btn" id="btnAssis">S'ASSEOIR</div>
  <div class="btn" id="btnLever">SE LEVER</div>
+ <div class="btn" id="btnDiscBlonde">DISCUTER</div>
+ <div class="btn" id="btnParlerBlonde">PARLER</div>
  <div class="btn" id="btnParler">PARLER</div>
  <div class="btn" id="btnSortir">SORTIR</div>
 </div>
@@ -441,6 +448,39 @@ addEventListener('message',e=>{if(e.data&&e.data.type==='relais:entree'){
   try{ localStorage.setItem("rudy_argent",String(Math.max(0,lire()+n))); }catch(e){}
   maj();
  };
+})();
+</script>
+<script>
+/* ================= la blonde assise sur le tabouret (à gauche du comptoir) : PARLER → sa vidéo ;
+   après la victoire contre la Reine des vampires (Rembourg) : DISCUTER en plus → une bulle ================= */
+(function(){
+ const BX=764, TETE_B=262;                       // son tabouret, et la hauteur de sa tête
+ const bP=document.getElementById('btnParlerBlonde'), bD=document.getElementById('btnDiscBlonde');
+ const bulle=document.createElement('div'); bulle.id='bulleBlonde'; document.body.appendChild(bulle);
+ const vb=document.createElement('div'); vb.id='videoBlonde'; vb.innerHTML='<video playsinline></video>'; document.body.appendChild(vb);
+ const v=vb.querySelector('video'); let enVideo=false;
+ function ferme(){ try{ v.pause(); }catch(e){} vb.style.display='none'; enVideo=false; }
+ v.addEventListener('ended',ferme); v.addEventListener('error',ferme);
+ const vampa=()=>{ try{ return localStorage.getItem('rembourg_chateau_gagne')==='1'; }catch(e){ return false; } };
+ function proche(){
+  if(window.DIALOGUE||window.PAUSE_BAR||enVideo) return false;
+  if(RUDY.etat==='assis') return !!(RUDY.chaise&&Math.abs(RUDY.chaise.x-BX)<200);   // assis sur le tabouret d'à côté
+  return RUDY.etat==='debout'&&RUDY.y<680&&Math.abs(RUDY.x-BX)<150;
+ }
+ function place(){
+  if(bulle.style.display!=='block') return;
+  const bw=bulle.offsetWidth, bh=bulle.offsetHeight, m=8;
+  bulle.style.left=Math.max(m,Math.min(W-bw-m,OX+BX*S-bw*0.5))+'px';
+  bulle.style.top=Math.max(m,OY+TETE_B*S-bh-14)+'px';
+ }
+ (function boucle(){ requestAnimationFrame(boucle); const p=proche();
+  bP.style.display=p?'block':'none'; bD.style.display=(p&&vampa())?'block':'none';
+  if(!p) bulle.style.display='none'; else place(); })();
+ appuie(bP,()=>{ if(!proche()) return; joyX=joyY=0; bulle.style.display='none'; enVideo=true;
+  v.src='/assets/shinato/m/relais_blonde.mp4'; vb.style.display='block'; const q=v.play(); if(q&&q.catch) q.catch(()=>{}); });
+ appuie(bD,()=>{ if(!proche()) return; joyX=joyY=0;
+  bulle.textContent="Tu as battu Vampa ? Je ne suis pas étonnée… Il n'y a que moi qui te fais faiblir. 😏";
+  bulle.style.display='block'; place(); clearTimeout(bulle._t); bulle._t=setTimeout(()=>{ bulle.style.display='none'; },5000); });
 })();
 </script>
 </body>
