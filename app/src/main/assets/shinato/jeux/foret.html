@@ -330,6 +330,22 @@ function startMap(i, keepHp, keepEn){
     b.st = 'intro'; b.t = 0; b.face = -1; game.ents.push(b); game.boss = b; game.phase = 1;
   }
   game.state = 'play'; game.fade = 1; game.fadeDir = -1;
+  // en arrivant dans la Clairière Maudite (depuis la 3e carte) : la vidéo d'avant le combat contre les boss
+  if (m.boss && keepHp!=null) videoAvantBoss();
+}
+function videoAvantBoss(src){
+  window.PAUSE = true;                                   // le jeu attend la fin de la vidéo
+  const prevenir = on=>{ try{ if (window.parent && window.parent !== window) window.parent.postMessage({type:'foret:video', on:on}, '*'); }catch(e){} };
+  prevenir(true);                                        // Vaviel coupe la musique de la forêt pendant la vidéo
+  const vb = document.createElement('div');
+  vb.style.cssText = 'position:fixed;inset:0;z-index:999;background:#000';
+  vb.innerHTML = '<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+  document.body.appendChild(vb);
+  const v = vb.querySelector('video');
+  const fin = ()=>{ v.removeEventListener('ended',fin); v.removeEventListener('error',fin); vb.remove(); prevenir(false); window.PAUSE = false; };
+  v.addEventListener('ended',fin); v.addEventListener('error',fin);
+  v.src = src || '/assets/shinato/m/foret_boss_intro.mp4';
+  const q = v.play(); if (q && q.catch) q.catch(()=>{});
 }
 function makeEnemy(kind, x, y){
   const K = KINDS[kind];
@@ -405,7 +421,7 @@ function updateRudy(dt){
   if (r.st==='grabbed'){ r.mash += pressed.length; return; }
   if (r.st==='tied'){ // attaché par les lianes, au sol
     r.mash += pressed.length; r.fr = 5;
-    r.hp -= 3*dt; if (r.hp <= 0){ r.hp = 0; r.tied = 0; killRudy(); return; }
+    r.hp -= 3*dt; if (r.hp <= 0){ r.hp = 0; r.tied = 0; killRudy('rou_lianes'); return; }
     if (r.mash >= r.need){ r.tied = 0; addFx('vineBurst', r.x, r.y-30); SFX.vine(); setR('down'); r.t = 1.2; r.kb = 0; r.inv = 1.0; }
     return;
   }
@@ -564,6 +580,7 @@ function enemyGrab(e){
   e.face = Math.sign(rudy.x-e.x)||e.face;
   e.pairX = (rudy.x+e.x)/2; e.pairY = (rudy.y+e.y)/2;
   e.rSide = Math.sign(rudy.x-e.x)||1;
+  e.deLiane = fromTied;   // pour la vidéo de K.O. : la Rousse l'a attrapé pendant qu'il était attaché
   setR('grabbed'); rudy.hidden = true; rudy.mash = fromTied ? Math.floor((rudy.mash||0)/2) : 0; rudy.grabber = e; rudy.tied = 0;
   rudy.need = e.K.boss ? 13 : (e.K.noGrab ? 10 : 8);
   SFX.grab();
@@ -678,12 +695,12 @@ function walkAI(e, dt, dx, dy, adx){
   e.fr = (e.walkT/0.085)%6;
 }
 function releaseRudy(e, dead){
-  const r = rudy; game.grabCD = 2.2; e.grab2 = false;
+  const r = rudy; game.grabCD = 2.2; const tp = e.grab2; e.grab2 = false;   // tp : la prise après la téléportation (pour la vidéo de K.O.)
   r.hidden = false; r.grabber = null;
   const s = e.rSide || 1;
   r.x = e.pairX + s*40; e.x = e.pairX - s*60; r.y = e.pairY; e.y = e.pairY; clampR();
   r.face = -s;
-  if (dead){ killRudy(e.kind); e.st = 'walk'; e.t = 0; return; }
+  if (dead){ killRudy(e.K.boss ? e.kind+(tp?'_prise_tp':e.deLiane?'_prise_liane':'_prise') : e.kind); e.st = 'walk'; e.t = 0; return; }
   e.st = e.K.boss ? 'walk' : 'hurt'; e.t = 0; e.cd = 1.6; e.hpShow = 1; e.face = s;
   if (e.K.boss===2) { e.st = 'walk'; e.x = clamp(e.x - s*60, 60, worldW()-60); }
   setR('down'); r.t = 1.2; r.kb = 0; r.inv = 1.2; SFX.hit();
@@ -695,7 +712,7 @@ function hurtRudy(dmg, heavy, src){
   addFx('spark', r.x, r.y-150*depth(r.y));
   r.face = src ? (Math.sign(src.x-r.x)||r.face) : r.face;
   r.kb = r.face;
-  if (r.hp <= 0){ r.hp = 0; killRudy((src&&src.kind)||''); return true; }
+  if (r.hp <= 0){ r.hp = 0; killRudy((src&&(src.ko||src.kind))||''); return true; }
   if (heavy) setR('down'); else setR('hurt');
   return true;
 }
@@ -748,7 +765,7 @@ function updateCentaur(e, dt, dx, dy, adx){
       if (!e.beamOn){ e.beamOn = true; SFX.laser(); game.shake = 0.12; }
       if (e.beamTx == null) e.beamTx = r.x;
       const ddx = (r.x - e.x)*e.face, reach = (e.beamTx - e.x)*e.face + 90;
-      if (!e.beamHit && ddx > 0 && ddx < reach && Math.abs(r.y - e.y) < 30 && !r.hidden){ if (hurtRudy(16, true, e)){ e.beamHit = true; addFx('burstG', r.x, r.y-110*depth(r.y)); } }
+      if (!e.beamHit && ddx > 0 && ddx < reach && Math.abs(r.y - e.y) < 30 && !r.hidden){ if (hurtRudy(16, true, {x:e.x, ko:'cen_rayon'})){ e.beamHit = true; addFx('burstG', r.x, r.y-110*depth(r.y)); } }
     } else e.beamOn = false;
     if (e.t > 1.25){ e.st = 'walk'; e.t = 0; e.cd = 1.3 + Math.random(); e.plan = null; e.beamOn = false; e.beamTx = null; }
     return; }
@@ -770,7 +787,7 @@ function updateCentaur(e, dt, dx, dy, adx){
     e.x += dir*dt*700;
     if (Math.floor(e.t/0.14) !== Math.floor((e.t-dt)/0.14)) SFX.gallop();
     if (Math.random()<0.6) game.parts.push({type:'mud', x:e.x - dir*60, y:e.y, vx:-dir*(40+Math.random()*80), vy:-60-Math.random()*90, t:0, life:0.6});
-    if (!e.hitDone && Math.abs(r.x-e.x) < 80 && Math.abs(r.y-e.y) < 34){ e.hitDone = true; if (hurtRudy(e.K.dmg, true, {x:e.x-dir*100, kind:e.kind})){ r.kb = -dir; game.shake = 0.25; addFx('burst', r.x, r.y-110); } }
+    if (!e.hitDone && Math.abs(r.x-e.x) < 80 && Math.abs(r.y-e.y) < 34){ e.hitDone = true; if (hurtRudy(e.K.dmg, true, {x:e.x-dir*100, ko:'cen_charge'})){ r.kb = -dir; game.shake = 0.25; addFx('burst', r.x, r.y-110); } }
     if ((dir>0 && e.x >= e.chargeTo) || (dir<0 && e.x <= e.chargeTo) || e.x < 70 || e.x > worldW()-70){ e.st = 'bounce'; e.t = 0; e.bounceFrom = e.x; }
     return; }
   case 'bounce': { // elle rebondit à sa place de départ
@@ -857,6 +874,8 @@ function startPhase2(cen){
   addFx('heal2', rudy.x, rudy.y-90);
   SFX.eat();
   game.banner = 2.6; game.bannerText = 'La Rousse se relève !';
+  // le Centaure est battu : la vidéo d'avant le combat final contre la Rousse seule
+  videoAvantBoss('/assets/shinato/m/foret_rousse_intro.mp4');
 }
 
 // ------------------------------------------------- BOSS 2 : LA ROUSSE
@@ -875,7 +894,10 @@ function updateRousse(e, dt, dx, dy, adx){
   case 'down': {
     const n = nf('rou_fall');
     e.fr = Math.min(n-1, e.t/0.13);
-    if (e.t > n*0.13 + 1.2 && !e.won){ e.won = true; SFX.win(); setTimeout(()=>{ game.state = 'win'; }, 900); }
+    if (e.t > n*0.13 + 1.2 && !e.won){ e.won = true; SFX.win(); setTimeout(()=>{ game.state = 'win';
+      // dans l'appli (Vaviel) : la Rousse est vaincue → la vidéo de la victoire
+      try{ if (window.parent && window.parent !== window) window.parent.postMessage({type:'foret:victoire'}, '*'); }catch(err){}
+    }, 900); }
     return true; }
   case 'grab': {
     const n = nf(e.grab2 ? 'rou_eg2' : 'rou_eg'), intro = (n-3)*0.16;
@@ -979,7 +1001,7 @@ function updateShots(dt){
       s.trail.push({x:s.x, y:s.y - s.z, t:0}); if (s.trail.length>12) s.trail.shift();
       if (Math.random()<0.7) game.parts.push({type:'spark', x:s.x + (Math.random()-0.5)*20, y:s.y - s.z + (Math.random()-0.5)*20, vx:-Math.sign(s.vx)*(40+Math.random()*80), vy:(Math.random()-0.5)*70, t:0, life:0.3, green:true});
       if (!r.hidden && Math.abs(s.x-r.x) < 44 && Math.abs(s.y-r.y) < 28 && r.inv<=0 && !['down','dead','tied','grabbed','grabbing'].includes(r.st)){
-        s.done = true; if (hurtRudy(10, s.last, {x:s.x - s.vx})) addFx('burstG', r.x, r.y-100*depth(r.y));
+        s.done = true; if (hurtRudy(10, s.last, {x:s.x - s.vx, ko:'cen_feu'})) addFx('burstG', r.x, r.y-100*depth(r.y));
       }
       if (s.t > 3) s.done = true;
       continue;
@@ -987,13 +1009,13 @@ function updateShots(dt){
     if (s.type==='tornado'){
       if (Math.random()<0.7) game.parts.push({type:'leaf', x:s.x+(Math.random()-0.5)*50, y:s.y-Math.random()*120, vx:(Math.random()-0.5)*120, vy:-40-Math.random()*60, t:0, life:0.6, free:true});
       if (!r.hidden && Math.abs(s.x-r.x) < 50 && Math.abs(s.y-r.y) < 30 && r.inv<=0 && !['down','dead','tied'].includes(r.st)){
-        s.done = true; hurtRudy(15, true, {x:s.x - s.vx}); addFx('burstG', r.x, r.y-90);
+        s.done = true; hurtRudy(15, true, {x:s.x - s.vx, ko:'rou_tornade'}); addFx('burstG', r.x, r.y-90);
       }
     }
     if (s.type==='vine'){
       if (!r.hidden && Math.abs(s.x-r.x) < 46 && Math.abs(s.y-r.y) < 30 && r.inv<=0 && !['down','dead','tied','grabbed','grabbing'].includes(r.st)){
         s.done = true; SFX.vine(); game.shake = 0.12;
-        r.hp -= 6; if (r.hp <= 0){ r.hp = 0; killRudy(); continue; }
+        r.hp -= 6; if (r.hp <= 0){ r.hp = 0; killRudy('rou_lianes'); continue; }
         setR('tied'); r.tied = 1; r.mash = 0; r.need = 10; r.face = -Math.sign(s.vx)||r.face;
       }
     }
