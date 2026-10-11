@@ -480,6 +480,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
 <script>
 /* les trois donjons finis (l'usine d'Astra, le château de la Reine, la Forêt Maudite de Farah) */
 window.TROIS_BOSS_VAINCUS=(function(){ try{ return ['mitsuda_usine_gagnee','rembourg_chateau_gagne','foret_gagnee'].every(function(k){ return localStorage.getItem(k)==='1'; }); }catch(e){ return false; } })();
+// l'Hôtel Palace gagné : le grand gars n'est plus inquiet, Sophie et lui reviennent discuter comme avant
+try{ if(localStorage.getItem('hotel_palace_gagne')==='1') window.TROIS_BOSS_VAINCUS=false; }catch(e){}
 </script>
 <script>
 /* ---------- Sophie (à gauche) et le mec (à droite) discutent à côté de la machine à boissons ---------- */

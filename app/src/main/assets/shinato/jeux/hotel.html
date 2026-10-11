@@ -1206,7 +1206,7 @@ function updateEnemies(dt,active){
     e.ic.visible=active&&(showA||showS);if(e.ic.visible){e.ic.material.map=showA?ICON.alert:ICON.sus;e.ic.material.opacity=showA?1:clamp(e.sus*1.4,.35,1);e.ic.position.set(e.pos.x,2.05,e.pos.z)}
   }
 }
-function gameOver(){P.hp=0;P.diving=null;TSC=1;$('slowmo').classList.remove('on');
+function gameOver(){try{if(!window.KO_PRISE&&typeof Q!=='undefined'&&P.lastShooter===Q)window.KO_PRISE='boss'}catch(e){}P.hp=0;P.diving=null;TSC=1;$('slowmo').classList.remove('on');
   if(P.mode==='fps'||P.mode==='peek'){const{F:f}=camVectors(fps.yaw);cam.yaw=cam.curYaw=fps.yaw}
   P.cover=null;P.hurtA=null;P.dieA={sheet:hitSide(P.lastShooter),t:0};setMode('dying');sfx('fall')}
 function updateDying(dt){const D=P.dieA;D.t+=dt;const i=Math.min(7,1+Math.floor(D.t/.16));

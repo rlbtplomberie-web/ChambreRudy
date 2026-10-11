@@ -421,12 +421,15 @@ function fermeHotel(){
 appui(hotelQuit,()=>{ fermeHotel(); dedans=false; x=2020; sens=1; dir=0; cadre(true); });
 addEventListener('message',e=>{
   const t=e.data&&e.data.type;
-  if(t==='hotel:victoire'){ try{ localStorage.setItem('hotel_palace_gagne','1'); }catch(err){} fermeHotel(); dedans=false; x=2020; sens=1; dir=0; cadre(true); }
+  if(t==='hotel:victoire'){ try{ localStorage.setItem('hotel_palace_gagne','1'); }catch(err){} fermeHotel(); dedans=true; dir=0;
+    // la vidéo de la victoire, puis Rudy devant l'hôtel
+    videoHotel('/assets/shinato/m/hotel_victoire.mp4',vb=>{ vb.remove(); dedans=false; x=2020; sens=1; dir=0; cadre(true); }); }
   else if(t==='hotel:ko'){ fermeHotel(); dedans=true; dir=0;
     // comme à l'usine : la vidéo du K.O. (si la boss l'a eu au sol, à califourchon), puis l'infirmière, puis devant l'hôpital
     const KO_HOTEL={grab1:'/assets/shinato/m/hotel_ko_boss_dos.mp4',        // elle saute sur son dos et l'étrangle
                     grab2:'/assets/shinato/m/hotel_ko_boss_sol.mp4',      // à califourchon au sol
-                    grab3:'/assets/shinato/m/hotel_ko_boss_souleve.mp4'}; // soulevé d'une main
+                    grab3:'/assets/shinato/m/hotel_ko_boss_souleve.mp4',  // soulevé d'une main
+                    boss:'/assets/shinato/m/hotel_ko_boss_coups.mp4'};    // tous ses autres coups (tirs, couteau…)
     const hopital=()=>videoHotel('/assets/shinato/m/usine_hopital.mp4',hb=>{ dedans=false; x=2020; sens=1;
       try{ parent.postMessage({type:'ruenuit:devantHopital'},'*'); }catch(err){} setTimeout(()=>hb.remove(),400); });
     const src=KO_HOTEL[e.data.prise];

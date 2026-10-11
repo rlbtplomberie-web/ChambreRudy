@@ -1,10 +1,10 @@
-ChambreRudy — mise à jour 182 (archive B sur 2)
+ChambreRudy — mise à jour 183
 
-- Shinato : après Astra, la Reine et Farah vaincues, Sophie et le grand gars disparaissent ;
-  le grand gars inquiet à la place (5 poses) avec PARLER → shinato_valor_panique.mp4.
-- Rue de nuit : après lui avoir parlé, flèche jaune + ENTRER devant l'hôtel → mission Hôtel Palace.
-  Victoire → devant l'hôtel. K.O. → vidéo du K.O. (selon l'attrape de la boss) → infirmière → devant l'hôpital.
-- K.O. sur son dos (étranglé) : hotel_ko_boss_dos.mp4.
-- Déverrouillage : vidéos ajoutées (Shinato + nouveau dossier Hôtel Palace).
-Fichiers : shinato/index.html, shinato/lieux/ruenuit.html, web/telephone.html,
-           shinato/m/valor_inquiet_1..5.webp, shinato/m/shinato_valor_panique.mp4, shinato/m/hotel_ko_boss_dos.mp4
+- Hôtel Palace : K.O. par les coups de la boss (hors attrapes) → hotel_ko_boss_coups.mp4 → infirmière → hôpital.
+- Hôtel Palace : victoire → hotel_victoire.mp4 → devant l'hôtel.
+- Shinato : après l'hôtel gagné, Sophie et le grand gars reviennent (le grand gars inquiet disparaît).
+- Statue : diamant rond étoilé (cercle de gauche) quand la boss de l'hôtel est vaincue.
+- Déverrouillage : les 2 vidéos ajoutées au dossier Hôtel Palace.
+Fichiers : shinato/index.html, shinato/jeux/hotel.html, shinato/lieux/ruenuit.html,
+           web/telephone.html, web/statue.html, web/statue/gem_rond_hotel.webp,
+           shinato/m/hotel_ko_boss_coups.mp4, shinato/m/hotel_victoire.mp4
