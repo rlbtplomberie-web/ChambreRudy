@@ -1282,7 +1282,7 @@ object Argent {
     private const val FICHIER = "rudy_argent"
     private const val CLE = "argent"
     fun lire(ctx: android.content.Context): Int =
-        ctx.getSharedPreferences(FICHIER, android.content.Context.MODE_PRIVATE).getInt(CLE, 1000)          // on commence le jeu avec 1000 €
+        ctx.getSharedPreferences(FICHIER, android.content.Context.MODE_PRIVATE).getInt(CLE, 5000)          // on commence le jeu avec 5000 €
     fun ecrire(ctx: android.content.Context, n: Int) {
         ctx.getSharedPreferences(FICHIER, android.content.Context.MODE_PRIVATE)
             .edit().putInt(CLE, maxOf(0, n)).apply()

@@ -160,7 +160,7 @@ const $=id=>document.getElementById(id);
 function lit(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 function argent(){
  for(const w of [window,window.parent,window.top]){ try{ if(w&&w.Chambre&&w.Chambre.argent) return parseInt(w.Chambre.argent(),10)||0; }catch(e){} }
- const v=lit('rudy_argent'); return v===null?1000:(parseInt(v,10)||0);
+ const v=lit('rudy_argent'); return v===null?5000:(parseInt(v,10)||0);
 }
 function contacts(){ try{ return Object.keys(JSON.parse(lit('rudy_contacts')||'{}')||{}).length; }catch(e){ return 0; } }
 function videos(){ const vu=new Set();   // les vidéos déjà vues / débloquées dans la partie
