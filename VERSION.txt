@@ -1,8 +1,5 @@
-ChambreRudy — mise à jour 181
+ChambreRudy — mise à jour 182 (archive A sur 2)
 
-- Aline : à 50 % de cœur, par texto elle propose de regarder un film → vidéo aline_film.mp4
-  (aussi dans Déverrouillage > Films).
-- Aline : 20 nouvelles conversations par texto (30 questions) et 20 appels différents avec question.
-- Argent : une nouvelle partie commence avec 5 000 €.
-Fichiers : web/telephone.html, web/statue.html, web/visite/aline_film.mp4,
-           java/com/rudy/chambre/ChambreActivity.kt
+- La mission « Hôtel Palace » (shinato/jeux/hotel.html) et ses vidéos :
+  entrée, escalier, 3e étage, final, K.O. au sol (à califourchon), K.O. soulevé d'une main.
+Déposer l'archive B ensuite.
