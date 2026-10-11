@@ -178,6 +178,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  <div class="btn" id="btnParlerVitrine" style="display:none">PARLER</div>
  <div class="btn" id="btnParlerPolicier" style="display:none">PARLER</div>
  <div class="btn" id="btnParlerMec" style="display:none">PARLER</div>
+ <div class="btn" id="btnParlerPanique" style="display:none">PARLER</div>
  <div class="btn" id="btnRegarderCachee" style="display:none">👀 REGARDER</div>
  <div class="btn" id="btnFumer">FUMER</div>
  <div class="btn off" id="btnJeter">JETER</div>
@@ -477,6 +478,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
 </script>
 <script>window.SOPHIE_IMAGES=["/assets/shinato/m/7412318ff6d0e312.webp", "/assets/shinato/m/47488b9b6f94549f.webp", "/assets/shinato/m/8d5aeb44ca9c9879.webp", "/assets/shinato/m/172fad450e196ec5.webp", "/assets/shinato/m/ddaec37d1ef6f02f.webp", "/assets/shinato/m/e11920bb060eccfc.webp", "/assets/shinato/m/edecaa88089b5523.webp", "/assets/shinato/m/83a67dd6e31564cd.webp", "/assets/shinato/m/7f82f0d551c58430.webp", "/assets/shinato/m/b149392565a5add3.webp", "/assets/shinato/m/31e7558e4148c5d0.webp", "/assets/shinato/m/e89f840076f5331a.webp"];window.MEC_IMAGES=["/assets/shinato/m/de9c036b83eca657.webp", "/assets/shinato/m/055c35e21fb03974.webp", "/assets/shinato/m/ec9271d37ebde085.webp", "/assets/shinato/m/d785523c5405726a.webp", "/assets/shinato/m/7214b3bfc913679c.webp", "/assets/shinato/m/d0dd549d4a6c8297.webp", "/assets/shinato/m/6cf83c740b9347d3.webp", "/assets/shinato/m/08564ff8929dc251.webp", "/assets/shinato/m/115620ce448d71fa.webp", "/assets/shinato/m/fcf603c7a4a6cb33.webp", "/assets/shinato/m/15d85f7813013083.webp", "/assets/shinato/m/7557634fa7050ea1.webp", "/assets/shinato/m/ca3f43536bbf572f.webp", "/assets/shinato/m/60e225e4c9d02c88.webp", "/assets/shinato/m/5f1d0de7b97d127d.webp", "/assets/shinato/m/740df42ddaeaeb6e.webp", "/assets/shinato/m/97321ea926407167.webp", "/assets/shinato/m/a648062ca8b4a8e4.webp", "/assets/shinato/m/f2bf16a7572a3a66.webp", "/assets/shinato/m/a9fedfc39c944036.webp"];</script>
 <script>
+/* les trois donjons finis (l'usine d'Astra, le château de la Reine, la Forêt Maudite de Farah) */
+window.TROIS_BOSS_VAINCUS=(function(){ try{ return ['mitsuda_usine_gagnee','rembourg_chateau_gagne','foret_gagnee'].every(function(k){ return localStorage.getItem(k)==='1'; }); }catch(e){ return false; } })();
+</script>
+<script>
 /* ---------- Sophie (à gauche) et le mec (à droite) discutent à côté de la machine à boissons ---------- */
 (function(){
  var monde=document.getElementById("monde");
@@ -515,8 +520,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
   }
   prochain();
  }
+ if(window.TROIS_BOSS_VAINCUS){
+  // Astra, la Reine des vampires et Farah vaincues : Sophie et le mec ne sont plus là, Valor est seul et inquiet
+  personnage(["/assets/shinato/m/valor_inquiet_1.webp","/assets/shinato/m/valor_inquiet_2.webp","/assets/shinato/m/valor_inquiet_3.webp",
+              "/assets/shinato/m/valor_inquiet_4.webp","/assets/shinato/m/valor_inquiet_5.webp"], 81.00, 26.40, 50, 2.9, 5);
+ } else {
  personnage(window.SOPHIE_IMAGES, 80.18, 23.62, 44.79, 2.3, 12);   // Sophie, regarde à droite
  personnage(window.MEC_IMAGES,    81.80, 27.15, 50.84, 2.9, 20);   // le mec, regarde à gauche, plus grand
+ }
 })();
 </script>
 <script>window.CAPUCHE_IMAGES=["/assets/shinato/m/112847c3b51e7847.webp", "/assets/shinato/m/153410b5ac8467ff.webp", "/assets/shinato/m/954100dffbe52ca9.webp", "/assets/shinato/m/4ec0e42e58f0403d.webp", "/assets/shinato/m/8993c38de7e47215.webp", "/assets/shinato/m/e9316325ffbeda05.webp", "/assets/shinato/m/8b5a5007fc669116.webp", "/assets/shinato/m/5362268e6fc8c3d6.webp", "/assets/shinato/m/2f348117741711ee.webp", "/assets/shinato/m/94cbf2528823eae9.webp", "/assets/shinato/m/afa6718171bd0b1b.webp", "/assets/shinato/m/c0b5cf57962fd846.webp", "/assets/shinato/m/7073e7d0bafa2755.webp", "/assets/shinato/m/7484553a5b26ae72.webp", "/assets/shinato/m/cc89dcf347608e43.webp", "/assets/shinato/m/73a7e69408ad610b.webp", "/assets/shinato/m/6b770141197257c5.webp", "/assets/shinato/m/dea63879346d5735.webp", "/assets/shinato/m/97087ac216f0f4d0.webp", "/assets/shinato/m/4dc9e651a073470b.webp"];</script>
@@ -1447,6 +1458,7 @@ else carte.addEventListener("load",demarre);
   {btn:"btnParlerMody",   pos:0.2537, video:"/assets/shinato/m/shinato_mody.mp4"},    // Mody, torse nu, saute à la corde sous le panneau Shibuya
   {btn:"btnParlerSophie", pos:0.8018, video:"/assets/shinato/m/shinato_sophie_mec.mp4"},// la blonde (Sophie), devant la machine à boissons
   {btn:"btnParlerMec",    pos:0.8180, video:"/assets/shinato/m/shinato_mec.mp4", apres:0.915},// le grand noir à côté d'elle : après sa vidéo, Rudy se retrouve à côté du gars au sweat rouge
+  {btn:"btnParlerPanique", pos:0.8100, video:"/assets/shinato/m/shinato_valor_panique.mp4", drapeau:"shinato_valor_parle"},// le noir inquiet (les trois boss vaincus)
   {btn:"btnParlerShana",  pos:0.9551, video:"/assets/shinato/m/shinato_shana.mp4"},     // Shana, assise en tailleur sur le banc, lit son livre
   {btn:"btnParlerAfro",   pos:0.9300, video:"/assets/shinato/m/shinato_afro_rousse.mp4"},// la fille afro et la rousse, assises entre les deux bancs
   {btn:"btnParlerBuveur", pos:0.7269, video:"/assets/shinato/m/shinato_buveur.mp4"},    // le buveur de bière, sur la chaise haute devant le Pixel Bar
@@ -1454,6 +1466,8 @@ else carte.addEventListener("load",demarre);
   {btn:"btnParlerVitrine",pos:0.4041, video:"/assets/shinato/m/shinato_vitrine.mp4"},  // l'homme en costume, de dos, devant la vitrine du magasin BRAND
   {btn:"btnParlerPolicier",pos:function(){ return window.POLICE_POS?window.POLICE_POS():-1; }, video:"/assets/shinato/m/shinato_policier.mp4"}   // le policier qui fait sa ronde : le bouton le suit
  ];
+ if(!window.TROIS_BOSS_VAINCUS){ PASSANTS=PASSANTS.filter(function(P){ if(P.btn==="btnParlerPanique"){ document.getElementById(P.btn).style.display="none"; return false; } return true; }); }
+ if(window.TROIS_BOSS_VAINCUS){ PASSANTS=PASSANTS.filter(function(P){ if(P.btn==="btnParlerSophie"||P.btn==="btnParlerMec"){ var b=document.getElementById(P.btn); if(b) b.style.display="none"; return false; } return true; }); }
  function posDe(P){ return typeof P.pos==="function"?P.pos():P.pos; }
  var PRES=95/7078, occupe=false;
  var vb=document.createElement("div"); vb.style.cssText="position:fixed;inset:0;z-index:70;background:#000;display:none";
@@ -1471,6 +1485,7 @@ else carte.addEventListener("load",demarre);
    btn.style.display=(d<largeurMonde*PRES&&plusProche)?"block":"none";
   },120);
   function parle(e){ if(e&&e.cancelable) e.preventDefault(); var n=performance.now(); if(n-t0<400) return; t0=n;
+   if(P.drapeau){ try{ localStorage.setItem(P.drapeau,"1"); }catch(_){} }
    occupe=true; dir=0; btn.style.display="none"; apres=(P.apres!==undefined)?P.apres:null; v.src=P.video; vb.style.display="block";
    var q=v.play(); if(q&&q.catch) q.catch(function(){}); }
   btn.addEventListener("touchstart",parle,{passive:false}); btn.addEventListener("click",parle);
@@ -1550,6 +1565,16 @@ else carte.addEventListener("load",demarre);
    if(!ch){ ch=document.createElement("iframe"); ch.id="moto"; ch.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(ch); }
    ch.style.pointerEvents="auto"; ch.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/hopital.html")); ch.style.display="block";
    window.minuterieLibre(function(){ try{ ch.focus(); }catch(err){} },300);
+   return;
+  }
+  if(e.data && e.data.type==="ruenuit:devantHopital"){
+   // à terre dans l'Hôtel Palace : (vidéo du K.O. et de l'infirmière déjà vues) → devant l'hôpital de Vaviel
+   var fh=document.getElementById("ruenuit"); if(fh){ fh.style.pointerEvents="none"; fh.blur(); fh.style.display="none"; }
+   dedans=false; dir=0;
+   var mh=document.getElementById("moto");
+   if(!mh){ mh=document.createElement("iframe"); mh.id="moto"; mh.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(mh); }
+   mh.style.pointerEvents="auto"; mh.style.display="block";
+   window.postMessage({type:"hopital:fin"},"*");
    return;
   }
   if(e.data && e.data.type==="ruenuit:sortie"){

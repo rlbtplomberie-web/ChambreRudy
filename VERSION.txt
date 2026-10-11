@@ -1,5 +1,10 @@
-ChambreRudy — mise à jour 182 (archive A sur 2)
+ChambreRudy — mise à jour 182 (archive B sur 2)
 
-- La mission « Hôtel Palace » (shinato/jeux/hotel.html) et ses vidéos :
-  entrée, escalier, 3e étage, final, K.O. au sol (à califourchon), K.O. soulevé d'une main.
-Déposer l'archive B ensuite.
+- Shinato : après Astra, la Reine et Farah vaincues, Sophie et le grand gars disparaissent ;
+  le grand gars inquiet à la place (5 poses) avec PARLER → shinato_valor_panique.mp4.
+- Rue de nuit : après lui avoir parlé, flèche jaune + ENTRER devant l'hôtel → mission Hôtel Palace.
+  Victoire → devant l'hôtel. K.O. → vidéo du K.O. (selon l'attrape de la boss) → infirmière → devant l'hôpital.
+- K.O. sur son dos (étranglé) : hotel_ko_boss_dos.mp4.
+- Déverrouillage : vidéos ajoutées (Shinato + nouveau dossier Hôtel Palace).
+Fichiers : shinato/index.html, shinato/lieux/ruenuit.html, web/telephone.html,
+           shinato/m/valor_inquiet_1..5.webp, shinato/m/shinato_valor_panique.mp4, shinato/m/hotel_ko_boss_dos.mp4

@@ -103,7 +103,8 @@ const SOL=0.805;          // il marche sur la route, devant le trottoir
 const TAILLE=0.30;        // hauteur du personnage par rapport à l'image
 const PORTES=[                 // les entrées de la rue de nuit
   {x:1432, lieu:'barding.html',     sortie:'barding:sortie'},     // la porte ouverte du Barding
-  {x:835,  lieu:'supermarche.html', sortie:'supermarche:sortie'}  // les portes vitrées du supermarché
+  {x:835,  lieu:'supermarche.html', sortie:'supermarche:sortie'}, // les portes vitrées du supermarché
+  {x:2020, lieu:null, hotel:true, si:()=>{ try{ return localStorage.getItem('shinato_valor_parle')==='1'; }catch(e){ return false; } }}  // l'entrée de l'hôtel : après avoir parlé au noir en panique à Shinato (rien derrière pour l'instant)
 ];
 let porteIci=null;
 const vue=document.getElementById('vue');
@@ -160,7 +161,7 @@ function boucleRudy(t){
     pose(jeu[Math.min(f,jeu.length-1)]);
   }
   // devant la porte du Barding : la flèche jaune au-dessus de lui et ENTRER
-  porteIci=PORTES.find(P=>Math.abs(x-P.x)<95)||null; const devant=!!porteIci;
+  porteIci=PORTES.find(P=>Math.abs(x-P.x)<95&&(!P.si||P.si()))||null; const devant=!!porteIci;
   fl.style.display=ent.style.display=devant?'block':'none';
   if(devant){ fl.style.left=(x/LARG*100)+'%'; fl.style.top=((SOL*HAUT-h*1.32)/HAUT*100)+'%'; }
   cadre(false);
@@ -192,6 +193,8 @@ appui(btnF,fumer); appui(btnJ,jeter);
 /* ENTRER : le bar Barding ; « ◀ LA RUE » dans le bar ramène devant la porte */
 appui(ent,function(){
   const P=porteIci; if(!P) return;
+  if(P.hotel){ lanceHotel(); return; }            // l'hôtel : la mission « Hôtel Palace »
+  if(!P.lieu) return;
   const idf='lieu_'+P.lieu.replace(/\W/g,'_');
   let fr=document.getElementById(idf);
   if(!fr){ fr=document.createElement('iframe'); fr.id=idf; fr.className='lieuR'; fr.setAttribute('allow','autoplay; fullscreen'); document.body.appendChild(fr); }
@@ -388,6 +391,47 @@ mesure(); majBoutons(); pose(IMG.fumer[0]); requestAnimationFrame(()=>{ cadre(tr
   bS.addEventListener('touchstart',sors,{passive:false}); bS.addEventListener('click',sors);
 })();
 
+
+/* ================= L'Hôtel Palace (après avoir parlé au noir en panique à Shinato) ================= */
+const hotelQuit=document.createElement('div'); hotelQuit.id='hotelQuitter'; hotelQuit.textContent='✕ LA RUE';
+hotelQuit.style.cssText='position:fixed;z-index:91;top:calc(10px + env(safe-area-inset-top,0px));left:10px;display:none;padding:9px 14px;border-radius:999px;background:rgba(0,0,0,.6);color:#ffe27a;border:2px solid rgba(255,226,122,.8);font:900 13px Arial,sans-serif;letter-spacing:.06em';
+document.body.appendChild(hotelQuit);
+function musiqueVilleH(){ try{ return parent.RUDY_AUDIO||null; }catch(e){ return null; } }
+let hotelMusiqueCoupee=false;
+function videoHotel(src,fin){
+  const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:95;background:#000';
+  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+  const v=vb.querySelector('video'); const f=()=>{ v.removeEventListener('ended',f); v.removeEventListener('error',f); fin(vb); };
+  v.addEventListener('ended',f); v.addEventListener('error',f); v.src=src; const q=v.play(); if(q&&q.catch) q.catch(()=>{});
+}
+function lanceHotel(){
+  let fr=document.getElementById('hotelJeu');
+  if(!fr){ fr=document.createElement('iframe'); fr.id='hotelJeu'; fr.setAttribute('allow','autoplay; fullscreen');
+    fr.style.cssText='position:fixed;inset:0;width:100%;height:100%;border:0;z-index:90;background:#000;display:none'; document.body.appendChild(fr); }
+  const m=musiqueVilleH(); hotelMusiqueCoupee=!!(m&&!m.paused); try{ if(m) m.pause(); }catch(e){}
+  fr.src='/assets/shinato/jeux/hotel.html'; fr.style.display='block'; hotelQuit.style.display='block';
+  dedans=true; dir=0; fl.style.display=ent.style.display='none';
+}
+function fermeHotel(){
+  const fr=document.getElementById('hotelJeu'); if(fr){ fr.style.display='none'; fr.src='about:blank'; }
+  hotelQuit.style.display='none';
+  if(hotelMusiqueCoupee){ try{ const m=musiqueVilleH(); if(m){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} }
+  hotelMusiqueCoupee=false;
+}
+appui(hotelQuit,()=>{ fermeHotel(); dedans=false; x=2020; sens=1; dir=0; cadre(true); });
+addEventListener('message',e=>{
+  const t=e.data&&e.data.type;
+  if(t==='hotel:victoire'){ try{ localStorage.setItem('hotel_palace_gagne','1'); }catch(err){} fermeHotel(); dedans=false; x=2020; sens=1; dir=0; cadre(true); }
+  else if(t==='hotel:ko'){ fermeHotel(); dedans=true; dir=0;
+    // comme à l'usine : la vidéo du K.O. (si la boss l'a eu au sol, à califourchon), puis l'infirmière, puis devant l'hôpital
+    const KO_HOTEL={grab1:'/assets/shinato/m/hotel_ko_boss_dos.mp4',        // elle saute sur son dos et l'étrangle
+                    grab2:'/assets/shinato/m/hotel_ko_boss_sol.mp4',      // à califourchon au sol
+                    grab3:'/assets/shinato/m/hotel_ko_boss_souleve.mp4'}; // soulevé d'une main
+    const hopital=()=>videoHotel('/assets/shinato/m/usine_hopital.mp4',hb=>{ dedans=false; x=2020; sens=1;
+      try{ parent.postMessage({type:'ruenuit:devantHopital'},'*'); }catch(err){} setTimeout(()=>hb.remove(),400); });
+    const src=KO_HOTEL[e.data.prise];
+    if(src) videoHotel(src,vb=>{ vb.remove(); hopital(); }); else hopital(); }
+});
 /* ================= La zombie cachée derrière le supermarché : REGARDER → 3 choix → vidéo → l'hôpital ================= */
 (function(){
   const ZOMBIE_X=1175;
