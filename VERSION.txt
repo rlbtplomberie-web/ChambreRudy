@@ -1,10 +1,7 @@
-ChambreRudy — mise à jour 183
+ChambreRudy — mise à jour 184
 
-- Hôtel Palace : K.O. par les coups de la boss (hors attrapes) → hotel_ko_boss_coups.mp4 → infirmière → hôpital.
-- Hôtel Palace : victoire → hotel_victoire.mp4 → devant l'hôtel.
-- Shinato : après l'hôtel gagné, Sophie et le grand gars reviennent (le grand gars inquiet disparaît).
-- Statue : diamant rond étoilé (cercle de gauche) quand la boss de l'hôtel est vaincue.
-- Déverrouillage : les 2 vidéos ajoutées au dossier Hôtel Palace.
-Fichiers : shinato/index.html, shinato/jeux/hotel.html, shinato/lieux/ruenuit.html,
-           web/telephone.html, web/statue.html, web/statue/gem_rond_hotel.webp,
-           shinato/m/hotel_ko_boss_coups.mp4, shinato/m/hotel_victoire.mp4
+- Toutes les vidéos du jeu : un seul petit bouton ⏩ en haut à droite pour passer la vidéo
+  (la suite du jeu se déroule comme si la vidéo avait été vue jusqu'au bout).
+  Les anciens boutons « Passer » / « ✕ Fermer » posés sur les vidéos sont cachés pendant la vidéo.
+Fichiers : web/passer.js (nouveau), shinato/index.html, web/index.html, web/visite.html,
+           web/telephone.html, web/jeux/dreamtosleep.html
