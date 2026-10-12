@@ -109,6 +109,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
 <div id="joy"><div id="stick"></div></div>
 <div id="actions">
  <div class="btn" id="btnParlerFille" style="display:none">PARLER</div>
+ <div class="btn" id="btnParlerFamille" style="display:none">PARLER</div>
  <div class="btn" id="btnParlerVieux" style="display:none">PARLER</div>
  <div class="btn" id="btnFumer">FUMER</div>
  <div class="btn off" id="btnJeter">JETER</div>
@@ -620,6 +621,36 @@ else carte.addEventListener("load",demarre);
 </script>
 <script>window.FILLE={"droite": {"img": ["/assets/shinato/m/a66e2ea515e8932d.webp", "/assets/shinato/m/69e12c448982a0fc.webp", "/assets/shinato/m/1456d5a0d518b270.webp", "/assets/shinato/m/c733327f51bf1e8f.webp", "/assets/shinato/m/0175a2363ea02af8.webp", "/assets/shinato/m/8b7596f1b2f05af7.webp", "/assets/shinato/m/b6996e4541f72128.webp", "/assets/shinato/m/0e03ba222fa62d90.webp", "/assets/shinato/m/934c888af57d6a4f.webp", "/assets/shinato/m/af04d4d03d45ccf1.webp", "/assets/shinato/m/58e10bba5adb022c.webp", "/assets/shinato/m/8d928341a5b5eba4.webp"], "W": 124, "H": 238, "ax": 60.33710691823899, "ay": 237.0}, "poses": {"img": ["/assets/shinato/m/39c2e4c981cacb6f.webp", "/assets/shinato/m/ab53a36377969ed7.webp", "/assets/shinato/m/20bd9d3df926536a.webp", "/assets/shinato/m/e40300669a2d8306.webp", "/assets/shinato/m/ee83b12f8f999f3f.webp", "/assets/shinato/m/6d732fb470a2c1f5.webp", "/assets/shinato/m/6160c4434ba15140.webp", "/assets/shinato/m/6c3406b65d7952a5.webp", "/assets/shinato/m/271c9c891aa8093f.webp", "/assets/shinato/m/512ad28651710cdf.webp", "/assets/shinato/m/3c276a7197823ea9.webp", "/assets/shinato/m/f40ff61d07526295.webp"], "W": 133, "H": 269, "ax": 67.36274732772345, "ay": 268.0}, "gauche": {"img": ["/assets/shinato/m/a5b403f3358a7819.webp", "/assets/shinato/m/79fab1cd2c1517ae.webp", "/assets/shinato/m/7f273392a58706a9.webp", "/assets/shinato/m/046d73645dfccdd9.webp", "/assets/shinato/m/a8138473831c392d.webp", "/assets/shinato/m/c8b5514628cec2c1.webp", "/assets/shinato/m/5600c100994c6a96.webp", "/assets/shinato/m/da4f1c5ad26c26b3.webp", "/assets/shinato/m/7637ec8c61a51f6f.webp", "/assets/shinato/m/9e6edf35bd033d70.webp", "/assets/shinato/m/d5460c60c866b10b.webp", "/assets/shinato/m/1fa8c680ea7de4fb.webp"], "W": 139, "H": 251, "ax": 74.61714677640603, "ay": 250.0}};</script>
 <script>
+/* ---------- l'ancien bagarreur au sweat gris (la ville délabrée) : après la mission de l'Hôtel Palace,
+   il est devenu gentil et se tient debout à côté de la vieille dame, sur son téléphone ---------- */
+(function(){
+ var gagne=false; try{ gagne=localStorage.getItem('hotel_palace_gagne')==='1'; }catch(e){}
+ if(!gagne) return;
+ var T=[1,2,3,4,5,6].map(function(n){ return "/assets/shinato/m/plage_sweatgris_"+n+".webp"; }), monde=document.getElementById("monde");
+ T.forEach(function(s){ var i=new Image(); i.src=s; });
+ var X=70.30;
+ var ombre=document.createElement("div");
+ ombre.style.cssText="position:absolute;z-index:3;left:"+X+"%;bottom:25.0%;width:2.4%;height:1.6%;"+
+  "transform:translateX(-50%);border-radius:50%;pointer-events:none;"+
+  "background:radial-gradient(closest-side,rgba(0,0,0,.5),rgba(0,0,0,.18) 60%,transparent 100%);filter:blur(.3vmin)";
+ monde.appendChild(ombre);
+ var boite=document.createElement("div");
+ boite.style.cssText="position:absolute;z-index:4;left:"+X+"%;bottom:25.2%;height:27.5%;"+
+  "transform:translateX(-50%);pointer-events:none;filter:brightness(.74) contrast(1.04) saturate(.82)";
+ function calque(){ var i=new Image(); i.alt=""; i.style.cssText="display:block;height:100%;width:auto"; return i; }
+ var A=calque(), B=calque(); B.style.position="absolute"; B.style.left="0"; B.style.top="0"; B.style.opacity="0";
+ boite.appendChild(A); boite.appendChild(B); monde.appendChild(boite);
+ var n=0, minuteur=null;
+ function montre(src,fondu){ clearTimeout(minuteur);
+  if(!fondu){ A.src=src; return; }
+  B.style.transition="none"; B.style.opacity="0"; B.src=src; void B.offsetWidth;
+  B.style.transition="opacity "+fondu+"ms ease-in-out"; B.style.opacity="1";
+  minuteur=setTimeout(function(){ A.src=src; B.style.transition="none"; B.style.opacity="0"; },fondu+10); }
+ function prochain(){ n=n%T.length+1; montre(T[n-1], A.getAttribute("src")?450:0); setTimeout(prochain,1600+Math.random()*900); }
+ prochain();
+})();
+</script>
+<script>
 /* ---------- la fille se promène sur le trottoir, d'un bout à l'autre de la plage ---------- */
 (function(){
  var F=window.FILLE, monde=document.getElementById("monde"), LS=2115, HS=546;
@@ -858,9 +889,35 @@ else carte.addEventListener("load",demarre);
  btn.addEventListener("touchstart",parle,{passive:false}); btn.addEventListener("click",parle);
 })();
 
+/* ---------- l'Hôtel Palace gagné : PARLER aux vieux et à leur fils au sweat gris → la nouvelle vidéo, +200 € à chaque fois ---------- */
+(function(){
+ var btn=document.getElementById("btnParlerFamille"), occupe=false, POS=0.6602;
+ var gagne=false; try{ gagne=localStorage.getItem("hotel_palace_gagne")==="1"; }catch(e){}
+ if(!gagne) return;
+ var vb=document.createElement("div"); vb.style.cssText="position:fixed;inset:0;z-index:70;background:#000;display:none";
+ vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+ document.body.appendChild(vb); var v=vb.querySelector("video");
+ function ferme(){ try{ v.pause(); }catch(e){} vb.style.display="none"; occupe=false; }
+ v.addEventListener("ended",ferme); v.addEventListener("error",ferme);
+ setInterval(function(){
+  if(typeof x==="undefined"||!largeurMonde||occupe){ btn.style.display="none"; return; }
+  var pres=Math.abs(x-largeurMonde*POS)<largeurMonde*0.05;
+  if(pres&&window.FILLE_X){ var df=Math.abs(x/largeurMonde*2115-window.FILLE_X()), dv=Math.abs(x/largeurMonde-POS)*2115; if(df<95&&df<dv) pres=false; }
+  btn.style.display=pres?"block":"none";
+ },100);
+ var t0=0;
+ function parle(e){ if(e&&e.cancelable) e.preventDefault(); var n=performance.now(); if(n-t0<400) return; t0=n;
+  occupe=true; try{ dir=0; }catch(err){} btn.style.display="none";
+  try{ if(window.argentGain) window.argentGain(200); }catch(err){}          // +200 € à chaque fois
+  v.src="/assets/shinato/m/plage_famille.mp4"; vb.style.display="block";
+  var q=v.play(); if(q&&q.catch) q.catch(function(){}); }
+ btn.addEventListener("touchstart",parle,{passive:false}); btn.addEventListener("click",parle);
+})();
 /* ---------- PARLER au vieux et à la vieille sur leur banc : la vidéo, sans dialogue ---------- */
 (function(){
  var btn=document.getElementById("btnParlerVieux"), occupe=false, POS=0.6602;
+ // l'Hôtel Palace gagné (leur fils au sweat gris est revenu près d'eux) : leur vidéo d'avant devient « ANCIENNE DISCUSSION »
+ try{ if(localStorage.getItem('hotel_palace_gagne')==='1') btn.textContent="ANCIENNE DISCUSSION"; }catch(e){}
  var vb=document.createElement("div"); vb.style.cssText="position:fixed;inset:0;z-index:70;background:#000;display:none";
  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
  document.body.appendChild(vb); var v=vb.querySelector("video");

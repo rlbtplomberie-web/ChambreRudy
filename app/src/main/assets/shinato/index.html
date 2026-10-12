@@ -487,15 +487,16 @@ try{ if(localStorage.getItem('hotel_palace_gagne')==='1') window.TROIS_BOSS_VAIN
 /* ---------- Sophie (à gauche) et le mec (à droite) discutent à côté de la machine à boissons ---------- */
 (function(){
  var monde=document.getElementById("monde");
- function personnage(T,gauche,hauteur,ancre,largeurOmbre,nbPoses){
+ function personnage(T,gauche,hauteur,ancre,largeurOmbre,nbPoses,bas){
+  bas=bas||32.88;
   T.forEach(function(s){ var i=new Image(); i.src=s; });
   var ombre=document.createElement("div");
-  ombre.style.cssText="position:absolute;z-index:3;left:"+gauche+"%;bottom:32.5%;width:"+largeurOmbre+"%;height:1.8%;"+
+  ombre.style.cssText="position:absolute;z-index:3;left:"+gauche+"%;bottom:"+(bas-0.38)+"%;width:"+largeurOmbre+"%;height:1.8%;"+
    "transform:translateX(-50%);border-radius:50%;pointer-events:none;"+
    "background:radial-gradient(closest-side,rgba(0,0,0,.5),rgba(0,0,0,.18) 60%,transparent 100%);filter:blur(.3vmin)";
   monde.appendChild(ombre);
   var boite=document.createElement("div");
-  boite.style.cssText="position:absolute;z-index:4;left:"+gauche+"%;bottom:32.88%;height:"+hauteur+"%;"+
+  boite.style.cssText="position:absolute;z-index:4;left:"+gauche+"%;bottom:"+bas+"%;height:"+hauteur+"%;"+
    "transform:translateX(-"+ancre+"%);pointer-events:none;"+
    "filter:brightness(.8) contrast(1.02) saturate(.92)";
   function calque(){ var i=new Image(); i.alt=""; i.style.cssText="display:block;height:100%;width:auto"; return i; }
@@ -525,7 +526,7 @@ try{ if(localStorage.getItem('hotel_palace_gagne')==='1') window.TROIS_BOSS_VAIN
  if(window.TROIS_BOSS_VAINCUS){
   // Astra, la Reine des vampires et Farah vaincues : Sophie et le mec ne sont plus là, Valor est seul et inquiet
   personnage(["/assets/shinato/m/valor_inquiet_1.webp","/assets/shinato/m/valor_inquiet_2.webp","/assets/shinato/m/valor_inquiet_3.webp",
-              "/assets/shinato/m/valor_inquiet_4.webp","/assets/shinato/m/valor_inquiet_5.webp"], 81.00, 26.40, 50, 2.9, 5);
+              "/assets/shinato/m/valor_inquiet_4.webp","/assets/shinato/m/valor_inquiet_5.webp"], 81.00, 26.40, 50, 2.9, 5, 31.2);   // un peu plus bas : les pieds sur le trottoir
  } else {
  personnage(window.SOPHIE_IMAGES, 80.18, 23.62, 44.79, 2.3, 12);   // Sophie, regarde à droite
  personnage(window.MEC_IMAGES,    81.80, 27.15, 50.84, 2.9, 20);   // le mec, regarde à gauche, plus grand

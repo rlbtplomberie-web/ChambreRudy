@@ -482,7 +482,9 @@ majBoutons(); pose(IMG.fumer[0]); requestAnimationFrame(()=>{ cadrer(true); requ
   const bE=document.getElementById('btnEnvieCarnet');
   const ENVIE={ video:'/assets/shinato/m/mitsuda_carnet_envie.mp4', apres:'À bientôt ! 😘' };
   appui(bA,()=>{ occupe=true; dir=dirY=0; bulle.style.display='none';
-    joue(AMI.video); try{ localStorage.setItem('mitsuda_carnet_ami','1'); }catch(e){} });
+    joue(AMI.video); try{ localStorage.setItem('mitsuda_carnet_ami','1');
+      const D=JSON.parse(localStorage.getItem('rudy_contacts')||'{}')||{}; if(!D.luna){ D.luna=Date.now(); localStorage.setItem('rudy_contacts',JSON.stringify(D)); }   // Luna entre dans les contacts
+    }catch(e){} });
   appui(bE,()=>{ if(!ENVIE.video) return; occupe=true; dir=dirY=0; bulle.style.display='none'; joue(ENVIE.video,ENVIE.apres); });
   const bP=document.getElementById('btnParlerCarnet'), act=document.getElementById('actions');
   const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:90;background:#000;display:none';
@@ -511,8 +513,12 @@ majBoutons(); pose(IMG.fumer[0]); requestAnimationFrame(()=>{ cadrer(true); requ
   function ferme(){ choixC.style.display='none'; act.style.visibility=''; }
   function bouton(t,fn,pale){ const b=document.createElement('div'); b.className='btn'; b.textContent=t; if(pale) b.style.opacity='.8'; choixC.appendChild(b); appui(b,fn); }
   function joue(src,apres){ bulle.style.display='none'; dir=dirY=0; v.src=src; vb.style.display='block';
-    const f=()=>{ v.removeEventListener('ended',f); v.removeEventListener('error',f); vb.style.display='none'; v.removeAttribute('src'); occupe=false; tPrec=0; if(apres) dit(apres,3000); };
+    const f=()=>{ v.removeEventListener('ended',f); v.removeEventListener('error',f); vb.style.display='none'; v.removeAttribute('src'); occupe=false; tPrec=0; if(apres) dit(apres,3000); coeurLuna(); };
     v.addEventListener('ended',f); v.addEventListener('error',f); const q=v.play(); if(q&&q.catch) q.catch(()=>{}); }
+  // chaque fois que Rudy lui parle dans la rue (une fois qu'elle est dans ses contacts) : +10 % de cœur
+  function coeurLuna(){ try{ const D=JSON.parse(localStorage.getItem('rudy_contacts')||'{}')||{}; if(!D.luna) return;
+    const S=JSON.parse(localStorage.getItem('rudyphone')||'{}')||{}; S.love=S.love||{}; const val=Math.min(100,Math.round(((S.love.luna||0)+10)*10)/10);
+    S.love.luna=val; localStorage.setItem('rudyphone',JSON.stringify(S)); toastC('❤️ Luna +10 % ('+String(val).replace('.',',')+' %)'); }catch(e){} }
   appui(bP,()=>{
     try{ localStorage.setItem('mitsuda_carnet_vu','1'); }catch(e){}   // débloque « la femme nerveuse » chez la fille au café
     occupe=true; dir=dirY=0; dit('Dégage ! 😒'); choixC.innerHTML='';
