@@ -1,6 +1,3 @@
-ChambreRudy — mise à jour 187
-
-Bouton ⏩ pour passer la vidéo : corrigé dans toutes les villes.
-- Le problème : quand Rudy est dans une ville (Mitsuda, la plage, Vaviel, la ville délabrée, le boulevard, Rembourg…), Shinato met ses minuteries en pause, et le bouton s'arrêtait avec elles.
-- Maintenant le bouton a sa propre minuterie qui ne s'arrête jamais : il apparaît sur toutes les vidéos de toutes les villes, des personnages, des missions et des mini-jeux.
-Fichier : web/passer.js
+ChambreRudy — mise à jour 188 (archive 1 sur 2)
+Les vidéos : Aline 60 %, Aline 80 %, Luna 80 %.
+Dépose ensuite la mise à jour 189 (archive 2 sur 2).
