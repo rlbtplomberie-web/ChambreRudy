@@ -1,11 +1,7 @@
-ChambreRudy — mise à jour 185
+ChambreRudy — mise à jour 186
 
-- Rue délabrée : après l'hôtel, le voyou au sweat gris est remplacé par un voyou en bleu foncé.
-- Plage : après l'hôtel, le gars au sweat gris est à côté des vieux (6 poses).
-- Plage : l'ancien bouton des vieux devient « ANCIENNE DISCUSSION » ; nouveau PARLER = nouvelle vidéo (+200 € à chaque fois).
-- Shinato : Valor (panique) abaissé, les pieds touchent le sol.
-- Téléphone : Aline accepte un repas à 40 % (vidéo).
-- Téléphone : Luna devient un contact après « Je suis un ami d'Ange » (caractère sévère, conversations et 10 appels).
-- Luna : points texto +3, appel +5, rue +10 ; film à 50 % et repas à 40 % (vidéos).
-- Déverrouillage : plage_famille, aline_manger, luna_film, luna_manger ajoutées.
-- Statue : 11 contacts.
+Bouton ⏩ pour passer la vidéo : sur TOUTES les vidéos mises dans le jeu.
+- Le bouton est posé au-dessus de tout : il n'est plus caché par l'argent, les menus ou le cadre d'une ville, d'une mission ou d'un mini-jeu.
+- Il apparaît sur les vidéos de toutes les villes, de tous les personnages, de toutes les missions et de tous les mini-jeux, quelle que soit la taille de la vidéo (aussi dans le téléphone).
+- La télé de la chambre n'est pas touchée.
+Fichier : web/passer.js
