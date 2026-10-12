@@ -1,7 +1,6 @@
-ChambreRudy — mise à jour 186
+ChambreRudy — mise à jour 187
 
-Bouton ⏩ pour passer la vidéo : sur TOUTES les vidéos mises dans le jeu.
-- Le bouton est posé au-dessus de tout : il n'est plus caché par l'argent, les menus ou le cadre d'une ville, d'une mission ou d'un mini-jeu.
-- Il apparaît sur les vidéos de toutes les villes, de tous les personnages, de toutes les missions et de tous les mini-jeux, quelle que soit la taille de la vidéo (aussi dans le téléphone).
-- La télé de la chambre n'est pas touchée.
+Bouton ⏩ pour passer la vidéo : corrigé dans toutes les villes.
+- Le problème : quand Rudy est dans une ville (Mitsuda, la plage, Vaviel, la ville délabrée, le boulevard, Rembourg…), Shinato met ses minuteries en pause, et le bouton s'arrêtait avec elles.
+- Maintenant le bouton a sa propre minuterie qui ne s'arrête jamais : il apparaît sur toutes les vidéos de toutes les villes, des personnages, des missions et des mini-jeux.
 Fichier : web/passer.js

@@ -18,6 +18,10 @@
   function demarre(){
   if(window.__passeurPrincipal) return; window.__passeurPrincipal=true;
   var W0=window, doc0=document;
+  // Shinato met ses minuteries en pause quand Rudy est dans une ville (Mitsuda, la plage, Vaviel…) :
+  // le bouton utilise donc une minuterie qui ne s'arrête jamais
+  var tic=(typeof window.minuterieLibre==='function')?window.minuterieLibre:window.setTimeout.bind(window);
+  function boucle(fn,ms){ (function va(){ try{ fn(); }catch(e){} tic(va,ms); })(); }
   var bt=null, cible=null, cibleWin=null, passee=null, derniere=null, caches=[];
 
   function bouton(){
@@ -44,8 +48,8 @@
       if(isFinite(v.duration)&&v.duration>0){ v.muted=true; v.currentTime=Math.max(0,v.duration-0.05); var q=v.play(); if(q&&q.catch) q.catch(function(){}); }
     }catch(e){}
     // au cas où la vidéo ne finirait pas toute seule : on annonce la fin nous-mêmes
-    setTimeout(function(){ try{ if(!v.ended&&(v.currentSrc||v.src)===src){ v.pause(); v.dispatchEvent(new w.Event('ended')); } }catch(e){} },900);
-    setTimeout(function(){ try{ if(v.muted&&(v.currentSrc||v.src)!==src) v.muted=false; }catch(e){} },1500);
+    tic(function(){ try{ if(!v.ended&&(v.currentSrc||v.src)===src){ v.pause(); v.dispatchEvent(new w.Event('ended')); } }catch(e){} },900);
+    tic(function(){ try{ if(v.muted&&(v.currentSrc||v.src)!==src) v.muted=false; }catch(e){} },1500);
     if(bt) bt.style.display='none';
   }
 
@@ -157,11 +161,10 @@
   function ecoute(){
     pages().forEach(function(p){
       if(p.doc.__passeEcoute) return; p.doc.__passeEcoute=true;
-      try{ p.doc.addEventListener('play',function(e){ if(e.target&&e.target.tagName==='VIDEO') setTimeout(tour,30); },true); }catch(e){}
+      try{ p.doc.addEventListener('play',function(e){ if(e.target&&e.target.tagName==='VIDEO') tic(tour,30); },true); }catch(e){}
     });
   }
-  setInterval(tour,250);
-  setInterval(ecoute,700);
-  ecoute(); tour();
+  boucle(tour,250);
+  boucle(ecoute,700);
   }
 })();
