@@ -1,12 +1,3 @@
-ChambreRudy — mise à jour 189 (archive 2 sur 2)
-
-Aline par texto :
-- 60 % : un petit dialogue sympa, elle demande à passer faire un coucou, puis la vidéo.
-- 80 % : « Tu me manques… Je sais que toi aussi je te manque. Alors j'arrive… je vais tout pomper. » puis la vidéo.
-Luna par texto :
-- 60 % : toujours aussi dure avec Rudy (4 échanges), mais à la fin elle accepte de venir, puis la vidéo.
-- 80 % : Rudy écrit « tu me manques », elle le prend très mal (« victime »), « Mais calme-toi… », « J'arrive. », puis la vidéo.
-- 90 % : « Tu peux plus te passer de moi ou quoi ? » / « Impossible de vivre sans toi » / elle a lu « Comment être une femme gentille » / « Ne change pas trop » / « Génial. J'arrive tout de suite. Sois prêt à souffrir. » puis la vidéo.
-Après chaque vidéo : 3 conversations normales avant que ça revienne.
-Les 6 vidéos sont dans Déverrouillage, dossier Mitsuda.
-Fichiers : web/telephone.html, web/visite/luna_60.mp4, luna_90.mp4 (les 3 autres vidéos sont dans la mise à jour 188)
+ChambreRudy — mise à jour 190 (archive 1 sur 3)
+Le jeu de Pont-l'Ades (« Le Grand Terrain ») : shinato/jeux/pontlades.html
+Dépose ensuite la 191, puis la 192.
