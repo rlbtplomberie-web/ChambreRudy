@@ -1,4 +1,3 @@
-ChambreRudy — mise à jour 196
-
-Barding, la barmaid : nouveaux rêves « ✨ Faz » et « ✨ Elisabeth bioshock 2 » (juste avant « 💋 Toi », vidéo d'entrée avant, −10 % de vie).
-À déposer après la mise à jour 195.
+maj-197 (1/3)
+- Le Grand Terrain : bouton Attraper corrige, touches debloquees apres la mort, 5 diamants
+- Le Grand Terrain : apres une mort, 2 fois plus de vie et tirs 2 fois plus puissants (une seule fois)

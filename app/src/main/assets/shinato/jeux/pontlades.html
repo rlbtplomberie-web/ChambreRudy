@@ -137,8 +137,8 @@ body.binoview #bBino{border-color:var(--accent);background:rgba(242,180,90,.3)}
 <div id="hurt"></div>
 <div id="prDuel" hidden><div class="esc"><b>ÉTRANGLE-LA !</b><span>Tape vite sur l'écran</span><i><em id="prFill"></em></i></div></div>
 <div id="escape" hidden><div class="esc"><b>LIBÈRE-TOI !</b><span>Tape vite sur l'écran</span><i><em id="escFill"></em></i></div></div>
-<div id="reussi" hidden><b>RÉUSSI !</b><span>Les 10 diamants sont à toi… le dernier boss t’attend.</span></div>
-<div id="win" hidden><div class="card"><h2>BRAVO !</h2><p id="winTxt">Rudy a trouvé les 10 diamants.</p><button id="again">REJOUER</button></div></div>
+<div id="reussi" hidden><b>RÉUSSI !</b><span>Les 5 diamants sont à toi… le dernier boss t’attend.</span></div>
+<div id="win" hidden><div class="card"><h2>BRAVO !</h2><p id="winTxt">Rudy a trouvé les 5 diamants.</p><button id="again">REJOUER</button></div></div>
 <div id="koVid" hidden><video id="koV" playsinline preload="none"></video></div>
 <div id="over" hidden><div class="card"><h2>RUDY EST À TERRE</h2><p>La soldate t'a eu.</p><button id="retry">RECOMMENCER</button></div></div>
 <div id="rotate"><b>📱</b>Tourne ton téléphone en horizontal pour jouer</div>
@@ -146,7 +146,7 @@ body.binoview #bBino{border-color:var(--accent);background:rgba(242,180,90,.3)}
   <div class="tag"><b>LE GRAND TERRAIN</b><span>Rudy</span></div>
   <div id="alt">Hauteur<em id="altNum">0,0 m</em></div>
   <div id="mapBox"><canvas id="minimap"></canvas></div>
-  <div id="gems"><b></b><span>DIAMANTS</span><em><i id="gemNum">0</i> / 10</em></div>
+  <div id="gems"><b></b><span>DIAMANTS</span><em><i id="gemNum">0</i> / 5</em></div>
   <div id="bossBar" hidden><span>LA REINE DES CŒURS</span><i><b id="bossFill"></b></i></div>
   <div id="life"><span>ÉNERGIE</span><i><b id="lifeBar"></b></i><em id="lifeNum">100</em></div>
   <div id="alertTxt"></div>
@@ -1767,13 +1767,16 @@ function addGem(x,y,z,why){const g=new THREE.Group();g.position.set(x,y,z);const
   // le reste dans la rue, à côté du poste d'une soldate
   const SS=S.slice().sort(()=>Math.random()-.5);
   for(const o of SS){if(spots.length>=10)break;const p=o.posts[(o.home+2)%o.posts.length],x=p[0]+1.2,z=p[1]+1.2;if(!far(x,z,35))continue;const y=groundAt(x,z,H(x,z)+.4);spots.push({x,z,y,why:'rue'})}
-  for(const s of spots.slice(0,10))addGem(s.x,s.y,s.z,s.why)}
+  // seulement 5 diamants, éparpillés aux quatre coins du terrain (on garde les cachettes les plus éloignées les unes des autres)
+  const garde=[];if(spots.length){garde.push(spots[(Math.random()*spots.length)|0]);
+    while(garde.length<5&&garde.length<spots.length){let best=null,bd=-1;for(const c of spots){if(garde.includes(c))continue;const m=Math.min(...garde.map(g=>Math.hypot(g.x-c.x,g.z-c.z)));if(m>bd){bd=m;best=c}}garde.push(best)}}
+  for(const s of garde)addGem(s.x,s.y,s.z,s.why)}
 function gemSfx(){const out=audioOut();if(!out)return;[880,1175,1568,2093].forEach((f,i)=>tone(out,{f,dur:.22,vol:.16,type:'triangle',delay:i*.07}))}
 function updateGems(dt,now){if(BOSSF.active)return;for(const G of GEMS){if(G.taken){if(G.g.visible){G.k=(G.k||0)+dt*2.5;G.g.position.y=G.y+G.k*1.2;G.g.scale.setScalar(Math.max(.01,1-G.k));if(G.k>=1)G.g.visible=false}continue}
     G.m.rotation.y=now*1.1+G.ph;G.m.position.y=.75+Math.sin(now*2+G.ph)*.09;const v=Math.max(0,Math.sin(now*2.6+G.ph*3));G.s.scale.setScalar(.12+.5*v);G.s.material.opacity=v;
     if(P.mode==='dead'||GR.on)continue;
     if(Math.hypot(P.pos.x-G.x,P.pos.z-G.z)<1.05&&Math.abs(P.y-G.y)<1.2){G.taken=true;G.k=0;gemCount++;gemSfx();$('gemNum').textContent=gemCount;$('gems').classList.add('pop');setTimeout(()=>$('gems').classList.remove('pop'),300);
-      hint('Diamant '+gemCount+' / 10 !');if(gemCount>=GEMS.length){P.cut=true;GR.on=false}if(gemCount>=GEMS.length)setTimeout(()=>{if(P.mode==='dead')return;$('reussi').hidden=false;const out=audioOut();if(out)[523,659,784,1047].forEach((f,i)=>tone(out,{f,dur:.3,vol:.18,type:'triangle',delay:i*.12}));setTimeout(()=>{$('reussi').hidden=true;if(P.mode==='dead')return;koThen=enterBoss;playKO(BOSS_INTRO_VID)},2300)},700)}}}
+      hint('Diamant '+gemCount+' / '+GEMS.length+' !');if(gemCount>=GEMS.length){P.cut=true;GR.on=false}if(gemCount>=GEMS.length)setTimeout(()=>{if(P.mode==='dead')return;$('reussi').hidden=false;const out=audioOut();if(out)[523,659,784,1047].forEach((f,i)=>tone(out,{f,dur:.3,vol:.18,type:'triangle',delay:i*.12}));setTimeout(()=>{$('reussi').hidden=true;if(P.mode==='dead')return;koThen=enterBoss;playKO(BOSS_INTRO_VID)},2300)},700)}}}
 function resetGems(){gemCount=0;$('gemNum').textContent=0;$('win').hidden=true;for(const G of GEMS){G.taken=false;G.k=0;G.g.visible=true;G.g.scale.setScalar(1);G.g.position.y=G.y}}
 
 /* ================== LE DERNIER BOSS : salle ronde rose, 4 poteaux, la femme aux cheveux roses ================== */
@@ -1841,7 +1844,7 @@ function hideCity(on){for(const o of ENEMIES){const g=o.gfx;g.mesh.visible=!on&&
 function enterBoss(){buildArena();BOSSF.active=true;hideCity(true);startBossFight();
   const out=audioOut();if(out){tone(out,{f:330,f2:660,dur:.6,vol:.25,type:'triangle'});tone(out,{f:495,f2:990,dur:.6,vol:.15,type:'triangle',delay:.15})}hint('Le dernier boss !')}
 function startBossFight(){P.cut=false;GR.on=false;GR.boss=false;P.paraT=0;P.relHide=0;P.dieA=null;P.hurtA=null;P.calmT=99;$('over').hidden=true;$('escape').hidden=true;$('win').hidden=true;
-  setNRG(100);standUp();setMode('free');rudy.visible=shadow.visible=true;P.pos.set(0,0,11);P.y=AY;P.ground=true;P.vx=P.vz=0;P.lad=null;P.mount=null;P.cover=null;P.diving=null;P.combo=null;P.knock=null;
+  setNRG(NRGMAX);standUp();setMode('free');rudy.visible=shadow.visible=true;P.pos.set(0,0,11);P.y=AY;P.ground=true;P.vx=P.vz=0;P.lad=null;P.mount=null;P.cover=null;P.diving=null;P.combo=null;P.knock=null;
   P.face.set(0,-1);cam.yaw=cam.curYaw=0;cam.ty=AY+1.35;P.ammo=15;P.reloadT=0;updateAmmo();P.lastShooter=BOSSO;TRAIL.length=0;
   Object.assign(BOSSF,{winVid:false,hp:BOSSF.max,state:'intro',t:0,anim:0,shotCd:1.8,kissCd:4,coverCd:6,roll:null,inv:0,hitT:0,cover:null,downT:0,grabK:0});BOSSF.pos.set(0,AY,-9);BOSSF.face.set(0,1);
   for(const h of BOSSF.hearts)scene.remove(h.s);BOSSF.hearts.length=0;bMesh.visible=true;bShadow.visible=true;bossHUD()}
@@ -1895,7 +1898,7 @@ function updateBoss(dt,now){const B=BOSSF;updateHearts(dt);
   {const r=Math.hypot(P.pos.x,P.pos.z);if(r>AR-.6){P.pos.x*=(AR-.6)/r;P.pos.z*=(AR-.6)/r}}
   B.hitT=Math.max(0,B.hitT-dt);B.inv=Math.max(0,B.inv-dt);B.shotCd-=dt;B.kissCd-=dt;B.coverCd-=dt;B.grabCd=Math.max(0,(B.grabCd||0)-dt);B.t+=dt;
   const d=Math.hypot(P.pos.x-B.pos.x,P.pos.z-B.pos.z);
-  if(B.state==='down'){B.downT+=dt;if(B.downT>2.2&&!B.winVid){B.winVid=true;koThen=()=>{ if(annonceVille('pontlades:victoire')) return; $('winTxt').textContent='Tu as battu la boss. Rudy a gagné !';$('win').hidden=false};playKO(BOSS_WIN_VID)}drawBoss(dt);return}
+  if(B.state==='down'){B.downT+=dt;if(B.downT>2.2&&!B.winVid){B.winVid=true;pvGagne();koThen=()=>{ if(annonceVille('pontlades:victoire')) return; $('winTxt').textContent='Tu as battu la boss. Rudy a gagné !';$('win').hidden=false};playKO(BOSS_WIN_VID)}drawBoss(dt);return}
   if(P.mode==='dead'){if(!GR.on){B.state='aim';bFaceRudy(dt)}drawBoss(dt);return}
   if(B.state==='grab'){GR.t+=dt;GR.fill=Math.max(0,GR.fill-dt*20);$('escFill').style.width=GR.fill+'%';if(GR.t>.7)setNRG(NRG-dt*11);B.pos.set(P.pos.x,AY,P.pos.z);drawBoss(dt);return}
   if(B.state==='intro'){bFaceRudy(dt);if(B.t>1.6){B.state='move';B.t=0}drawBoss(dt);return}
@@ -1963,7 +1966,7 @@ function drawMinimap(dt){const c=$('minimap');if(!c)return;const box=$('mapBox')
 // récupération de l'énergie : 5 s sans tirer ni être touché (ni attrapé, ni paralysé) -> la vie remonte
 function updateRegen(dt){if(P.calmT==null)P.calmT=99;
   if(GR.on||P.paraT>0||P.mode==='dead')P.calmT=0;else P.calmT+=dt;
-  const on=P.calmT>=5&&NRG<100;if(on)setNRG(NRG+dt*14);$('life').classList.toggle('regen',on)}
+  const on=P.calmT>=5&&NRG<NRGMAX;if(on)setNRG(NRG+dt*14);$('life').classList.toggle('regen',on)}
 function resetAllEnemies(){for(const o of ENEMIES){bindE(o);resetEnemy()}}
 
 /* ---------- ce que voit l'ennemie : segment contre les obstacles ---------- */
@@ -2035,12 +2038,19 @@ function enFire(){const dx=P.pos.x-E.pos.x,dz=P.pos.z-E.pos.z,d=Math.hypot(dx,dz
   if(hit)hurtRudy(5+Math.random()*3)}
 
 /* ---------- énergie de Rudy ---------- */
-let NRG=100;function setNRG(v){NRG=clamp(v,0,100);$('lifeBar').style.width=NRG+'%';$('lifeNum').textContent=Math.round(NRG);if(NRG<=0&&P.mode!=='dead')rudyDown()}
+/* bonus de vie : après une mort, la partie suivante se joue avec 2 fois plus de vie (une seule fois) ;
+   si Rudy meurt encore, ou s'il gagne, ça revient comme avant */
+const PVB_CLE='pvBonus_pontlades';let PVX=1,pvMortFait=false;
+function pvDebut(){try{PVX=localStorage.getItem(PVB_CLE)==='1'?2:1}catch(e){PVX=1}pvMortFait=false;return PVX}
+function pvMort(){if(pvMortFait)return;pvMortFait=true;try{if(PVX>1)localStorage.removeItem(PVB_CLE);else localStorage.setItem(PVB_CLE,'1')}catch(e){}}
+function pvGagne(){try{localStorage.removeItem(PVB_CLE)}catch(e){}}
+let NRGMAX=100*pvDebut(),NRG=NRGMAX;function setNRG(v){NRG=clamp(v,0,NRGMAX);$('lifeBar').style.width=(NRG/NRGMAX*100)+'%';$('lifeNum').textContent=Math.round(NRG);$('life').firstElementChild.textContent=NRGMAX>100?'ÉNERGIE \u00d72':'ÉNERGIE';if(NRG<=0&&P.mode!=='dead')rudyDown()}
+try{setNRG(NRG)}catch(e){}
 function hitSide(e){const{R:r}=camVectors(cam.curYaw);return e&&((e.pos.x-P.pos.x)*r.x+(e.pos.z-P.pos.z)*r.z)>0?'hitR':'hitL'}
 function hurtRudy(a){if(P.mode==='dead'||P.cut)return;P.calmT=0;P.lastShooter=E;if(P.mode==='free'&&!P.hurtA&&P.ground)P.hurtA={sheet:hitSide(E),t:0};setNRG(NRG-a);$('hurt').style.opacity=.75;setTimeout(()=>$('hurt').style.opacity=0,160);camShake=.25;
   const out=audioOut();if(out){burst(out,{dur:.08,type:'lowpass',f:700,vol:.4});tone(out,{f:90,dur:.12,vol:.3})}}
 let camShake=0;
-function rudyDown(){if(PR.on)endPrise();let grabbed=P.mode==='grabbed'&&GR.on;const killer=(grabbed&&GR.e)||P.lastShooter,koVid=killer?(killer.v===9?(grabbed&&GR.boss?BOSS_KO_VID:BOSS_KO2_VID):KO_VIDS[killer.v]):null;if(grabbed&&GR.e&&GR.e.v>=2){GR.on=false;GR.e.state='shoot';GR.e.pos.x-=GR.e.face.x*.9;GR.e.pos.z-=GR.e.face.y*.9;P.lastShooter=GR.e;grabbed=false}else if(grabbed&&GR.e){GR.e.state='pin';}
+function rudyDown(){pvMort();libereTouches();if(PR.on)endPrise();let grabbed=P.mode==='grabbed'&&GR.on;const killer=(grabbed&&GR.e)||P.lastShooter,koVid=killer?(killer.v===9?(grabbed&&GR.boss?BOSS_KO_VID:BOSS_KO2_VID):KO_VIDS[killer.v]):null;if(grabbed&&GR.e&&GR.e.v>=2){GR.on=false;GR.e.state='shoot';GR.e.pos.x-=GR.e.face.x*.9;GR.e.pos.z-=GR.e.face.y*.9;P.lastShooter=GR.e;grabbed=false}else if(grabbed&&GR.e){GR.e.state='pin';}
   if(P.mode==='fps'||P.mode==='peek'){cam.yaw=cam.curYaw=fps.yaw}
   P.hurtA=null;P.lad=null;P.cover=null;P.diving=null;P.dieA=grabbed?null:{sheet:hitSide(P.lastShooter),t:0};
   setMode('dead');P.deadT=0;$('escape').hidden=true;
@@ -2055,7 +2065,7 @@ function playKO(src){const box=$('koVid'),v=$('koV');if(v.dataset.s!==src){v.src
 let koThen=null;
 function annonceVille(t){ try{ if(window.parent&&window.parent!==window){ window.parent.postMessage({type:t},'*'); return true; } }catch(e){} return false; }   // ChambreRudy : Pont-l'Ades est ouvert depuis Shinato // ce qui se passe à la fin de la vidéo (vidéo avant le boss)
 function endRedKO(){if(koThen){const f=koThen;koThen=null;const v=$('koV');v.pause();$('koVid').hidden=true;if(MASTER)MASTER.gain.value=.85;f();return}const v=$('koV');v.pause();$('koVid').hidden=true;if(MASTER)MASTER.gain.value=.85;if(P.mode==='dead'){ if(annonceVille('pontlades:ko')) return; resetGame(); }} // à la fin de la vidéo : dans ChambreRudy, l'infirmière puis Vaviel ; sinon la partie recommence
-function resetGame(){if(PR.on)endPrise();P.cut=false;if(BOSSF.active&&$('win').hidden){{const v=$('koV');v.pause();$('koVid').hidden=true}startBossFight();return}if(BOSSF.active)exitBoss();GR.on=false;{const v=$('koV');v.pause();$('koVid').hidden=true;if(MASTER)MASTER.gain.value=.85}P.calmT=99;resetGems();P.relHide=0;P.dieA=null;P.hurtA=null;P.paraT=0;for(const f of FB){scene.remove(f.core);scene.remove(f.halo)}FB.length=0;$('over').hidden=true;$('escape').hidden=true;setNRG(100);P.pos.set(5.8,0,5.8);P.y=H(5.8,5.8);P.ground=true;P.vx=P.vz=0;P.diving=null;P.lad=null;P.mount=null;P.combo=null;P.knock=null;
+function resetGame(){NRGMAX=100*pvDebut();libereTouches();if(PR.on)endPrise();P.cut=false;if(BOSSF.active&&$('win').hidden){{const v=$('koV');v.pause();$('koVid').hidden=true}startBossFight();return}if(BOSSF.active)exitBoss();GR.on=false;{const v=$('koV');v.pause();$('koVid').hidden=true;if(MASTER)MASTER.gain.value=.85}P.calmT=99;resetGems();P.relHide=0;P.dieA=null;P.hurtA=null;P.paraT=0;for(const f of FB){scene.remove(f.core);scene.remove(f.halo)}FB.length=0;$('over').hidden=true;$('escape').hidden=true;setNRG(NRGMAX);P.pos.set(5.8,0,5.8);P.y=H(5.8,5.8);P.ground=true;P.vx=P.vz=0;P.diving=null;P.lad=null;P.mount=null;P.combo=null;P.knock=null;
   standUp();setMode('free');rudy.visible=true;shadow.visible=true;cam.yaw=cam.curYaw=-2.356;TRAIL.length=0;GR.e=null;resetAllEnemies()}
 
 /* ---------- ATTRAPER : Rudy prend une soldate par derrière (étranglement) ----------
@@ -2072,14 +2082,14 @@ const prMesh=(()=>{const g=new THREE.PlaneGeometry(1,1);g.translate(0,.5,0);cons
 const PR={on:false,e:null,phase:'ko',t:0,fi:0,fill:0,view:'dos',mir:false,anchor:new THREE.Vector3()};
 const PR_T=[.22,.32,.38,.45,.55,.8];   // durée de chaque image du K.O.
 function priseCible(){
-  if(BOSSF.active||PR.on||!P.ground||!['free','punch','cover'].includes(P.mode))return null;
-  let best=null,bd=1.7;
+  if(BOSSF.active||PR.on||!P.ground||!['free','punch','cover','fps'].includes(P.mode)||P.diving)return null;
+  let best=null,bd=2.6; // plus loin que sa propre prise (2,1 m) : sinon elle attrape Rudy avant que le bouton n'apparaisse
   for(const o of ENEMIES){if(o.v>3||!prMats[o.v]||o.state==='down'||o.state==='grab'||o.state==='pin'||o.state==='prise'||o.lad||o.stun>0)continue;
     const d=Math.hypot(o.pos.x-P.pos.x,o.pos.z-P.pos.z);if(d<bd&&Math.abs(o.y-P.y)<.6){bd=d;best=o}}
   return best}
 function tryPrise(){const o=priseCible();if(!o)return false;startPrise(o);return true}
 function startPrise(o){
-  bindE(o);if(P.mode==='cover')leaveCover();standUp();P.combo=null;P.knock=null;P.vx=P.vz=0;
+  bindE(o);if(P.mode==='cover')leaveCover();if(P.mode==='fps')setMode('free');standUp();P.combo=null;P.knock=null;P.vx=P.vz=0;
   const vu=E.alert||E.sus>=.6||E.visible&&E.state==='shoot';
   // on la tourne dos à Rudy si elle ne l'a pas vu ; sinon elle reste comme elle est
   if(!vu){const f=new THREE.Vector2(E.pos.x-P.pos.x,E.pos.z-P.pos.z);if(f.lengthSq()>1e-4)E.face.copy(f.normalize())}
@@ -2327,7 +2337,7 @@ function fire(){if(P.mode==='prise')return;if(tryPrise()){fireHeld=false;return}
     P.shootT=.9;const y=P.y+(P.crawl?.4:P.crouch?.85:1.3);
     const o=new THREE.Vector3(P.pos.x,y,P.pos.z).addScaledVector(dir,.45);
     ray.set(o,dir);ray.far=60;hit=ray.intersectObjects(shotTargets,false)[0];ray.far=Infinity;
-    const eh=enemyShot(o.clone().addScaledVector(dir,-.45),dir,hit?hit.distance+.45:60);if(eh){eh.boss?bossHurt(eh.head?2:1):damageEnemy(eh.head?3:1);hit=null}
+    const eh=enemyShot(o.clone().addScaledVector(dir,-.45),dir,hit?hit.distance+.45:60);if(eh){eh.boss?bossHurt((eh.head?2:1)*PVX):damageEnemy((eh.head?3:1)*PVX);hit=null}
     const end=eh?o.clone().addScaledVector(dir,eh.t):hit?hit.point:o.clone().addScaledVector(dir,40);
     muzzle.position.copy(o);muzzle.visible=true;muzzle.userData.t=.06;muzzle.scale.setScalar(.7+Math.random()*.4);
     tracer.geometry.setFromPoints([o.clone().addScaledVector(dir,.2),end]);tracer.visible=true;tracer.userData.t=.05}
@@ -2354,7 +2364,7 @@ $('bFire').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagati
 $('bFire').addEventListener('pointerup',()=>fireHeld=false);$('bFire').addEventListener('pointercancel',()=>fireHeld=false);
 $('help').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();$('intro').hidden=false;$('go').textContent='REPRENDRE'});
 const gameEl=renderer.domElement;
-gameEl.addEventListener('pointerdown',e=>{audioOut();if(GR.on){grabTap();return}
+gameEl.addEventListener('pointerdown',e=>{if(e.isPrimary&&e.pointerType!=='mouse')libereTouches();audioOut();if(GR.on){grabTap();return}
   if(e.pointerType==='mouse'){if(e.button===2){aim();return}if(e.button===0&&(P.mode==='fps'||e.shiftKey||keys.shift)){fireHeld=true;fire()}
     lookId=e.pointerId;lookLast={x:e.clientX,y:e.clientY};return}
   if(e.clientX<innerWidth*.45&&joyId===null){joyId=e.pointerId;joyO={x:e.clientX,y:e.clientY};joy.style.display='block';joy.style.left=e.clientX+'px';joy.style.top=e.clientY+'px';knob.style.transform=''}
@@ -2363,8 +2373,9 @@ addEventListener('pointermove',e=>{
   if(e.pointerId===joyId){let dx=e.clientX-joyO.x,dy=e.clientY-joyO.y;const d=Math.hypot(dx,dy),R=55;if(d>R){dx*=R/d;dy*=R/d}
     knob.style.transform=`translate(${dx}px,${dy}px)`;input.x=dx/R;input.y=-dy/R}
   else if(e.pointerId===lookId){input.lookDX+=e.clientX-lookLast.x;input.lookDY+=e.clientY-lookLast.y;lookLast={x:e.clientX,y:e.clientY}}});
+function libereTouches(){try{joyId=null;lookId=null;input.x=input.y=0;input.lookDX=input.lookDY=0;joy.style.display='none';knob.style.transform='';fireHeld=false}catch(e){}}
 function endPtr(e){if(e.pointerId===joyId){joyId=null;input.x=input.y=0;joy.style.display='none'}if(e.pointerId===lookId)lookId=null;if(e.pointerType==='mouse')fireHeld=false}
-addEventListener('pointerup',endPtr);addEventListener('pointercancel',endPtr);
+addEventListener('pointerup',endPtr);addEventListener('pointercancel',endPtr);addEventListener('blur',libereTouches);document.addEventListener('visibilitychange',libereTouches);
 gameEl.addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('wheel',e=>{if(P.mode==='binoview'){e.preventDefault();zoom(e.deltaY<0?1:-1)}},{passive:false});
 addEventListener('resize',()=>{if(P.mode==='binoview')drawBinoMask()});
