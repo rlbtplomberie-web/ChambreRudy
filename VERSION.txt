@@ -1,7 +1,4 @@
-ChambreRudy — mise à jour 195
+ChambreRudy — mise à jour 196
 
-1) Hôtel Palace, combat contre la boss : les 4 poulets dans les coins réapparaissent 2 secondes après avoir été mangés.
-2) Statue : le diamant jaune au cœur apparaît dans le rond du milieu quand la boss du Grand Terrain (Pont-l'Ades) est battue.
-3) Statue : le diamant à la lune (Astra) passe en bleu ciel.
-4) Barding, la barmaid : nouveaux rêves « ✨ Cammy », « ✨ Ada w », « ✨ Chel » et « ✨ Rouge 2 » (juste avant « 💋 Toi », vidéo d'entrée avant, −10 % de vie).
-5) Barding : le rêve « Rito » s'écrit maintenant « Ruto ».
+Barding, la barmaid : nouveaux rêves « ✨ Faz » et « ✨ Elisabeth bioshock 2 » (juste avant « 💋 Toi », vidéo d'entrée avant, −10 % de vie).
+À déposer après la mise à jour 195.
