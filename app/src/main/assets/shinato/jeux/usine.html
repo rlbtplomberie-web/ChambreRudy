@@ -330,9 +330,15 @@ document.querySelectorAll('[data-b]').forEach(b => {
 });
 const punchLabel = document.querySelector('[data-b="punch"] span');
 
+/* bonus de vie : après une mort, la partie suivante se joue avec 2 fois plus de vie (une seule fois) ;
+   si Rudy meurt encore, ou s'il gagne, ça revient comme avant */
+const PVB_CLE='pvBonus_usine';let PVX=1,pvMortFait=false;
+function pvDebut(){try{PVX=localStorage.getItem(PVB_CLE)==='1'?2:1}catch(e){PVX=1}pvMortFait=false;return PVX}
+function pvMort(){if(pvMortFait)return;pvMortFait=true;try{if(PVX>1)localStorage.removeItem(PVB_CLE);else localStorage.setItem(PVB_CLE,'1')}catch(e){}}
+function pvGagne(){try{localStorage.removeItem(PVB_CLE)}catch(e){}}
 // ---------- entités ----------
 function makeRudy(x, y) {
-  const r = { type: 'rudy', x, y, z: 0, face: 1, hp: 100, max: 100, state: 'idle', st: 0, inv: 0, combo: 0, comboT: 0, gauge: 0, vx: 0, power: 0 };
+  const r = { type: 'rudy', x, y, z: 0, face: 1, hp: 100*PVX, max: 100*PVX, state: 'idle', st: 0, inv: 0, combo: 0, comboT: 0, gauge: 0, vx: 0, power: 0 };
   setAnim(r, 'rudy_punch', [0], 1, true); return r;
 }
 function makeEnemy(kind, x, y) {
@@ -352,9 +358,9 @@ function loadMap(i) {
   zoom = 1; mapIdx = i; kills = 0; ents = []; fx = []; beams = []; items = []; waves = []; debris = []; floats = [];
   crates = CRATES[i].map(([x, k]) => { const f = MAPS[i].floor; return { x, y: f[0] + 8 + k * (f[1] - f[0] - 14), t: 0 }; }); goShown = false; boss = null; lastKinds = [];
   const f = MAP().floor;
-  const keepHp = rudy ? rudy.hp : 100;
-  rudy = makeRudy(i === 2 ? 190 : 140, (f[0] + f[1]) / 2); rudy.hp = Math.max(keepHp, i === 0 ? 100 : 40);
-  if (i === 0) rudy.hp = 100;
+  const keepHp = rudy ? rudy.hp : 100*PVX;
+  rudy = makeRudy(i === 2 ? 190 : 140, (f[0] + f[1]) / 2); rudy.hp = Math.max(keepHp, i === 0 ? 100*PVX : 40);
+  if (i === 0) rudy.hp = 100*PVX;
   cam = 0;
   if (i < 2) {
     spawnT = 0.6;
@@ -561,7 +567,7 @@ function updWorld(dt) {
       if (w.hit.has(e) || !canBeHit(e) || Math.abs(e.y - w.y) > 46) continue;
       if (e.x < lo || e.x > hi) continue;
       w.hit.add(e);
-      const d = w.dir; hitEnemy(e, e.type === 'boss' ? 30 : 40, 'kick');
+      const d = w.dir; hitEnemy(e, (e.type === 'boss' ? 30 : 40) * PVX, 'kick');   // partie bonus : tir 2 fois plus puissant
       if (e.state !== 'knock' && e.state !== 'dead' && e.state !== 'gone') knock(e, d);
       spark(e.x, e.y - 100 * ds(e.y), true);
     }
@@ -1058,7 +1064,7 @@ function bar(x, y, w, h, v, max, fill, back, label, right) {
   ctx.fillText(label, right ? x + w : x, y - 8);
 }
 function hud(t) {
-  bar(22, 34, 250, 16, rudy.hp, rudy.max, '#4fb35f', '#4a1418', 'Rudy');
+  bar(22, 34, 250, 16, rudy.hp, rudy.max, '#4fb35f', '#4a1418', PVX > 1 ? 'Rudy \u00d72' : 'Rudy');
   {
     const p = rudy.power, full = p >= 1, y = 58;
     ctx.fillStyle = 'rgba(8,10,14,.75)'; ctx.fillRect(19, y - 3, 256, 14);
@@ -1153,7 +1159,7 @@ function drawFStatic(k, i, x, y, face, sc) { const c = cam; cam = 0; drawF(k, i,
 const titleEl = document.getElementById('title'), overEl = document.getElementById('over');
 const overH = document.getElementById('overH'), overP = document.getElementById('overP'), overBtn = document.getElementById('overBtn');
 function startGame() {
-  audioOn(); titleEl.hidden = true; overEl.hidden = true; scene = 'play'; rudy = null; loadMap(0);
+  audioOn(); titleEl.hidden = true; overEl.hidden = true; scene = 'play'; rudy = null; pvDebut(); loadMap(0);
   document.body.classList.add('playing');
 }
 document.getElementById('play').addEventListener('click', startGame);
@@ -1161,13 +1167,15 @@ document.getElementById('play').addEventListener('click', startGame);
 try { titleEl.hidden = true; } catch (e) {}
 setTimeout(() => { try { if (scene !== 'play') startGame(); } catch (e) {} }, 60);
 function gameOver() {
+  pvMort();
   // dans l'appli : Rudy est K.O. → on le prévient (Mitsuda l'envoie à l'hôpital de Vaviel)
   try { if (window.parent && window.parent !== window) { scene = 'over'; window.parent.postMessage({type:'usine:ko', prise: window.KO_PRISE || null}, '*'); window.KO_PRISE = null; return; } } catch (e) {}
   scene = 'over'; overH.textContent = 'Rudy est K.O.'; overP.textContent = `Tu étais sur la carte ${mapIdx + 1}.`;
-  overBtn.textContent = 'Recommencer la carte'; overBtn.onclick = () => { overEl.hidden = true; scene = 'play'; rudy = null; const i = mapIdx; loadMap(i); if (i > 0) rudy.hp = 100; };
+  overBtn.textContent = 'Recommencer la carte'; overBtn.onclick = () => { overEl.hidden = true; scene = 'play'; rudy = null; pvDebut(); const i = mapIdx; loadMap(i); if (i > 0) rudy.hp = rudy.max; };
   overEl.hidden = false;
 }
 function victory() {
+  pvGagne();
   // dans l'appli : on prévient Mitsuda (la vidéo de victoire, puis devant la porte du labo)
   try { if (window.parent && window.parent !== window) { scene = 'over'; window.parent.postMessage({type:'usine:victoire'}, '*'); return; } } catch (e) {}
   scene = 'over'; overH.textContent = 'Victoire !'; overP.textContent = 'La boss est tombée. L\'usine est libérée.';

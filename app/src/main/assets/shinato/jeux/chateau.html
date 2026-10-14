@@ -25,7 +25,14 @@ const ASSETS={"r_kick": {"src": "data:image/webp;base64,UklGRoz6AABXRUJQVlA4WAoA
 const W = 960, H = 540, Q = 1.5;
 const KILLS_TO_GO = 10;
 const MAX_ENEMIES = 4;
-const RUDY_MAX = 100;
+let RUDY_MAX = 100;
+/* bonus de vie : après une mort, la partie suivante se joue avec 2 fois plus de vie (une seule fois) ;
+   si Rudy meurt encore, ou s'il gagne, ça revient comme avant */
+const PVB_CLE='pvBonus_chateau';let PVX=1,pvMortFait=false;
+function pvDebut(){try{PVX=localStorage.getItem(PVB_CLE)==='1'?2:1}catch(e){PVX=1}pvMortFait=false;return PVX}
+function pvMort(){if(pvMortFait)return;pvMortFait=true;try{if(PVX>1)localStorage.removeItem(PVB_CLE);else localStorage.setItem(PVB_CLE,'1')}catch(e){}}
+function pvGagne(){try{localStorage.removeItem(PVB_CLE)}catch(e){}}
+
 const MAPS = [
   {bg:'bg1', name:'Salle 1 — Le Grand Hall', yMin:330, yMax:420, boss:false},
   {bg:'bg2', name:'Salle 2 — La Galerie des Portraits', yMin:330, yMax:420, boss:false},
@@ -193,6 +200,7 @@ function startMap(i, keepHp){
   game.map = i; game.kills = 0; game.ents = []; game.fx = []; game.balls = []; game.goShown = false; game.grabCD = 1.5;
   game.crates = []; game.chickens = [];
   if (!MAPS[i].boss){ const ww0 = worldW(); for (const fx0 of [0.36, 0.72]){ const mm = MAPS[i]; game.crates.push({x: ww0*fx0 + (Math.random()-0.5)*80, y: mm.yMin + 15 + Math.random()*(mm.yMax-mm.yMin-30), hp:2, shake:0}); } }
+  if (keepHp==null) RUDY_MAX = 100*pvDebut();
   const hp = keepHp!=null ? keepHp : RUDY_MAX;
   rudy = newRudy(hp); game.cam = 0; game.banner = 2.6; game.spawnT = 0.6;
   if (MAPS[i].boss){
@@ -551,6 +559,7 @@ function hurtRudy(dmg, heavy, src){
   else setR('hurt');
 }
 function killRudy(prise){
+  pvMort();
   setR('dead'); rudy.hidden = false; SFX.ko();
   setTimeout(()=>{ game.state = 'over';
     // dans l'appli (Rembourg) : on prévient Rembourg de qui a mis Rudy K.O. (sa vidéo, puis l'hôpital)
@@ -558,6 +567,7 @@ function killRudy(prise){
   }, 1500);
 }
 function bossDefeated(){
+  pvGagne();
   SFX.win();
   setTimeout(()=>{ game.state = 'win';
     // dans l'appli (Rembourg) : la Reine est vaincue → la vidéo de la victoire
@@ -578,7 +588,7 @@ function updateBalls(dt){
     if (b.yellow){ // boule d'énergie de Rudy : traverse et touche tous les ennemis sur la ligne
       for (const e of living()){
         if (b.hitList.includes(e) || e.st==='down' || e.st==='intro' || e.st==='grab' || e.st==='grabbedByR') continue;
-        if (Math.abs(e.x-b.x) < 50 && Math.abs(e.y-b.y) < 32){ b.hitList.push(e); e.hp -= 60; e.hpShow = 2.2; addFx('burstY', e.x, e.y-120); SFX.big(); game.shake = 0.15; if (e.hp<=0){ e.hp=0; knockDown(e,true); } else knockDown(e,false); }
+        if (Math.abs(e.x-b.x) < 50 && Math.abs(e.y-b.y) < 32){ b.hitList.push(e); e.hp -= 60*PVX; e.hpShow = 2.2; addFx('burstY', e.x, e.y-120); SFX.big(); game.shake = 0.15; if (e.hp<=0){ e.hp=0; knockDown(e,true); } else knockDown(e,false); }
       }
       continue;
     }
@@ -770,7 +780,7 @@ function bar(x, y, w, h, v, col, label, right){
 
 function drawHUD(){
   const m = MAPS[game.map];
-  bar(20, 34, 280, 18, rudy.hp/RUDY_MAX, ['#7dff8a','#1f9a33'], 'RUDY', false);
+  bar(20, 34, 280, 18, rudy.hp/RUDY_MAX, ['#7dff8a','#1f9a33'], PVX>1?'RUDY \u00d72':'RUDY', false);
   const full = rudy.en >= 100, fl = full && Math.floor(game.t*6)%2;
   bar(20, 66, 200, 10, rudy.en/100, fl ? ['#ffffff','#ffe14a'] : ['#fff27a','#e0a800'], '', false);
   ctx.font = '700 13px Georgia,serif'; ctx.textAlign = 'left'; ctx.fillStyle = full ? '#ffe14a' : '#e9d9a8';
