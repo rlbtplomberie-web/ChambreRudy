@@ -1,3 +1,10 @@
-ChambreRudy — mise à jour 191 (archive 2 sur 3)
-Les 12 vidéos du jeu de Pont-l'Ades (shinato/m/pl_*.mp4).
-Dépose ensuite la 192.
+ChambreRudy — mise à jour 192 (archive 3 sur 3)
+
+1) Shinato, le vieux monsieur devant le Pixel Bar : il garde PARLER ; nouveau bouton « 💛 LE DIAMANT JAUNE » (seulement si l'hôtel est réussi).
+2) Rue de nuit, le costaud au débardeur blanc devant le Barding : « ℹ️ INFORMATION SUR MIDA » (après le diamant jaune).
+3) PONT-L'ADES : après Mida, nouveau choix dans tous les « Où voulez-vous aller ? ».
+   - La moto, puis le jeu « Le Grand Terrain » se lance (bouton « ✕ SHINATO » en haut à gauche pour quitter).
+   - Rudy à terre : la vidéo de la méchante, puis la vidéo de l'infirmière, puis Rudy devant l'hôpital de Vaviel.
+   - La boss battue : la vidéo de victoire, puis retour à Shinato.
+4) Déverrouillage : nouveau dossier « Pont-l'Ades » (12 vidéos) + le diamant jaune (Shinato) + Mida (Rue de nuit).
+Les archives 190 (le jeu) et 191 (ses vidéos) doivent être déposées avant celle-ci.

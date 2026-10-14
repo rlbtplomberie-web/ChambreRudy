@@ -740,7 +740,10 @@ else carte.addEventListener("load",demarre);
  <div class="choix" id="versBoulevard">BOULEVARD</div>
  <div class="choix" id="versMitsuda">MITSUDA</div>
  <div class="choix" id="versRembourg">REMBOURG</div>
+ <div class="choix" id="versPontLades" style="display:none">PONT-L'ADES</div>
 </div></div>
+<script>/* PONT-L'ADES : le choix n'apparaît qu'après « INFORMATION SUR MIDA » (le costaud du Barding) */
+setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) return; var ok=false; try{ ok=localStorage.getItem('pontlades_debloque')==='1'; }catch(e){} b.style.display=ok?'':'none'; },400);</script>
 <script>
 /* ---------- tout à gauche de la plage : « Où voulez-vous aller ? » ---------- */
 (function(){
@@ -768,6 +771,10 @@ else carte.addEventListener("load",demarre);
  });
  window.appuiSur(document.getElementById("versBoulevard"),function(){
   cache(); try{ window.parent.postMessage({type:"plage:destination",dest:"boulevard"},"*"); }catch(e){}
+ });
+ // PONT-L'ADES : on reprend la moto
+ window.appuiSur(document.getElementById("versPontLades"),function(){
+  cache(); try{ window.parent.postMessage({type:"plage:destination",dest:"pontlades"},"*"); }catch(e){}
  });
  // REMBOURG : on reprend la moto jusqu'au château
  window.appuiSur(document.getElementById("versRembourg"),function(){

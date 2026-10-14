@@ -174,6 +174,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
  <div class="btn" id="btnParlerShana" style="display:none">PARLER</div>
  <div class="btn" id="btnParlerAfro" style="display:none">PARLER</div>
  <div class="btn" id="btnParlerBuveur" style="display:none">PARLER</div>
+ <div class="btn" id="btnDiamantJaune" style="display:none">💛 LE DIAMANT JAUNE</div>
  <div class="btn" id="btnParlerCapuche" style="display:none">PARLER</div>
  <div class="btn" id="btnParlerVitrine" style="display:none">PARLER</div>
  <div class="btn" id="btnParlerPolicier" style="display:none">PARLER</div>
@@ -1225,8 +1226,43 @@ else carte.addEventListener("load",demarre);
  <button class="choix" id="versBoulevard" style="margin-top:2.4vmin">BOULEVARD</button>
  <button class="choix" id="versMitsuda" style="margin-top:2.4vmin">MITSUDA</button>
  <button class="choix" id="versRembourg" style="margin-top:2.4vmin">REMBOURG</button>
+ <button class="choix" id="versPontLades" style="margin-top:2.4vmin;display:none">PONT-L'ADES</button>
 </div></div>
+<script>/* PONT-L'ADES : le choix n'apparaît qu'après « INFORMATION SUR MIDA » (le costaud du Barding) */
+setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) return; var ok=false; try{ ok=localStorage.getItem('pontlades_debloque')==='1'; }catch(e){} b.style.display=ok?'':'none'; },400);</script>
 <script>
+/* ---------- PONT-L'ADES (« Le Grand Terrain ») : quitter, K.O. (l'infirmière puis devant l'hôpital de Vaviel), victoire (retour à Shinato) ---------- */
+(function(){
+ var q=document.createElement("div"); q.id="pontladesQuitter"; q.textContent="✕ SHINATO";
+ q.style.cssText="position:fixed;z-index:91;top:calc(10px + env(safe-area-inset-top,0px));left:10px;display:none;padding:9px 14px;border-radius:999px;background:rgba(0,0,0,.6);color:#ffe27a;border:2px solid rgba(255,226,122,.8);font:900 13px Arial,sans-serif;letter-spacing:.06em";
+ document.body.appendChild(q);
+ window.pontladesQuitte=function(montre){ q.style.display=montre?"block":"none"; };
+ function ferme(){
+  var cm=document.getElementById("moto"); if(cm){ cm.style.pointerEvents="none"; cm.blur(); cm.style.display="none"; cm.removeAttribute("src"); cm.srcdoc=""; }
+  q.style.display="none";
+  try{ if(window.PONTLADES_MUSIQUE&&window.RUDY_AUDIO){ var p=window.RUDY_AUDIO.play(); if(p&&p.catch) p.catch(function(){}); } }catch(e){}
+  window.PONTLADES_MUSIQUE=false;
+ }
+ function retourShinato(){ ferme(); window.DESTINATION_MOTO="plage"; dir=0; window.repriseRue(); if(typeof cadre==="function") cadre(true); }
+ window.appuiSur(q,retourShinato);
+ window.pontladesFin=function(gagne){
+  if(gagne){ retourShinato(); return; }
+  // à terre : la vidéo de l'infirmière, puis Rudy devant l'hôpital de Vaviel (comme pour les autres jeux)
+  ferme();
+  var vb=document.createElement("div"); vb.style.cssText="position:fixed;inset:0;z-index:95;background:#000";
+  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+  var v=vb.querySelector("video"), fait=false;
+  var fin=function(){ if(fait) return; fait=true;
+   window.pauseRue();
+   var mh=document.getElementById("moto");
+   if(!mh){ mh=document.createElement("iframe"); mh.id="moto"; mh.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(mh); }
+   mh.style.pointerEvents="auto"; mh.style.display="block";
+   window.postMessage({type:"hopital:fin"},"*");
+   window.minuterieLibre(function(){ vb.remove(); },400); };
+  v.addEventListener("ended",fin); v.addEventListener("error",fin);
+  v.src="/assets/shinato/m/usine_hopital.mp4"; var p=v.play(); if(p&&p.catch) p.catch(function(){});
+ };
+})();
 /* ---------- au bout de la rue, tout à droite : « Où voulez-vous aller ? » ---------- */
 (function(){
  var boite=document.getElementById("depart"), ouvert=false, arme=true;
@@ -1263,6 +1299,7 @@ else carte.addEventListener("load",demarre);
  window.appuiSur(document.getElementById("versVaviel"),function(){ partEnMoto("vaviel"); });
  window.appuiSur(document.getElementById("versBoulevard"),function(){ partEnMoto("boulevard"); });
  window.appuiSur(document.getElementById("versMitsuda"),function(){ partEnMoto("mitsuda"); });
+ window.appuiSur(document.getElementById("versPontLades"),function(){ partEnMoto("pontlades"); });
  window.appuiSur(document.getElementById("versRembourg"),function(){ partEnMoto("rembourg"); });
 
  // arrivée de la moto : c'est ici qu'on enchaînera sur la plage (fichier à venir)
@@ -1303,7 +1340,7 @@ else carte.addEventListener("load",demarre);
    window.minuterieLibre(function(){ try{ cv.focus(); }catch(err){} },300);
    return;
   }
-  if(e.data && (e.data.type==="delabree:destination"||e.data.type==="vaviel:destination"||e.data.type==="mitsuda:destination"||e.data.type==="rembourg:destination") && (e.data.dest==="shinato"||e.data.dest==="plage"||e.data.dest==="delabree"||e.data.dest==="vaviel"||e.data.dest==="boulevard"||e.data.dest==="mitsuda"||e.data.dest==="rembourg")){
+  if(e.data && (e.data.type==="delabree:destination"||e.data.type==="vaviel:destination"||e.data.type==="mitsuda:destination"||e.data.type==="rembourg:destination") && (e.data.dest==="pontlades"||e.data.dest==="shinato"||e.data.dest==="plage"||e.data.dest==="delabree"||e.data.dest==="vaviel"||e.data.dest==="boulevard"||e.data.dest==="mitsuda"||e.data.dest==="rembourg")){
    // depuis le bout gauche de la ville délabrée : la moto, vers Shinato (bout droit de la ville) ou vers la plage (bout gauche)
    window.DESTINATION_MOTO=e.data.dest==="shinato"?"ville":e.data.dest;
    var cmv=document.getElementById("moto"); if(!cmv) return;
@@ -1312,13 +1349,30 @@ else carte.addEventListener("load",demarre);
    window.minuterieLibre(function(){ try{ cmv.focus(); }catch(err){} },300);
    return;
   }
-  if(e.data && e.data.type==="plage:destination" && (e.data.dest==="shinato"||e.data.dest==="delabree"||e.data.dest==="vaviel"||e.data.dest==="boulevard"||e.data.dest==="mitsuda"||e.data.dest==="rembourg")){
+  if(e.data && e.data.type==="plage:destination" && (e.data.dest==="pontlades"||e.data.dest==="shinato"||e.data.dest==="delabree"||e.data.dest==="vaviel"||e.data.dest==="boulevard"||e.data.dest==="mitsuda"||e.data.dest==="rembourg")){
    // depuis la plage : on reprend la moto (vers Shinato, la ville, ou vers la ville délabrée)
    window.DESTINATION_MOTO=e.data.dest==="shinato"?"ville":e.data.dest;
    var cm=document.getElementById("moto"); if(!cm) return;
    var om=LIEU_OCTETS("lieux/moto.html");
    cm.srcdoc=new TextDecoder("utf-8").decode(om);        // la plage est déchargée, seule la moto tourne
    window.minuterieLibre(function(){ try{ cm.focus(); }catch(err){} },300);
+   return;
+  }
+  if(e.data && e.data.type==="rudyMoto:arrivee" && window.DESTINATION_MOTO==="pontlades"){
+   // PONT-L'ADES : après la moto, le jeu « Le Grand Terrain » se lance (sa propre musique : celle de la ville se tait)
+   window.minuterieLibre(function(){
+    var cm=document.getElementById("moto"); if(!cm) return;
+    try{ if(window.RUDY_AUDIO){ window.PONTLADES_MUSIQUE=!window.RUDY_AUDIO.paused; window.RUDY_AUDIO.pause(); } }catch(err){}
+    cm.removeAttribute("srcdoc"); cm.src="/assets/shinato/jeux/pontlades.html"; cm.style.pointerEvents="auto"; cm.style.display="block";
+    window.pontladesQuitte(true);
+    window.minuterieLibre(function(){ try{ cm.focus(); }catch(err){} },300);
+   },600);
+   return;
+  }
+  if(e.data && (e.data.type==="pontlades:ko"||e.data.type==="pontlades:victoire")){
+   var gagne=e.data.type==="pontlades:victoire";
+   if(gagne){ try{ localStorage.setItem("pontlades_gagne","1"); }catch(err){} }
+   window.pontladesFin(gagne);
    return;
   }
   if(e.data && e.data.type==="rudyMoto:arrivee" && window.DESTINATION_MOTO==="ville"){
@@ -1465,10 +1519,14 @@ else carte.addEventListener("load",demarre);
   {btn:"btnParlerShana",  pos:0.9551, video:"/assets/shinato/m/shinato_shana.mp4"},     // Shana, assise en tailleur sur le banc, lit son livre
   {btn:"btnParlerAfro",   pos:0.9300, video:"/assets/shinato/m/shinato_afro_rousse.mp4"},// la fille afro et la rousse, assises entre les deux bancs
   {btn:"btnParlerBuveur", pos:0.7269, video:"/assets/shinato/m/shinato_buveur.mp4"},    // le buveur de bière, sur la chaise haute devant le Pixel Bar
+  {btn:"btnDiamantJaune", pos:0.7269, video:"/assets/shinato/m/shinato_buveur_diamant.mp4", drapeau:"shinato_diamant_jaune_vu"},// le même buveur : sa nouvelle discussion, seulement après la mission de l'hôtel
   {btn:"btnParlerCapuche",pos:0.9042, video:"/assets/shinato/m/shinato_capuche.mp4"},  // le gars au sweat à capuche rouge, assis sur le banc de gauche
   {btn:"btnParlerVitrine",pos:0.4041, video:"/assets/shinato/m/shinato_vitrine.mp4"},  // l'homme en costume, de dos, devant la vitrine du magasin BRAND
   {btn:"btnParlerPolicier",pos:function(){ return window.POLICE_POS?window.POLICE_POS():-1; }, video:"/assets/shinato/m/shinato_policier.mp4"}   // le policier qui fait sa ronde : le bouton le suit
  ];
+ // « LE DIAMANT JAUNE » (le buveur du Pixel Bar) : seulement quand la mission de l'hôtel est réussie
+ (function(){ var h=false; try{ h=localStorage.getItem('hotel_palace_gagne')==='1'; }catch(e){}
+  if(!h){ PASSANTS=PASSANTS.filter(function(P){ if(P.btn==="btnDiamantJaune"){ document.getElementById(P.btn).style.display="none"; return false; } return true; }); } })();
  if(!window.TROIS_BOSS_VAINCUS){ PASSANTS=PASSANTS.filter(function(P){ if(P.btn==="btnParlerPanique"){ document.getElementById(P.btn).style.display="none"; return false; } return true; }); }
  if(window.TROIS_BOSS_VAINCUS){ PASSANTS=PASSANTS.filter(function(P){ if(P.btn==="btnParlerSophie"||P.btn==="btnParlerMec"){ var b=document.getElementById(P.btn); if(b) b.style.display="none"; return false; } return true; }); }
  function posDe(P){ return typeof P.pos==="function"?P.pos():P.pos; }
