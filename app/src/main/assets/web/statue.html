@@ -103,6 +103,7 @@ html,body{margin:0;height:100%;background:var(--fond);overflow:hidden;touch-acti
   <img class="gem" id="gemVampa" alt="Diamant tête de mort" style="left:30.82%;top:28.5%" src="statue/1e1c580db6.webp">
   <img class="gem" id="gemFarah" alt="Diamant vert" style="left:48.57%;top:28.5%" src="statue/5b610aa6af.webp">
   <img class="gem rond" id="gemHotel" alt="Diamant rond étoilé" style="left:13.23%;top:40.19%;width:13.6%" src="statue/gem_rond_hotel.webp">
+  <img class="gem rond" id="gemPontlades" alt="Diamant jaune au cœur" style="left:30.82%;top:40.19%;width:13.6%" src="statue/gem_rond_jaune.webp">
   <div class="val" id="vArgent"  style="left:38.9%;top:54.9%;width:17.4%;height:4.2%;font-size:6.2cqw"></div>
   <div class="val" id="vContacts" style="left:39.9%;top:63.3%;width:16.2%;height:4.2%;font-size:6.6cqw"></div>
   <div class="val" id="vVideos"  style="left:39.9%;top:71.7%;width:16.2%;height:4.2%;font-size:5.6cqw"></div>
@@ -178,7 +179,8 @@ function maj(){
  $('gemAstra').classList.toggle('on',A||lit('mitsuda_usine_gagnee')==='1');      // Astra vaincue (l'usine)
  $('gemVampa').classList.toggle('on',A||lit('rembourg_chateau_gagne')==='1');    // la Reine des vampires vaincue (le château)
  $('gemFarah').classList.toggle('on',A||lit('foret_gagnee')==='1');
- $('gemHotel').classList.toggle('on',A||lit('hotel_palace_gagne')==='1');          // la boss de l'Hôtel Palace vaincue              // Farah la Rousse vaincue (la forêt)
+ $('gemHotel').classList.toggle('on',A||lit('hotel_palace_gagne')==='1');
+ $('gemPontlades').classList.toggle('on',A||lit('pontlades_gagne')==='1');   // la boss du Grand Terrain (Pont-l'Ades) vaincue          // la boss de l'Hôtel Palace vaincue              // Farah la Rousse vaincue (la forêt)
 }
 maj(); setInterval(maj,1500); addEventListener('storage',maj);
 

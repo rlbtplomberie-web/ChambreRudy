@@ -895,6 +895,7 @@ function loop(now){requestAnimationFrame(loop);updateWindows(now/1000);var dt=Ma
   hintT-=dt;if(hintT<=0)$('hint').classList.remove('on');
   toastT-=dt;if(toastT<=0)$('toast').classList.remove('on');
   foodClock-=dt;if(foodClock<=0){spawnFood();foodClock=20+Math.random()*20}
+  if(LEVEL===4)for(const f of FINAL_FOOD){if(f.reT>0){f.reT-=dt;if(f.reT<=0)f.food=true}}   // les 4 poulets des coins réapparaissent
   fireCd-=dt;if(fireHeld&&fireCd<=0)fire();
   P.shootT=Math.max(0,(P.shootT||0)-dt);
   if(muzzle.visible){muzzle.userData.t-=dt;muzzleLight.intensity=3;muzzleLight.position.copy(muzzle.position);if(muzzle.userData.t<=0){muzzle.visible=false;muzzleLight.intensity=0}}
@@ -980,7 +981,7 @@ function loop(now){requestAnimationFrame(loop);updateWindows(now/1000);var dt=Ma
   else if(m==='grabbed'){if(GR.on)updateGrab(dt)}
   else if(m==='rescue'){cam.curDist+=(2.9-cam.curDist)*Math.min(1,dt*4);cam.curPitch+=(.15-cam.curPitch)*Math.min(1,dt*4);cam.curYaw=angLerp(cam.curYaw,cam.yaw,Math.min(1,dt*4.5));placeThirdPerson(1.0)}
   else if(m==='eat'){P.timer+=dt*(LEVEL===4?2.3:1);const T_=[.45,.45,.5,.5,.75,.9];let acc=0,i=0;while(i<5&&P.timer>acc+T_[i]){acc+=T_[i];i++}
-    if(i>=1&&!P.took){P.took=true;P.eatTable.food=false;sfx('whoosh')}
+    if(i>=1&&!P.took){P.took=true;P.eatTable.food=false;if(LEVEL===4&&FINAL_FOOD.includes(P.eatTable))P.eatTable.reT=2;sfx('whoosh')}   // contre la boss : le poulet revient 2 s après
     if(i>=4&&!P.ate){P.ate=true;eatBite()}
     cam.curYaw=angLerp(cam.curYaw,cam.yaw,Math.min(1,dt*6));cam.curPitch+=(.2-cam.curPitch)*Math.min(1,dt*5);cam.curDist+=(3.0-cam.curDist)*Math.min(1,dt*5);
     placeThirdPerson(1.35);const off=setFrame(rudy,'eat',i,false);placeSprite(off);
