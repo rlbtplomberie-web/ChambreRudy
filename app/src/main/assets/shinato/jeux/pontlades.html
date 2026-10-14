@@ -43,6 +43,7 @@ html,body{height:100%;margin:0;background:var(--sand);color:var(--ink);overflow:
 #alertTxt{position:absolute;left:50%;top:calc(46px + env(safe-area-inset-top,0px));transform:translateX(-50%);font-family:var(--display);font-weight:900;letter-spacing:.3em;font-size:18px;color:#ffd34a;opacity:0;text-shadow:0 2px 6px #000}
 #alertTxt.on{opacity:1}#alertTxt.red{color:#ff3b30;animation:blink .5s steps(2) infinite}@keyframes blink{50%{opacity:.35}}
 #hurt{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .2s;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(190,20,20,.85) 100%)}
+#prDuel{position:fixed;inset:0;z-index:8;display:flex;align-items:flex-end;justify-content:center;padding-bottom:calc(90px + env(safe-area-inset-bottom,0px));touch-action:none;cursor:pointer}#prDuel[hidden]{display:none}#prDuel .esc{display:grid;gap:6px;justify-items:center;width:min(80vw,420px);pointer-events:none}#prDuel b{font-family:var(--display);font-weight:900;font-size:clamp(30px,8vw,48px);letter-spacing:.08em;color:#ffd34a;text-shadow:0 3px 8px #000;animation:esc .35s ease-in-out infinite alternate}#prDuel span{font-size:16px;letter-spacing:.12em;text-transform:uppercase;text-shadow:0 2px 4px #000}#prDuel i{display:block;width:100%;height:16px;border:2px solid var(--accent);background:rgba(12,10,14,.7);border-radius:3px;overflow:hidden}#prDuel em{display:block;height:100%;width:45%;background:linear-gradient(90deg,var(--accent-dim),var(--accent))}
 #escape{position:fixed;inset:0;z-index:8;display:flex;align-items:flex-end;justify-content:center;padding-bottom:calc(90px + env(safe-area-inset-bottom,0px));touch-action:none;cursor:pointer}
 #escape .esc{display:grid;gap:6px;justify-items:center;width:min(80vw,420px);pointer-events:none}
 #escape b{font-family:var(--display);font-weight:900;font-size:clamp(30px,8vw,48px);letter-spacing:.08em;color:#ff3b30;text-shadow:0 3px 8px #000;animation:esc .35s ease-in-out infinite alternate}
@@ -134,6 +135,7 @@ body.binoview #bBino{border-color:var(--accent);background:rgba(242,180,90,.3)}
 <div id="slowmo"><span>RALENTI</span></div>
 <canvas id="binoMask" hidden></canvas>
 <div id="hurt"></div>
+<div id="prDuel" hidden><div class="esc"><b>ÉTRANGLE-LA !</b><span>Tape vite sur l'écran</span><i><em id="prFill"></em></i></div></div>
 <div id="escape" hidden><div class="esc"><b>LIBÈRE-TOI !</b><span>Tape vite sur l'écran</span><i><em id="escFill"></em></i></div></div>
 <div id="reussi" hidden><b>RÉUSSI !</b><span>Les 10 diamants sont à toi… le dernier boss t’attend.</span></div>
 <div id="win" hidden><div class="card"><h2>BRAVO !</h2><p id="winTxt">Rudy a trouvé les 10 diamants.</p><button id="again">REJOUER</button></div></div>
@@ -1394,7 +1396,7 @@ let hintT=0;function hint(t){$('hint').textContent=t;$('hint').classList.add('on
 /* ---------- actions ---------- */
 function setMode(m){P.mode=m;$('mode').textContent={free:'Libre',cover:'Plaqué au mur',fps:'Visée',peek:'Angle',punch:'Coup',dive:'Plongeon',combo:'Combo',mount:'Monter',ladder:'Échelle',door:'Porte',bino:'Jumelles',binoview:'Jumelles',grabbed:'Attrapé !',dead:'À terre'}[m]||m;
   const f=m==='fps';$('cross').hidden=!f;
-  $('bAim').classList.toggle('on',f);rudy.visible=!f&&m!=='door'&&m!=='binoview'&&m!=='grabbed'&&m!=='dead';if(m!=='dive')shadow.scale.setScalar(1);shadow.visible=rudy.visible;
+  $('bAim').classList.toggle('on',f);rudy.visible=!f&&m!=='prise'&&m!=='door'&&m!=='binoview'&&m!=='grabbed'&&m!=='dead';if(m!=='dive')shadow.scale.setScalar(1);shadow.visible=rudy.visible;
   if(!f)hctx.clearRect(0,0,hands.width,hands.height);updateAmmo()}
 function toggleWall(){if(P.mode==='cover'){leaveCover();return}if(P.mode!=='free'||!P.ground)return;
   const w=findWall();if(!w)return;
@@ -2038,7 +2040,7 @@ function hitSide(e){const{R:r}=camVectors(cam.curYaw);return e&&((e.pos.x-P.pos.
 function hurtRudy(a){if(P.mode==='dead'||P.cut)return;P.calmT=0;P.lastShooter=E;if(P.mode==='free'&&!P.hurtA&&P.ground)P.hurtA={sheet:hitSide(E),t:0};setNRG(NRG-a);$('hurt').style.opacity=.75;setTimeout(()=>$('hurt').style.opacity=0,160);camShake=.25;
   const out=audioOut();if(out){burst(out,{dur:.08,type:'lowpass',f:700,vol:.4});tone(out,{f:90,dur:.12,vol:.3})}}
 let camShake=0;
-function rudyDown(){let grabbed=P.mode==='grabbed'&&GR.on;const killer=(grabbed&&GR.e)||P.lastShooter,koVid=killer?(killer.v===9?(grabbed&&GR.boss?BOSS_KO_VID:BOSS_KO2_VID):KO_VIDS[killer.v]):null;if(grabbed&&GR.e&&GR.e.v>=2){GR.on=false;GR.e.state='shoot';GR.e.pos.x-=GR.e.face.x*.9;GR.e.pos.z-=GR.e.face.y*.9;P.lastShooter=GR.e;grabbed=false}else if(grabbed&&GR.e){GR.e.state='pin';}
+function rudyDown(){if(PR.on)endPrise();let grabbed=P.mode==='grabbed'&&GR.on;const killer=(grabbed&&GR.e)||P.lastShooter,koVid=killer?(killer.v===9?(grabbed&&GR.boss?BOSS_KO_VID:BOSS_KO2_VID):KO_VIDS[killer.v]):null;if(grabbed&&GR.e&&GR.e.v>=2){GR.on=false;GR.e.state='shoot';GR.e.pos.x-=GR.e.face.x*.9;GR.e.pos.z-=GR.e.face.y*.9;P.lastShooter=GR.e;grabbed=false}else if(grabbed&&GR.e){GR.e.state='pin';}
   if(P.mode==='fps'||P.mode==='peek'){cam.yaw=cam.curYaw=fps.yaw}
   P.hurtA=null;P.lad=null;P.cover=null;P.diving=null;P.dieA=grabbed?null:{sheet:hitSide(P.lastShooter),t:0};
   setMode('dead');P.deadT=0;$('escape').hidden=true;
@@ -2053,8 +2055,73 @@ function playKO(src){const box=$('koVid'),v=$('koV');if(v.dataset.s!==src){v.src
 let koThen=null;
 function annonceVille(t){ try{ if(window.parent&&window.parent!==window){ window.parent.postMessage({type:t},'*'); return true; } }catch(e){} return false; }   // ChambreRudy : Pont-l'Ades est ouvert depuis Shinato // ce qui se passe à la fin de la vidéo (vidéo avant le boss)
 function endRedKO(){if(koThen){const f=koThen;koThen=null;const v=$('koV');v.pause();$('koVid').hidden=true;if(MASTER)MASTER.gain.value=.85;f();return}const v=$('koV');v.pause();$('koVid').hidden=true;if(MASTER)MASTER.gain.value=.85;if(P.mode==='dead'){ if(annonceVille('pontlades:ko')) return; resetGame(); }} // à la fin de la vidéo : dans ChambreRudy, l'infirmière puis Vaviel ; sinon la partie recommence
-function resetGame(){P.cut=false;if(BOSSF.active&&$('win').hidden){{const v=$('koV');v.pause();$('koVid').hidden=true}startBossFight();return}if(BOSSF.active)exitBoss();GR.on=false;{const v=$('koV');v.pause();$('koVid').hidden=true;if(MASTER)MASTER.gain.value=.85}P.calmT=99;resetGems();P.relHide=0;P.dieA=null;P.hurtA=null;P.paraT=0;for(const f of FB){scene.remove(f.core);scene.remove(f.halo)}FB.length=0;$('over').hidden=true;$('escape').hidden=true;setNRG(100);P.pos.set(5.8,0,5.8);P.y=H(5.8,5.8);P.ground=true;P.vx=P.vz=0;P.diving=null;P.lad=null;P.mount=null;P.combo=null;P.knock=null;
+function resetGame(){if(PR.on)endPrise();P.cut=false;if(BOSSF.active&&$('win').hidden){{const v=$('koV');v.pause();$('koVid').hidden=true}startBossFight();return}if(BOSSF.active)exitBoss();GR.on=false;{const v=$('koV');v.pause();$('koVid').hidden=true;if(MASTER)MASTER.gain.value=.85}P.calmT=99;resetGems();P.relHide=0;P.dieA=null;P.hurtA=null;P.paraT=0;for(const f of FB){scene.remove(f.core);scene.remove(f.halo)}FB.length=0;$('over').hidden=true;$('escape').hidden=true;setNRG(100);P.pos.set(5.8,0,5.8);P.y=H(5.8,5.8);P.ground=true;P.vx=P.vz=0;P.diving=null;P.lad=null;P.mount=null;P.combo=null;P.knock=null;
   standUp();setMode('free');rudy.visible=true;shadow.visible=true;cam.yaw=cam.curYaw=-2.356;TRAIL.length=0;GR.e=null;resetAllEnemies()}
+
+/* ---------- ATTRAPER : Rudy prend une soldate par derrière (étranglement) ----------
+   Tout près d'une soldate, le bouton « Tirer » devient « Attraper ».
+   - elle ne l'a pas vu : un appui suffit, elle tombe K.O. (les 6 images de la planche) ;
+   - elle l'a vu : duel, il faut taper plus vite qu'elle ; s'il perd, elle se libère et c'est elle qui l'attrape.
+   Planches : 0 brune (queue de cheval), 1 blonde (la même, recolorée), 2 blonde au carré, 3 rousse peau noire (la même, recolorée) ;
+   chacune vue de face, de dos et de profil. */
+const PRISE={"0":{"pages":[[2048,603]],"frames":{"face":[[0,0,0,168,312,-0.5536,0,1.1072,2.0534],[0,170,0,150,322,-0.4912,0,0.9824,2.1125],[0,322,0,154,288,-0.5043,0,1.0086,1.8924],[0,478,0,156,222,-0.5109,0,1.0218,1.4555],[0,636,0,184,210,-0.6029,0,1.2058,1.3832],[0,822,0,217,252,-0.7129,0,1.4259,1.6526]],"dos":[[0,1041,0,164,268,-0.5372,0,1.0743,1.7643],[0,1207,0,120,271,-0.3926,0,0.7852,1.7807],[0,1329,0,128,245,-0.4189,0,0.8378,1.6099],[0,1459,0,131,206,-0.4304,0,0.8608,1.3536],[0,1592,0,281,168,-0.9232,0,1.8464,1.1039],[0,0,324,182,168,-0.598,0,1.1959,1.1006]],"prof":[[0,184,324,168,279,-0.552,0,1.1039,1.8333],[0,354,324,127,276,-0.4173,0,0.8345,1.8103],[0,483,324,141,246,-0.4632,0,0.9265,1.6132],[0,626,324,150,212,-0.4945,0,0.9889,1.3897],[0,778,324,282,156,-0.9265,0,1.853,1.0218],[0,1062,324,208,158,-0.685,0,1.37,1.0415]]}},"1":{"pages":[[2048,603]],"frames":{"face":[[0,0,0,168,312,-0.5536,0,1.1072,2.0534],[0,170,0,150,322,-0.4912,0,0.9824,2.1125],[0,322,0,154,288,-0.5043,0,1.0086,1.8924],[0,478,0,156,222,-0.5109,0,1.0218,1.4555],[0,636,0,184,210,-0.6029,0,1.2058,1.3832],[0,822,0,217,252,-0.7129,0,1.4259,1.6526]],"dos":[[0,1041,0,164,268,-0.5372,0,1.0743,1.7643],[0,1207,0,120,271,-0.3926,0,0.7852,1.7807],[0,1329,0,128,245,-0.4189,0,0.8378,1.6099],[0,1459,0,131,206,-0.4304,0,0.8608,1.3536],[0,1592,0,281,168,-0.9232,0,1.8464,1.1039],[0,0,324,182,168,-0.598,0,1.1959,1.1006]],"prof":[[0,184,324,168,279,-0.552,0,1.1039,1.8333],[0,354,324,127,276,-0.4173,0,0.8345,1.8103],[0,483,324,141,246,-0.4632,0,0.9265,1.6132],[0,626,324,150,212,-0.4945,0,0.9889,1.3897],[0,778,324,282,156,-0.9265,0,1.853,1.0218],[0,1062,324,208,158,-0.685,0,1.37,1.0415]]}},"2":{"pages":[[2048,602]],"frames":{"face":[[0,0,0,173,311,-0.5684,0,1.1368,2.0436],[0,175,0,132,320,-0.4353,0,0.8706,2.0994],[0,309,0,150,294,-0.4912,0,0.9824,1.9351],[0,461,0,158,254,-0.5207,0,1.0415,1.669],[0,621,0,194,224,-0.639,0,1.278,1.4686],[0,817,0,225,252,-0.7392,0,1.4785,1.6592]],"dos":[[0,1044,0,160,268,-0.524,0,1.0481,1.7643],[0,1206,0,118,272,-0.3893,0,0.7787,1.784],[0,1326,0,130,244,-0.4271,0,0.8542,1.6066],[0,1458,0,134,206,-0.4386,0,0.8772,1.3503],[0,1594,0,282,168,-0.9265,0,1.853,1.1006],[0,0,322,191,166,-0.6275,0,1.255,1.0941]],"prof":[[0,193,322,164,280,-0.5388,0,1.0776,1.8366],[0,359,322,126,276,-0.4156,0,0.8312,1.8136],[0,487,322,138,246,-0.455,0,0.9101,1.6197],[0,627,322,146,211,-0.478,0,0.9561,1.3865],[0,775,322,278,158,-0.9134,0,1.8267,1.0349],[0,1055,322,202,155,-0.6653,0,1.3306,1.0185]]}},"3":{"pages":[[2048,602]],"frames":{"face":[[0,0,0,173,311,-0.5684,0,1.1368,2.0436],[0,175,0,132,320,-0.4353,0,0.8706,2.0994],[0,309,0,150,294,-0.4912,0,0.9824,1.9351],[0,461,0,158,254,-0.5207,0,1.0415,1.669],[0,621,0,194,224,-0.639,0,1.278,1.4686],[0,817,0,225,252,-0.7392,0,1.4785,1.6592]],"dos":[[0,1044,0,160,268,-0.524,0,1.0481,1.7643],[0,1206,0,118,272,-0.3893,0,0.7787,1.784],[0,1326,0,130,244,-0.4271,0,0.8542,1.6066],[0,1458,0,134,206,-0.4386,0,0.8772,1.3503],[0,1594,0,282,168,-0.9265,0,1.853,1.1006],[0,0,322,191,166,-0.6275,0,1.255,1.0941]],"prof":[[0,193,322,164,280,-0.5388,0,1.0776,1.8366],[0,359,322,126,276,-0.4156,0,0.8312,1.8136],[0,487,322,138,246,-0.455,0,0.9101,1.6197],[0,627,322,146,211,-0.478,0,0.9561,1.3865],[0,775,322,278,158,-0.9134,0,1.8267,1.0349],[0,1055,322,202,155,-0.6653,0,1.3306,1.0185]]}}};
+const prMats=[];
+[0,1,2,3].forEach(v=>{const img=new Image();img.onload=()=>{const t=new THREE.Texture(img);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;t.needsUpdate=true;
+  prMats[v]=new THREE.MeshBasicMaterial({map:t,alphaTest:.45,side:THREE.DoubleSide,color:0xd6d0d2})};img.src='/assets/shinato/m/pl_prise_'+v+'.webp'});
+const prMesh=(()=>{const g=new THREE.PlaneGeometry(1,1);g.translate(0,.5,0);const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({visible:false}));m.renderOrder=2;m.visible=false;scene.add(m);return m})();
+const PR={on:false,e:null,phase:'ko',t:0,fi:0,fill:0,view:'dos',mir:false,anchor:new THREE.Vector3()};
+const PR_T=[.22,.32,.38,.45,.55,.8];   // durée de chaque image du K.O.
+function priseCible(){
+  if(BOSSF.active||PR.on||!P.ground||!['free','punch','cover'].includes(P.mode))return null;
+  let best=null,bd=1.7;
+  for(const o of ENEMIES){if(o.v>3||!prMats[o.v]||o.state==='down'||o.state==='grab'||o.state==='pin'||o.state==='prise'||o.lad||o.stun>0)continue;
+    const d=Math.hypot(o.pos.x-P.pos.x,o.pos.z-P.pos.z);if(d<bd&&Math.abs(o.y-P.y)<.6){bd=d;best=o}}
+  return best}
+function tryPrise(){const o=priseCible();if(!o)return false;startPrise(o);return true}
+function startPrise(o){
+  bindE(o);if(P.mode==='cover')leaveCover();standUp();P.combo=null;P.knock=null;P.vx=P.vz=0;
+  const vu=E.alert||E.sus>=.6||E.visible&&E.state==='shoot';
+  // on la tourne dos à Rudy si elle ne l'a pas vu ; sinon elle reste comme elle est
+  if(!vu){const f=new THREE.Vector2(E.pos.x-P.pos.x,E.pos.z-P.pos.z);if(f.lengthSq()>1e-4)E.face.copy(f.normalize())}
+  E.state='prise';E.t=0;E.hurtA=null;
+  PR.on=true;PR.e=o;PR.t=0;PR.fi=0;PR.phase=vu?'duel':'ko';PR.fill=45;
+  const y=camYaw(),{F:F_,R:R_}=camVectors(y),fwd=E.face.x*F_.x+E.face.y*F_.z,lx=E.face.x*R_.x+E.face.y*R_.z;
+  if(fwd>.45){PR.view='dos';PR.mir=false}else if(fwd<-.45){PR.view='face';PR.mir=false}else{PR.view='prof';PR.mir=lx<0}
+  PR.anchor.set(E.pos.x,E.y,E.pos.z);
+  P.pos.set(E.pos.x-E.face.x*.5,P.y,E.pos.z-E.face.y*.5);P.face.set(E.face.x,E.face.y);
+  setMode('prise');$('bFire').textContent='Tirer';
+  if(PR.phase==='duel'){$('prDuel').hidden=false;hint('Elle t’a vu… serre plus fort qu’elle !');PR.fi=1}
+  const out=audioOut();if(out)burst(out,{dur:.2,type:'lowpass',f:600,vol:.5})}
+function priseTap(){if(!PR.on||PR.phase!=='duel')return;PR.fill=Math.min(100,PR.fill+10);const out=audioOut();if(out)burst(out,{dur:.04,f:900,vol:.12});
+  if(PR.fill>=100){PR.phase='ko';PR.t=PR_T[0]+PR_T[1]*.5;$('prDuel').hidden=true}}
+function endPrise(){PR.on=false;prMesh.visible=false;$('prDuel').hidden=true;const o=PR.e;PR.e=null;if(o){bindE(o);enMesh.visible=true;enShadow.visible=true}return o}
+function updatePrise(dt){
+  cam.curYaw=angLerp(cam.curYaw,cam.yaw,Math.min(1,dt*6));cam.curDist+=(3.4-cam.curDist)*Math.min(1,dt*4);placeThirdPerson(.9,dt);
+  const o=PR.e;if(!o){setMode('free');return}
+  PR.t+=dt;
+  if(PR.phase==='duel'){
+    PR.fill=Math.max(0,PR.fill-dt*24);$('prFill').style.width=PR.fill+'%';
+    PR.fi=PR.fill>60?2:1;
+    if(PR.fill<=0){ // elle se libère… et c'est elle qui l'attrape
+      endPrise();bindE(o);E.state='post';E.alert=true;E.sus=1.2;E.lastSeen=performance.now()/1000;E.lastKnown.copy(P.pos);E.grabCd=0;
+      setMode('free');hint('Elle s’est libérée !');startGrab();return}}
+  else{let acc=0,i=0;while(i<5&&PR.t>acc+PR_T[i]){acc+=PR_T[i];i++}PR.fi=i;
+    if(PR.t>acc+PR_T[5]+.35&&i===5){ // K.O. : elle reste à terre, Rudy se relève à côté
+      endPrise();bindE(o);E.hp=0;E.state='down';E.downT=2;E.alert=false;E.sus=0;E.dieMir=PR.mir;enMark.visible=false;enSpot.intensity=0;enBeam.visible=false;
+      const {R:r}=camVectors(cam.curYaw);P.pos.set(o.pos.x,P.y,o.pos.z).addScaledVector(r,PR.view==='prof'?(PR.mir?.9:-.9):-.8);collide(P.pos,P.y);
+      setMode('free');hint('Ennemie neutralisée');return}}
+  drawPrise(o)}
+function drawPrise(o){
+  const L_=PRISE[o.v],list=L_.frames[PR.view];const f=list[Math.max(0,Math.min(list.length-1,PR.fi))];if(!f||!prMats[o.v])return;
+  const [p,x,yy,w,h,L,B,Wm,Hm]=f,[PW,PH]=L_.pages[p];
+  let u0=x/PW,u1=(x+w)/PW;if(PR.mir)[u0,u1]=[u1,u0];const v0=1-(yy+h)/PH,v1=1-yy/PH;
+  const uv=prMesh.geometry.attributes.uv;uv.setXY(0,u0,v1);uv.setXY(1,u1,v1);uv.setXY(2,u0,v0);uv.setXY(3,u1,v0);uv.needsUpdate=true;
+  prMesh.material=prMats[o.v];prMesh.visible=true;
+  const y=camYaw(),{R:r}=camVectors(y);prMesh.scale.set(Wm,Hm,1);
+  const left=PR.mir?-(L+Wm):L;prMesh.position.copy(PR.anchor).addScaledVector(r,left+Wm/2);prMesh.rotation.set(0,y,0);
+  const g=groundAt(PR.anchor.x,PR.anchor.z,PR.anchor.y+.01);shadow.visible=true;shadow.position.set(PR.anchor.x,g+.03,PR.anchor.z);shadow.scale.setScalar(1.15)}
+// le bouton Tirer devient « Attraper » quand une soldate est à portée de main
+let prLabT=0;function updatePriseLabel(dt){prLabT-=dt;if(prLabT>0)return;prLabT=.12;const c=priseCible();const t=c?'Attraper':'Tirer';const b=$('bFire');if(b.textContent!==t)b.textContent=t}
 
 /* ---------- la prise : elle saute sur Rudy et le plaque au sol ---------- */
 const GR={on:false,t:0,fill:0,e:null};
@@ -2104,6 +2171,7 @@ function updateEnemy1(dt,now){
   if(enMuzzle.visible){enMuzzle.userData.t-=dt;if(enMuzzle.userData.t<=0)enMuzzle.visible=false}
   if(enTracer.visible){enTracer.userData.t-=dt;if(enTracer.userData.t<=0)enTracer.visible=false}
   E.hitT=Math.max(0,E.hitT-dt);E.grabCd=Math.max(0,E.grabCd-dt);
+  if(E.state==='prise'){if(PR.on&&PR.e===E){enMesh.visible=false;enShadow.visible=false;enMark.visible=false;enBeam.visible=false;enSpot.intensity=0;return}E.state='stun';E.stun=1;enMesh.visible=true;enShadow.visible=true}
   if(E.state==='down'){E.downT+=dt;const hp=POSTS[E.home];if(E.downT>32&&Math.hypot(P.pos.x-hp[0],P.pos.z-hp[1])>25)resetEnemy();drawEnemy(dt);return}
   if(P.mode==='dead'){if(GR.e!==E&&E.alert){E.state='shoot';faceTo(P.pos,dt)}enGravity(dt);drawEnemy(dt);return}
   if(P.mode==='grabbed'&&GR.on&&GR.e===E){updateGrab(dt);E.pos.copy(P.pos);E.y=P.y;drawEnemy(dt);return}
@@ -2245,7 +2313,7 @@ function gunShotSfx(){const out=audioOut();if(!out)return;const t=AC.currentTime
 function gunClickSfx(n){const out=audioOut();if(!out)return;for(let k=0;k<n;k++)tone(out,{f:1800-k*600,dur:.04,vol:.12,type:'square',delay:k*.18})}
 function reload(){if(P.reloadT>0||P.ammo===15)return;P.reloadT=1.1;gunClickSfx(2)}
 let fireHeld=false,fireCd=0;
-function fire(){if(fireCd>0||P.reloadT>0||(P.paraT>0||P.relHide>0))return;
+function fire(){if(P.mode==='prise')return;if(tryPrise()){fireHeld=false;return}if(fireCd>0||P.reloadT>0||(P.paraT>0||P.relHide>0))return;
   const m=P.mode;if(m!=='fps'&&m!=='free'&&m!=='cover')return;if(m==='free'&&!P.ground)return;
   if(P.ammo<=0){gunClickSfx(1);reload();return}
   P.ammo--;P.calmT=0;makeNoise(1,30);gunShotSfx();fireCd=m==='fps'?.16:.2;updateAmmo();
@@ -2314,7 +2382,7 @@ $('go').addEventListener('click',()=>{audioOut();$('intro').hidden=true});
   v.muted=false;const p=v.play();if(p&&p.catch)p.catch(()=>{v.muted=true;v.play().catch(finish)}); // sans son si le navigateur l'interdit avant un toucher
   box.addEventListener('pointerdown',()=>{if(v.muted){v.muted=false;v.play().catch(()=>{})}audioOut()}); // un toucher remet le son
   v.addEventListener('ended',finish);v.addEventListener('error',finish);setTimeout(()=>{if(v.currentTime<.05)finish()},4000)}
-$('escape').addEventListener('pointerdown',e=>{e.preventDefault();grabTap()});$('retry').addEventListener('click',()=>resetGame());$('koV').addEventListener('ended',endRedKO);$('koV').addEventListener('error',endRedKO);$('koV').addEventListener('error',endRedKO);$('again').addEventListener('click',()=>resetGame());
+$('escape').addEventListener('pointerdown',e=>{e.preventDefault();grabTap()});$('prDuel').addEventListener('pointerdown',e=>{e.preventDefault();priseTap()});$('retry').addEventListener('click',()=>resetGame());$('koV').addEventListener('ended',endRedKO);$('koV').addEventListener('error',endRedKO);$('koV').addEventListener('error',endRedKO);$('again').addEventListener('click',()=>resetGame());
 
 /* ---------- choix de l'image ---------- */
 function spriteDir(){ // direction de Rudy vue depuis la caméra
@@ -2438,6 +2506,7 @@ function loop(now){requestAnimationFrame(loop);const dt=Math.max(0,Math.min(.05,
   else if(m==='mount')updateMount(dt,ldx);
   else if(m==='ladder')updateLadder(dt,ay,ldx,ldy);
   else if(m==='door')updateDoorAnim(dt);
+  else if(m==='prise')updatePrise(dt);
   else if(m==='grabbed'||m==='dead'){cam.curYaw=angLerp(cam.curYaw,cam.yaw,Math.min(1,dt*6));placeThirdPerson(.9,dt);if(m==='dead'&&!GR.on){rudy.visible=shadow.visible=true;const D=P.dieA;let off; // il tombe sous les balles
       if(D){D.t+=dt;off=setFrame(rudy,D.sheet,Math.min(7,1+Math.floor(D.t/.16)),false);cam.curPitch+=(.35-cam.curPitch)*Math.min(1,dt*2);cam.curDist+=(3.6-cam.curDist)*Math.min(1,dt*2)}
       else off=setFrame(rudy,'dive_R',4,false);placeSprite(off,0)}}
@@ -2458,7 +2527,7 @@ function loop(now){requestAnimationFrame(loop);const dt=Math.max(0,Math.min(.05,
     fps.recoil=Math.max(0,fps.recoil-dt*7);fps.flashT-=dt;
     drawHands(dt);
   }
-  updateCtx();updateDoors(dt);updateAudio(dt);drawNoiseMeter(dt);updateTraffic(dt);updateRiver(dt,now/1000);if(['free','cover','ladder','punch','combo','mount'].includes(P.mode))recordTrail();updateEnemy(dt,now/1000);updateGems(dt,now/1000);drawMinimap(dt);updateRegen(dt);if(P.relHide>0){P.relHide-=dt;rudy.visible=shadow.visible=P.relHide<=0}SQW_MAT.uniforms.uTime.value=now/1000;updateRings(dt);$('bKnock').hidden=P.mode!=='cover';updateCity(dt,now/1000);
+  updateCtx();updateDoors(dt);updateAudio(dt);drawNoiseMeter(dt);updateTraffic(dt);updateRiver(dt,now/1000);if(['free','cover','ladder','punch','combo','mount'].includes(P.mode))recordTrail();updateEnemy(dt,now/1000);updatePriseLabel(dt);updateGems(dt,now/1000);drawMinimap(dt);updateRegen(dt);if(P.relHide>0){P.relHide-=dt;rudy.visible=shadow.visible=P.relHide<=0}SQW_MAT.uniforms.uTime.value=now/1000;updateRings(dt);$('bKnock').hidden=P.mode!=='cover';updateCity(dt,now/1000);
   // étincelles
   for(let i=sparks.length-1;i>=0;i--){const s=sparks[i];s.userData.t-=dt;s.material.opacity=Math.max(0,s.userData.t/.12);s.scale.setScalar(1+(.12-s.userData.t)*8);if(s.userData.t<=0){scene.remove(s);sparks.splice(i,1)}}
   const alt=Math.max(0,P.y-(BOSSF.active?AY:0));$('altNum').textContent=alt.toFixed(1).replace('.',',')+' m';

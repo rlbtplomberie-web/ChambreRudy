@@ -1,11 +1,11 @@
-ChambreRudy — mise à jour 193
+ChambreRudy — mise à jour 194
 
-Barding, la barmaid : 5 nouveaux rêves, juste avant « 💋 Toi » :
-- « ✨ Sailor »
-- « ✨ Tps sye »
-- « ✨ Tsunade »
-- « ✨ Nammi »
-- « ✨ Midona2 »
-La vidéo d'entrée dans le rêve passe avant, −10 % de vie, comme les autres rêves.
-Ajoutés dans Déverrouillage (Les rêves).
-Fichiers : shinato/lieux/barding.html, shinato/m/barding_reve_(sailor, tpssye, tsunade, nammi, midona2).mp4, web/telephone.html
+Pont-l'Ades (Le Grand Terrain) : ATTRAPER une soldate par derrière.
+- Tout près d'une soldate, le bouton « Tirer » devient « Attraper ».
+- Elle ne t'a pas vu : un appui, Rudy l'étrangle et elle tombe K.O. (6 images de la planche).
+- Elle t'a vu : « ÉTRANGLE-LA ! » — il faut taper sur l'écran plus vite qu'elle.
+  Gagné : elle tombe K.O. ; perdu : elle se libère et c'est elle qui attrape Rudy.
+- Planches vues de face, de dos et de profil, choisies selon l'endroit où se trouve la caméra.
+- 4 soldates : la brune à queue de cheval, la même en blonde peau plus claire,
+  la blonde au carré, la même en rousse peau noire.
+Fichiers : shinato/jeux/pontlades.html, shinato/m/pl_prise_0..3.webp
