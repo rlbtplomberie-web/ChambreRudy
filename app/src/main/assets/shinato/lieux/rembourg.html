@@ -60,6 +60,7 @@ body{height:100%}
  <div class="choix" data-d="boulevard">BOULEVARD</div>
  <div class="choix" data-d="mitsuda">MITSUDA</div>
  <div class="choix" id="versPontLades" data-d="pontlades" style="display:none">PONT-L'ADES</div>
+ <div class="choix" data-d="aeroport">L'AÉROPORT</div>
 </div></div>
 <script>/* PONT-L'ADES : le choix n'apparaît qu'après « INFORMATION SUR MIDA » (le costaud du Barding) */
 setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) return; var ok=false; try{ ok=localStorage.getItem('pontlades_debloque')==='1'; }catch(e){} b.style.display=ok?'':'none'; },400);</script>

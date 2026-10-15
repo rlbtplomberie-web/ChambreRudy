@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="color-scheme" content="dark only">
+<title>RUDY STYLE &middot; A&Eacute;ROPORT</title>
+<style>
+:root{color-scheme:dark only}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#05060a;color:#fff;font-family:Arial,Helvetica,sans-serif;touch-action:none;overscroll-behavior:none}
+#scene{position:fixed;inset:0;width:100%;height:100%;display:block}
+#vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(130% 95% at 50% 45%,transparent 58%,rgba(0,0,0,.45) 100%)}
+
+#titre{position:fixed;top:calc(2vmin + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:20;text-align:center;
+ color:#fff;font:900 clamp(14px,3vmin,26px)/1.15 Arial,sans-serif;letter-spacing:3px;text-shadow:0 3px 0 #000,0 0 14px rgba(0,0,0,.9);pointer-events:none}
+#titre small{display:block;margin-top:.5vmin;color:#ffe27a;letter-spacing:4px;font:800 clamp(8px,1.6vmin,13px)/1 Arial,sans-serif}
+
+#joy{position:fixed;left:calc(4.5vmin + env(safe-area-inset-left,0px));bottom:5vmin;width:30vmin;height:30vmin;border-radius:50%;
+ background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.10),rgba(0,0,0,.34));
+ border:2px solid rgba(255,226,122,.45);box-shadow:0 6px 18px rgba(0,0,0,.5);z-index:20;touch-action:none}
+#stick{position:absolute;left:50%;top:50%;width:13vmin;height:13vmin;margin:-6.5vmin 0 0 -6.5vmin;border-radius:50%;
+ background:radial-gradient(circle at 42% 36%,#fbf0c6,#c9a33c 60%,#7d6118);box-shadow:0 4px 12px rgba(0,0,0,.6);pointer-events:none}
+
+#actions{position:fixed;right:calc(4.5vmin + env(safe-area-inset-right,0px));bottom:6vmin;display:flex;flex-direction:column;gap:2.6vmin;z-index:20}
+.btn{min-width:26vmin;padding:2.4vmin 3vmin;border-radius:3vmin;text-align:center;
+ font:900 clamp(13px,3.1vmin,26px)/1 Arial,sans-serif;letter-spacing:2px;color:#ffe27a;
+ background:linear-gradient(rgba(12,12,14,.9),rgba(30,30,34,.9));border:2px solid rgba(255,226,122,.55);
+ box-shadow:0 5px 16px rgba(0,0,0,.55);transition:transform .08s,opacity .2s;cursor:pointer}
+.btn:active{transform:scale(.94)}
+.btn[hidden]{display:none}
+
+#charge{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#05060a;z-index:50;
+ color:#ffe27a;font:900 clamp(14px,3vmin,24px)/1 Arial,sans-serif;letter-spacing:4px}
+#charge[hidden]{display:none}
+#departAero{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-family:Arial,Helvetica,sans-serif}
+#departAero .carte{position:relative;min-width:62vmin;max-height:92vh;overflow:auto;padding:5vmin 6vmin 5.5vmin;border-radius:3vmin;text-align:center;
+ background:linear-gradient(rgba(14,14,18,.96),rgba(30,30,36,.96));border:2px solid rgba(255,226,122,.6);box-shadow:0 10px 40px rgba(0,0,0,.7)}
+#departAero h2{margin:0 0 4vmin;color:#fff;font:900 clamp(16px,4.2vmin,34px)/1.2 Arial,sans-serif;letter-spacing:2px;text-shadow:0 3px 0 #000}
+#departAero .choix{display:block;width:100%;margin-top:2.4vmin;padding:3vmin 4vmin;border-radius:2.4vmin;cursor:pointer;
+ font:900 clamp(15px,3.8vmin,30px)/1 Arial,sans-serif;letter-spacing:2px;color:#ffe27a;
+ background:linear-gradient(rgba(12,12,14,.9),rgba(40,40,46,.9));border:2px solid rgba(255,226,122,.7)}
+#departAero .choix:active{transform:scale(.95)}
+#departAero .fermer{position:absolute;top:1.6vmin;right:2.2vmin;color:#ffe27a;font:900 clamp(16px,4vmin,30px)/1 Arial;cursor:pointer;opacity:.7}
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div id="vignette"></div>
+<div id="titre">RUDY STYLE<small>A&Eacute;ROPORT</small></div>
+
+<div id="joy"><div id="stick"></div></div>
+<div id="actions">
+ <div class="btn" id="btnParlerMeca" hidden>PARLER</div>
+</div>
+<div id="charge">CHARGEMENT…</div>
+<div id="departAero"><div class="carte">
+ <div class="fermer" id="departFermer">&#10005;</div>
+ <h2>OÙ VOULEZ-VOUS ALLER&nbsp;?</h2>
+ <div class="choix" data-d="shinato">SHINATO</div>
+ <div class="choix" data-d="plage">À LA PLAGE</div>
+ <div class="choix" data-d="delabree">VILLE DÉLABRÉE</div>
+ <div class="choix" data-d="vaviel">VAVIEL</div>
+ <div class="choix" data-d="boulevard">BOULEVARD</div>
+ <div class="choix" data-d="mitsuda">MITSUDA</div>
+ <div class="choix" data-d="rembourg">REMBOURG</div>
+ <div class="choix" id="versPontLades" data-d="pontlades" style="display:none">PONT-L'ADES</div>
+</div></div>
+
+<script>
+/* ================== AÉROPORT ==================
+   Le décor fait 2048 x 768. Rudy se déplace librement sur l'esplanade (8 directions),
+   plus petit quand il s'éloigne vers le terminal, plus grand quand il revient vers nous. */
+var IMG_SRC={"up": "/assets/shinato/m/aero_up.webp", "upR": "/assets/shinato/m/aero_upR.webp", "upL": "/assets/shinato/m/aero_upL.webp", "right": "/assets/shinato/m/aero_right.webp", "left": "/assets/shinato/m/aero_left.webp", "down": "/assets/shinato/m/aero_down.webp", "downL": "/assets/shinato/m/aero_downL.webp", "downR": "/assets/shinato/m/aero_downR.webp", "idle": "/assets/shinato/m/aero_idle.webp", "ouvrier": "/assets/shinato/m/aero_ouvrier.webp", "hotesse1": "/assets/shinato/m/aero_hotesse1.webp", "hotesse2": "/assets/shinato/m/aero_hotesse2.webp", "punk": "/assets/shinato/m/aero_punk.webp", "fond": "/assets/shinato/m/aero_fond.webp", "avion": "/assets/shinato/m/aero_avion.webp"};
+var META={"up": {"n": 12, "w": 217, "h": 302}, "upR": {"n": 12, "w": 261, "h": 302}, "upL": {"n": 12, "w": 289, "h": 302}, "right": {"n": 12, "w": 412, "h": 302}, "left": {"n": 12, "w": 372, "h": 302}, "down": {"n": 12, "w": 235, "h": 302}, "downL": {"n": 12, "w": 267, "h": 302}, "downR": {"n": 12, "w": 227, "h": 302}, "idle": {"n": 6, "w": 157, "h": 302}, "ouvrier": {"n": 4, "w": 360, "h": 262}, "hotesse1": {"n": 4, "w": 107, "h": 332}, "hotesse2": {"n": 4, "w": 153, "h": 332}, "punk": {"n": 4, "w": 304, "h": 302}};
+
+var cv=document.getElementById("scene"), cx=cv.getContext("2d");
+var IM={}, aCharger=0;
+Object.keys(IMG_SRC).forEach(function(k){ aCharger++; var i=new Image(); i.onload=function(){ if(--aCharger===0) depart(); }; i.src=IMG_SRC[k]; IM[k]=i; });
+
+var FW=2048, FH=768;          // taille du décor
+var HORIZON=330, K=0.5;       // hauteur d'une personne = K * (y - HORIZON)
+var SOL={x0:40, x1:2008, y0:526, y1:752};   // l'esplanade où l'on peut marcher
+function taille(y){ return K*(y-HORIZON); }
+
+// obstacles au sol (bornes lumineuses, jardinières, bancs) : rectangles x0, y0, x1, y1 (là où sont les pieds)
+var OBST=[[0,555,195,662],[420,538,540,573],[345,575,392,601],[605,528,634,551],[625,505,680,537],
+          [1300,505,1326,527],[1345,510,1372,531],[1430,515,1492,546],[1480,535,1602,569],
+          [1655,550,1697,604],[1815,558,1862,630],[1855,555,2048,667]];
+
+// ---------- les PNJ ----------
+var PNJ=[
+ {id:"hotesse1", nom:"HÔTESSE D'ACCUEIL", x:715, y:566, f:.95, vit:.75, mir:false},
+ {id:"hotesse2", nom:"HÔTESSE DE L'AIR", x:1585, y:604, f:.95, vit:.9, mir:false},
+ {id:"ouvrier", nom:"OUVRIER", x:300, y:668, f:.66, vit:1.1, mir:false},
+ {id:"punk", nom:"LA FILLE AU CHIEN", x:1120, y:628, f:.78, vit:1.15, mir:false, r:.55, ref:300, omb:.55}
+];
+
+// ---------- Rudy ----------
+var R={x:1024, y:700, dir:"up", bouge:false, dist:0};
+var DIRS=["right","downR","down","downL","left","upL","up","upR"];
+var REPOS={right:0,downR:5,down:1,downL:4,left:2,upL:3,up:3,upR:3};
+var input={x:0,y:0}, clav={};
+
+// ---------- écran ----------
+var W=0,H=0,DPR=1,ZOOM=1,cam={x:0,y:0};
+function mesure(){
+ DPR=Math.min(2,window.devicePixelRatio||1);
+ W=innerWidth; H=innerHeight;
+ cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+ ZOOM=Math.max(H/(FH*0.82), W/FW);            // on voit 82 % de la hauteur du décor
+}
+addEventListener("resize",mesure);
+
+function libre(x,y){
+ if(x<SOL.x0||x>SOL.x1||y<SOL.y0||y>SOL.y1) return false;
+ for(var i=0;i<OBST.length;i++){ var o=OBST[i]; if(x>o[0]-8&&x<o[2]+8&&y>o[1]-3&&y<o[3]+3) return false; }
+ for(i=0;i<PNJ.length;i++){ var p=PNJ[i], r=taille(p.y)*(p.r||.16); if(Math.hypot(x-p.x,(y-p.y)*(p.r?3:1.8))<r) return false; }
+ return true;
+}
+
+var tPrec=0;
+function boucle(t){
+ requestAnimationFrame(boucle);
+ var dt=Math.min(.05,(t-(tPrec||t))/1000); tPrec=t;
+ // direction
+ var ix=input.x, iy=input.y;
+ if(clav.l) ix=-1; if(clav.r) ix=1; if(clav.u) iy=-1; if(clav.d) iy=1;
+ var m=Math.min(1,Math.hypot(ix,iy));
+ if(m>.2){
+  var a=Math.atan2(iy,ix), s=Math.round(a/(Math.PI/4)); s=(s+8)%8;
+  R.dir=DIRS[s]; R.bouge=true;
+  var h=taille(R.y), v=1.55*h*m;
+  var nx=R.x+Math.cos(a)*v*dt, ny=R.y+Math.sin(a)*v*dt*.55;   // en profondeur, on avance moins vite à l'écran
+  if(libre(nx,ny)){R.x=nx;R.y=ny}else if(libre(nx,R.y)){R.x=nx}else if(libre(R.x,ny)){R.y=ny}
+  R.dist+=v*dt;
+ } else R.bouge=false;
+
+ // boutons
+
+ dessine(t/1000);
+}
+
+function dessine(T){
+ // caméra : suit Rudy
+ var vw=W/ZOOM, vh=H/ZOOM;
+ var cxT=Math.max(0,Math.min(FW-vw,R.x-vw/2)), cyT=Math.max(0,Math.min(FH-vh,R.y-taille(R.y)*.55-vh*.55));
+ cam.x+=(cxT-cam.x)*.12; cam.y+=(cyT-cam.y)*.12;
+ if(!dessine.ok){cam.x=cxT;cam.y=cyT;dessine.ok=true}
+ cx.setTransform(DPR*ZOOM,0,0,DPR*ZOOM,-cam.x*DPR*ZOOM,-cam.y*DPR*ZOOM);
+ cx.imageSmoothingEnabled=true; cx.imageSmoothingQuality="high";
+ cx.drawImage(IM.fond,0,0,FW,FH);
+
+ // feu rouge de la tour de contrôle
+ var cl=(Math.sin(T*3)+1)/2;
+ lueur(468,56,10+cl*8,"rgba(255,40,40,"+(.35+cl*.55)+")");
+ avion(T);
+
+ // personnages, du fond vers l'avant
+ var liste=PNJ.map(function(p){return {y:p.y,f:function(){dessinePNJ(p,T)}}});
+ liste.push({y:R.y,f:dessineRudy});
+ liste.sort(function(a,b){return a.y-b.y}).forEach(function(o){o.f()});
+}
+/* l'avion décolle et traverse le ciel une fois par minute (la première fois peu après l'arrivée) */
+var AVION_TOUS=60, AVION_DUREE=17, AVION_DEBUT=4;
+function avion(T){
+ var t=(T-AVION_DEBUT)%AVION_TOUS; if(T<AVION_DEBUT||t>AVION_DUREE) return;
+ var k=t/AVION_DUREE, img=IM.avion;
+ var x=-260+k*2620, y=250-k*120, sc=1.1-k*.35;          // il monte en s'éloignant
+ var w=img.width*sc, h=img.height*sc;
+ cx.save(); cx.translate(x,y);
+ cx.drawImage(img,-w/2,-h/2,w,h);
+ var cl=(Math.sin(T*6)+1)/2;
+ cx.translate(-w/2,-h/2); cx.scale(sc,sc);
+ lueur(88,37,6+cl*4,"rgba(255,60,60,"+(.4+cl*.5)+")");          // feu rouge sous le fuselage
+ if(Math.floor(T*1.4)%2===0){ lueur(4,40,7,"rgba(255,255,255,.95)"); lueur(150,6,5,"rgba(255,255,255,.8)"); }  // flashs blancs
+ cx.restore();
+}
+function lueur(x,y,r,c){
+ var g=cx.createRadialGradient(x,y,0,x,y,r); g.addColorStop(0,c); g.addColorStop(1,"rgba(0,0,0,0)");
+ cx.globalCompositeOperation="lighter"; cx.fillStyle=g; cx.beginPath(); cx.arc(x,y,r,0,7); cx.fill(); cx.globalCompositeOperation="source-over";
+}
+function ombre(x,y,w){
+ cx.save(); cx.translate(x,y); cx.scale(1,.28);
+ var g=cx.createRadialGradient(0,0,0,0,0,w); g.addColorStop(0,"rgba(0,0,0,.55)"); g.addColorStop(1,"rgba(0,0,0,0)");
+ cx.fillStyle=g; cx.beginPath(); cx.arc(0,0,w,0,7); cx.fill(); cx.restore();
+}
+function sprite(nom,i,x,y,hPerso,refH,mir){
+ var M=META[nom], img=IM[nom], sc=hPerso/refH, w=M.w*sc, h=M.h*sc;
+ cx.save(); cx.translate(x,y); if(mir) cx.scale(-1,1);
+ cx.drawImage(img,i*M.w,0,M.w,M.h,-w/2,-h,w,h); cx.restore();
+}
+function dessineRudy(){
+ var h=taille(R.y);
+ ombre(R.x,R.y,h*.22);
+ if(R.bouge){ var n=META[R.dir].n, i=Math.floor(R.dist/(h*.13))%n; sprite(R.dir,i,R.x,R.y+h*.01,h,300,false); }
+ else sprite("idle",REPOS[R.dir],R.x,R.y+h*.01,h,300,false);
+}
+function dessinePNJ(p,T){
+ var h=taille(p.y)*p.f, n=META[p.id].n;
+ var k=Math.floor(T/p.vit)%(n*2-2); if(k>=n) k=n*2-2-k;      // aller-retour dans les poses
+ ombre(p.x,p.y,taille(p.y)*(p.omb||(p.id==="ouvrier"?.42:.2)));
+ sprite(p.id,k,p.x,p.y,h,p.ref||(p.id==="ouvrier"?260:330),p.mir);
+}
+
+
+// ---------- joystick (un doigt, analogique) ----------
+(function(){
+ var joy=document.getElementById("joy"), st=document.getElementById("stick"), id=null, c0=null;
+ function maj(e){
+  var r=joy.getBoundingClientRect(), R0=r.width/2, dx=e.clientX-(r.left+R0), dy=e.clientY-(r.top+R0);
+  var d=Math.hypot(dx,dy), lim=R0*.62; if(d>lim){dx*=lim/d;dy*=lim/d}
+  st.style.transform="translate("+dx+"px,"+dy+"px)";
+  var n=Math.min(1,d/lim); input.x=d?dx/Math.hypot(dx,dy)*n:0; input.y=d?dy/Math.hypot(dx,dy)*n:0;
+ }
+ joy.addEventListener("pointerdown",function(e){ e.preventDefault(); id=e.pointerId; try{joy.setPointerCapture(id)}catch(_){} maj(e); });
+ joy.addEventListener("pointermove",function(e){ if(e.pointerId===id) maj(e); });
+ function lache(e){ if(e.pointerId!==id) return; id=null; input.x=input.y=0; st.style.transform=""; }
+ joy.addEventListener("pointerup",lache); joy.addEventListener("pointercancel",lache);
+ addEventListener("blur",function(){ id=null; input.x=input.y=0; st.style.transform=""; });
+})();
+// clavier (pour tester sur ordinateur)
+var TOUCHES={ArrowLeft:"l",KeyA:"l",KeyQ:"l",ArrowRight:"r",KeyD:"r",ArrowUp:"u",KeyW:"u",KeyZ:"u",ArrowDown:"d",KeyS:"d"};
+addEventListener("keydown",function(e){ if(TOUCHES[e.code]) clav[TOUCHES[e.code]]=1; });
+addEventListener("keyup",function(e){ if(TOUCHES[e.code]) clav[TOUCHES[e.code]]=0; });
+
+function appui(el,f){ var t0=0; function go(e){ if(e.cancelable)e.preventDefault(); e.stopPropagation(); var n=Date.now(); if(n-t0<350)return; t0=n; f(); }
+ el.addEventListener("pointerdown",go); }
+/* ---------- au bout de l'esplanade (à gauche ou à droite) : « Où voulez-vous aller ? » (on reprend la moto) ---------- */
+(function(){
+ var boite=document.getElementById("departAero"), ouvert=false, arme=false;
+ function montre(){ ouvert=true; arme=false; boite.style.display="flex"; input.x=input.y=0; clav={}; }
+ function cache(){ ouvert=false; boite.style.display="none"; }
+ appui(document.getElementById("departFermer"),cache);
+ setInterval(function(){
+  var bout=(R.x<=SOL.x0+6||R.x>=SOL.x1-6);
+  if(!ouvert&&arme&&bout) montre();
+  if(R.x>SOL.x0+70&&R.x<SOL.x1-70) arme=true;     // il faut s'être éloigné du bord pour que la question revienne
+ },120);
+ [].forEach.call(boite.querySelectorAll(".choix"),function(b){
+  appui(b,function(){ cache(); try{ window.parent.postMessage({type:"aeroport:destination",dest:b.getAttribute("data-d")},"*"); }catch(e){} });
+ });
+ // PONT-L'ADES : le choix n'apparaît qu'après « INFORMATION SUR MIDA »
+ setInterval(function(){ var b=document.getElementById("versPontLades"); var ok=false; try{ ok=localStorage.getItem("pontlades_debloque")==="1"; }catch(e){} b.style.display=ok?"":"none"; },400);
+})();
+/* ---------- PARLER au mécanicien : seulement après « QU'EST-CE QUI SE PASSE ? » au Pixel Bar ----------
+   sa vidéo se lance, puis on entre directement dans le jeu « Chasseur de nuit » */
+(function(){
+ var b=document.getElementById("btnParlerMeca"), meca=PNJ.filter(function(p){return p.id==="ouvrier"})[0], occupe=false;
+ var vb=document.createElement("div"); vb.style.cssText="position:fixed;inset:0;z-index:70;background:#000;display:none";
+ vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+ document.body.appendChild(vb); var v=vb.querySelector("video");
+ function debloque(){ try{ return localStorage.getItem("pixelbar_quoi_vu")==="1"; }catch(e){ return false; } }
+ setInterval(function(){
+  var d=Math.hypot(R.x-meca.x,(R.y-meca.y)*1.6), pres=!occupe&&debloque()&&d<taille(meca.y)*.9;
+  b.hidden=!pres;
+ },150);
+ var fini=false;
+ function fin(){ if(fini) return; fini=true; try{ window.parent.postMessage({type:"aeroport:chasseur"},"*"); }catch(e){} }
+ v.addEventListener("ended",fin); v.addEventListener("error",fin);
+ appui(b,function(){ if(occupe) return; occupe=true; fini=false; b.hidden=true; input.x=input.y=0; clav={};
+  v.src="/assets/shinato/m/aero_mecanicien.mp4"; vb.style.display="block"; var q=v.play(); if(q&&q.catch) q.catch(function(){}); });
+})();
+function depart(){ mesure(); document.getElementById("charge").hidden=true; requestAnimationFrame(boucle); }
+</script>
+</body>
+</html>

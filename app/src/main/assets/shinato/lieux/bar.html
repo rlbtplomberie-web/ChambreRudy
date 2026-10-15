@@ -98,6 +98,7 @@ window.addEventListener('load',()=>requestAnimationFrame(frame));
  <div class="btn" id="btnJouer">JOUER</div>
  <div class="btn" id="btnBiere" style="display:none">🍺 COMMANDER UNE BIÈRE</div>
  <div class="btn" id="btnParlerCanape" style="display:none">PARLER</div>
+ <div class="btn" id="btnQuoiCanape" style="display:none">QU'EST-CE QUI SE PASSE&nbsp;?</div>
  <div class="btn" id="btnSortir">SORTIR</div>
 </div>
 <script>
@@ -379,6 +380,25 @@ window.addEventListener("blur",r);document.addEventListener("visibilitychange",r
   let t0=0;
   const go=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t0<400) return; t0=n;
     occupe=true; b.style.display='none'; v.src='/assets/shinato/m/pixelbar_canape.mp4'; vb.style.display='block';
+    const q=v.play(); if(q&&q.catch) q.catch(()=>{}); };
+  b.addEventListener('touchstart',go,{passive:false}); b.addEventListener('click',go);
+})();
+
+/* ================= QU'EST-CE QUI SE PASSE ? (la fille sur le canapé) : seulement après avoir réussi « Le Grand Terrain » ================= */
+(function(){
+  const b=document.getElementById('btnQuoiCanape');
+  const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:70;background:#000;display:none';
+  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+  document.body.appendChild(vb); const v=vb.querySelector('video'); let occupe=false;
+  function ferme(){ try{ v.pause(); }catch(e){} vb.style.display='none'; occupe=false; }
+  v.addEventListener('ended',ferme); v.addEventListener('error',ferme);
+  function gagne(){ try{ return localStorage.getItem('pontlades_gagne')==='1'; }catch(e){ return false; } }
+  setInterval(()=>{ const pres=!occupe&&RUDY.etat==='debout'&&RUDY.x>=980&&gagne();
+    b.style.display=pres?'block':'none'; },150);
+  let t0=0;
+  const go=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t0<400) return; t0=n;
+    occupe=true; b.style.display='none'; v.src='/assets/shinato/m/pixelbar_canape_quoi.mp4'; vb.style.display='block';
+    try{ localStorage.setItem('pixelbar_quoi_vu','1'); }catch(err){}   // débloque PARLER au mécanicien de l'aéroport
     const q=v.play(); if(q&&q.catch) q.catch(()=>{}); };
   b.addEventListener('touchstart',go,{passive:false}); b.addEventListener('click',go);
 })();

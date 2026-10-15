@@ -1227,6 +1227,7 @@ else carte.addEventListener("load",demarre);
  <button class="choix" id="versMitsuda" style="margin-top:2.4vmin">MITSUDA</button>
  <button class="choix" id="versRembourg" style="margin-top:2.4vmin">REMBOURG</button>
  <button class="choix" id="versPontLades" style="margin-top:2.4vmin;display:none">PONT-L'ADES</button>
+ <button class="choix" id="versAeroport" style="margin-top:2.4vmin">L'AÉROPORT</button>
 </div></div>
 <script>/* PONT-L'ADES : le choix n'apparaît qu'après « INFORMATION SUR MIDA » (le costaud du Barding) */
 setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) return; var ok=false; try{ ok=localStorage.getItem('pontlades_debloque')==='1'; }catch(e){} b.style.display=ok?'':'none'; },400);</script>
@@ -1262,6 +1263,23 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
   v.addEventListener("ended",fin); v.addEventListener("error",fin);
   v.src="/assets/shinato/m/usine_hopital.mp4"; var p=v.play(); if(p&&p.catch) p.catch(function(){});
  };
+})();
+/* ---------- bulle style manga au-dessus de Rudy (dans la rue de Shinato) ---------- */
+(function(){
+ var st=document.createElement("style");
+ st.textContent="#bulleRudy{position:fixed;z-index:40;display:none;pointer-events:none;transform:translate(-50%,-100%);max-width:62vw;padding:2.2vmin 3.4vmin;background:#fff;color:#111;border:.6vmin solid #111;border-radius:50%/42%;font:900 clamp(15px,4vmin,30px)/1.15 'Comic Sans MS','Comic Neue','Bangers',Arial,sans-serif;text-align:center;white-space:nowrap;box-shadow:.8vmin .8vmin 0 rgba(0,0,0,.55);animation:bullePop .35s cubic-bezier(.2,1.6,.4,1)}"+
+  "#bulleRudy:after{content:'';position:absolute;left:46%;bottom:-3.2vmin;border:1.8vmin solid transparent;border-top:3.4vmin solid #111;border-bottom:0}"+
+  "#bulleRudy:before{content:'';position:absolute;left:calc(46% + .9vmin);bottom:-2vmin;z-index:1;border:1.1vmin solid transparent;border-top:2.3vmin solid #fff;border-bottom:0}"+
+  "@keyframes bullePop{from{transform:translate(-50%,-100%) scale(.2)}to{transform:translate(-50%,-100%) scale(1)}}";
+ document.head.appendChild(st);
+ var b=document.createElement("div"); b.id="bulleRudy"; document.body.appendChild(b);
+ var fin=0;
+ function suit(){
+  if(Date.now()>fin){ b.style.display="none"; return; }
+  var r=document.getElementById("rudy"); if(r){ var q=r.getBoundingClientRect(), w=b.offsetWidth||200, h=b.offsetHeight||60; var cx=Math.max(w/2+8,Math.min(innerWidth-w/2-8,q.left+q.width/2)); var cy=Math.max(h+8,q.top+q.height*0.10); b.style.left=cx+"px"; b.style.top=cy+"px"; }
+  requestAnimationFrame(suit);
+ }
+ window.bulleRudy=function(texte,ms){ b.textContent=texte; fin=Date.now()+(ms||5000); b.style.display="block"; b.style.animation="none"; void b.offsetWidth; b.style.animation=""; requestAnimationFrame(suit); };
 })();
 /* ---------- au bout de la rue, tout à droite : « Où voulez-vous aller ? » ---------- */
 (function(){
@@ -1301,6 +1319,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
  window.appuiSur(document.getElementById("versMitsuda"),function(){ partEnMoto("mitsuda"); });
  window.appuiSur(document.getElementById("versPontLades"),function(){ partEnMoto("pontlades"); });
  window.appuiSur(document.getElementById("versRembourg"),function(){ partEnMoto("rembourg"); });
+ window.appuiSur(document.getElementById("versAeroport"),function(){ partEnMoto("aeroport"); });
 
  // arrivée de la moto : c'est ici qu'on enchaînera sur la plage (fichier à venir)
  window.addEventListener("message",function(e){
@@ -1340,7 +1359,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
    window.minuterieLibre(function(){ try{ cv.focus(); }catch(err){} },300);
    return;
   }
-  if(e.data && (e.data.type==="delabree:destination"||e.data.type==="vaviel:destination"||e.data.type==="mitsuda:destination"||e.data.type==="rembourg:destination") && (e.data.dest==="pontlades"||e.data.dest==="shinato"||e.data.dest==="plage"||e.data.dest==="delabree"||e.data.dest==="vaviel"||e.data.dest==="boulevard"||e.data.dest==="mitsuda"||e.data.dest==="rembourg")){
+  if(e.data && (e.data.type==="delabree:destination"||e.data.type==="vaviel:destination"||e.data.type==="mitsuda:destination"||e.data.type==="rembourg:destination"||e.data.type==="aeroport:destination") && (e.data.dest==="aeroport"||e.data.dest==="pontlades"||e.data.dest==="shinato"||e.data.dest==="plage"||e.data.dest==="delabree"||e.data.dest==="vaviel"||e.data.dest==="boulevard"||e.data.dest==="mitsuda"||e.data.dest==="rembourg")){
    // depuis le bout gauche de la ville délabrée : la moto, vers Shinato (bout droit de la ville) ou vers la plage (bout gauche)
    window.DESTINATION_MOTO=e.data.dest==="shinato"?"ville":e.data.dest;
    var cmv=document.getElementById("moto"); if(!cmv) return;
@@ -1349,7 +1368,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
    window.minuterieLibre(function(){ try{ cmv.focus(); }catch(err){} },300);
    return;
   }
-  if(e.data && e.data.type==="plage:destination" && (e.data.dest==="pontlades"||e.data.dest==="shinato"||e.data.dest==="delabree"||e.data.dest==="vaviel"||e.data.dest==="boulevard"||e.data.dest==="mitsuda"||e.data.dest==="rembourg")){
+  if(e.data && e.data.type==="plage:destination" && (e.data.dest==="aeroport"||e.data.dest==="pontlades"||e.data.dest==="shinato"||e.data.dest==="delabree"||e.data.dest==="vaviel"||e.data.dest==="boulevard"||e.data.dest==="mitsuda"||e.data.dest==="rembourg")){
    // depuis la plage : on reprend la moto (vers Shinato, la ville, ou vers la ville délabrée)
    window.DESTINATION_MOTO=e.data.dest==="shinato"?"ville":e.data.dest;
    var cm=document.getElementById("moto"); if(!cm) return;
@@ -1365,8 +1384,26 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
     try{ if(window.RUDY_AUDIO){ window.PONTLADES_MUSIQUE=!window.RUDY_AUDIO.paused; window.RUDY_AUDIO.pause(); } }catch(err){}
     cm.removeAttribute("srcdoc"); cm.src="/assets/shinato/jeux/pontlades.html"; cm.style.pointerEvents="auto"; cm.style.display="block";
     window.pontladesQuitte(true);
+    var qp=document.getElementById("pontladesQuitter"); if(qp){ qp.style.left="10px"; qp.style.transform=""; }
     window.minuterieLibre(function(){ try{ cm.focus(); }catch(err){} },300);
    },600);
+   return;
+  }
+  if(e.data && e.data.type==="aeroport:chasseur"){
+   // CHASSEUR DE NUIT : après la vidéo du mécanicien de l'aéroport, le jeu se lance (sa propre musique : celle de la ville se tait)
+   var cc=document.getElementById("moto"); if(!cc) return;
+   try{ if(window.RUDY_AUDIO){ window.PONTLADES_MUSIQUE=!window.RUDY_AUDIO.paused; window.RUDY_AUDIO.pause(); } }catch(err){}
+   cc.removeAttribute("srcdoc"); cc.src="/assets/shinato/jeux/chasseur.html"; cc.style.pointerEvents="auto"; cc.style.display="block";
+   window.pontladesQuitte(true);
+   var qc=document.getElementById("pontladesQuitter"); if(qc){ qc.style.left="50%"; qc.style.transform="translateX(-50%)"; }   // en haut au milieu : la barre de vie de l'avion reste visible
+   window.minuterieLibre(function(){ try{ cc.focus(); }catch(err){} },300);
+   return;
+  }
+  if(e.data && e.data.type==="chasseur:victoire"){
+   // la géante est vaincue : Rudy atterrit à Shinato, et une bulle s'affiche au-dessus de lui
+   try{ localStorage.setItem("chasseur_gagne","1"); }catch(err){}
+   window.pontladesFin(true);
+   window.minuterieLibre(function(){ window.bulleRudy("Je dois prévenir Ameline !",6000); },500);
    return;
   }
   if(e.data && (e.data.type==="pontlades:ko"||e.data.type==="pontlades:victoire")){
@@ -1403,6 +1440,16 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
    window.minuterieLibre(function(){
     var cadre=document.getElementById("moto"); if(!cadre) return;
     var o=LIEU_OCTETS("lieux/rembourg.html");
+    cadre.srcdoc=new TextDecoder("utf-8").decode(o);
+    window.minuterieLibre(function(){ try{ cadre.focus(); }catch(e){} },300);
+   },2200);
+   return;
+  }
+  if(e.data && e.data.type==="rudyMoto:arrivee" && window.DESTINATION_MOTO==="aeroport"){
+   // « Arrivé » : on arrive à l'aéroport (la moto est déchargée, la musique de Shinato continue)
+   window.minuterieLibre(function(){
+    var cadre=document.getElementById("moto"); if(!cadre) return;
+    var o=LIEU_OCTETS("lieux/aeroport.html");
     cadre.srcdoc=new TextDecoder("utf-8").decode(o);
     window.minuterieLibre(function(){ try{ cadre.focus(); }catch(e){} },300);
    },2200);
@@ -2069,7 +2116,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
  /* MAP du téléphone : Rudy est téléporté là où il a choisi d'aller (la musique de la ville continue) */
  window.teleporteVers=function(lieu){
   telAncien=true;                                    // après le voyage, le téléphone se recharge à neuf
-  var dest={plage:"plage",vaviel:"vaviel",ville:"delabree",delabree:"delabree",boulevard:"boulevard",mitsuda:"mitsuda",rembourg:"rembourg"}[lieu];
+  var dest={plage:"plage",vaviel:"vaviel",ville:"delabree",delabree:"delabree",boulevard:"boulevard",mitsuda:"mitsuda",rembourg:"rembourg",aeroport:"aeroport"}[lieu];
   if(lieu==="home"){ try{ if(window.Chambre&&window.Chambre.rentrer) window.Chambre.rentrer(); }catch(e){} return; }
   try{ if(window.RUDY_AUDIO&&window.RUDY_AUDIO.paused){ var pr=window.RUDY_AUDIO.play(); if(pr&&pr.catch) pr.catch(function(){}); } }catch(e){}
   var cm=document.getElementById("moto");
@@ -2084,7 +2131,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
   window.DESTINATION_MOTO=dest; dir=0; window.pauseRue();
   if(!cm){ cm=document.createElement("iframe"); cm.id="moto"; cm.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(cm); }
   // un écran de voyage le temps que le lieu se dessine : la rue ne se montre plus entre les deux
-  if(couv){ document.getElementById("voyageTxt").textContent="En route vers "+({plage:"la plage",vaviel:"Vaviel",ville:"la ville délabrée",delabree:"la ville délabrée",boulevard:"le boulevard",mitsuda:"Mitsuda",rembourg:"Rembourg"}[lieu]||"là-bas")+"…"; couv.style.display="flex"; }
+  if(couv){ document.getElementById("voyageTxt").textContent="En route vers "+({plage:"la plage",vaviel:"Vaviel",ville:"la ville délabrée",delabree:"la ville délabrée",boulevard:"le boulevard",mitsuda:"Mitsuda",rembourg:"Rembourg",aeroport:"l'aéroport"}[lieu]||"là-bas")+"…"; couv.style.display="flex"; }
   var fini=false, cache=function(){ if(fini) return; fini=true; window.minuterieLibre(function(){ if(couv) couv.style.display="none"; },250); };
   cm.onload=cache; window.minuterieLibre(cache,8000);
   cm.style.pointerEvents="auto"; cm.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/"+dest+".html")); cm.style.display="block";
