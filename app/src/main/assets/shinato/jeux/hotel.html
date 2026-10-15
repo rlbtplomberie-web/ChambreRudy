@@ -704,7 +704,14 @@ function sfx(type,vol=1){if(!AC)return;const t=AC.currentTime,out=AC.createGain(
 }
 
 /* ---------- état du joueur ---------- */
-const P={hp:100,pos:new THREE.Vector3(0,0,14.6),face:new THREE.Vector2(0,-1),mode:'free',crouch:false,armed:false,
+/* bonus de vie : après une mort, la partie suivante se joue avec 2 fois plus de vie (une seule fois) ;
+   si Rudy meurt encore, ou s'il gagne, ça revient comme avant */
+const PVB_CLE='pvBonus_hotel';let PVX=1,pvMortFait=false;
+function pvDebut(){try{PVX=localStorage.getItem(PVB_CLE)==='1'?2:1}catch(e){PVX=1}pvMortFait=false;return PVX}
+function pvMort(){if(pvMortFait)return;pvMortFait=true;try{if(PVX>1)localStorage.removeItem(PVB_CLE);else localStorage.setItem(PVB_CLE,'1')}catch(e){}}
+function pvGagne(){try{localStorage.removeItem(PVB_CLE)}catch(e){}}
+let HPMAX=100*pvDebut();
+const P={hp:HPMAX,pos:new THREE.Vector3(0,0,14.6),face:new THREE.Vector2(0,-1),mode:'free',crouch:false,armed:false,
   anim:0,animT:0,stepT:0,cover:null,coverMoveDir:1,coverIdleT:0,corner:0,timer:0,fromCover:false,ammo:15,reserve:45,reloadT:0,punchSheet:'punch_E',punchMirror:false};
 const cam={yaw:0,pitch:.28,dist:3.3,curYaw:0,curPitch:.28,curDist:3.3,target:new THREE.Vector3(),pos:new THREE.Vector3()};
 const fps={yaw:0,pitch:0,vx:0,vy:0,recoil:0,bob:0,frame:0,flashT:0,pend:0,pendFi:0,swX:0,swY:0};
@@ -735,13 +742,14 @@ function findWall(){let best=null;
   return best}
 function nearFood(){let best=null,bd=1.5;for(const o of foodSpots){if(!o.food)continue;
     const c=o.colRect,dx=Math.max(c.x0-P.pos.x,0,P.pos.x-c.x1),dz=Math.max(c.z0-P.pos.z,0,P.pos.z-c.z1),d=Math.hypot(dx,dz);if(d<bd){bd=d;best=o}}return best}
-function setHP(v){P.hp=clamp(v,0,100);$('lifeBar').style.width=P.hp+'%';$('lifeNum').textContent=Math.round(P.hp)}
+function setHP(v){P.hp=clamp(v,0,HPMAX);$('lifeBar').style.width=(P.hp/HPMAX*100)+'%';$('lifeNum').textContent=Math.round(P.hp);$('life').firstElementChild.textContent=HPMAX>100?'VIE \u00d72':'VIE'}
+try{setHP(P.hp)}catch(e){}
 let toastT=0;function toast(txt){$('toast').textContent=txt;$('toast').classList.add('on');toastT=1.2}
 function eat(o){ // Rudy prend le poulet sur la table et le mange (planche « manger »)
   P.eatTable=o;P.timer=0;P.ate=false;P.took=false;
   const dx=o.x-P.pos.x,dz=o.z-P.pos.z;P.face.set(dx,dz).normalize();
   cam.yaw=Math.atan2(-dx,-dz);setMode('eat');foodClock=18+Math.random()*12}
-function eatBite(){const g=Math.min(40,100-P.hp);setHP(P.hp+40);sfx('eat');toast(g>0?'+'+Math.round(g)+' VIE':'Déjà en pleine forme')}
+function eatBite(){const g=Math.min(40,HPMAX-P.hp);setHP(P.hp+40);sfx('eat');toast(g>0?'+'+Math.round(g)+' VIE':'Déjà en pleine forme')}
 let foodClock=2;
 function spawnFood(){const pool=foodSpots.filter(o=>LEVEL===4?o.x>200:o.x<50);const free=pool.filter(o=>!o.food&&Math.hypot(o.x-P.pos.x,o.z-P.pos.z)>3);
   if(pool.filter(o=>o.food).length>=(LEVEL===4?4:2)||!free.length)return;free[Math.random()*free.length|0].food=true}
@@ -825,7 +833,7 @@ function fire(){if(GR.on){grabTap();return}if(P.mode==='free'){const g=nearGrab(
     const end=eh?o.clone().addScaledVector(dir,eh.t):hit?hit.point:o.clone().addScaledVector(dir,40);if(eh)hitFx(end);
     muzzle.position.copy(o);muzzle.visible=true;muzzle.userData.t=.06;muzzle.scale.setScalar(.7+Math.random()*.4);
     tracer.geometry.setFromPoints([o.clone().addScaledVector(dir,.2),end]);tracer.visible=true;tracer.userData.t=.05}
-  if(eh)damageEnemy(eh.e,1,eh.head);else if(hit&&hit.face)addHole(hit);
+  if(eh)damageEnemy(eh.e,PVX,eh.head,PVX);else if(hit&&hit.face)addHole(hit);
   if(P.ammo===0)setTimeout(reload,250)}
 function hitFx(p){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:0xff3020,transparent:true,depthWrite:false}));s.position.copy(p);s.scale.setScalar(.45);scene.add(s);efx.push({o:s,t:.12})}
 function updateAmmo(){$('ammo').innerHTML=`${P.reloadT>0?'··':P.ammo}<small>/ ${P.reserve}</small>`}
@@ -1122,7 +1130,7 @@ function hitSide(e){const{R:r}=camVectors(cam.curYaw);return e&&((e.pos.x-P.pos.
 function hurtRudy(dmg,e){if(P.hp<=0)return;if(P.mode==='free'&&!P.hurtA)P.hurtA={sheet:hitSide(e),t:0};P.lastShooter=e;setHP(P.hp-dmg);sfx('hurt');$('hurt').style.opacity=.55;hurtT=.35;camShake=.18;
   if(P.hp<=0)gameOver()}
 let hurtT=0,camShake=0,kills=0;
-function damageEnemy(e,n,head){if(e===Q){bossHurt(n,head);return}if(e.state==='dead'||e.state==='dying')return;e.hp-=head?(e.def.boss?3:99):n;e.flash=.18;if(e.def.boss){updBoss();if(e.bst==='peek'&&Math.random()<.55)e.duck=true}
+function damageEnemy(e,n,head,k){k=k||1;if(e===Q){bossHurt(n,head,k);return}if(e.state==='dead'||e.state==='dying')return;e.hp-=head?(e.def.boss?3*k:99):n;e.flash=.18;if(e.def.boss){updBoss();if(e.bst==='peek'&&Math.random()<.55)e.duck=true}
   e.last.copy(P.pos);if(e.hp<=0){e.state='dying';e.dieT=0;e.ic.visible=false;kills++;updFoes();sfx('fall');return}
   e.state='hit';e.hitT=e.def.boss?.12:.38;e.sus=1;sfx('ehurt')}
 function updFoes(){const n=activeFoes()-kills;$('foesNum').textContent=n;if(n===0&&kills>0)toast('ÉTAGE NETTOYÉ !')}
@@ -1207,13 +1215,13 @@ function updateEnemies(dt,active){
     e.ic.visible=active&&(showA||showS);if(e.ic.visible){e.ic.material.map=showA?ICON.alert:ICON.sus;e.ic.material.opacity=showA?1:clamp(e.sus*1.4,.35,1);e.ic.position.set(e.pos.x,2.05,e.pos.z)}
   }
 }
-function gameOver(){try{if(!window.KO_PRISE&&typeof Q!=='undefined'&&P.lastShooter===Q)window.KO_PRISE='boss'}catch(e){}P.hp=0;P.diving=null;TSC=1;$('slowmo').classList.remove('on');
+function gameOver(){pvMort();try{if(!window.KO_PRISE&&typeof Q!=='undefined'&&P.lastShooter===Q)window.KO_PRISE='boss'}catch(e){}P.hp=0;P.diving=null;TSC=1;$('slowmo').classList.remove('on');
   if(P.mode==='fps'||P.mode==='peek'){const{F:f}=camVectors(fps.yaw);cam.yaw=cam.curYaw=fps.yaw}
   P.cover=null;P.hurtA=null;P.dieA={sheet:hitSide(P.lastShooter),t:0};setMode('dying');sfx('fall')}
 function updateDying(dt){const D=P.dieA;D.t+=dt;const i=Math.min(7,1+Math.floor(D.t/.16));
   cam.curPitch+=(.35-cam.curPitch)*Math.min(1,dt*2);cam.curDist+=(3.6-cam.curDist)*Math.min(1,dt*2);placeThirdPerson(.8);
   const off=setFrame(rudy,D.sheet,i,false);placeSprite(off);if(D.t>1.1+1.2&&$('over').hidden)$('over').hidden=false}
-function resetGame(){$('over').hidden=true;P.dieA=null;P.hurtA=null;P.diving=null;TSC=1;$('slowmo').classList.remove('on');setHP(100);P.ammo=15;P.reserve=45;P.reloadT=0;updateAmmo();P.pos.set(LEVEL===4?BX:LEVEL===3?AX:0,0,LEVEL===4?9.5:LEVEL===3?7:LEVEL===2?-1.4:14.6);GR.on=false;$('escape').hidden=true;Q.g.visible=false;P.face.set(0,-1);P.crouch=false;P.cover=null;
+function resetGame(){$('over').hidden=true;P.dieA=null;P.hurtA=null;P.diving=null;TSC=1;$('slowmo').classList.remove('on');HPMAX=100*pvDebut();setHP(HPMAX);P.ammo=15;P.reserve=45;P.reloadT=0;updateAmmo();P.pos.set(LEVEL===4?BX:LEVEL===3?AX:0,0,LEVEL===4?9.5:LEVEL===3?7:LEVEL===2?-1.4:14.6);GR.on=false;$('escape').hidden=true;Q.g.visible=false;P.face.set(0,-1);P.crouch=false;P.cover=null;
   cam.yaw=cam.curYaw=0;rudy.visible=shadow.visible=true;setMode('free');kills=0;
   for(const e of enemies){if(e.off)continue;e.dropped=false;resetEnemy(e)}lvlBusy=false;if(LEVEL===3)updBoss();if(LEVEL===4){P.reserve=Math.max(P.reserve,60);updateAmmo();resetBoss();Q.m.visible=true;for(const f of FINAL_FOOD)f.food=true}for(const pk of pickups)scene.remove(pk.s);pickups.length=0;updFoes()}
 
@@ -1428,7 +1436,7 @@ function bossMove(tx,tz,speed,dt){const dx=tx-Q.pos.x,dz=tz-Q.pos.z,L=Math.hypot
 function startRoll(kind){Q.state='roll';Q.t=0;Q.inv=true;camera.getWorldDirection(tmpV);
   const R=new THREE.Vector3(-tmpV.z,0,tmpV.x),Fw=new THREE.Vector3(tmpV.x,0,tmpV.z).normalize();
   Q.rollKey=kind;Q.rollV=kind==='roll_E'?R:kind==='roll_W'?R.clone().negate():kind==='roll_S'?Fw.clone().negate():Fw.clone();Q.shotDone=false;sfx('whoosh')}
-function bossHurt(n,head){if(Q.inv||Q.state==='dead'||Q.state==='dying'||Q.state==='grab')return;Q.hp-=head?2.5:n;Q.flash=.15;updFinalBar();sfx('ehurt');
+function bossHurt(n,head,k){if(Q.inv||Q.state==='dead'||Q.state==='dying'||Q.state==='grab')return;Q.hp-=head?2.5*(k||1):n;Q.flash=.15;updFinalBar();sfx('ehurt');
   if(Q.hp<=0){Q.state='dying';Q.t=0;Q.inv=true;sfx('fall');toast('LA BOSS EST À TERRE !');return}
   if(Q.state==='fight'&&Q.rollCd<=0&&Math.random()<.4){Q.rollCd=2.5;startRoll(Math.random()<.5?'roll_E':'roll_W')}}
 function bossOnShot(){ // Rudy tire : elle esquive parfois en roulade
@@ -1506,11 +1514,11 @@ function updateFinal(dt){if(!Q.active)return;camera.getWorldDirection(tmpV);cons
   else off=bSet(Q.m,key,fi,mir);
   Q.m.position.set(Q.pos.x+R.x*off,0,Q.pos.z+R.z*off);Q.m.rotation.y=camYaw;Q.sh.position.set(Q.pos.x,.012,Q.pos.z)}
 function nearHostage(){return LEVEL===4&&Q.state==='dead'&&!HOST.freed&&Math.hypot(P.pos.x-HOST.x,P.pos.z-HOST.z)<1.9}
-function freeHostage(){HOST.freed=true;Q.hm.visible=false;sfx('eat');setTimeout(()=>{$('win').hidden=false},900);toast('OTAGE LIBÉRÉE !')}
+function freeHostage(){pvGagne();HOST.freed=true;Q.hm.visible=false;sfx('eat');setTimeout(()=>{$('win').hidden=false},900);toast('OTAGE LIBÉRÉE !')}
 function startLevel4(){LEVEL=4;buildFinal();
   for(const e of enemies){e.off=true;e.state='dead';e.m.visible=false;e.sh.visible=false;e.ic.visible=false}
   for(const pk of pickups)scene.remove(pk.s);pickups.length=0;kills=0;$('foesNum').textContent='la boss';
-  P.reserve=Math.max(P.reserve,60);updateAmmo();setHP(Math.max(P.hp,100));
+  P.reserve=Math.max(P.reserve,60);updateAmmo();setHP(Math.max(P.hp,HPMAX));
   P.pos.set(BX,0,9.5);P.face.set(0,-1);cam.yaw=cam.curYaw=0;P.crouch=false;P.cover=null;setMode('free');
   Q.active=true;HOST.freed=false;resetBoss();for(const f of FINAL_FOOD)f.food=true;
   $('lvl').textContent='Dernier étage';$('bossbar').hidden=false;$('bossbar').firstElementChild.textContent='LA BOSS';toast('COMBAT FINAL')}

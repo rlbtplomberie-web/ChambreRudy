@@ -1,2 +1,2 @@
-maj-197 (2/3)
-- Usine, Chateau hante, Foret maudite : apres une mort, 2 fois plus de vie et tirs 2 fois plus puissants (une seule fois)
+maj-197 (3/3)
+- Hotel : apres une mort, 2 fois plus de vie et tirs 2 fois plus puissants (une seule fois)
