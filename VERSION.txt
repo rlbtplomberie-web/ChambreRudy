@@ -1,6 +1,2 @@
-maj-201 (partie 2/3)
-- Correctif Pont-l'Ades : la jauge de bruit pouvait planter la boucle du jeu (Rudy et les touches ne repondaient plus)
-- Grand Terrain : la Reine des coeurs plus forte (plus de vie, tirs plus forts et plus frequents)
-- Correctif sons (web/passer.js) : les sons des jeux et lieux quittes sont liberes
-- Chaliaville : devant le bowling, fleche jaune vers le haut + bouton ENTRER
-- Interieur du bowling (shinato/lieux/bowling.html) avec Rudy qui fume, sortie a gauche (SORTIR)
+maj-201 (partie 3/3)
+- Foret Maudite : les boss plus forts (Centaure et Rousse : plus de vie, plus de degats, un peu plus rapides)
