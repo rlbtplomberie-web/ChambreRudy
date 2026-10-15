@@ -154,7 +154,7 @@ requestAnimationFrame(boucle);
 const IMG={"marche": ["/assets/shinato/m/f66b7486849bf5b6.webp", "/assets/shinato/m/cc08b27eef23e5a1.webp", "/assets/shinato/m/8d7a4da973184d42.webp", "/assets/shinato/m/c3af9ca2675d2358.webp", "/assets/shinato/m/e69420c5e154a6e8.webp", "/assets/shinato/m/1e7d270f5c81b1d7.webp"], "marchecig": ["/assets/shinato/m/d67e7594cc42e870.webp", "/assets/shinato/m/03ece0389ddde297.webp", "/assets/shinato/m/b151e5b2b7a95417.webp", "/assets/shinato/m/9b0eb765d4393a26.webp", "/assets/shinato/m/d754aefb2c136d92.webp", "/assets/shinato/m/25ffc9231580075c.webp"], "fumer": ["/assets/shinato/m/bedcf36925325251.webp", "/assets/shinato/m/4ebd35da82f3a2e9.webp", "/assets/shinato/m/f7881a04b223dd0e.webp", "/assets/shinato/m/7ffc91a79091a2b6.webp", "/assets/shinato/m/fa8228dd48637425.webp", "/assets/shinato/m/43eb2067b32c9926.webp", "/assets/shinato/m/8108a6212954d8a4.webp", "/assets/shinato/m/af7011fab2bf9118.webp"], "jeter": ["/assets/shinato/m/c641f840c39566aa.webp", "/assets/shinato/m/305939c97e25c315.webp", "/assets/shinato/m/f9d3aa2a9eb1e230.webp", "/assets/shinato/m/30b1d03ab2b1509e.webp", "/assets/shinato/m/787b5557b3a151cc.webp", "/assets/shinato/m/2d3b6b31173af9a5.webp", "/assets/shinato/m/2644b102ac4560ca.webp", "/assets/shinato/m/506c07a78b8481f4.webp", "/assets/shinato/m/ab9a2f2011d3f12f.webp"]};
 Object.values(IMG).forEach(l=>l.forEach(u=>{const i=new Image();i.src=u;}));
 const vue=document.getElementById('vue');
-const PIEDS_Y=692, TAILLE=262;                  // pieds sur le carrelage, hauteur de Rudy (pixels de la scène)
+const PIEDS_Y=716, TAILLE=440;                  // pieds sur le carrelage, hauteur de Rudy (pixels de la scène)
 const X0=330, X1=1405;                           // il ne passe pas dans le comptoir de l'accueil
 const SORTIE_X=390;                              // la sortie est à gauche
 const HF=TAILLE*800/660, WF=HF*560/800;          // la toile fait 560×800 pour 660 de personnage
@@ -164,7 +164,7 @@ const fleche=document.createElement('div');fleche.id='flecheB';
 fleche.innerHTML='<svg viewBox="0 0 60 80" width="100%"><path d="M18 0h24v42h16L30 80 2 42h16z" fill="#ffd400" stroke="#fff6b0" stroke-width="3" stroke-linejoin="round"/></svg>';
 scene.appendChild(ombre);scene.appendChild(rudy);scene.appendChild(fleche);
 place(ombre,0,0,TAILLE*0.55,TAILLE*0.09);
-Object.assign(fleche.style,{left:pc(SORTIE_X/SW*100),top:pc(372/SH*100)});
+Object.assign(fleche.style,{left:pc(SORTIE_X/SW*100),top:pc(205/SH*100)});
 let etat='repos',clope=false,sens=1,x=470,f=0,phase=0,parcours=0,dir=0,tPrec=0;
 const DUREE={fumer:300,jeter:190,repos:520,reposcig:600}, VITESSE=1.25, PAS=0.17;
 function planche(){if(etat==='fumer')return'fumer';if(etat==='jeter')return'jeter';if(etat==='marche')return clope?'marchecig':'marche';return'repos';}
@@ -202,7 +202,12 @@ function boucle(t){
 function appui(el,fn){el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();fn();});}
 appui(bF,()=>{if(etat==='repos'&&!clope){etat='fumer';f=0;phase=0;}});
 appui(bJ,()=>{if(etat==='repos'&&clope){etat='jeter';f=0;phase=0;}});
-appui(bS,()=>{try{window.parent.postMessage({type:'bowling:sortie'},'*');}catch(e){}});
+// SORTIR : on sort quand le doigt se relève (le doigt n'est plus posé quand on revient dans la rue)
+let sortieArmee=false;
+bS.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();sortieArmee=true;});
+bS.addEventListener('pointerup',e=>{e.preventDefault();e.stopPropagation();if(!sortieArmee)return;sortieArmee=false;js();for(const k in clav)clav[k]=0;
+  setTimeout(()=>{try{window.parent.postMessage({type:'bowling:sortie'},'*');}catch(e){}},60);});
+bS.addEventListener('pointercancel',()=>{sortieArmee=false;});
 // joystick (gauche / droite)
 const joy=document.getElementById('joyB'),knob=document.getElementById('knobB');let jid=null;
 function jm(e){const r=joy.getBoundingClientRect(),R=r.width/2;let dx=e.clientX-r.left-R,dy=e.clientY-r.top-R;const dd=Math.hypot(dx,dy),mm=R*0.62;if(dd>mm){dx*=mm/dd;dy*=mm/dd;}knob.style.transform=`translate(${dx}px,${dy}px)`;dir=Math.abs(dx)>mm*0.25?(dx>0?1:-1):0;}

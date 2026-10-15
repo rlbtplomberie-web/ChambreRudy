@@ -1,2 +1,4 @@
-maj-201 (partie 3/3)
-- Foret Maudite : les boss plus forts (Centaure et Rousse : plus de vie, plus de degats, un peu plus rapides)
+maj-202
+- Chaliaville : les 9 PNJ refaits en haute qualite a partir des planches d'origine (nets meme en zoomant)
+- Bowling : Rudy deux fois plus grand (a la taille de l'accueil)
+- Bowling : on sort quand on releve le doigt de SORTIR ; dans la rue, joystick et boutons remis a zero (plus de touches qui buggent)
