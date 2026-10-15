@@ -1,5 +1,6 @@
-maj-201 (partie 1/2)
-- Nouvelle ville CHALIAVILLE (shinato/lieux/chaliaville.html + images shinato/m/chalia_*)
-- Acces par la MAP du telephone et par Ou voulez-vous aller ? au bout des rues, toujours en moto
-- Meme musique que Shinato
-- Chasseur de nuit : apres les 10 ennemies, la video de la geante (ch_boss.mp4) puis le combat contre la boss ; video ajoutee dans Deverrouillage
+maj-201 (partie 2/3)
+- Correctif Pont-l'Ades : la jauge de bruit pouvait planter la boucle du jeu (Rudy et les touches ne repondaient plus)
+- Grand Terrain : la Reine des coeurs plus forte (plus de vie, tirs plus forts et plus frequents)
+- Correctif sons (web/passer.js) : les sons des jeux et lieux quittes sont liberes
+- Chaliaville : devant le bowling, fleche jaune vers le haut + bouton ENTRER
+- Interieur du bowling (shinato/lieux/bowling.html) avec Rudy qui fume, sortie a gauche (SORTIR)

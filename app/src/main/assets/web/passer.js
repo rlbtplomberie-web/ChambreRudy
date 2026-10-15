@@ -174,12 +174,13 @@
   var audios=new Set(), ctxs=new Set(), coupesA=[], coupesC=[], actif=false, rate=0, scanT=0;
   function equipe(win){
    if(win.__sonEquipe) return; win.__sonEquipe=true;
+   var docSon=null; try{ docSon=win.document; }catch(e){}
    try{ var MP=win.HTMLMediaElement.prototype, op=MP.play;
     MP.play=function(){ try{ if(this.tagName!=="VIDEO") audios.add(this); }catch(e){} return op.apply(this,arguments); }; }catch(e){}
    ["AudioContext","webkitAudioContext"].forEach(function(n){ var C=win[n]; if(!C||!C.prototype) return; var P=C.prototype;
     ["createGain","createOscillator","createBufferSource","createMediaElementSource","createBiquadFilter","createDynamicsCompressor","createPanner","createStereoPanner","resume"].forEach(function(m){
      var o=P[m]; if(typeof o!=="function"||o.__sonEquipe) return;
-     var f=function(){ try{ ctxs.add(this); }catch(e){} return o.apply(this,arguments); }; f.__sonEquipe=true; try{ P[m]=f; }catch(e){} }); });
+     var f=function(){ try{ if(!this.__docSon) this.__docSon=docSon; ctxs.add(this); }catch(e){} return o.apply(this,arguments); }; f.__sonEquipe=true; try{ P[m]=f; }catch(e){} }); });
   }
   function ramasse(p,complet){
    try{ var as=p.doc.getElementsByTagName("audio"); for(var i=0;i<as.length;i++) audios.add(as[i]); }catch(e){}
@@ -189,7 +190,7 @@
     for(var j=0;j<ks.length;j++){ var v; try{ v=w[ks[j]]; }catch(e){ continue; }
      if(!v||typeof v!=="object") continue;
      try{ if(w.HTMLAudioElement&&v instanceof w.HTMLAudioElement) audios.add(v);
-          else if((w.AudioContext&&v instanceof w.AudioContext)||(w.webkitAudioContext&&v instanceof w.webkitAudioContext)) ctxs.add(v); }catch(e){} } }catch(e){}
+          else if((w.AudioContext&&v instanceof w.AudioContext)||(w.webkitAudioContext&&v instanceof w.webkitAudioContext)){ if(!v.__docSon) v.__docSon=p.doc; ctxs.add(v); } }catch(e){} } }catch(e){}
   }
   function videoParle(ps){
    for(var j=0;j<ps.length;j++){
@@ -207,6 +208,16 @@
    coupesA.forEach(function(a){ try{ a.muted=false; }catch(e){} }); coupesA=[];
    coupesC.forEach(function(c){ try{ if(c.state==="suspended"){ var q=c.resume(); if(q&&q.catch) q.catch(function(){}); } }catch(e){} }); coupesC=[];
   }
+  // ménage : les sons des pages déjà fermées (un jeu quitté, une ville quittée) ne sont plus gardés,
+  // et leurs AudioContext sont fermés pour libérer le son du téléphone
+  function morte(d){ try{ return !d||!d.defaultView; }catch(e){ return true; } }
+  function menage(){
+   audios.forEach(function(a){ var d=null; try{ d=a.ownerDocument; }catch(e){} if(morte(d)){ try{ a.pause(); }catch(e){} audios.delete(a); } });
+   ctxs.forEach(function(c){ if(c.__docSon&&morte(c.__docSon)){ try{ if(c.state!=="closed"){ var q=c.close(); if(q&&q.catch) q.catch(function(){}); } }catch(e){} ctxs.delete(c); }
+     else{ try{ if(c.state==="closed") ctxs.delete(c); }catch(e){} } });
+   coupesA=coupesA.filter(function(a){ return audios.has(a); }); coupesC=coupesC.filter(function(c){ return ctxs.has(c); });
+  }
+  boucle(menage,2000);
   boucle(function(){
    var ps=pages(), complet=(Date.now()-scanT>2500); if(complet) scanT=Date.now();
    ps.forEach(function(p){ equipe(p.win); ramasse(p,complet); });

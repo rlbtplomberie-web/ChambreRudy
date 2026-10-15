@@ -1521,7 +1521,7 @@ function updateAudio(dt){if(!AMB||!AC)return;const t=AC.currentTime,high=clamp((
 /* ---------- le petit rond noir : battement de cœur + bruit que fait Rudy ---------- */
 const NM={hist:new Array(72).fill(0),lvl:0,acc:0,beat:0,ring:0};
 function makeNoise(l,r){NM.lvl=Math.max(NM.lvl,l);NM.ring=Math.max(NM.ring,l);NOISE.x=P.pos.x;NOISE.z=P.pos.z;NOISE.t=performance.now()/1000;NOISE.r=r}
-function drawNoiseMeter(dt){const c=$('noiseMeter');if(!c)return;const D=Math.min(devicePixelRatio||1,2),S=c.clientWidth*D;if(c.width!==S){c.width=c.height=S}
+function drawNoiseMeter(dt){const c=$('noiseMeter');if(!c)return;const D=Math.min(devicePixelRatio||1,2),S=Math.round(c.clientWidth*D);if(S<12)return;if(c.width!==S){c.width=c.height=S}
   const g=c.getContext('2d'),R=S/2;
   NM.lvl=Math.max(0,NM.lvl-dt*1.1);NM.ring=Math.max(0,NM.ring-dt*1.6);NM.beat+=dt*(P.dashT>0?1.7:1);NM.acc+=dt;
   while(NM.acc>1/36){NM.acc-=1/36;const ph=NM.beat%1.05;let hb=0;if(ph<.05)hb=.22;else if(ph<.1)hb=-.16;else if(ph<.16)hb=.1;else if(ph>.3&&ph<.36)hb=.07;
@@ -1781,7 +1781,7 @@ function resetGems(){gemCount=0;$('gemNum').textContent=0;$('win').hidden=true;f
 
 /* ================== LE DERNIER BOSS : salle ronde rose, 4 poteaux, la femme aux cheveux roses ================== */
 const AY=300,AR=15,AH=7.5; // salle construite très haut au-dessus de la ville (fermée : on ne voit rien d'autre)
-const BOSSF={active:false,built:false,hp:30,max:30,state:'idle',t:0,pos:new THREE.Vector3(),face:new THREE.Vector2(0,1),anim:0,
+const BOSSF={active:false,built:false,hp:50,max:50,state:'idle',t:0,pos:new THREE.Vector3(),face:new THREE.Vector2(0,1),anim:0,
   shotCd:1.5,kissCd:3,coverCd:4,roll:null,inv:0,hitT:0,grabK:0,cover:null,downT:0,hearts:[],v:9};
 const BOSSO={v:9,pos:BOSSF.pos}; // pour savoir qui a tué Rudy (pas de vidéo pour elle)
 const PILLARS=[[-6,-6],[6,-6],[-6,6],[6,6]];
@@ -1862,7 +1862,7 @@ function bFire(){const d=Math.hypot(P.pos.x-BOSSF.pos.x,P.pos.z-BOSSF.pos.z);con
   let p=clamp(.55-d*.018,.18,.55);if(P.crouch)p*=.8;if(P.crawl)p*=.6;if(P.dashT>0)p*=.5;if(P.mode==='cover')p*=.5;if(!bSees())p=0;const hit=Math.random()<p;
   const tg=new THREE.Vector3(P.pos.x,rudyChest(),P.pos.z);if(!hit){tg.x+=(Math.random()-.5)*2;tg.y+=(Math.random()-.5)*1.2;tg.z+=(Math.random()-.5)*2}
   bMuzzle.position.copy(m);bMuzzle.visible=true;bMuzzle.userData.t=.06;bMuzzle.scale.setScalar(.6);bTracer.geometry.setFromPoints([m,tg]);bTracer.visible=true;bTracer.userData.t=.05;gunShotSfx();
-  if(hit){hurtRudy(6+Math.random()*3);P.lastShooter=BOSSO}}
+  if(hit){hurtRudy(8+Math.random()*4);P.lastShooter=BOSSO}}
 function bThrowHeart(){const o=new THREE.Vector3(BOSSF.pos.x+BOSSF.face.x*.5,AY+1.45,BOSSF.pos.z+BOSSF.face.y*.5),tg=new THREE.Vector3(P.pos.x,rudyChest(),P.pos.z);
   const s=new THREE.Sprite(HEART_MAT.clone());s.scale.setScalar(.7);s.position.copy(o);s.renderOrder=10;scene.add(s);BOSSF.hearts.push({s,o,v:tg.sub(o).normalize().multiplyScalar(9.5),life:2.6,ph:0});
   const out=audioOut();if(out){tone(out,{f:880,f2:1320,dur:.25,vol:.15,type:'sine'});tone(out,{f:1100,f2:1650,dur:.25,vol:.1,type:'sine',delay:.08})}}
@@ -1900,7 +1900,7 @@ function updateBoss(dt,now){const B=BOSSF;updateHearts(dt);
   const d=Math.hypot(P.pos.x-B.pos.x,P.pos.z-B.pos.z);
   if(B.state==='down'){B.downT+=dt;if(B.downT>2.2&&!B.winVid){B.winVid=true;pvGagne();koThen=()=>{ if(annonceVille('pontlades:victoire')) return; $('winTxt').textContent='Tu as battu la boss. Rudy a gagné !';$('win').hidden=false};playKO(BOSS_WIN_VID)}drawBoss(dt);return}
   if(P.mode==='dead'){if(!GR.on){B.state='aim';bFaceRudy(dt)}drawBoss(dt);return}
-  if(B.state==='grab'){GR.t+=dt;GR.fill=Math.max(0,GR.fill-dt*20);$('escFill').style.width=GR.fill+'%';if(GR.t>.7)setNRG(NRG-dt*11);B.pos.set(P.pos.x,AY,P.pos.z);drawBoss(dt);return}
+  if(B.state==='grab'){GR.t+=dt;GR.fill=Math.max(0,GR.fill-dt*20);$('escFill').style.width=GR.fill+'%';if(GR.t>.7)setNRG(NRG-dt*14);B.pos.set(P.pos.x,AY,P.pos.z);drawBoss(dt);return}
   if(B.state==='intro'){bFaceRudy(dt);if(B.t>1.6){B.state='move';B.t=0}drawBoss(dt);return}
   if(B.state==='stun'){B.stun-=dt;if(B.stun<=0){B.state='move';B.t=0}drawBoss(dt);return}
   if(B.state==='roll'){const R=B.roll;R.t+=dt;if(R.t<.6){B.pos.x+=R.dx*5.5*dt;B.pos.z+=R.dz*5.5*dt;collide(B.pos,AY,.4);const r=Math.hypot(B.pos.x,B.pos.z);if(r>AR-.8){B.pos.x*=(AR-.8)/r;B.pos.z*=(AR-.8)/r}}
@@ -1918,7 +1918,7 @@ function updateBoss(dt,now){const B=BOSSF;updateHearts(dt);
   if(B.kissCd<=0&&d>3&&d<15&&bSees()){B.state='kiss';B.t=0;B.thrown=false;drawBoss(dt);return}
   // tourne autour de Rudy en tirant
   if(B.state!=='move'&&B.state!=='aim'){B.state='move';B.t=0}
-  if(B.shotCd<=0&&bSees()){B.state='aim';B.t=0;B.shotCd=.9+Math.random()*.6}
+  if(B.shotCd<=0&&bSees()){B.state='aim';B.t=0;B.shotCd=.7+Math.random()*.5}
   if(B.state==='aim'){bFaceRudy(dt);if(B.t>.25&&!B.shot){B.shot=true;bFire()}if(B.t>.55){B.state='move';B.shot=false;B.t=0;B.strafe=Math.random()<.5?1:-1}drawBoss(dt);return}
   {const nx=(P.pos.x-B.pos.x)/(d||1),nz=(P.pos.z-B.pos.z)/(d||1),st=B.strafe||1,want=d>9?1:d<5?-1:0;
     bMove(B.pos.x+(-nz*st+nx*want*.8)*2,B.pos.z+(nx*st+nz*want*.8)*2,3.4,dt);B.aimRun=true}
