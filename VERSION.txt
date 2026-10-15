@@ -1,4 +1,4 @@
-maj-199
-- Chasseur de nuit : quand Rudy est abattu -> toujours la video de celle qui l'a abattu, puis l'infirmiere, puis devant l'hopital de Vaviel
-- Pixel Bar : bouton J'AI REUSSI ! (fille du canape) apres Chasseur de nuit -> dialogue d'Ameline -> video
-- Deverrouillage : video ajoutee dans Pixel Bar
+maj-200
+- Shinato : la rue se met a jour tout de suite apres une mission (homme en panique, Sophie et le mec, DIAMANT JAUNE)
+- Toutes les videos : la musique et les sons des jeux se coupent pendant la video, puis reviennent a la fin (web/passer.js)
+- Ou voulez-vous aller ? sur 2 colonnes (Shinato, plage, Vaviel, ville delabree, Mitsuda, Rembourg, aeroport)

@@ -961,5 +961,11 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
   document.addEventListener('touchstart',f,{capture:true,passive:true}); document.addEventListener('click',f,true);
 })();
 </script>
+<style>/* « Où voulez-vous aller ? » sur 2 colonnes : toutes les destinations se voient */
+#depart .carte{display:grid!important;grid-template-columns:1fr 1fr;column-gap:2.4vmin;row-gap:2vmin;align-content:start;width:min(92vw,760px)!important;min-width:0!important;box-sizing:border-box;padding:4vmin 4.5vmin 4.5vmin!important}
+#depart .carte h2{grid-column:1/-1;margin:0 0 1vmin!important}
+#depart .carte .choix{display:block;margin:0!important;width:auto!important;box-sizing:border-box;padding:2.6vmin 2vmin!important;font-size:clamp(12px,3.1vmin,24px)!important;line-height:1.1!important}
+#depart .carte .choix[style*="display:none"],#depart .carte .choix[style*="display: none"]{display:none!important}
+</style>
 </body>
 </html>

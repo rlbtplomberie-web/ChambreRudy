@@ -710,4 +710,10 @@ function parlerPolicier(src){   // sert aussi pour le gérant de la salle d'arca
   const v=vb.querySelector('video'); v.src=src||'/assets/shinato/m/prison_policier.mp4'; vb.style.display='block';
   const q=v.play(); if(q&&q.catch) q.catch(()=>{});
 }
-</script></body></html>
+</script><style>/* « Où voulez-vous aller ? » sur 2 colonnes : toutes les destinations se voient */
+#departVD .carte{display:grid!important;grid-template-columns:1fr 1fr;column-gap:2.4vmin;row-gap:2vmin;align-content:start;width:min(92vw,760px)!important;min-width:0!important;box-sizing:border-box;padding:4vmin 4.5vmin 4.5vmin!important}
+#departVD .carte h2{grid-column:1/-1;margin:0 0 1vmin!important}
+#departVD .carte .choix{display:block;margin:0!important;width:auto!important;box-sizing:border-box;padding:2.6vmin 2vmin!important;font-size:clamp(12px,3.1vmin,24px)!important;line-height:1.1!important}
+#departVD .carte .choix[style*="display:none"],#departVD .carte .choix[style*="display: none"]{display:none!important}
+</style>
+</body></html>

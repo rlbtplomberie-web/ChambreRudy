@@ -166,5 +166,52 @@
   }
   boucle(tour,250);
   boucle(ecoute,700);
+
+  /* ---------- la musique se tait pendant les vidéos ----------
+     Dès qu'une vidéo avec du son joue (n'importe où : rue, ville, jeu, mini-jeu, téléphone…),
+     toutes les musiques et tous les sons des jeux se coupent pour laisser place au son de la vidéo.
+     À la fin de la vidéo, ils reviennent exactement comme avant. */
+  var audios=new Set(), ctxs=new Set(), coupesA=[], coupesC=[], actif=false, rate=0, scanT=0;
+  function equipe(win){
+   if(win.__sonEquipe) return; win.__sonEquipe=true;
+   try{ var MP=win.HTMLMediaElement.prototype, op=MP.play;
+    MP.play=function(){ try{ if(this.tagName!=="VIDEO") audios.add(this); }catch(e){} return op.apply(this,arguments); }; }catch(e){}
+   ["AudioContext","webkitAudioContext"].forEach(function(n){ var C=win[n]; if(!C||!C.prototype) return; var P=C.prototype;
+    ["createGain","createOscillator","createBufferSource","createMediaElementSource","createBiquadFilter","createDynamicsCompressor","createPanner","createStereoPanner","resume"].forEach(function(m){
+     var o=P[m]; if(typeof o!=="function"||o.__sonEquipe) return;
+     var f=function(){ try{ ctxs.add(this); }catch(e){} return o.apply(this,arguments); }; f.__sonEquipe=true; try{ P[m]=f; }catch(e){} }); });
+  }
+  function ramasse(p,complet){
+   try{ var as=p.doc.getElementsByTagName("audio"); for(var i=0;i<as.length;i++) audios.add(as[i]); }catch(e){}
+   if(!complet) return;
+   // les musiques créées avant que l'on regarde (new Audio(), AudioContext rangés dans une variable de la page)
+   try{ var w=p.win, ks=Object.keys(w);
+    for(var j=0;j<ks.length;j++){ var v; try{ v=w[ks[j]]; }catch(e){ continue; }
+     if(!v||typeof v!=="object") continue;
+     try{ if(w.HTMLAudioElement&&v instanceof w.HTMLAudioElement) audios.add(v);
+          else if((w.AudioContext&&v instanceof w.AudioContext)||(w.webkitAudioContext&&v instanceof w.webkitAudioContext)) ctxs.add(v); }catch(e){} } }catch(e){}
+  }
+  function videoParle(ps){
+   for(var j=0;j<ps.length;j++){
+    var vs; try{ vs=ps[j].doc.getElementsByTagName("video"); }catch(e){ continue; }
+    for(var i=0;i<vs.length;i++){ var v=vs[i];
+     try{ if(!v.paused&&!v.ended&&!v.muted&&!v.loop&&v.volume>0&&v.readyState>=2&&v!==passee) return true; }catch(e){} }
+   }
+   return false;
+  }
+  function coupe(){
+   audios.forEach(function(a){ try{ if(!a.paused&&!a.muted){ a.muted=true; coupesA.push(a); } }catch(e){} });
+   ctxs.forEach(function(c){ try{ if(c.state==="running"){ var q=c.suspend(); if(q&&q.catch) q.catch(function(){}); coupesC.push(c); } }catch(e){} });
+  }
+  function rend(){
+   coupesA.forEach(function(a){ try{ a.muted=false; }catch(e){} }); coupesA=[];
+   coupesC.forEach(function(c){ try{ if(c.state==="suspended"){ var q=c.resume(); if(q&&q.catch) q.catch(function(){}); } }catch(e){} }); coupesC=[];
+  }
+  boucle(function(){
+   var ps=pages(), complet=(Date.now()-scanT>2500); if(complet) scanT=Date.now();
+   ps.forEach(function(p){ equipe(p.win); ramasse(p,complet); });
+   if(videoParle(ps)){ rate=0; actif=true; coupe(); }        // (coupe aussi ce qui redémarrerait pendant la vidéo)
+   else if(actif){ rate++; if(rate>=2){ actif=false; rend(); } }   // petite marge : deux vidéos qui s'enchaînent ne laissent pas repasser la musique
+  },250);
   }
 })();

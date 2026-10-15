@@ -480,9 +480,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;
 <script>window.SOPHIE_IMAGES=["/assets/shinato/m/7412318ff6d0e312.webp", "/assets/shinato/m/47488b9b6f94549f.webp", "/assets/shinato/m/8d5aeb44ca9c9879.webp", "/assets/shinato/m/172fad450e196ec5.webp", "/assets/shinato/m/ddaec37d1ef6f02f.webp", "/assets/shinato/m/e11920bb060eccfc.webp", "/assets/shinato/m/edecaa88089b5523.webp", "/assets/shinato/m/83a67dd6e31564cd.webp", "/assets/shinato/m/7f82f0d551c58430.webp", "/assets/shinato/m/b149392565a5add3.webp", "/assets/shinato/m/31e7558e4148c5d0.webp", "/assets/shinato/m/e89f840076f5331a.webp"];window.MEC_IMAGES=["/assets/shinato/m/de9c036b83eca657.webp", "/assets/shinato/m/055c35e21fb03974.webp", "/assets/shinato/m/ec9271d37ebde085.webp", "/assets/shinato/m/d785523c5405726a.webp", "/assets/shinato/m/7214b3bfc913679c.webp", "/assets/shinato/m/d0dd549d4a6c8297.webp", "/assets/shinato/m/6cf83c740b9347d3.webp", "/assets/shinato/m/08564ff8929dc251.webp", "/assets/shinato/m/115620ce448d71fa.webp", "/assets/shinato/m/fcf603c7a4a6cb33.webp", "/assets/shinato/m/15d85f7813013083.webp", "/assets/shinato/m/7557634fa7050ea1.webp", "/assets/shinato/m/ca3f43536bbf572f.webp", "/assets/shinato/m/60e225e4c9d02c88.webp", "/assets/shinato/m/5f1d0de7b97d127d.webp", "/assets/shinato/m/740df42ddaeaeb6e.webp", "/assets/shinato/m/97321ea926407167.webp", "/assets/shinato/m/a648062ca8b4a8e4.webp", "/assets/shinato/m/f2bf16a7572a3a66.webp", "/assets/shinato/m/a9fedfc39c944036.webp"];</script>
 <script>
 /* les trois donjons finis (l'usine d'Astra, le château de la Reine, la Forêt Maudite de Farah) */
-window.TROIS_BOSS_VAINCUS=(function(){ try{ return ['mitsuda_usine_gagnee','rembourg_chateau_gagne','foret_gagnee'].every(function(k){ return localStorage.getItem(k)==='1'; }); }catch(e){ return false; } })();
-// l'Hôtel Palace gagné : le grand gars n'est plus inquiet, Sophie et lui reviennent discuter comme avant
-try{ if(localStorage.getItem('hotel_palace_gagne')==='1') window.TROIS_BOSS_VAINCUS=false; }catch(e){}
+// (recalculé en continu : dès qu'une mission est finie, la rue change tout de suite, sans repasser par la chambre)
+window.calcTroisBoss=function(){ try{
+  if(localStorage.getItem('hotel_palace_gagne')==='1') return false;   // l'Hôtel Palace gagné : le grand gars n'est plus inquiet, Sophie et lui reviennent discuter comme avant
+  return ['mitsuda_usine_gagnee','rembourg_chateau_gagne','foret_gagnee'].every(function(k){ return localStorage.getItem(k)==='1'; }); }catch(e){ return false; } };
+window.TROIS_BOSS_VAINCUS=window.calcTroisBoss();
 </script>
 <script>
 /* ---------- Sophie (à gauche) et le mec (à droite) discutent à côté de la machine à boissons ---------- */
@@ -516,22 +518,35 @@ try{ if(localStorage.getItem('hotel_palace_gagne')==='1') window.TROIS_BOSS_VAIN
    B.style.transition="opacity "+fondu+"ms ease-in-out"; B.style.opacity="1";
    minuteur=setTimeout(function(){ A.src=src; enCours=null; B.style.transition="none"; B.style.opacity="0"; },fondu+10);
   }
-  var n=0;
+  var n=0, fini=false;
   function prochain(){
+   if(fini) return;
    n=n%nbPoses+1;
    montre(n, A.getAttribute("src") ? 420 : 0);
    setTimeout(prochain, 1000+Math.random()*700);
   }
   prochain();
+  return {retire:function(){ fini=true; clearTimeout(minuteur); try{ ombre.remove(); boite.remove(); }catch(e){} }};
  }
+ var presents=[], etat=null;
+ function place(){
+  etat=window.TROIS_BOSS_VAINCUS;
+  presents.forEach(function(p){ p.retire(); }); presents=[];
  if(window.TROIS_BOSS_VAINCUS){
   // Astra, la Reine des vampires et Farah vaincues : Sophie et le mec ne sont plus là, Valor est seul et inquiet
-  personnage(["/assets/shinato/m/valor_inquiet_1.webp","/assets/shinato/m/valor_inquiet_2.webp","/assets/shinato/m/valor_inquiet_3.webp",
-              "/assets/shinato/m/valor_inquiet_4.webp","/assets/shinato/m/valor_inquiet_5.webp"], 81.00, 26.40, 50, 2.9, 5, 31.2);   // un peu plus bas : les pieds sur le trottoir
+  presents.push(personnage(["/assets/shinato/m/valor_inquiet_1.webp","/assets/shinato/m/valor_inquiet_2.webp","/assets/shinato/m/valor_inquiet_3.webp",
+              "/assets/shinato/m/valor_inquiet_4.webp","/assets/shinato/m/valor_inquiet_5.webp"], 81.00, 26.40, 50, 2.9, 5, 31.2));   // un peu plus bas : les pieds sur le trottoir
  } else {
- personnage(window.SOPHIE_IMAGES, 80.18, 23.62, 44.79, 2.3, 12);   // Sophie, regarde à droite
- personnage(window.MEC_IMAGES,    81.80, 27.15, 50.84, 2.9, 20);   // le mec, regarde à gauche, plus grand
+ presents.push(personnage(window.SOPHIE_IMAGES, 80.18, 23.62, 44.79, 2.3, 12));   // Sophie, regarde à droite
+ presents.push(personnage(window.MEC_IMAGES,    81.80, 27.15, 50.84, 2.9, 20));   // le mec, regarde à gauche, plus grand
  }
+ }
+ place();
+ // une mission vient d'être finie (dans une ville, un jeu…) : on remet la bonne personne tout de suite
+ (window.minuterieLibre?function(f){ (function va(){ f(); window.minuterieLibre(va,1000); })(); }:function(f){ setInterval(f,1000); })(function(){
+  window.TROIS_BOSS_VAINCUS=window.calcTroisBoss();
+  if(window.TROIS_BOSS_VAINCUS!==etat) place();
+ });
 })();
 </script>
 <script>window.CAPUCHE_IMAGES=["/assets/shinato/m/112847c3b51e7847.webp", "/assets/shinato/m/153410b5ac8467ff.webp", "/assets/shinato/m/954100dffbe52ca9.webp", "/assets/shinato/m/4ec0e42e58f0403d.webp", "/assets/shinato/m/8993c38de7e47215.webp", "/assets/shinato/m/e9316325ffbeda05.webp", "/assets/shinato/m/8b5a5007fc669116.webp", "/assets/shinato/m/5362268e6fc8c3d6.webp", "/assets/shinato/m/2f348117741711ee.webp", "/assets/shinato/m/94cbf2528823eae9.webp", "/assets/shinato/m/afa6718171bd0b1b.webp", "/assets/shinato/m/c0b5cf57962fd846.webp", "/assets/shinato/m/7073e7d0bafa2755.webp", "/assets/shinato/m/7484553a5b26ae72.webp", "/assets/shinato/m/cc89dcf347608e43.webp", "/assets/shinato/m/73a7e69408ad610b.webp", "/assets/shinato/m/6b770141197257c5.webp", "/assets/shinato/m/dea63879346d5735.webp", "/assets/shinato/m/97087ac216f0f4d0.webp", "/assets/shinato/m/4dc9e651a073470b.webp"];</script>
@@ -1578,9 +1593,14 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
  ];
  // « LE DIAMANT JAUNE » (le buveur du Pixel Bar) : seulement quand la mission de l'hôtel est réussie
  (function(){ var h=false; try{ h=localStorage.getItem('hotel_palace_gagne')==='1'; }catch(e){}
-  if(!h){ PASSANTS=PASSANTS.filter(function(P){ if(P.btn==="btnDiamantJaune"){ document.getElementById(P.btn).style.display="none"; return false; } return true; }); } })();
- if(!window.TROIS_BOSS_VAINCUS){ PASSANTS=PASSANTS.filter(function(P){ if(P.btn==="btnParlerPanique"){ document.getElementById(P.btn).style.display="none"; return false; } return true; }); }
- if(window.TROIS_BOSS_VAINCUS){ PASSANTS=PASSANTS.filter(function(P){ if(P.btn==="btnParlerSophie"||P.btn==="btnParlerMec"){ var b=document.getElementById(P.btn); if(b) b.style.display="none"; return false; } return true; }); }
+ })();
+ // qui est là en ce moment (vérifié à chaque instant : une mission finie compte tout de suite)
+ function present(P){
+  if(P.btn==="btnDiamantJaune"){ try{ return localStorage.getItem('hotel_palace_gagne')==='1'; }catch(e){ return false; } }
+  if(P.btn==="btnParlerPanique") return !!window.TROIS_BOSS_VAINCUS;
+  if(P.btn==="btnParlerSophie"||P.btn==="btnParlerMec") return !window.TROIS_BOSS_VAINCUS;
+  return true;
+ }
  function posDe(P){ return typeof P.pos==="function"?P.pos():P.pos; }
  var PRES=95/7078, occupe=false;
  var vb=document.createElement("div"); vb.style.cssText="position:fixed;inset:0;z-index:70;background:#000;display:none";
@@ -1593,8 +1613,8 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
  PASSANTS.forEach(function(P){
   var btn=document.getElementById(P.btn), t0=0;
   setInterval(function(){
-   if(typeof x==="undefined"||!largeurMonde||window.PAUSE_RUE||occupe){ btn.style.display="none"; return; }
-   var d=Math.abs(x-largeurMonde*posDe(P)), plusProche=PASSANTS.every(function(Q){ return Q===P||Math.abs(x-largeurMonde*posDe(Q))>=d; });
+   if(typeof x==="undefined"||!largeurMonde||window.PAUSE_RUE||occupe||!present(P)){ btn.style.display="none"; return; }
+   var d=Math.abs(x-largeurMonde*posDe(P)), plusProche=PASSANTS.every(function(Q){ return Q===P||!present(Q)||Math.abs(x-largeurMonde*posDe(Q))>=d; });
    btn.style.display=(d<largeurMonde*PRES&&plusProche)?"block":"none";
   },120);
   function parle(e){ if(e&&e.cancelable) e.preventDefault(); var n=performance.now(); if(n-t0<400) return; t0=n;
@@ -2175,5 +2195,11 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
 })();
 </script>
 <script src="/assets/web/passer.js"></script>
+<style>/* « Où voulez-vous aller ? » sur 2 colonnes : toutes les destinations se voient */
+#depart .carte{display:grid!important;grid-template-columns:1fr 1fr;column-gap:2.4vmin;row-gap:2vmin;align-content:start;width:min(92vw,760px)!important;min-width:0!important;box-sizing:border-box;padding:4vmin 4.5vmin 4.5vmin!important}
+#depart .carte h2{grid-column:1/-1;margin:0 0 1vmin!important}
+#depart .carte .choix{display:block;margin:0!important;width:auto!important;box-sizing:border-box;padding:2.6vmin 2vmin!important;font-size:clamp(12px,3.1vmin,24px)!important;line-height:1.1!important}
+#depart .carte .choix[style*="display:none"],#depart .carte .choix[style*="display: none"]{display:none!important}
+</style>
 </body>
 </html>
