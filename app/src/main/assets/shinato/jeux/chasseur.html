@@ -1561,7 +1561,7 @@ function update(dt) {
           if (o.k === 'h') playDeathVideo('aviatrice');   // tué par l'aviatrice : sa vidéo se lance tout de suite
           else if (o.k === 'o') playDeathVideo('harpie');  // tué par la harpie : sa vidéo
           else if (o.k === 'v') playDeathVideo('dragonne'); // tué par la dragonne : sa vidéo
-          else { sBoom(1.2); say('ABATTU !', 99, '#ff5050'); setTimeout(() => showOver(), 2200); }
+          else playDeathVideo('geante');                    // touché par une boule de feu de la géante : sa vidéo
         }
         o.done = true;
       }
@@ -2130,6 +2130,8 @@ function playDeathVideo(who) {
     v.remove();
     // dans l'appli : la géante est battue -> Shinato s'occupe de la suite (retour à Shinato)
     if (who === 'victoire') { try { if (window.parent && window.parent !== window) { window.parent.postMessage({ type: 'chasseur:victoire' }, '*'); return; } } catch (e) {} }
+    // dans l'appli : Rudy est abattu -> juste après la vidéo de la méchante, l'infirmière puis devant l'hôpital de Vaviel
+    else { try { if (window.parent && window.parent !== window) { window.parent.postMessage({ type: 'chasseur:ko' }, '*'); return; } } catch (e) {} }
     ov.innerHTML = `<button id="go">REJOUER</button>`;
     ov.style.display = 'flex';
     document.getElementById('go').onclick = start;
@@ -2137,6 +2139,7 @@ function playDeathVideo(who) {
 }
 function showOver() {
   running = false;
+  try { if (window.parent && window.parent !== window) { window.parent.postMessage({ type: 'chasseur:ko' }, '*'); return; } } catch (e) {}
   ov.innerHTML = `<h1 style="color:#ff7070;text-shadow:0 0 18px #f22">ABATTU</h1><p>Cibles abattues : ${kills}</p><button id="go">REJOUER</button>`;
   ov.style.display = 'flex';
   document.getElementById('go').onclick = start;

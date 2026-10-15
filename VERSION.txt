@@ -1,2 +1,4 @@
-maj-198 (2/2)
-- Videos du jeu Chasseur de nuit (shinato/m/ch_*.mp4)
+maj-199
+- Chasseur de nuit : quand Rudy est abattu -> toujours la video de celle qui l'a abattu, puis l'infirmiere, puis devant l'hopital de Vaviel
+- Pixel Bar : bouton J'AI REUSSI ! (fille du canape) apres Chasseur de nuit -> dialogue d'Ameline -> video
+- Deverrouillage : video ajoutee dans Pixel Bar

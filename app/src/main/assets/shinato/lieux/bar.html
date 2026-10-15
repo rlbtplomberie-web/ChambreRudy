@@ -99,6 +99,7 @@ window.addEventListener('load',()=>requestAnimationFrame(frame));
  <div class="btn" id="btnBiere" style="display:none">🍺 COMMANDER UNE BIÈRE</div>
  <div class="btn" id="btnParlerCanape" style="display:none">PARLER</div>
  <div class="btn" id="btnQuoiCanape" style="display:none">QU'EST-CE QUI SE PASSE&nbsp;?</div>
+ <div class="btn" id="btnReussiCanape" style="display:none">J'AI RÉUSSI&nbsp;!</div>
  <div class="btn" id="btnSortir">SORTIR</div>
 </div>
 <script>
@@ -382,6 +383,39 @@ window.addEventListener("blur",r);document.addEventListener("visibilitychange",r
     occupe=true; b.style.display='none'; v.src='/assets/shinato/m/pixelbar_canape.mp4'; vb.style.display='block';
     const q=v.play(); if(q&&q.catch) q.catch(()=>{}); };
   b.addEventListener('touchstart',go,{passive:false}); b.addEventListener('click',go);
+})();
+
+/* ================= J'AI RÉUSSI ! (la fille sur le canapé) : seulement après avoir réussi « Chasseur de nuit »
+   elle répond (bulle de dialogue), puis la vidéo se lance ================= */
+(function(){
+  const b=document.getElementById('btnReussiCanape');
+  const st=document.createElement('style');
+  st.textContent='#dialReussi{position:fixed;left:50%;top:calc(12vmin + env(safe-area-inset-top,0px));transform:translateX(-50%);width:min(70vw,640px);z-index:65;display:none;'+
+   'background:rgba(8,6,10,.93);border:2px solid rgba(255,226,122,.7);border-radius:2.6vmin;padding:2.8vmin 3.4vmin 2.2vmin;box-shadow:0 8px 26px rgba(0,0,0,.7);cursor:pointer;font-family:Arial,sans-serif}'+
+   '#dialReussi b{display:block;color:#ffe27a;letter-spacing:2px;font:900 clamp(11px,2.5vmin,18px)/1.2 Arial,sans-serif;margin-bottom:1.2vmin}'+
+   '#dialReussi p{margin:0;color:#fff;font:700 clamp(14px,3.3vmin,24px)/1.35 Arial,sans-serif}'+
+   '#dialReussi i{display:block;text-align:right;color:rgba(255,226,122,.7);font:700 clamp(9px,1.8vmin,13px)/1 Arial,sans-serif;margin-top:1.4vmin;font-style:normal}';
+  document.head.appendChild(st);
+  const dl=document.createElement('div'); dl.id='dialReussi';
+  dl.innerHTML='<b>AMELINE</b><p>Quoi&nbsp;? Sérieusement&nbsp;?! Qu\'est-ce que je t\'aime, toi&nbsp;! Je t\'emmène chez moi tout de suite&nbsp;!</p><i>toucher pour continuer</i>';
+  document.body.appendChild(dl);
+  const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:70;background:#000;display:none';
+  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+  document.body.appendChild(vb); const v=vb.querySelector('video'); let occupe=false;
+  function ferme(){ try{ v.pause(); }catch(e){} vb.style.display='none'; occupe=false; }
+  v.addEventListener('ended',ferme); v.addEventListener('error',ferme);
+  function gagne(){ try{ return localStorage.getItem('chasseur_gagne')==='1'; }catch(e){ return false; } }
+  setInterval(()=>{ const pres=!occupe&&RUDY.etat==='debout'&&RUDY.x>=980&&gagne();
+    b.style.display=pres?'block':'none'; },150);
+  let t0=0;
+  const go=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t0<400) return; t0=n;
+    occupe=true; b.style.display='none'; dl.style.display='block'; };
+  b.addEventListener('touchstart',go,{passive:false}); b.addEventListener('click',go);
+  let t1=0;
+  const lance=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t1<400) return; t1=n;
+    dl.style.display='none'; v.src='/assets/shinato/m/pixelbar_canape_reussi.mp4'; vb.style.display='block';
+    const q=v.play(); if(q&&q.catch) q.catch(()=>{}); };
+  dl.addEventListener('touchstart',lance,{passive:false}); dl.addEventListener('click',lance);
 })();
 
 /* ================= QU'EST-CE QUI SE PASSE ? (la fille sur le canapé) : seulement après avoir réussi « Le Grand Terrain » ================= */
