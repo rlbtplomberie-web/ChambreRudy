@@ -1,7 +1,2 @@
-maj-198 (1/2)
-- Nouveau lieu : L'AEROPORT (acces : bouts des villes + MAP du telephone, musique de Shinato)
-- Pixel Bar : QU'EST-CE QUI SE PASSE ? (fille du canape) apres Le Grand Terrain
-- Aeroport : PARLER au mecanicien (apres QU'EST-CE QUI SE PASSE ?) -> sa video -> jeu Chasseur de nuit
-- Victoire : retour a Shinato + bulle 'Je dois prevenir Ameline !' + diamant rose dans la 3e case ronde de la Statue
-- Deverrouillage : dossiers Aeroport et Chasseur de nuit
-(les videos du jeu sont dans la partie 2/2)
+maj-198 (2/2)
+- Videos du jeu Chasseur de nuit (shinato/m/ch_*.mp4)
