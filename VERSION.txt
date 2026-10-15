@@ -1,4 +1,5 @@
-maj-200
-- Shinato : la rue se met a jour tout de suite apres une mission (homme en panique, Sophie et le mec, DIAMANT JAUNE)
-- Toutes les videos : la musique et les sons des jeux se coupent pendant la video, puis reviennent a la fin (web/passer.js)
-- Ou voulez-vous aller ? sur 2 colonnes (Shinato, plage, Vaviel, ville delabree, Mitsuda, Rembourg, aeroport)
+maj-201 (partie 1/2)
+- Nouvelle ville CHALIAVILLE (shinato/lieux/chaliaville.html + images shinato/m/chalia_*)
+- Acces par la MAP du telephone et par Ou voulez-vous aller ? au bout des rues, toujours en moto
+- Meme musique que Shinato
+- Chasseur de nuit : apres les 10 ennemies, la video de la geante (ch_boss.mp4) puis le combat contre la boss ; video ajoutee dans Deverrouillage

@@ -408,7 +408,20 @@ function updFlee(dt) {
   P.phaseT += dt;
   if (P.phaseT > 3 && !P.alerted) { P.alerted = true; say('ALERTE : BOSS EN APPROCHE !', 3.2, '#ff5a3a'); sSiren(); }
   if (P.phaseT > 5.8) P.fade = Math.min(1, (P.phaseT - 5.8) / 0.8);
-  if (P.phaseT > 6.7) initBoss();
+  if (P.phaseT > 6.7 && !P.bossVid) { P.bossVid = true; playBossIntro(); }
+}
+// ----- les 10 ennemies sont battues : la vidéo de la boss, puis le combat commence -----
+function playBossIntro() {
+  running = false; msgs = [];
+  if (AC) { engGain.gain.value = 0; }
+  const v = document.createElement('video');
+  v.id = 'bossvid'; v.src = '/assets/shinato/m/ch_boss.mp4'; v.playsInline = true; v.setAttribute('playsinline', ''); v.controls = false;
+  v.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;background:#000;z-index:30';
+  document.body.appendChild(v);
+  let fini = false;
+  const suite = () => { if (fini) return; fini = true; v.remove(); initBoss(); last = performance.now(); running = true; };
+  v.addEventListener('ended', suite); v.addEventListener('error', suite);
+  const p = v.play(); if (p && p.catch) p.catch(() => { v.muted = true; v.play().catch(suite); });
 }
 function drawFade() {
   if (!P || !(P.fade > 0)) return;

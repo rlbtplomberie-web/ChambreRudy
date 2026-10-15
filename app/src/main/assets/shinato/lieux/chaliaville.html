@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="color-scheme" content="dark only">
+<title>RUDY STYLE &middot; CHALIAVILLE</title>
+<style>
+:root{color-scheme:dark only}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#050a1e;color:#fff;font-family:Arial,Helvetica,sans-serif;touch-action:none;overscroll-behavior:none}
+#gl,#av{position:fixed;inset:0;width:100%;height:100%;display:block}
+#titre{position:fixed;top:calc(2vmin + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:20;text-align:center;pointer-events:none;
+ color:#fff;font:900 clamp(14px,3vmin,26px)/1.15 Arial,sans-serif;letter-spacing:3px;text-shadow:0 3px 0 #000,0 0 14px rgba(0,0,0,.9)}
+#titre small{display:block;margin-top:.5vmin;color:#ffe27a;letter-spacing:4px;font:800 clamp(8px,1.6vmin,13px)/1 Arial,sans-serif}
+#joy{position:fixed;left:calc(4.5vmin + env(safe-area-inset-left,0px));bottom:5vmin;width:30vmin;height:30vmin;border-radius:50%;z-index:20;touch-action:none;
+ background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.10),rgba(0,0,0,.34));border:2px solid rgba(255,226,122,.45);box-shadow:0 6px 18px rgba(0,0,0,.5)}
+#knob{position:absolute;left:50%;top:50%;width:13vmin;height:13vmin;margin:-6.5vmin 0 0 -6.5vmin;border-radius:50%;pointer-events:none;
+ background:radial-gradient(circle at 42% 36%,#fbf0c6,#c9a33c 60%,#7d6118);box-shadow:0 4px 12px rgba(0,0,0,.6)}
+#zoom{position:fixed;right:calc(4vmin + env(safe-area-inset-right,0px));top:14vh;height:44vh;width:7vmin;z-index:20;touch-action:none;display:flex;flex-direction:column;align-items:center;user-select:none;-webkit-user-select:none}
+#zoom b{position:relative;display:block;width:100%;height:5vmin;cursor:pointer}
+#zoom b::before,#zoom b.zp::after{content:'';position:absolute;left:50%;top:50%;width:3vmin;height:.6vmin;margin:-.3vmin 0 0 -1.5vmin;background:#f3dfa0;border-radius:1vmin;box-shadow:0 0 3px #000}
+#zoom b.zp::after{width:.6vmin;height:3vmin;margin:-1.5vmin 0 0 -.3vmin}
+#zoomRail{position:relative;flex:1;width:.7vmin;border-radius:1vmin;background:rgba(243,223,160,.45);box-shadow:0 0 3px rgba(0,0,0,.8);margin:2.5vmin 0}
+#zoomBout{position:absolute;left:50%;width:4vmin;height:4vmin;margin:-2vmin 0 0 -2vmin;border-radius:50%;background:radial-gradient(circle at 45% 38%,#f6e3a1,#a07a24);border:1px solid #3b2a08;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+#courir{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:7vmin;width:22vmin;height:22vmin;border-radius:50%;z-index:20;display:flex;align-items:center;justify-content:center;touch-action:none;
+ font:900 clamp(12px,3.2vmin,22px)/1 Arial,sans-serif;letter-spacing:1px;color:#ffe27a;background:radial-gradient(circle at 45% 38%,rgba(60,60,70,.92),rgba(12,12,16,.92));border:2px solid rgba(255,226,122,.65);box-shadow:0 6px 18px rgba(0,0,0,.55)}
+#courir.on{transform:scale(.93);background:radial-gradient(circle at 45% 38%,#c9a33c,#7d6118);color:#fff}
+#depart{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55)}
+#depart .carte{position:relative;display:grid;grid-template-columns:1fr 1fr;column-gap:2.4vmin;row-gap:2vmin;width:min(92vw,760px);max-height:92vh;overflow:auto;padding:4vmin 4.5vmin 4.5vmin;border-radius:3vmin;text-align:center;
+ background:linear-gradient(rgba(14,14,18,.96),rgba(30,30,36,.96));border:2px solid rgba(255,226,122,.6);box-shadow:0 10px 40px rgba(0,0,0,.7)}
+#depart h2{grid-column:1/-1;margin:0 0 1vmin;color:#fff;font:900 clamp(16px,4.2vmin,34px)/1.2 Arial,sans-serif;letter-spacing:2px;text-shadow:0 3px 0 #000}
+#depart .choix{padding:2.6vmin 2vmin;border-radius:2.4vmin;cursor:pointer;font:900 clamp(12px,3.1vmin,24px)/1.1 Arial,sans-serif;letter-spacing:2px;color:#ffe27a;
+ background:linear-gradient(rgba(12,12,14,.9),rgba(40,40,46,.9));border:2px solid rgba(255,226,122,.7)}
+#depart .choix:active{transform:scale(.95)}
+#depart .fermer{position:absolute;top:1.6vmin;right:2.2vmin;color:#ffe27a;font:900 clamp(16px,4vmin,30px)/1 Arial;cursor:pointer;opacity:.7}
+#charge{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#050a1e;z-index:60;color:#ffe27a;font:900 clamp(14px,3vmin,24px)/1 Arial;letter-spacing:4px;transition:opacity .5s}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<canvas id="av"></canvas>
+<div id="titre">RUDY STYLE<small>CHALIAVILLE</small></div>
+<div id="joy"><div id="knob"></div></div>
+<div id="courir">COURIR</div>
+<div id="zoom"><b class="zp" data-z="-1"></b><div id="zoomRail"><div id="zoomBout"></div></div><b class="zm" data-z="1"></b></div>
+<div id="depart"><div class="carte">
+ <div class="fermer" id="departFermer">&#10005;</div>
+ <h2>OÙ VOULEZ-VOUS ALLER&nbsp;?</h2>
+ <div class="choix" data-d="shinato">SHINATO</div>
+ <div class="choix" data-d="plage">À LA PLAGE</div>
+ <div class="choix" data-d="delabree">VILLE DÉLABRÉE</div>
+ <div class="choix" data-d="vaviel">VAVIEL</div>
+ <div class="choix" data-d="boulevard">BOULEVARD</div>
+ <div class="choix" data-d="mitsuda">MITSUDA</div>
+ <div class="choix" data-d="rembourg">REMBOURG</div>
+ <div class="choix" id="versPontLades" data-d="pontlades" style="display:none">PONT-L'ADES</div>
+ <div class="choix" data-d="aeroport">L'AÉROPORT</div>
+</div></div>
+<div id="charge">CHARGEMENT…</div>
+<script>
+/* ===================== CHALIAVILLE =====================
+   Les trois images bout à bout (4796 x 941), animées dans la carte graphique :
+   arbres et plantes qui bougent au vent, lac qui ondule, lumières qui frémissent, étoiles, lune.
+   Rudy (planche de la ville dépravée) marche sur la promenade devant les boutiques. */
+const SW=4796, SH=941, HALF=2398, SOLB=725;
+const IMG0="/assets/shinato/m/chalia_0.jpg", IMG1="/assets/shinato/m/chalia_1.jpg", MASK="/assets/shinato/m/chalia_masque.png", AVANT="/assets/shinato/m/chalia_avant.webp";
+const PET=[[2366, 440], [171, 224], [80, 512], [3730, 347], [763, 459], [36, 210], [4294, 346], [25, 530], [139, 229], [292, 282], [3684, 404], [4318, 330], [4645, 218], [2398, 451], [4403, 174], [1484, 187], [1584, 365], [751, 424], [978, 220], [149, 319], [4712, 311], [534, 637], [998, 215], [2340, 472], [1611, 446], [3771, 406], [4162, 402], [4311, 348], [4156, 396], [3097, 462], [2175, 259], [4693, 436], [166, 234], [2755, 265], [826, 406], [3717, 440], [1630, 379], [1561, 406], [148, 254], [4159, 430], [3144, 473], [1514, 399], [11, 188], [3690, 334], [4126, 361], [4239, 359], [79, 550], [1609, 435], [1600, 385], [1593, 404], [3713, 319], [3712, 389], [4159, 396], [161, 261], [3901, 221], [4239, 613], [1601, 628], [3935, 413], [3736, 358], [1238, 216], [933, 210], [3862, 617], [3676, 322], [118, 547], [171, 237], [3124, 414], [4310, 340], [3893, 447], [2419, 423], [1250, 215], [117, 255], [53, 174], [72, 512], [4776, 292], [1624, 438], [19, 189], [3664, 342], [1517, 431], [3096, 461], [24, 184], [4031, 236], [2400, 407], [3628, 243], [4717, 279], [1594, 374], [34, 535], [2388, 442], [174, 223], [41, 235], [3151, 389], [4565, 218], [4452, 178], [785, 385], [2420, 261], [3176, 213], [2893, 280], [4445, 187], [74, 542], [2410, 445], [2386, 407], [4294, 344], [492, 324], [1662, 224], [4117, 618], [341, 183], [1597, 413], [4565, 222], [4645, 363], [823, 388], [211, 394], [1478, 187], [4198, 454], [4255, 342], [3749, 246], [3124, 435], [34, 196], [3454, 188], [4175, 436], [51, 211], [4454, 178], [4175, 435], [84, 197], [342, 288], [2425, 445], [595, 488], [500, 627], [4316, 332], [4264, 324], [817, 449], [1565, 417], [742, 398], [158, 366], [3945, 432], [835, 381], [3822, 598], [2395, 431], [57, 190], [734, 418], [3795, 390], [4640, 435], [364, 568], [734, 420], [1417, 212], [187, 174], [703, 558], [4208, 409], [4533, 240], [1116, 269], [4150, 618], [80, 227], [558, 503], [3722, 335], [3781, 413], [510, 516], [2692, 278], [480, 655], [409, 561], [4679, 190], [3722, 393], [4086, 649], [3904, 407], [4635, 207], [736, 460], [3712, 416], [1605, 435], [3101, 429], [2374, 509], [43, 191], [107, 221], [4675, 192], [111, 227], [3198, 300], [1601, 414], [3742, 345], [1903, 213], [3110, 439], [3777, 375], [557, 482], [2326, 492], [724, 463], [4277, 317], [1619, 412], [2354, 345], [84, 213], [98, 209], [3778, 398], [722, 437], [3740, 207], [89, 213], [4094, 381], [3783, 274], [1570, 416], [257, 138], [3937, 415], [787, 421], [3136, 384], [4248, 377], [2330, 457], [3701, 340], [4660, 190], [1479, 410], [3114, 403], [1564, 359], [74, 511], [4568, 230], [797, 464], [1487, 396], [4195, 420], [3892, 227], [381, 561], [767, 414], [4638, 586], [474, 237], [729, 560], [4405, 186], [484, 643], [841, 424], [1584, 619], [1472, 423], [590, 483], [527, 655], [916, 219], [1564, 381], [1536, 193], [4110, 361], [4234, 387], [402, 662], [1512, 307], [4288, 345], [4271, 314], [737, 411], [1518, 309], [504, 641], [4291, 338], [714, 559], [706, 562], [870, 209], [743, 405], [771, 446], [798, 400], [748, 459], [1583, 341], [2713, 270], [381, 660], [3140, 351], [529, 653], [4515, 455], [2379, 404], [1878, 194], [1901, 211], [3744, 376], [4547, 244], [2383, 451], [168, 330], [3126, 454], [1626, 406], [4186, 588], [741, 446], [363, 660], [4720, 271], [2978, 280], [1221, 220], [2986, 291], [11, 529], [4061, 575], [1523, 403], [3768, 367], [3069, 326], [184, 240], [796, 445], [3684, 362], [1588, 421], [128, 561], [774, 439], [3692, 339], [4176, 405], [32, 203], [3862, 607], [1478, 407], [4180, 478], [3502, 195], [3802, 376], [2186, 248], [3930, 405], [2383, 436], [145, 261], [3725, 194], [538, 195], [2386, 398], [182, 359], [527, 217], [4640, 442], [4209, 463], [835, 444], [4217, 318], [1547, 370], [803, 439], [592, 483], [2351, 432], [34, 187], [4119, 463], [828, 412], [2338, 453], [2418, 421], [3778, 353], [166, 331], [2420, 483], [137, 237], [811, 409], [150, 265], [4055, 437], [4090, 376], [3842, 601], [2244, 272], [4496, 251], [2371, 451], [4521, 432], [2958, 291], [4052, 436], [4277, 330], [771, 423], [792, 451], [786, 468], [156, 278], [3819, 449], [169, 244], [229, 287], [4114, 381], [767, 436], [2388, 407], [3689, 340], [85, 213], [4423, 173], [266, 136], [3213, 291], [3236, 320], [57, 194], [361, 647], [3894, 423], [298, 252], [3827, 431], [3117, 451], [3932, 410], [809, 416], [2358, 489], [2354, 432], [75, 225], [3811, 421], [332, 177], [3780, 614], [160, 403], [730, 471], [51, 520], [1299, 288], [39, 511], [794, 404], [522, 650], [138, 391], [72, 513], [1605, 360], [787, 379], [544, 483], [654, 640], [1545, 615], [155, 383], [118, 405], [4184, 621], [4263, 372], [172, 362], [86, 200], [1623, 439], [1475, 426], [714, 467], [3778, 393], [4087, 374], [169, 362], [1615, 354], [534, 494], [835, 435], [1189, 243], [4478, 166], [3717, 363], [786, 394], [3123, 416], [4070, 425], [4564, 225], [1626, 390], [3133, 379], [1199, 223], [491, 631], [756, 430], [761, 404], [350, 190], [788, 423], [738, 413], [832, 445], [3159, 367], [4569, 223], [2382, 431], [2453, 300], [4585, 231], [3974, 273], [1538, 419], [4390, 188], [3809, 395], [715, 443], [2464, 292], [823, 409], [4789, 172], [4466, 170], [3718, 367], [4505, 590], [720, 550], [3606, 224], [113, 205], [3754, 354], [1923, 222], [550, 506], [72, 193], [4135, 465], [1524, 389], [1583, 417], [4124, 407], [3720, 351], [1613, 429], [4713, 314], [4589, 444], [4110, 366], [133, 559], [809, 411], [1600, 411], [192, 408], [764, 411], [4632, 215], [4149, 409], [613, 266], [3833, 455], [1581, 279], [3804, 614], [12, 227], [3176, 368], [751, 414], [4565, 224], [1596, 414], [2381, 482], [2870, 316], [4174, 408], [253, 136], [3146, 387], [2419, 261], [4298, 335], [283, 144], [1611, 398], [178, 350], [1605, 400], [4550, 586], [794, 418], [3766, 381], [3816, 241], [3111, 457], [1561, 373], [82, 204], [551, 494], [4141, 377], [4558, 235], [1622, 419], [1527, 401], [4035, 301], [3105, 405], [3788, 374], [4273, 299], [152, 330], [2, 218], [3688, 331], [526, 198], [40, 181], [745, 404], [1540, 281], [1872, 194], [2176, 262], [800, 426], [3715, 364], [27, 166], [1608, 418], [164, 247], [2345, 350], [3265, 250], [1875, 250], [168, 331], [64, 522], [743, 467], [1608, 360], [3037, 315], [4114, 386], [12, 205], [3108, 328], [4246, 361], [4400, 164], [25, 199], [3721, 334]];
+const PNJ=[{"n": "femme_banc", "x": 2505, "y": 908, "w": 102.2, "h": 105.0, "lum": 0.8, "om": 0.9, "f": ["/assets/shinato/m/chalia_pnj_femme_banc_0.webp", "/assets/shinato/m/chalia_pnj_femme_banc_1.webp", "/assets/shinato/m/chalia_pnj_femme_banc_2.webp", "/assets/shinato/m/chalia_pnj_femme_banc_3.webp"]}, {"n": "homme_banc", "x": 3860, "y": 698, "w": 88.2, "h": 94.9, "lum": 0.86, "om": 0.9, "f": ["/assets/shinato/m/chalia_pnj_homme_banc_0.webp", "/assets/shinato/m/chalia_pnj_homme_banc_1.webp", "/assets/shinato/m/chalia_pnj_homme_banc_2.webp", "/assets/shinato/m/chalia_pnj_homme_banc_3.webp"]}, {"n": "clocharde", "x": 4420, "y": 704, "w": 73.9, "h": 79.5, "lum": 0.72, "om": 1.0, "f": ["/assets/shinato/m/chalia_pnj_clocharde_0.webp", "/assets/shinato/m/chalia_pnj_clocharde_1.webp", "/assets/shinato/m/chalia_pnj_clocharde_2.webp", "/assets/shinato/m/chalia_pnj_clocharde_3.webp"]}, {"n": "clochard", "x": 2394, "y": 906, "w": 63.0, "h": 121.9, "lum": 0.76, "om": 0.6, "f": ["/assets/shinato/m/chalia_pnj_clochard_0.webp", "/assets/shinato/m/chalia_pnj_clochard_1.webp", "/assets/shinato/m/chalia_pnj_clochard_2.webp", "/assets/shinato/m/chalia_pnj_clochard_3.webp"]}, {"n": "soldat", "x": 1980, "y": 708, "w": 54.9, "h": 122.9, "lum": 0.84, "om": 0.6, "f": ["/assets/shinato/m/chalia_pnj_soldat_0.webp", "/assets/shinato/m/chalia_pnj_soldat_1.webp", "/assets/shinato/m/chalia_pnj_soldat_2.webp", "/assets/shinato/m/chalia_pnj_soldat_3.webp"]}, {"n": "femme_carnet", "x": 2700, "y": 704, "w": 39.3, "h": 116.8, "lum": 0.9, "om": 0.5, "f": ["/assets/shinato/m/chalia_pnj_femme_carnet_0.webp", "/assets/shinato/m/chalia_pnj_femme_carnet_1.webp", "/assets/shinato/m/chalia_pnj_femme_carnet_2.webp", "/assets/shinato/m/chalia_pnj_femme_carnet_3.webp"]}, {"n": "femme_orange", "x": 3420, "y": 706, "w": 43.7, "h": 113.9, "lum": 0.9, "om": 0.5, "f": ["/assets/shinato/m/chalia_pnj_femme_orange_0.webp", "/assets/shinato/m/chalia_pnj_femme_orange_1.webp", "/assets/shinato/m/chalia_pnj_femme_orange_2.webp", "/assets/shinato/m/chalia_pnj_femme_orange_3.webp"]}, {"n": "femme_mur", "x": 2866, "y": 902, "w": 57.3, "h": 115.0, "lum": 0.74, "om": 0.7, "f": ["/assets/shinato/m/chalia_pnj_femme_mur_0.webp", "/assets/shinato/m/chalia_pnj_femme_mur_1.webp", "/assets/shinato/m/chalia_pnj_femme_mur_2.webp", "/assets/shinato/m/chalia_pnj_femme_mur_3.webp"]}, {"n": "femme_robe_noire", "x": 1320, "y": 706, "w": 62.8, "h": 114.0, "lum": 0.88, "om": 0.5, "f": ["/assets/shinato/m/chalia_pnj_femme_robe_noire_0.webp", "/assets/shinato/m/chalia_pnj_femme_robe_noire_1.webp", "/assets/shinato/m/chalia_pnj_femme_robe_noire_2.webp", "/assets/shinato/m/chalia_pnj_femme_robe_noire_3.webp"]}];
+const RF={"r1": {"src": "/assets/shinato/m/9b9b609521f7a7c9.webp", "w": 225, "h": 310, "ax": 147.0, "ay": 311.4}, "r2": {"src": "/assets/shinato/m/967952dbd060c73e.webp", "w": 212, "h": 313, "ax": 152.0, "ay": 314.1}, "r3": {"src": "/assets/shinato/m/efa6769e0f6f92e5.webp", "w": 282, "h": 311, "ax": 180.8, "ay": 320.4}, "r4": {"src": "/assets/shinato/m/10036fd875c7771a.webp", "w": 281, "h": 302, "ax": 160.1, "ay": 305.1}, "r5": {"src": "/assets/shinato/m/432cd74043b9ce39.webp", "w": 228, "h": 303, "ax": 150.2, "ay": 305.1}, "r6": {"src": "/assets/shinato/m/64188ce43857fefc.webp", "w": 340, "h": 277, "ax": 202.7, "ay": 307.8}, "r7": {"src": "/assets/shinato/m/e32f47cfb64d481b.webp", "w": 274, "h": 301, "ax": 179.3, "ay": 302.4}, "r8": {"src": "/assets/shinato/m/2f8a05d1a75956fc.webp", "w": 210, "h": 294, "ax": 132.9, "ay": 296.1}, "w1": {"src": "/assets/shinato/m/97da91b023d881aa.webp", "w": 158, "h": 304, "ax": 75.9, "ay": 306.0}, "w2": {"src": "/assets/shinato/m/70c25cf4b344a90d.webp", "w": 160, "h": 304, "ax": 74.0, "ay": 306.0}, "w3": {"src": "/assets/shinato/m/2b46b314a55f55c2.webp", "w": 148, "h": 304, "ax": 64.3, "ay": 306.0}, "w4": {"src": "/assets/shinato/m/8ff5ff6fbef4394e.webp", "w": 97, "h": 304, "ax": 61.4, "ay": 306.0}, "w5": {"src": "/assets/shinato/m/30fae9420c7b809f.webp", "w": 125, "h": 304, "ax": 71.6, "ay": 306.0}, "w6": {"src": "/assets/shinato/m/d5bdc2f2a3e3374e.webp", "w": 158, "h": 304, "ax": 87.1, "ay": 306.0}, "w7": {"src": "/assets/shinato/m/086d5d79ed5374d1.webp", "w": 166, "h": 304, "ax": 87.0, "ay": 306.0}, "w8": {"src": "/assets/shinato/m/5ca623a174297ef7.webp", "w": 169, "h": 304, "ax": 88.7, "ay": 306.0}, "w9": {"src": "/assets/shinato/m/a45d3d1b5d02aeb4.webp", "w": 170, "h": 304, "ax": 78.4, "ay": 305.2}, "w10": {"src": "/assets/shinato/m/17597c672148869c.webp", "w": 134, "h": 304, "ax": 51.3, "ay": 305.2}, "w11": {"src": "/assets/shinato/m/b8d615dd8fcb6142.webp", "w": 101, "h": 304, "ax": 34.3, "ay": 305.2}, "w12": {"src": "/assets/shinato/m/a7b0cc678a88ca7b.webp", "w": 156, "h": 304, "ax": 79.4, "ay": 305.2}, "w13": {"src": "/assets/shinato/m/902c55b8832618a3.webp", "w": 164, "h": 304, "ax": 76.3, "ay": 305.2}, "w14": {"src": "/assets/shinato/m/3863f576d3425184.webp", "w": 172, "h": 304, "ax": 85.8, "ay": 305.2}, "w15": {"src": "/assets/shinato/m/aedffd0046ce9878.webp", "w": 167, "h": 304, "ax": 76.3, "ay": 305.2}, "w16": {"src": "/assets/shinato/m/be1d2de0d4ac213e.webp", "w": 168, "h": 304, "ax": 77.6, "ay": 305.2}}, ASSET_H=304;
+let VUE_H=470; const VUE_MIN=300, VUE_MAX=900;                       // hauteur de scène visible (en pixels de l'image) : la vue est zoomée sur Rudy
+const Y0=SOLB-31, Y1=SOLB-16;          // le trottoir (pieds de Rudy), juste derrière les bornes
+const X0=40, X1=SW-40;
+const B0=900, B1=910;                  // la promenade du bas, au bord du lac (pieds de Rudy)
+// les escaliers entre le trottoir des boutiques et la promenade du bas : haut (x,y) -> bas (x,y)
+const ESC=[{hx:2172,hy:SOLB-20,bx:2332,by:B0+4},{hx:3118,hy:SOLB-20,bx:2928,by:B0+4}];
+const TAILLE=118;                       // hauteur de Rudy dans l'image
+const RUN_K=0.9;                       // Rudy qui court est dessiné plus gros sur la planche : même taille qu'en marchant
+
+const cv=document.getElementById('gl'), gl=cv.getContext('webgl',{antialias:false,premultipliedAlpha:false});
+const av=document.getElementById('av'), cx=av.getContext('2d');
+const vs='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+const fs=`precision highp float;
+uniform sampler2D i0,i1,mk;uniform float t,sc;uniform vec2 cam,res;
+const float W=${SW}.,H=${SH}.,HF=${HALF}.;
+float h21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+vec3 img(vec2 p){p=clamp(p,vec2(0.5),vec2(W-0.5,H-0.5));
+  if(p.x<HF) return texture2D(i0,vec2(p.x/HF,p.y/H)).rgb;
+  return texture2D(i1,vec2((p.x-HF)/(W-HF),p.y/H)).rgb;}
+vec4 msk(vec2 p){return texture2D(mk,clamp(p/vec2(W,H),0.,1.));}
+float vent(float x){return 0.35+0.65*pow(0.5+0.5*sin(x*0.0016-t*0.55),3.)*(0.6+0.4*sin(t*0.13))+0.25*pow(0.5+0.5*sin(x*0.004-t*1.1+1.7),4.);}
+void main(){
+  vec2 px=cam+vec2(gl_FragCoord.x,res.y-gl_FragCoord.y)/sc;
+  vec4 m=msk(px);
+  vec3 c=img(px);
+  // arbres, plantes : bougent au vent (rafales qui traversent la ville)
+  if(m.r>0.02){
+    float w=vent(px.x);
+    float ph=-px.x*0.004+0.8*sin(px.x*0.0021);
+    float hb=clamp((px.y-300.)/600.,0.,1.);             // le lierre du mur du bas bouge un peu moins que les arbres
+    float A=1.-0.45*hb;
+    vec2 D=vec2(sin(t*1.5+ph)*(1.8+3.2*w)+sin(t*3.4+px.y*0.05+ph)*1.0*w, sin(t*2.1+px.x*0.03)*0.8*w)*A;
+    D+=vec2(sin(px.x*0.23+px.y*0.31+t*(6.+w*4.)),cos(px.x*0.19-px.y*0.27+t*(5.+w*3.))*0.5)*0.9*w*A;
+    vec2 s=px-D;
+    float a=min(m.r,msk(s).r);
+    vec3 tc=img(s)*(1.+0.07*w*sin(px.x*0.35-px.y*0.22+t*(5.+w*4.)));
+    c=mix(c,tc,a);
+  }
+  // le lac : vagues, reflets qui s'étirent, scintillement et reflet de la lune
+  if(m.g>0.02){
+    float wv=sin(px.y*0.9-t*2.2+sin(px.x*0.011+t*0.5)*2.)*2.2+sin(px.y*0.37+t*1.4+px.x*0.006)*1.4+sin(px.x*0.05-t*1.7)*0.8;
+    float vy=sin(px.x*0.045+t*1.9+sin(px.y*0.6+t))*1.6;
+    vec2 s=px+vec2(wv,vy)*m.g;
+    vec3 lc=img(s);
+    // reflet étiré vers le bas (les lumières de la ville tremblent dans l'eau)
+    lc=max(lc,img(s-vec2(0.,2.5+1.5*sin(t*2.3+px.x*0.07)))*0.85);
+    float l0=dot(lc,vec3(.3,.59,.11));
+    float sp=sin(px.x*0.13+px.y*1.9-t*3.6)*sin(px.x*0.033-t*1.3+px.y*0.5);
+    lc*=1.+m.g*(0.12*sp+0.6*max(sp,0.)*smoothstep(0.3,0.75,l0));
+    // houle : bandes plus claires qui avancent lentement
+    float hou=pow(0.5+0.5*sin(px.y*0.55-t*1.2+sin(px.x*0.004+t*0.3)*3.),6.);
+    lc+=vec3(.10,.14,.24)*hou*m.g;
+    // petites étincelles
+    float k=h21(floor(px/vec2(6.,2.)));
+    lc+=vec3(.75,.8,1.)*m.g*pow(max(0.,sin(t*(1.5+k*3.)+k*50.)),40.)*step(0.82,k);
+    // chemin de lune qui scintille sur l'eau
+    float dl=abs(px.x-1302.+3.*sin(px.y*0.8+t*2.));
+    lc+=vec3(.6,.68,.9)*m.g*smoothstep(26.,0.,dl)*(0.25+0.35*pow(max(0.,sin(px.y*1.6-t*4.+sin(px.x*0.3)*2.)),3.));
+    c=mix(c,lc,m.g);
+  }
+  float lum=dot(c,vec3(.3,.59,.11));
+  // étoiles qui scintillent
+  if(px.y<190.&&lum>0.5){float k=h21(floor(px/3.));c*=0.75+0.35*(0.5+0.5*sin(t*(2.+k*3.)+k*6.28));}
+  // halo de la lune
+  c+=vec3(.55,.62,.8)*0.07*(0.8+0.2*sin(t*0.8))*smoothstep(95.,22.,distance(px,vec2(1302.,67.)));
+  // lumières chaudes qui frémissent
+  if(m.b>0.05){float k=h21(floor(px/14.));c*=1.+m.b*0.07*sin(t*(5.+k*6.)+k*40.)*sin(t*(1.3+k));}
+  gl_FragColor=vec4(c,1.);
+}`;
+function sh(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))console.error(gl.getShaderInfoLog(s));return s;}
+const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
+const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+const loc=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+function tex(unit,image,fmt){const t=gl.createTexture();gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,t);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  gl.texImage2D(gl.TEXTURE_2D,0,fmt,fmt,gl.UNSIGNED_BYTE,image);}
+gl.uniform1i(gl.getUniformLocation(pr,'i0'),0);gl.uniform1i(gl.getUniformLocation(pr,'i1'),1);gl.uniform1i(gl.getUniformLocation(pr,'mk'),2);
+const uT=gl.getUniformLocation(pr,'t'),uS=gl.getUniformLocation(pr,'sc'),uC=gl.getUniformLocation(pr,'cam'),uR=gl.getUniformLocation(pr,'res');
+
+// ---------- écran ----------
+let DW=0,DH=0,S=1,cam={x:0,y:0};
+function mesure(){const d=Math.min(2.5,window.devicePixelRatio||1);DW=Math.round(innerWidth*d);DH=Math.round(innerHeight*d);
+  cv.width=av.width=DW;cv.height=av.height=DH;gl.viewport(0,0,DW,DH);S=DH/VUE_H;}
+addEventListener('resize',()=>{mesure();camera(false);placeZoom();});
+// ---------- barre de zoom (haut = zoomer, bas = dézoomer) ----------
+const zr=document.getElementById('zoomRail'), zb=document.getElementById('zoomBout'), zz=document.getElementById('zoom');
+try{const v=parseFloat(localStorage.getItem('chalia_zoom'));if(v>=VUE_MIN&&v<=VUE_MAX)VUE_H=v;}catch(e){}
+function placeZoom(){zb.style.top=((VUE_H-VUE_MIN)/(VUE_MAX-VUE_MIN)*100)+'%';}
+function regleZoom(v){VUE_H=Math.max(VUE_MIN,Math.min(VUE_MAX,v));S=DH/VUE_H;placeZoom();camera(false);try{localStorage.setItem('chalia_zoom',String(Math.round(VUE_H)));}catch(e){}}
+let zid=null;
+function zmove(e){const r=zr.getBoundingClientRect();regleZoom(VUE_MIN+Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))*(VUE_MAX-VUE_MIN));}
+zz.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();const t=e.target.tagName;if(t==='B'){regleZoom(VUE_H+60*parseFloat(e.target.dataset.z));return;}zid=e.pointerId;try{zz.setPointerCapture(zid)}catch(_){}zmove(e);});
+zz.addEventListener('pointermove',e=>{if(e.pointerId===zid)zmove(e);});
+['pointerup','pointercancel'].forEach(n=>zz.addEventListener(n,e=>{if(e.pointerId===zid)zid=null;}));
+addEventListener('wheel',e=>{regleZoom(VUE_H*(e.deltaY>0?1.08:1/1.08));},{passive:true});
+placeZoom();
+
+// ---------- Rudy ----------
+Object.keys(RF).forEach(k=>{const i=new Image();i.src=RF[k].src;RF[k].img=i;});
+const WALK_R=['w1','w2','w3','w4','w5','w6','w7','w8'],WALK_L=['w9','w10','w11','w12','w13','w14','w15','w16'],RUN=['r1','r2','r3','r4','r5','r6','r7','r8'];
+const P={x:2000,y:Y0+8,face:1,speed:0,phase:0,mode:'idle',niv:'haut',esc:null,s:0};
+let jx=0,jy=0,clav={},courir=false,menu=false;
+function camera(lisse){
+  const vw=DW/S, vh=DH/S;
+  const tx=Math.max(0,Math.min(SW-vw,P.x-vw/2)), ty=Math.max(0,Math.min(SH-vh,P.y-TAILLE*0.5-vh*0.56));
+  if(lisse){cam.x+=(tx-cam.x)*0.14;cam.y+=(ty-cam.y)*0.14;}else{cam.x=tx;cam.y=ty;}
+}
+const avant=new Image();avant.src=AVANT;
+// les passants : 4 poses chacun, qui s'enchaînent en fondu
+PNJ.forEach(o=>{o.im=o.f.map(s=>{const i=new Image();i.src=s;return i;});o.cur=0;o.prev=0;o.fade=1;o.next=performance.now()/1000+1.5+Math.random()*2.5;o.ph=Math.random()*6;});
+function dessinePNJ(o,t){
+  if(t>o.next){o.prev=o.cur;let n;do{n=(Math.random()*4)|0}while(n===o.cur);o.cur=n;o.fade=0;o.next=t+1.8+Math.random()*2.6;}
+  o.fade=Math.min(1,o.fade+0.035);
+  const x=o.x-o.w/2, y=o.y-o.h, b=1+0.006*Math.sin(t*1.5+o.ph);
+  const ow=o.w*(o.n.includes('banc')?1.05:0.75)*o.om, oh=Math.max(4,o.h*0.07);
+  cx.fillStyle='rgba(0,0,10,.45)';cx.beginPath();cx.ellipse(o.x,o.y-oh*0.1,ow/2,oh/2,0,0,7);cx.fill();
+  cx.save();cx.translate(o.x,o.y);cx.scale(1/b*1.0+ (b-1)*0.5,b);cx.translate(-o.x,-o.y);
+  cx.filter=`brightness(${o.lum}) saturate(.92)`;
+  const A=o.im[o.prev],B=o.im[o.cur];
+  if(o.fade<1&&A.complete&&A.naturalWidth){cx.globalAlpha=1;cx.drawImage(A,x,y,o.w,o.h);}
+  if(B.complete&&B.naturalWidth){cx.globalAlpha=o.fade<1?o.fade:1;cx.drawImage(B,x,y,o.w,o.h);}
+  cx.globalAlpha=1;cx.filter='none';cx.restore();
+}
+// pétales
+const pet=[];function nouveau(){const p=PET[(Math.random()*PET.length)|0];return{x:p[0],y:p[1],vx:0,vy:0.15+Math.random()*0.25,r:1.2+Math.random()*1.6,a:Math.random()*6.28,va:(Math.random()-.5)*0.12,vie:0,max:300+Math.random()*450};}
+for(let i=0;i<140;i++){const p=nouveau();p.vie=Math.random()*p.max;pet.push(p);}
+function ventJS(x,t){return 0.35+0.65*Math.pow(0.5+0.5*Math.sin(x*0.0016-t*0.55),3)*(0.6+0.4*Math.sin(t*0.13))+0.25*Math.pow(0.5+0.5*Math.sin(x*0.004-t*1.1+1.7),4);}
+
+let tPrec=0;
+function boucle(ms){
+  requestAnimationFrame(boucle);
+  const t=ms/1000, dt=Math.min(.05,(ms-(tPrec||ms))/1000); tPrec=ms;
+  // déplacement
+  let ax=jx,ay=jy; if(clav.l)ax=-1; if(clav.r)ax=1; if(clav.u)ay=-1; if(clav.d)ay=1; if(menu){ax=ay=0;}
+  const m=Math.abs(ax), cours=courir||clav.shift, v=m<0.15?0:(cours?260:105)*Math.min(1,m*1.25);
+  let vit=v;
+  if(P.niv==='esc'){
+    // dans l'escalier : on avance le long des marches (bas / vers le bas de l'escalier = descendre)
+    const E=P.esc, dx=E.bx-E.hx, dy=E.by-E.hy, L=Math.hypot(dx,dy), sens=Math.sign(dx);
+    let u=ax*sens*0.7+ay; const mu=Math.min(1,Math.abs(u));
+    vit=mu<0.2?0:(cours?200:85)*mu;
+    if(vit>0){P.s=Math.max(0,Math.min(1,P.s+Math.sign(u)*vit*dt/L)); P.face=(Math.sign(u)*sens)>0?1:-1;}
+    P.x=E.hx+dx*P.s; P.y=E.hy+dy*P.s;
+    if(P.s<=0&&u<0){P.niv='haut';P.y=Y1-2;}
+    if(P.s>=1&&u>0){P.niv='bas';P.y=B0+4;}
+  } else {
+    if(v>0){P.face=ax>0?1:-1;P.x=Math.max(X0,Math.min(X1,P.x+P.face*v*dt));}
+    const lo=P.niv==='haut'?Y0:B0, hi=P.niv==='haut'?Y1:B1;
+    if(Math.abs(ay)>0.3)P.y=Math.max(lo,Math.min(hi,P.y+ay*24*dt));
+    // devant le haut d'un escalier + joystick vers le bas : on descend ; devant le bas + vers le haut : on monte
+    for(const E of ESC){
+      if(P.niv==='haut'&&ay>0.5&&Math.abs(P.x-E.hx)<26){P.niv='esc';P.esc=E;P.s=0.02;break;}
+      if(P.niv==='bas'&&ay<-0.5&&Math.abs(P.x-E.bx)<26){P.niv='esc';P.esc=E;P.s=0.98;break;}
+    }
+  }
+  P.mode=vit<5?'idle':(cours?'run':'walk');
+  if(P.mode==='walk')P.phase+=dt*10*(vit/105);else if(P.mode==='run')P.phase+=dt*14*(vit/(P.niv==='esc'?200:260));
+  camera(true); bouts();
+  // décor animé
+  gl.uniform1f(uT,t);gl.uniform1f(uS,S);gl.uniform2f(uC,cam.x,cam.y);gl.uniform2f(uR,DW,DH);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  // Rudy, les bornes devant lui, les pétales
+  cx.setTransform(1,0,0,1,0,0);cx.clearRect(0,0,DW,DH);
+  cx.setTransform(S,0,0,S,-cam.x*S,-cam.y*S);cx.imageSmoothingEnabled=true;cx.imageSmoothingQuality='high';
+  let key,flip=false;
+  if(P.mode==='run'){key=RUN[Math.floor(P.phase)%8];flip=P.face<0;}
+  else if(P.mode==='walk'){key=(P.face>0?WALK_R:WALK_L)[Math.floor(P.phase)%8];}
+  else key=P.face>0?'w4':'w12';
+  const f=RF[key], k=TAILLE*(P.niv==='haut'?0.97+0.06*(P.y-Y0)/(Y1-Y0):1.03)/ASSET_H*(key[0]==='r'?RUN_K:1);
+  const dessineRudy=()=>{
+  cx.fillStyle='rgba(0,0,0,.38)';cx.beginPath();cx.ellipse(P.x,P.y+1,TAILLE*0.2,TAILLE*0.035,0,0,7);cx.fill();
+  if(f.img.complete&&f.img.naturalWidth){cx.save();cx.translate(P.x,P.y);if(flip)cx.scale(-1,1);cx.filter='brightness(.92) saturate(.95)';cx.drawImage(f.img,-f.ax*k,-f.ay*k,f.w*k,f.h*k);cx.restore();cx.filter='none';}};
+  const vw=DW/S, liste=PNJ.filter(o=>o.x+o.w>cam.x-20&&o.x-o.w<cam.x+vw+20).map(o=>({y:o.y,d:()=>dessinePNJ(o,t)}));
+  const enHaut=P.niv==='haut'||(P.niv==='esc'&&P.s<0.12);
+  if(!enHaut&&avant.complete&&avant.naturalWidth) cx.drawImage(avant,0,SOLB-60);      // Rudy en bas : les bornes du haut sont derrière lui
+  liste.push({y:P.y,d:dessineRudy}); liste.sort((a,b)=>a.y-b.y).forEach(e=>e.d());
+  if(enHaut&&avant.complete&&avant.naturalWidth) cx.drawImage(avant,0,SOLB-60);
+  for(const p of pet){const w=ventJS(p.x,t);p.vx+=(w*1.1-0.25-p.vx)*0.03+Math.sin(t*1.7+p.y*0.05)*0.02;
+    p.x+=p.vx;p.y+=p.vy+Math.sin(t*2+p.x*0.03)*0.15*w;p.a+=p.va*(0.5+w);p.vie++;
+    if(p.vie>p.max||p.y>SH||p.x>SW+10||p.x<-10)Object.assign(p,nouveau());
+    if(p.x<cam.x-10||p.x>cam.x+DW/S+10)continue;
+    const al=Math.min(1,p.vie/40,(p.max-p.vie)/60);
+    cx.save();cx.globalAlpha=al*0.9;cx.translate(p.x,p.y);cx.rotate(p.a);cx.scale(1,0.5+0.5*Math.sin(p.a*3));
+    cx.fillStyle='#f6b9e6';cx.beginPath();cx.ellipse(0,0,p.r*1.4,p.r,0,0,6.28);cx.fill();cx.restore();}
+}
+
+// ---------- commandes ----------
+const joy=document.getElementById('joy'),knob=document.getElementById('knob');let jid=null;
+function jmove(e){const r=joy.getBoundingClientRect(),R=r.width/2;let dx=e.clientX-r.left-R,dy=e.clientY-r.top-R;const d=Math.hypot(dx,dy),mm=R*0.62;if(d>mm){dx*=mm/d;dy*=mm/d}jx=dx/mm;jy=dy/mm;knob.style.transform=`translate(${dx}px,${dy}px)`;}
+function jstop(){jid=null;jx=jy=0;knob.style.transform='';}
+joy.addEventListener('pointerdown',e=>{e.preventDefault();jid=e.pointerId;try{joy.setPointerCapture(jid)}catch(_){}jmove(e);});
+joy.addEventListener('pointermove',e=>{if(e.pointerId===jid)jmove(e);});
+joy.addEventListener('pointerup',e=>{if(e.pointerId===jid)jstop();});joy.addEventListener('pointercancel',e=>{if(e.pointerId===jid)jstop();});
+const bc=document.getElementById('courir');
+bc.addEventListener('pointerdown',e=>{e.preventDefault();courir=true;bc.classList.add('on');try{bc.setPointerCapture(e.pointerId)}catch(_){}});
+['pointerup','pointercancel','lostpointercapture'].forEach(n=>bc.addEventListener(n,()=>{courir=false;bc.classList.remove('on');}));
+addEventListener('blur',()=>{jstop();courir=false;bc.classList.remove('on');});
+const T={ArrowLeft:'l',KeyA:'l',KeyQ:'l',ArrowRight:'r',KeyD:'r',ArrowUp:'u',KeyW:'u',KeyZ:'u',ArrowDown:'d',KeyS:'d',ShiftLeft:'shift',ShiftRight:'shift'};
+addEventListener('keydown',e=>{if(T[e.code])clav[T[e.code]]=1;});addEventListener('keyup',e=>{if(T[e.code])clav[T[e.code]]=0;});
+
+// ---------- au bout de la promenade : « Où voulez-vous aller ? » (on reprend toujours la moto) ----------
+const boite=document.getElementById('depart');let arme=false;
+function appui(el,f){let t0=0;el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();const n=Date.now();if(n-t0<350)return;t0=n;f();});}
+function montre(){menu=true;arme=false;boite.style.display='flex';jstop();clav={};}
+function cache(){menu=false;boite.style.display='none';}
+appui(document.getElementById('departFermer'),cache);
+function bouts(){const bout=P.niv!=='esc'&&(P.x<=X0+2||P.x>=X1-2);if(!menu&&arme&&bout)montre();if(P.x>X0+80&&P.x<X1-80)arme=true;}
+[...boite.querySelectorAll('.choix')].forEach(b=>appui(b,()=>{cache();try{window.parent.postMessage({type:'chaliaville:destination',dest:b.getAttribute('data-d')},'*');}catch(e){}}));
+setInterval(()=>{const b=document.getElementById('versPontLades');let ok=false;try{ok=localStorage.getItem('pontlades_debloque')==='1';}catch(e){}b.style.display=ok?'':'none';},400);
+
+// ---------- chargement ----------
+function charge(src){return new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=src;});}
+Promise.all([charge(IMG0),charge(IMG1),charge(MASK)]).then(([a,b,c])=>{
+  tex(0,a,gl.RGB);tex(1,b,gl.RGB);tex(2,c,gl.RGBA);
+  mesure();camera(false);
+  const ch=document.getElementById('charge');ch.style.opacity=0;setTimeout(()=>ch.remove(),600);
+  requestAnimationFrame(boucle);
+});
+</script>
+</body>
+</html>
