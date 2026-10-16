@@ -1,4 +1,3 @@
-maj-203
-- Ville delabree : devant le passage sous le pont (entre la salle d'arcade et la salle de rencontre), fleche jaune vers le haut + bouton Entrer
-- Nouveau lieu : l'impasse (shinato/lieux/impasse.html), avec Rudy de l'aeroport (8 directions) ; SORTIR en bas de l'impasse, retour devant le passage
-- Impasse : bouton PARLER pres de chaque personnage, bulle manga ; tous lui disent de degager, la patronne sur le canape : Tu pars pas d'ici dans 10 secondes... je te tue.
+maj-204
+- Chapiteau : apres avoir parle une premiere fois a Monsieur Loyal, nouvelle touche POURQUOI IL Y A PERSONNE ICI ? qui lance sa nouvelle video (cirque_loyal_personne.mp4)
+- Deverrouillage : video ajoutee dans les videos du cirque
