@@ -157,6 +157,7 @@ const SCENES={
       if(p.x>3130&&p.x<3255)return{label:'Entrer',arrow:'up',go:'desir'};            // entrée du Désir
       if(p.x>3290&&p.x<3385)return{label:'Entrer',arrow:'up',relais:true};          // bar Le Relais
       if(p.x>2865&&p.x<3035)return{label:'Entrer',arrow:'up',go:'rencontre'};        // salle de rencontre
+      if(p.x>2665&&p.x<2810)return{label:'Entrer',arrow:'up',impasse:true};          // le passage sous le pont : l'impasse
       if(p.x>4015&&p.x<4155)return{label:'Entrer',arrow:'up',go:'hall'};             // portail de la prison
       return null}},
   arcade:{w:1672,h:941,speed:3.8,vspeed:.6,rain:false,refl:.28,
@@ -247,6 +248,14 @@ function ouvreRelais(){busy=true;P.speed=0;jx=jy=0;fade.style.opacity=1;setTimeo
   gameBox.appendChild(gameFrame);gameBox.classList.add('show');fade.style.opacity=0;setTimeout(()=>gameFrame&&gameFrame.focus(),300)},320)}
 addEventListener('message',e=>{if(!e.data||e.data.type!=='relais:sortie'||!gameFrame)return;
   closeGame();setTimeout(()=>{document.getElementById('quit').style.display='';P.x=3337;P.y=ROAD_TOP+3;P.face=1;snap=true},330)});
+// ---------- l'impasse : par le passage sous le pont, on en ressort devant le passage ----------
+let sortieImpasseT=0;
+function ouvreImpasse(){if(Date.now()-sortieImpasseT<900)return;busy=true;P.speed=0;jx=jy=0;fade.style.opacity=1;setTimeout(()=>{
+  gameUrl=null;gameFrame=document.createElement('iframe');gameFrame.src='lieux/impasse.html';gameFrame.allow='fullscreen; autoplay';
+  document.getElementById('quit').style.display='none';                       // pas de « Quitter » : on sort avec SORTIR, en bas de l'impasse
+  gameBox.appendChild(gameFrame);gameBox.classList.add('show');fade.style.opacity=0;setTimeout(()=>gameFrame&&gameFrame.focus(),300)},320)}
+addEventListener('message',e=>{if(!e.data||e.data.type!=='impasse:sortie'||!gameFrame)return;sortieImpasseT=Date.now();
+  closeGame();setTimeout(()=>{document.getElementById('quit').style.display='';P.x=2737;P.y=ROAD_TOP+3;P.face=1;P.speed=0;jstop();snap=true;try{window.focus()}catch(_){}},330)});
 // ---------- dialogue avec le monsieur de l'accueil ----------
 const bulleAcc=document.createElement('div');bulleAcc.id='bulleAcc';document.body.appendChild(bulleAcc);
 const stB=document.createElement('style');stB.textContent=`
@@ -286,7 +295,7 @@ addEventListener('message',e=>{if(e.data&&e.data.type==='brasdefer:sortie'){clos
  if(e.data&&e.data.type==='premierVerre:partir'){P.x=640;P.y=600;P.dir4='h';snap=true;closeGame();if(premierOuvert)musiqueVille(true);setTimeout(()=>{quit.textContent=QUIT_TXT},700)}});
 quit.addEventListener('click',()=>{if(evasionEnCours)return;if(premierOuvert)musiqueVille(true);if(scene===SCENES.rencontre){P.x=640;P.y=600;P.dir4='h';snap=true}setTimeout(()=>{quit.textContent=QUIT_TXT},700)});
 
-function doAction(){if(busy||!zoneNow)return;if(zoneNow.relais){ouvreRelais();return}if(zoneNow.carlos){parlerCarlos();return}if(zoneNow.policier){parlerPolicier();return}if(zoneNow.gerant){parlerPolicier('/assets/shinato/m/arcade_gerant.mp4');return}if(zoneNow.danseuse){parlerDanseuse();return}if(zoneNow.evasion){evasion();return}if(zoneNow.talk){parler();return}if(zoneNow.play){openGame(zoneNow.play);return}busy=true;fade.style.opacity=1;
+function doAction(){if(busy||!zoneNow)return;if(zoneNow.relais){ouvreRelais();return}if(zoneNow.impasse){ouvreImpasse();return}if(zoneNow.carlos){parlerCarlos();return}if(zoneNow.policier){parlerPolicier();return}if(zoneNow.gerant){parlerPolicier('/assets/shinato/m/arcade_gerant.mp4');return}if(zoneNow.danseuse){parlerDanseuse();return}if(zoneNow.evasion){evasion();return}if(zoneNow.talk){parler();return}if(zoneNow.play){openGame(zoneNow.play);return}busy=true;fade.style.opacity=1;
   const z=zoneNow;setTimeout(()=>{if(z.go!=='rue'){scene=SCENES[z.go];P.x=836;P.y=872;P.face=1;P.dir4='h'}else{scene=SCENES.rue;P.x=z.door;P.y=ROAD_TOP+3;P.face=1}
     P.speed=0;snap=true;fade.style.opacity=0;setTimeout(()=>busy=false,300)},320)}
 act.addEventListener('click',doAction);

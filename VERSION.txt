@@ -1,4 +1,4 @@
-maj-202
-- Chaliaville : les 9 PNJ refaits en haute qualite a partir des planches d'origine (nets meme en zoomant)
-- Bowling : Rudy deux fois plus grand (a la taille de l'accueil)
-- Bowling : on sort quand on releve le doigt de SORTIR ; dans la rue, joystick et boutons remis a zero (plus de touches qui buggent)
+maj-203
+- Ville delabree : devant le passage sous le pont (entre la salle d'arcade et la salle de rencontre), fleche jaune vers le haut + bouton Entrer
+- Nouveau lieu : l'impasse (shinato/lieux/impasse.html), avec Rudy de l'aeroport (8 directions) ; SORTIR en bas de l'impasse, retour devant le passage
+- Impasse : bouton PARLER pres de chaque personnage, bulle manga ; tous lui disent de degager, la patronne sur le canape : Tu pars pas d'ici dans 10 secondes... je te tue.
