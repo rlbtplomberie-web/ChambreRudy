@@ -1416,6 +1416,11 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
    window.minuterieLibre(function(){ try{ cc.focus(); }catch(err){} },300);
    return;
   }
+  if(e.data && e.data.type==="impasse:ko"){
+   // l'impasse : la patronne a eu Rudy → la vidéo de l'infirmière, puis devant l'hôpital de Vaviel
+   window.pontladesFin(false);
+   return;
+  }
   if(e.data && e.data.type==="chasseur:ko"){
    // abattu : la vidéo de l'infirmière, puis Rudy devant l'hôpital de Vaviel (comme les autres jeux)
    window.pontladesFin(false);

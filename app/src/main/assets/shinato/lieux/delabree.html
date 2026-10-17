@@ -254,6 +254,8 @@ function ouvreImpasse(){if(Date.now()-sortieImpasseT<900)return;busy=true;P.spee
   gameUrl=null;gameFrame=document.createElement('iframe');gameFrame.src='lieux/impasse.html';gameFrame.allow='fullscreen; autoplay';
   document.getElementById('quit').style.display='none';                       // pas de « Quitter » : on sort avec SORTIR, en bas de l'impasse
   gameBox.appendChild(gameFrame);gameBox.classList.add('show');fade.style.opacity=0;setTimeout(()=>gameFrame&&gameFrame.focus(),300)},320)}
+// la patronne a eu Rudy : Shinato s'occupe de la suite (la vidéo de l'infirmière, puis devant l'hôpital de Vaviel)
+addEventListener('message',e=>{if(e.data&&e.data.type==='impasse:ko'){try{window.parent.postMessage({type:'impasse:ko'},'*')}catch(_){}}});
 addEventListener('message',e=>{if(!e.data||e.data.type!=='impasse:sortie'||!gameFrame)return;sortieImpasseT=Date.now();
   closeGame();setTimeout(()=>{document.getElementById('quit').style.display='';P.x=2737;P.y=ROAD_TOP+3;P.face=1;P.speed=0;jstop();snap=true;try{window.focus()}catch(_){}},330)});
 // ---------- dialogue avec le monsieur de l'accueil ----------

@@ -1,3 +1,5 @@
-maj-204
-- Chapiteau : apres avoir parle une premiere fois a Monsieur Loyal, nouvelle touche POURQUOI IL Y A PERSONNE ICI ? qui lance sa nouvelle video (cirque_loyal_personne.mp4)
-- Deverrouillage : video ajoutee dans les videos du cirque
+maj-205
+- Impasse : apres avoir parle a la patronne (canape), compte a rebours de 10 secondes en haut de l'ecran
+- Si Rudy n'est pas sorti a temps : sa video (impasse_patronne.mp4), puis la video de l'infirmiere, puis Rudy devant l'hopital de Vaviel
+- Si Rudy sort avant la fin : le compte a rebours s'arrete
+- Deverrouillage : video ajoutee dans Ville delabree
