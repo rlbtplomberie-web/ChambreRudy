@@ -1,3 +1,1 @@
-maj-208
-- Chapiteau : la question a Monsieur Loyal (Pourquoi il y a personne ici ?) est memorisee, ce qui debloque LA PLAQUETTE GUERRIERE dans l'impasse (ce fichier etait dans la maj-206, jamais envoyee)
-- Apres l'installation : reposer une fois la question a Monsieur Loyal
+maj-209 : Shinato Soccer - vidéo quand ton équipe gagne (remplace l'image) + ajoutée dans Déverrouillage
