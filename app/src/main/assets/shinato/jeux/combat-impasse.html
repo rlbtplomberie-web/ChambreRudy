@@ -1,0 +1,2464 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Combat dans l'impasse</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none;position:fixed;inset:0;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;font-family:system-ui,sans-serif}
+  /* tout le jeu est dans ce cadre, toujours à l'horizontale (tourné si le téléphone est tenu droit) */
+  #cadre{position:fixed;left:0;top:0;transform-origin:0 0;overflow:hidden;background:#000}
+  #jeu{position:absolute;display:block;background:transparent}
+  .ctrl{position:absolute;z-index:5;touch-action:none}
+  #manette{left:calc(var(--u)*4);bottom:calc(var(--u)*5);width:calc(var(--u)*34);height:calc(var(--u)*34);border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,.12),rgba(255,255,255,.04));border:2px solid rgba(255,255,255,.3)}
+  #bouton{position:absolute;left:50%;top:50%;width:42%;height:42%;transform:translate(-50%,-50%);border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,#8a8a8a,#3a3a3a);border:2px solid rgba(255,255,255,.45);pointer-events:none}
+  #boutons{right:calc(var(--u)*3);bottom:calc(var(--u)*3);width:calc(var(--u)*68);height:calc(var(--u)*48)}
+  .b{position:absolute;width:calc(var(--u)*18);height:calc(var(--u)*18);border-radius:50%;color:#fff;
+    font:700 calc(var(--u)*3.2) system-ui,sans-serif;
+    display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.05;
+    border:2px solid rgba(255,255,255,.55);text-shadow:0 1px 2px #000;box-shadow:0 3px 8px rgba(0,0,0,.6);opacity:.92}
+  .b.on{filter:brightness(1.5);transform:scale(.94)}
+  #bEnergie{left:calc(var(--u)*34);top:0;background:radial-gradient(circle at 35% 30%,#ffe46a,#a87a00);color:#2a1d00;text-shadow:none}
+  #bPoing{left:calc(var(--u)*18);top:calc(var(--u)*15);background:radial-gradient(circle at 35% 30%,#ff6a5a,#9b1c12)}
+  #bPrise{left:calc(var(--u)*50);top:calc(var(--u)*15);background:radial-gradient(circle at 35% 30%,#6be07a,#1d6b2a)}
+  #bPied{left:calc(var(--u)*34);top:calc(var(--u)*30);background:radial-gradient(circle at 35% 30%,#62a8ff,#173f8a)}
+  #bGarde{left:0;top:calc(var(--u)*30);background:radial-gradient(circle at 35% 30%,#b9a7ff,#4b3a8f)}
+  #recharge{position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);border-radius:50%;pointer-events:none}
+  #ecran{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    color:#fff;text-align:center;background:rgba(0,0,0,.6);gap:calc(var(--u)*2.5)}
+  #ecran h1{margin:0;font:900 calc(var(--u)*9)/1 Impact,system-ui,sans-serif;letter-spacing:2px;color:#ffd84a;
+    text-shadow:0 3px 0 #7a2a00,0 0 18px rgba(255,180,0,.6)}
+  #ecran p{margin:0;font-size:calc(var(--u)*3.4);max-width:80%;color:#eee}
+  #ecran button{font:800 calc(var(--u)*4.5) system-ui,sans-serif;color:#2a1d00;background:linear-gradient(#ffe46a,#e0a400);
+    border:0;border-radius:12px;padding:calc(var(--u)*2) calc(var(--u)*6);box-shadow:0 4px 0 #7a5200}
+  #plein{position:absolute;top:calc(var(--u)*13);right:calc(var(--u)*2);z-index:6;width:calc(var(--u)*8);height:calc(var(--u)*8);
+    border-radius:8px;background:rgba(0,0,0,.45);color:#fff;border:1px solid rgba(255,255,255,.35);font-size:calc(var(--u)*4.5)}
+</style>
+</head>
+<body>
+<div id="cadre">
+<iframe id="decor" title="Impasse" scrolling="no" style="position:absolute;border:0;pointer-events:none;background:#000"></iframe>
+<canvas id="jeu" width="1774" height="887"></canvas>
+<div id="manette" class="ctrl"><div id="bouton"></div></div>
+<div id="boutons" class="ctrl">
+  <div class="b" id="bEnergie">Énergie<canvas id="recharge" width="84" height="84"></canvas></div>
+  <div class="b" id="bPoing">Poing</div>
+  <div class="b" id="bPrise">Attraper</div>
+  <div class="b" id="bPied">Pied</div>
+  <div class="b" id="bGarde">Garde</div>
+</div>
+<button id="plein" title="Plein écran">⛶</button>
+<div id="video" style="position:absolute;inset:0;z-index:9;background:#000;display:none;align-items:center;justify-content:center">
+  <video id="vid" playsinline style="width:100%;height:100%;object-fit:contain;background:#000"></video>
+  <button id="passer" style="position:absolute;right:calc(var(--u)*3);bottom:calc(var(--u)*4);font:700 calc(var(--u)*3.6) system-ui;color:#fff;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.5);border-radius:10px;padding:calc(var(--u)*1.2) calc(var(--u)*3)">Passer ▶</button>
+</div>
+<div id="ecran" style="display:none">
+  <h1>COMBAT DANS L'IMPASSE</h1>
+  <p>Un contre un contre les combattants de l'impasse : Selfrid, Kimy, Avalda, Gueriya, Nouza, Gueparia, Cocoche, Cibora, Zidoroa, Gagavi, la femme chewing-gum, Oma, Piki, puis Ingrid, la boss.</p>
+  <p style="font-size:calc(var(--u)*2.6);color:#bbb">Au clavier : flèches ou ZQSD · J poing · K pied · L énergie · U attraper · O garde</p>
+  <button id="go">JOUER</button>
+  <div style="margin-top:10px;font:600 14px system-ui;opacity:.75">Version 18 octobre – 22 h 30 (Kimy prend son temps)</div>
+</div>
+</div>
+<script type="text/x-impasse" id="impasseSrc"><!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>L'impasse</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:pan-x}
+  #vue{position:fixed;inset:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  #vue::-webkit-scrollbar{display:none}
+  #scene{position:absolute;left:0;top:0;width:1774px;height:887px;transform-origin:0 0;overflow:hidden}
+  #fond{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .perso{position:absolute;background-repeat:no-repeat;pointer-events:none}
+  .ombre{position:absolute;border-radius:50%;
+    background:radial-gradient(closest-side,rgba(0,0,0,.6),rgba(0,0,0,.28) 60%,rgba(0,0,0,0));pointer-events:none}
+  .muret{position:absolute;pointer-events:none;
+    background:
+      linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.15) 18%,rgba(0,0,0,.35) 100%),
+      linear-gradient(90deg,rgba(0,0,0,.35),rgba(0,0,0,0) 12%,rgba(0,0,0,0) 88%,rgba(0,0,0,.4)),
+      url(/assets/shinato/m/ci_9754ff52cc7997.webp) 0 0/80px 110px repeat;
+    border-top:2px solid rgba(20,16,14,.8);box-shadow:0 0 10px rgba(0,0,0,.5)}
+  .lueur{position:absolute;border-radius:50%;pointer-events:none;mix-blend-mode:screen;
+    background:radial-gradient(closest-side,rgba(255,180,90,.55),rgba(255,140,50,.18) 45%,rgba(255,120,40,0));
+    animation:vacille 3s infinite}
+  @keyframes vacille{0%,100%{opacity:.85}20%{opacity:1}23%{opacity:.7}26%{opacity:.95}60%{opacity:.9}62%{opacity:.75}64%{opacity:1}}
+  #nuit{position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 55%,rgba(0,0,0,0) 45%,rgba(5,3,12,.55) 100%)}
+  #brume{position:absolute;left:-50%;top:470px;width:200%;height:220px;pointer-events:none;opacity:.22;
+    background:radial-gradient(ellipse at 20% 50%,rgba(170,160,190,.5),rgba(0,0,0,0) 60%),
+               radial-gradient(ellipse at 60% 40%,rgba(170,160,190,.4),rgba(0,0,0,0) 55%),
+               radial-gradient(ellipse at 90% 60%,rgba(170,160,190,.45),rgba(0,0,0,0) 60%);
+    animation:brume 40s linear infinite alternate}
+  @keyframes brume{from{transform:translateX(0)}to{transform:translateX(25%)}}
+  #fumees{position:absolute;inset:0;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="vue"><div id="scene">
+  <img id="fond" src="/assets/shinato/m/ci_1e401ed84316af.webp" alt="">
+  <canvas id="decor" width="1774" height="887" style="position:absolute;inset:0;pointer-events:none"></canvas>
+  <canvas id="sol" width="1774" height="887" style="position:absolute;inset:0;pointer-events:none"></canvas>
+  <div id="brume"></div>
+  <canvas id="fumees" width="1774" height="887"></canvas>
+  <div id="nuit"></div>
+</div></div>
+<script>
+/* ============================================================
+   L'IMPASSE — décor + personnages animés
+   Pour placer / ajouter un personnage : modifier la liste PERSOS.
+   x, y   = position des PIEDS dans le décor (décor 1774 x 887)
+   h      = hauteur affichée de la planche (en pixels du décor)
+   ms     = durée de chaque image (millisecondes)
+   ordre  = ordre de lecture des images (numéros à partir de 0)
+   nuit   = assombrissement pour se fondre dans la nuit (0 à 1)
+   inverse= true pour retourner le personnage (regarde de l'autre côté)
+   ============================================================ */
+const PLANCHES = {"renarde": {"fw": 295, "fh": 508, "n": 8, "ax": 130, "src": "/assets/shinato/m/ci_4c813b4eadaf5e.webp"}, "clown": {"fw": 295, "fh": 633, "n": 8, "ax": 168, "src": "/assets/shinato/m/ci_ec1229eaf2707a.webp"}, "blonde": {"fw": 249, "fh": 739, "n": 8, "ax": 119, "src": "/assets/shinato/m/ci_266ad856d6059d.webp"}, "costaud": {"fw": 207, "fh": 473, "n": 8, "ax": 130, "src": "/assets/shinato/m/ci_f94a779c74e317.webp"}, "cyborg": {"fw": 271, "fh": 733, "n": 5, "ax": 174, "src": "/assets/shinato/m/ci_7a6f5a8e8f1fd5.webp"}, "guepard": {"fw": 364, "fh": 451, "n": 8, "ax": 202, "src": "/assets/shinato/m/ci_aba8ca2c139996.webp"}, "aventuriere": {"fw": 262, "fh": 719, "n": 8, "ax": 146, "src": "/assets/shinato/m/ci_c547abca107634.webp"}, "casquette": {"fw": 253, "fh": 495, "n": 8, "ax": 132, "src": "/assets/shinato/m/ci_7973e2f481ebeb.webp"}, "ourson": {"fw": 382, "fh": 501, "n": 8, "ax": 208, "src": "/assets/shinato/m/ci_4017616b55d0c8.webp"}, "cochonne": {"fw": 364, "fh": 310, "n": 12, "ax": 185, "src": "/assets/shinato/m/ci_d7a26607ef0b31.webp"}, "yoga": {"fw": 372, "fh": 414, "n": 8, "ax": 188, "src": "/assets/shinato/m/ci_5a7cc8dd69dd2d.webp"}, "bain": {"fw": 371, "fh": 459, "n": 8, "ax": 182, "src": "/assets/shinato/m/ci_90a054d6839783.webp"}, "canape": {"fw": 549, "fh": 364, "n": 8, "ax": 272, "src": "/assets/shinato/m/ci_b3683864003509.webp"}};
+
+const PERSOS = [
+  // le costaud à capuche, adossé au mur de gauche à côté de la porte, sous la lanterne
+  {id:'costaud',     x:318, y:612, h:258, ms:420, ordre:[0,1,2,3,0,4,5,6,4,7,0,0], nuit:.34, fumee:null},
+  // la renarde au cigare, adossée au mur de droite près de la porte
+  {id:'renarde',     x:1625, y:618, h:214, inverse:true, ms:380, ordre:[0,1,2,3,4,7,6,5,0], nuit:.36,
+   fumee:{fx:.86, fy:.15}},
+  // la cyborg au fond, devant le passage voûté (ses lumières bleues s'allument et s'éteignent)
+  {id:'cyborg',      x:1080, y:547, h:175, ms:260, ordre:[0,0,0,1,2,3,4,4,4,3,2,1], nuit:.25, lumiere:'#3fc8ff'},
+  // la petite blonde aux crocs, au milieu
+  // la grande femme à la casquette (cigare et bouteille), à gauche de la blonde
+  {id:'casquette',   x:619, y:565, h:215, ms:420, ordre:[0,1,2,3,3,4,5,6,7], nuit:.34},
+  // la fille en ourson qui joue à sa console, assise sur les marches de gauche
+  {id:'ourson',      x:205, y:600, h:170, ms:450, ordre:[0,1,2,3,2,1,0,4,5,6,7,6], nuit:.36},
+  // la cochonne assise par terre qui mange dans sa gamelle, côté droit
+  {id:'cochonne',    x:1675, y:749, h:190, ms:420, ordre:[0,1,2,3,4,5,6,7,8,9,10,11], nuit:.34},
+  // la femme aux quatre bras qui fait du yoga avec ses haltères, devant le tonneau à droite
+  {id:'yoga',        x:1366, y:600, h:135, ms:380, ordre:[0,1,2,3,3,2,1,0,4,5,6,7,7,6,5,4], nuit:.34},
+  // la fille d'eau dans sa baignoire pleine de mousse, entre la cyborg et la femme aux quatre bras, un peu au fond
+  {id:'bain',        x:1225, y:560, h:125, ms:420, ordre:[0,1,2,3,4,5,6,7], nuit:.30},
+  // la femme à la casquette sur son canapé en cuir, qui fume le cigare, entre la cyborg et la petite blonde
+  {id:'canape',      x:857, y:572, h:159, ms:520, ordre:[0,1,2,3,4,5,6,7,6,5,4,3,2,1], nuit:.32},
+  {id:'blonde',      x:790, y:594, h:131, ms:330, ordre:[0,1,2,3,4,5,6,7], nuit:.34},
+  // la clown assise sur un muret, côté droit
+  {id:'clown',       x:112, y:732, h:282, ms:420, ordre:[0,0,1,2,3,4,3,2,5,6,7,7], nuit:.38,
+   muret:{haut:.624, g:.007, d:.956}},
+  // la guépard à genoux, devant à droite
+  {id:'guepard',     x:759, y:374, h:118, ms:360, ordre:[0,1,2,3,2,3,7,4,5,6,5,6,7], nuit:.32},
+  // l'aventurière boueuse avec sa bouteille, au premier plan à gauche
+  {id:'aventuriere', x:405, y:598, h:246, ms:380, ordre:[0,1,2,3,3,2,4,5,6,7], nuit:.28},
+];
+
+/* lanternes du décor (halo qui vacille) */
+const LANTERNES = [[95,292,190],[880,398,150],[1345,198,200],[1143,422,90]];
+
+const scene = document.getElementById('scene');
+const fond = document.getElementById('fond');
+const fumeeCv = document.getElementById('fumees');
+
+LANTERNES.forEach(([x,y,r],i)=>{
+  const d=document.createElement('div'); d.className='lueur';
+  Object.assign(d.style,{left:(x-r)+'px',top:(y-r)+'px',width:2*r+'px',height:2*r+'px',animationDelay:(-i*0.9)+'s',zIndex:2});
+  scene.insertBefore(d, fumeeCv);
+});
+
+const anims=[];
+PERSOS.forEach(p=>{
+  const pl = PLANCHES[p.id];
+  const om=document.createElement('div'); om.className='ombre'; scene.insertBefore(om, fumeeCv);
+  let m=null;
+  if(p.muret){ m=document.createElement('div'); m.className='muret'; scene.insertBefore(m, fumeeCv); }
+  const el=document.createElement('div'); el.className='perso'; el.dataset.id=p.id;
+  el.style.backgroundImage=`url(${pl.src})`;
+  scene.insertBefore(el, fumeeCv);
+  const a={p,pl,el,om,m,i:Math.floor(Math.random()*p.ordre.length),t:0};
+  anims.push(a);
+  placer(a);
+});
+
+/* calcule la position, la taille et le sens d'un personnage */
+function placer(a){
+  const p=a.p, pl=a.pl;
+  const k  = p.h / pl.fh;
+  const w  = pl.fw * k;
+  const ax = p.inverse ? pl.fw - pl.ax : pl.ax;   // pieds dans l'image
+  const left = p.x - ax * k;
+  const top  = p.y - p.h;
+  const z = Math.round(p.y);
+  a.w=w; a.left=left; a.top=top;
+  // muret (gauche/droite inversées si retournée)
+  const mg = p.muret ? (p.inverse ? 1-p.muret.d : p.muret.g) : 0;
+  const md = p.muret ? (p.inverse ? 1-p.muret.g : p.muret.d) : 0;
+  const ow = (p.muret ? (md-mg)*w*1.05 : w*0.7);
+  Object.assign(a.om.style,{left:(p.muret? left+mg*w-ow*0.02 : p.x-ow/2)+'px', top:(p.y-ow*0.09)+'px',
+    width:ow+'px',height:(ow*0.18)+'px',zIndex:z-1});
+  if(a.m){
+    const mt = top + p.muret.haut*p.h;
+    Object.assign(a.m.style,{left:(left+mg*w)+'px',top:mt+'px',width:((md-mg)*w)+'px',
+      height:(p.y-mt)+'px',zIndex:z, filter:`brightness(${1-p.nuit})`});
+  }
+  Object.assign(a.el.style,{left:left+'px',top:top+'px',width:w+'px',height:p.h+'px',zIndex:z+1,
+    backgroundSize:`${w*pl.n}px ${p.h}px`,
+    filter:`brightness(${1-p.nuit}) contrast(1.06) saturate(.9) sepia(.12)`
+      + (p.lumiere? ` drop-shadow(0 0 6px ${p.lumiere}88)`:''),
+    transform: p.inverse? 'scaleX(-1)':'none'});
+  show(a);
+}
+fumeeCv.style.zIndex = 2000;
+document.getElementById('nuit').style.zIndex = 2001;
+document.getElementById('brume').style.zIndex = 1;
+document.getElementById('decor').style.zIndex = 1;
+document.getElementById('sol').style.zIndex = 1;
+
+function show(a){ const f=a.p.ordre[a.i]; a.el.style.backgroundPosition = `${-f*a.w}px 0`; }
+
+/* petites volutes de fumée qui montent du cigare de la renarde */
+const ctx=fumeeCv.getContext('2d'); const bouffees=[];
+function fumer(a){ if (a.el.style.visibility === 'hidden') return;
+  const liste = BRAISES[a.p.id]; if(!liste) return;
+  // le cigare / la cigarette change de place : on suit la braise selon l'image affichée
+  let pts = liste[a.p.ordre[a.i]];
+  if(!pts) return;
+  if(typeof pts[0]==='number') pts=[pts];
+  pts.forEach(pos=>{
+    const souffle = pos[2]==='bouche';
+    bouffees.push({x:a.left+(a.p.inverse?1-pos[0]:pos[0])*a.w, y:a.top+pos[1]*a.p.h,
+      r:(souffle?4:1.5)+Math.random()*2*(a.p.h/250), v:(.22+Math.random()*.25), dx:(Math.random()-.4)*.25+(souffle?.35:0),
+      vie:1, f:souffle?1.6:1});
+  });
+}
+const BRAISES = {"renarde": [[0.85, 0.19], [0.76, 0.175], [0.94, 0.25], [0.89, 0.28], [0.87, 0.29], [0.02, 0.48], [0.95, 0.22], [0.95, 0.22]], "casquette": [[0.38, 0.16], [0.17, 0.145], [0.19, 0.175], [0.82, 0.48], [0.4, 0.175], [0.42, 0.165], [0.36, 0.13], [0.37, 0.165]], "costaud": [[0.3, 0.574], [0.7, 0.158], [0.715, 0.158], [[0.29, 0.57], [0.6, 0.15, "bouche"]], [0.27, 0.58], [0.31, 0.55], [0.36, 0.565], [0.68, 0.15]]};
+
+/* ---------- tissus, arbre et plantes qui bougent au vent ---------- */
+const DECOR = [{"nom": "auvent rouge", "type": "auvent", "x": 55, "y": 145, "w": 295, "h": 167, "amp": 3.2, "vit": 1.6, "src": "/assets/shinato/m/ci_0473ca7c3d0c7e.webp"}, {"nom": "grand drap", "type": "pendu", "x": 1635, "y": 146, "w": 139, "h": 159, "amp": 7.5, "vit": 1.3, "src": "/assets/shinato/m/ci_569469297d9179.webp", "haut": 150}, {"nom": "linge tendu", "type": "hamac", "x": 496, "y": 363, "w": 119, "h": 67, "amp": 4.0, "vit": 1.5, "src": "/assets/shinato/m/ci_3f34c78f695b82.webp"}, {"nom": "arbre", "type": "plante", "x": 1032, "y": 89, "w": 114, "h": 217, "amp": 2.8, "vit": 0.9, "src": "/assets/shinato/m/ci_3ce6600a6f86e2.webp", "bas": 300}, {"nom": "plante", "type": "plante", "x": 0, "y": 374, "w": 132, "h": 185, "amp": 3.3800000000000003, "vit": 1.1, "src": "/assets/shinato/m/ci_4c94d1e6591dee.webp", "bas": 565}, {"nom": "plante", "type": "plante", "x": 199, "y": 430, "w": 167, "h": 131, "amp": 3.12, "vit": 1.26, "src": "/assets/shinato/m/ci_a757e7aea71d88.webp", "bas": 560}, {"nom": "plante", "type": "plante", "x": 587, "y": 509, "w": 64, "h": 49, "amp": 2.3400000000000003, "vit": 1.1800000000000002, "src": "/assets/shinato/m/ci_717165265db2bc.webp", "bas": 552}, {"nom": "plante", "type": "plante", "x": 712, "y": 522, "w": 66, "h": 34, "amp": 2.08, "vit": 1.1, "src": "/assets/shinato/m/ci_41d2688de3911a.webp", "bas": 552}, {"nom": "plante", "type": "plante", "x": 794, "y": 462, "w": 117, "h": 91, "amp": 2.8600000000000003, "vit": 1.26, "src": "/assets/shinato/m/ci_8a494c097cd6cd.webp", "bas": 548}, {"nom": "plante", "type": "plante", "x": 1051, "y": 473, "w": 73, "h": 77, "amp": 3.12, "vit": 1.1, "src": "/assets/shinato/m/ci_901967cd8e1605.webp", "bas": 545}, {"nom": "plante", "type": "plante", "x": 1233, "y": 495, "w": 95, "h": 90, "amp": 2.6, "vit": 1.58, "src": "/assets/shinato/m/ci_91d182d7a99cdc.webp", "bas": 582}, {"nom": "plante", "type": "plante", "x": 1522, "y": 434, "w": 76, "h": 91, "amp": 3.6399999999999997, "vit": 1.26, "src": "/assets/shinato/m/ci_24b46dd508bfd7.webp", "bas": 565}, {"nom": "plante", "type": "plante", "x": 1637, "y": 562, "w": 137, "h": 82, "amp": 2.6, "vit": 1.5, "src": "/assets/shinato/m/ci_ecf7e0ced3edcf.webp", "bas": 642}];
+const dctx = document.getElementById('decor').getContext('2d');
+DECOR.forEach(e=>{ e.img=new Image(); e.img.src=e.src; e.ph=Math.random()*6; });
+function vent(t){ // vent qui se lève par rafales
+  return .65 + .25*Math.sin(t*.37) + .25*Math.max(0,Math.sin(t*.13+1))*Math.sin(t*1.9)*Math.sin(t*1.9);
+}
+function dessinerDecor(t){
+  dctx.clearRect(0,0,1774,887);
+  const v=vent(t) + forceRafale*.6;
+  for(const e of DECOR){
+    if(!e.img.complete) continue;
+    const T=t*e.vit+e.ph, A=e.amp*v;
+    if(e.type==='plante'){            // accroché en bas
+      const H=e.bas-e.y;
+      for(let j=0;j<e.h;j+=2){
+        const k=Math.pow(Math.max(0,(e.bas-(e.y+j))/H),1.4);
+        const dx=A*k*(Math.sin(T)*.75+.25*Math.sin(T*2.6+j*.09)) + A*.6*k;
+        dctx.drawImage(e.img,0,j,e.w,3,e.x+dx,e.y+j,e.w,3);
+      }
+    } else if(e.type==='pendu'){      // accroché en haut
+      for(let j=0;j<e.h;j+=2){
+        const k=Math.pow(Math.min(1,Math.max(0,(e.y+j-e.haut)/e.h)),1.2);
+        const dx=A*k*(.7*Math.sin(T+j*.05)+.3*Math.sin(T*1.8+j*.14)) - A*.5*k;
+        dctx.drawImage(e.img,0,j,e.w,3,e.x+dx,e.y+j,e.w,3);
+      }
+    } else if(e.type==='hamac'){      // tendu entre deux points
+      for(let i=0;i<e.w;i+=2){
+        const env=Math.sin(Math.PI*Math.min(1,Math.max(0,(i-6)/(e.w-12))));
+        const dy=A*env*(.75*Math.sin(T)+.25*Math.sin(T*2.3+i*.08));
+        dctx.drawImage(e.img,i,0,3,e.h,e.x+i,e.y+dy,3,e.h);
+      }
+    } else if(e.type==='auvent'){     // toile qui ondule
+      for(let i=0;i<e.w;i+=2){
+        const dy=A*(.6*Math.sin(T+i*.045)+.4*Math.sin(T*2.2+i*.12));
+        dctx.drawImage(e.img,i,0,3,e.h,e.x+i,e.y+dy*.6,3,e.h);
+      }
+    }
+  }
+}
+
+
+/* ---------- feuilles mortes au sol + poussière soulevée par les rafales ---------- */
+const sctx = document.getElementById('sol').getContext('2d');
+const SOL_HAUT = 548, SOL_BAS = 887;
+const echelleSol = y => .45 + (y - SOL_HAUT) / (SOL_BAS - SOL_HAUT) * 1.0;   // plus gros devant
+const TEINTES = ['#8a5a2c','#9a6a2a','#6e4a26','#a87a34','#7d4524','#8c7438','#b06a2a'];
+const feuilles = [];
+function nouvelleFeuille(x, y){
+  return {x, y, h:0, vx:0, vy:0, vh:0, rot:Math.random()*6.3, vr:0, vole:false,
+          t:.8+Math.random()*.6, c:TEINTES[Math.floor(Math.random()*TEINTES.length)], ph:Math.random()*6};
+}
+for(let i=0;i<60;i++){
+  const y = SOL_HAUT + 15 + Math.pow(Math.random(), .8) * (SOL_BAS - SOL_HAUT - 25);
+  feuilles.push(nouvelleFeuille(Math.random()*1774, y));
+}
+const poussieres = [];
+let rafale = null, prochaineRafale = 3 + Math.random()*4, forceRafale = 0;
+
+function lancerRafale(){
+  const dir = Math.random() < .55 ? 1 : -1;
+  const cy = SOL_HAUT + 60 + Math.random() * (SOL_BAS - SOL_HAUT - 90);
+  rafale = {dir, x: dir > 0 ? -150 : 1924, cy, bande: 90 + Math.random()*110, vit: 380 + Math.random()*260};
+}
+function dessinerFeuille(f){
+  const k = echelleSol(f.y) * f.t, L = 11*k, l = 5*k;
+  sctx.save();
+  sctx.translate(f.x, f.y - f.h);
+  sctx.rotate(f.rot);
+  sctx.scale(1, f.vole ? Math.abs(Math.cos(f.ph)) * .85 + .15 : .7);  // à plat au sol, tourne en vol
+  sctx.globalAlpha = .82; sctx.fillStyle = f.c;
+  sctx.beginPath(); sctx.moveTo(-L, 0);
+  sctx.quadraticCurveTo(0, -l*1.6, L, 0); sctx.quadraticCurveTo(0, l*1.6, -L, 0); sctx.fill();
+  sctx.strokeStyle = 'rgba(30,20,10,.55)'; sctx.lineWidth = .6*k;
+  sctx.beginPath(); sctx.moveTo(-L*1.15, 0); sctx.lineTo(L*.9, 0); sctx.stroke();
+  sctx.restore();
+}
+function majSol(dt){
+  // rafales de temps en temps
+  prochaineRafale -= dt;
+  if(!rafale && prochaineRafale <= 0){ lancerRafale(); prochaineRafale = 6 + Math.random()*9; }
+  if(rafale){
+    rafale.x += rafale.dir * rafale.vit * dt;
+    forceRafale = Math.min(1, forceRafale + dt*2);
+    // poussière qui se soulève sur le front de la rafale
+    for(let i=0;i<3;i++){
+      const y = rafale.cy + (Math.random()-.5) * rafale.bande;
+      const k = echelleSol(y);
+      poussieres.push({x: rafale.x + (Math.random()-.5)*60, y, h: Math.random()*8*k,
+        vx: rafale.dir * (90 + Math.random()*120) * k, vh: (15 + Math.random()*35) * k,
+        r: (10 + Math.random()*16) * k, vie: 1, duree: 1.4 + Math.random()*1.4});
+    }
+    // les feuilles touchées par la rafale s'envolent
+    for(const f of feuilles){
+      if(!f.vole && Math.abs(f.x - rafale.x) < 50 && Math.abs(f.y - rafale.cy) < rafale.bande/2 && Math.random() < .8){
+        const k = echelleSol(f.y);
+        f.vole = true;
+        f.vx = rafale.dir * (110 + Math.random()*200) * k;
+        f.vy = (Math.random()-.5) * 25 * k;
+        f.vh = (70 + Math.random()*110) * k;
+        f.vr = (Math.random()-.5) * 9;
+      }
+    }
+    if(rafale.x < -300 || rafale.x > 2074) rafale = null;
+  } else forceRafale = Math.max(0, forceRafale - dt*.7);
+
+  for(const f of feuilles){
+    if(!f.vole) continue;
+    const k = echelleSol(f.y);
+    f.x += f.vx*dt; f.y += f.vy*dt; f.h += f.vh*dt;
+    f.vh -= 160*k*dt;                       // la gravité
+    f.vh = Math.max(f.vh, -45*k);           // la feuille plane en retombant
+    f.vx *= (1 - .6*dt); f.vy *= (1 - 1.5*dt);
+    f.x += Math.sin(f.ph*1.3) * 18*k*dt;    // petit balancement
+    f.rot += f.vr*dt; f.ph += 6*dt;
+    f.y = Math.min(SOL_BAS - 6, Math.max(SOL_HAUT + 10, f.y));
+    if(f.h <= 0){ f.h = 0; f.vole = false; f.vr = 0; }
+    if(f.x < -40){ f.x = 1800; } else if(f.x > 1814){ f.x = -25; }
+  }
+  for(let i=poussieres.length-1;i>=0;i--){
+    const p = poussieres[i];
+    p.x += p.vx*dt; p.h += p.vh*dt; p.vx *= (1 - .5*dt); p.vh *= (1 - .8*dt);
+    p.r += 9*dt*echelleSol(p.y); p.vie -= dt / p.duree;
+    if(p.vie <= 0) poussieres.splice(i,1);
+  }
+}
+function dessinerSol(){
+  sctx.clearRect(0,0,1774,887);
+  for(const f of feuilles) if(!f.vole) dessinerFeuille(f);
+  for(const p of poussieres){
+    const a = Math.sin(Math.PI * Math.min(1, Math.max(0, p.vie))) * .22;
+    const gr = sctx.createRadialGradient(p.x, p.y-p.h, 0, p.x, p.y-p.h, p.r);
+    gr.addColorStop(0, `rgba(165,145,120,${a})`); gr.addColorStop(1, 'rgba(165,145,120,0)');
+    sctx.fillStyle = gr; sctx.beginPath(); sctx.arc(p.x, p.y-p.h, p.r, 0, 7); sctx.fill();
+  }
+  for(const f of feuilles) if(f.vole) dessinerFeuille(f);
+}
+
+let last=performance.now(), acc=0, impaire=false;
+function boucle(now){
+  const dt=now-last; last=now;
+  anims.forEach(a=>{ a.t+=dt; if(a.t>=a.p.ms){ a.t=0; a.i=(a.i+1)%a.p.ordre.length; show(a);} });
+  acc+=dt; if(acc>140){ acc=0; anims.forEach(fumer); }
+  impaire=!impaire; if(impaire) dessinerDecor(now/1000);
+  majSol(Math.min(dt,50)/1000); dessinerSol();
+  ctx.clearRect(0,0,1774,887);
+  for(let i=bouffees.length-1;i>=0;i--){
+    const b=bouffees[i]; b.y-=b.v*dt/16; b.x+=b.dx*dt/16+Math.sin(b.y/14)*.15; b.r+=.045*dt/16; b.vie-=.006*dt/16;
+    if(b.vie<=0){bouffees.splice(i,1);continue;}
+    ctx.fillStyle=`rgba(200,195,205,${Math.min(1,b.vie)*.22*b.f})`;
+    ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,7); ctx.fill();
+  }
+  requestAnimationFrame(boucle);
+}
+requestAnimationFrame(boucle);
+
+/* adapter à l'écran : en paysage tout le décor tient ; en portrait on fait glisser le décor du doigt */
+let ECHELLE=1;
+function ajuster(){
+  const vu=document.getElementById('vue');
+  const W=vu.clientWidth||innerWidth,H=vu.clientHeight||innerHeight;
+  let s = Math.min(W/1774, H/887);
+  if (W < H) s = H/887;
+  ECHELLE=s;
+  scene.style.transform=`scale(${s})`;
+  const vue=document.getElementById('vue');
+  scene.style.left = Math.max(0,(W-1774*s)/2)+'px';
+  scene.style.top  = Math.max(0,(H-887*s)/2)+'px';
+  const spacer = document.getElementById('espace') || Object.assign(document.createElement('div'),{id:'espace'});
+  Object.assign(spacer.style,{position:'absolute',left:0,top:0,width:(1774*s)+'px',height:'1px'});
+  vue.appendChild(spacer);
+  if (W < H) vue.scrollLeft = (1774*s - W)/2;
+}
+addEventListener('resize',ajuster); ajuster();
+<§/script>
+
+</body>
+</html>
+</script>
+<script>
+/* =================== DONNÉES =================== */
+const SPR = {"l_bloc": {"fw": 375, "fh": 323, "n": 4, "ax": 195, "sens": -1, "src": "/assets/shinato/m/ci_074c7c31c53d3e.webp"}, "r_energie": {"fw": 357, "fh": 293, "n": 8, "ax": 189, "sens": -1, "src": "/assets/shinato/m/ci_3915c36e8ebf2c.webp"}, "r_touche": {"fw": 346, "fh": 289, "n": 8, "ax": 208, "sens": 1, "src": "/assets/shinato/m/ci_ff629927552ca2.webp"}, "r_prise_c": {"fw": 413, "fh": 380, "n": 8, "ax": 172, "sens": -1, "src": "/assets/shinato/m/ci_e42602522735e9.webp", "debut_e": -57, "debut_r": 127, "fin_e": -47, "fin_r": 42}, "r_prise_a": {"fw": 373, "fh": 319, "n": 8, "ax": 169, "sens": -1, "src": "/assets/shinato/m/ci_ffd8030a3bf236.webp", "debut_e": -97, "debut_r": 55, "fin_e": 33, "fin_r": -73}, "c_marche": {"fw": 247, "fh": 289, "n": 12, "ax": 120, "sens": 1, "src": "/assets/shinato/m/ci_c3b2ecea67b446.webp"}, "c_prise": {"fw": 344, "fh": 363, "n": 8, "ax": 167, "sens": 1, "src": "/assets/shinato/m/ci_8495ccbc723150.webp", "debut_e": -70, "debut_r": 102, "fin_e": -70, "fin_r": 96}, "c_pied": {"fw": 321, "fh": 308, "n": 8, "ax": 124, "sens": 1, "src": "/assets/shinato/m/ci_7ab102408d558b.webp"}, "c_garde": {"fw": 246, "fh": 321, "n": 8, "ax": 134, "sens": 1, "src": "/assets/shinato/m/ci_41ee0c0eac4afb.webp"}, "c_charge": {"fw": 304, "fh": 298, "n": 8, "ax": 174, "sens": 1, "src": "/assets/shinato/m/ci_44a39e3e5e0d26.webp"}, "c_touche": {"fw": 351, "fh": 302, "n": 8, "ax": 185, "sens": 1, "src": "/assets/shinato/m/ci_c9e8acd989c77e.webp"}, "c_poing": {"fw": 299, "fh": 334, "n": 8, "ax": 162, "sens": 1, "src": "/assets/shinato/m/ci_989b06a1675127.webp"}, "a_garde": {"fw": 222, "fh": 296, "n": 8, "ax": 95, "sens": 1, "src": "/assets/shinato/m/ci_c9e55d20629216.webp"}, "a_pied1": {"fw": 274, "fh": 296, "n": 8, "ax": 116, "sens": 1, "src": "/assets/shinato/m/ci_1d958c5dbfc561.webp"}, "a_saut": {"fw": 370, "fh": 307, "n": 8, "ax": 172, "sens": 1, "src": "/assets/shinato/m/ci_0a5f3818f8eb71.webp"}, "a_pied2": {"fw": 293, "fh": 296, "n": 8, "ax": 133, "sens": 1, "src": "/assets/shinato/m/ci_d7a12d346a973e.webp"}, "a_marche": {"fw": 211, "fh": 327, "n": 8, "ax": 104, "sens": -1, "src": "/assets/shinato/m/ci_f139eea83ad548.webp"}, "a_prise": {"fw": 342, "fh": 370, "n": 8, "ax": 178, "sens": 1, "src": "/assets/shinato/m/ci_8e2da101e7ea78.webp", "debut_e": -12, "debut_r": -12, "fin_e": -12, "fin_r": -12}, "a_touche": {"fw": 362, "fh": 295, "n": 8, "ax": 204, "sens": 1, "src": "/assets/shinato/m/ci_a2abeb409234e1.webp"}, "a_boire": {"fw": 112, "fh": 326, "n": 8, "ax": 53, "sens": 1, "src": "/assets/shinato/m/ci_f874e36fc0eca5.webp"}, "r_marche": {"fw": 204, "fh": 290, "n": 8, "ax": 103, "sens": -1, "src": "/assets/shinato/m/ci_6785abcdc0e010.webp"}, "r_garde": {"fw": 233, "fh": 321, "n": 8, "ax": 112, "sens": 1, "src": "/assets/shinato/m/ci_d6ba0b503c0e33.webp"}, "r_poing": {"fw": 261, "fh": 289, "n": 8, "ax": 132, "sens": 1, "src": "/assets/shinato/m/ci_957cffadcaf60f.webp"}, "r_pied": {"fw": 294, "fh": 289, "n": 8, "ax": 124, "sens": 1, "src": "/assets/shinato/m/ci_1acb32a423abbf.webp"}, "l_marche": {"fw": 301, "fh": 324, "n": 4, "ax": 96, "sens": -1, "src": "/assets/shinato/m/ci_a12dd80f9f4c6e.webp"}, "l_touche": {"fw": 411, "fh": 304, "n": 8, "ax": 234, "sens": -1, "src": "/assets/shinato/m/ci_6519ce6ce6eec4.webp"}, "l_prise": {"fw": 368, "fh": 359, "n": 8, "ax": 201, "sens": 1, "src": "/assets/shinato/m/ci_c1f8e6ff87b410.webp", "debut_e": -90, "debut_r": 29, "fin_e": -2, "fin_r": 57}, "l_pied": {"fw": 354, "fh": 287, "n": 8, "ax": 208, "sens": -1, "src": "/assets/shinato/m/ci_0ec00b6d14d9a8.webp"}, "l_garde": {"fw": 321, "fh": 321, "n": 8, "ax": 177, "sens": -1, "src": "/assets/shinato/m/ci_270ce057e25b7d.webp"}, "l_bond": {"fw": 502, "fh": 343, "n": 8, "ax": 251, "sens": -1, "src": "/assets/shinato/m/ci_ecaa4f66634c34.webp", "debut_e": 78, "debut_r": -125, "fin_e": 35, "fin_r": -63}, "l_griffe": {"fw": 321, "fh": 301, "n": 8, "ax": 173, "sens": -1, "src": "/assets/shinato/m/ci_e11e21f46f8fed.webp"}, "b_poing": {"fw": 275, "fh": 321, "n": 8, "ax": 118, "sens": -1, "src": "/assets/shinato/m/ci_2a26ea99dcd6a8.webp"}, "b_hache": {"fw": 304, "fh": 352, "n": 8, "ax": 149, "sens": -1, "src": "/assets/shinato/m/ci_767bb8eb08991a.webp"}, "b_marche": {"fw": 203, "fh": 356, "n": 8, "ax": 97, "sens": -1, "src": "/assets/shinato/m/ci_c36767770dcec3.webp"}, "b_prise": {"fw": 306, "fh": 340, "n": 8, "ax": 139, "sens": -1, "src": "/assets/shinato/m/ci_ef24ace27d2871.webp", "debut_e": 92, "debut_r": -21, "fin_e": 47, "fin_r": -73}, "b_touche": {"fw": 343, "fh": 334, "n": 8, "ax": 158, "sens": -1, "src": "/assets/shinato/m/ci_db84eda90c0c1f.webp"}, "b_garde": {"fw": 247, "fh": 321, "n": 8, "ax": 111, "sens": -1, "src": "/assets/shinato/m/ci_d7781065cb1037.webp"}, "b_laser": {"fw": 311, "fh": 317, "n": 8, "ax": 136, "sens": -1, "src": "/assets/shinato/m/ci_c7e3893add8b1f.webp"}, "r_prise_l": {"fw": 438, "fh": 330, "n": 8, "ax": 204, "sens": -1, "src": "/assets/shinato/m/ci_a8609ac000553d.webp", "debut_e": -110, "debut_r": 51, "fin_e": 5, "fin_r": 107}, "p_garde": {"fw": 142, "fh": 320, "n": 8, "ax": 58, "sens": -1, "src": "/assets/shinato/m/ci_880e4e798708b0.webp"}, "p_touche": {"fw": 271, "fh": 251, "n": 8, "ax": 138, "sens": -1, "src": "/assets/shinato/m/ci_595b6dfc9a0cb9.webp"}, "p_course": {"fw": 320, "fh": 304, "n": 4, "ax": 117, "sens": 1, "src": "/assets/shinato/m/ci_4625c63d94afc3.webp"}, "p_saut": {"fw": 466, "fh": 311, "n": 8, "ax": 234, "sens": 1, "src": "/assets/shinato/m/ci_b9a26f8561ed90.webp", "debut_e": 10, "debut_r": 93, "fin_e": -63, "fin_r": -115}, "p_poing": {"fw": 156, "fh": 270, "n": 8, "ax": 81, "sens": -1, "src": "/assets/shinato/m/ci_ff52661a0038d1.webp"}, "p_fesse": {"fw": 171, "fh": 267, "n": 8, "ax": 93, "sens": -1, "src": "/assets/shinato/m/ci_b8661b7a40e978.webp"}, "p_tourne": {"fw": 458, "fh": 340, "n": 8, "ax": 186, "sens": 1, "src": "/assets/shinato/m/ci_659610d61f5b5d.webp", "debut_e": -71, "debut_r": 47, "fin_e": -71, "fin_r": 47}, "p_marche": {"fw": 134, "fh": 287, "n": 8, "ax": 54, "sens": -1, "src": "/assets/shinato/m/ci_2286f267c18f2f.webp"}, "k_marche": {"fw": 154, "fh": 324, "n": 8, "ax": 84, "sens": -1, "src": "/assets/shinato/m/ci_6790499ccc491e.webp"}, "k_batte": {"fw": 346, "fh": 344, "n": 8, "ax": 170, "sens": -1, "src": "/assets/shinato/m/ci_955691e76a9d0a.webp"}, "k_garde": {"fw": 157, "fh": 310, "n": 8, "ax": 65, "sens": -1, "src": "/assets/shinato/m/ci_7ef79d4273253b.webp"}, "k_marteau": {"fw": 425, "fh": 387, "n": 8, "ax": 229, "sens": -1, "src": "/assets/shinato/m/ci_701fe0bfa68fab.webp"}, "k_tir": {"fw": 229, "fh": 309, "n": 8, "ax": 123, "sens": -1, "src": "/assets/shinato/m/ci_f6b1723c409292.webp"}, "k_touche": {"fw": 256, "fh": 284, "n": 8, "ax": 178, "sens": -1, "src": "/assets/shinato/m/ci_5296317e3cc868.webp"}, "k_prise": {"fw": 325, "fh": 402, "n": 8, "ax": 131, "sens": -1, "src": "/assets/shinato/m/ci_29e2b7fff9c6ee.webp", "debut_e": 116, "debut_r": -29, "fin_e": 116, "fin_r": -29}, "f_marche": {"fw": 241, "fh": 345, "n": 8, "ax": 113, "sens": -1, "src": "/assets/shinato/m/ci_4e6bb417404b67.webp"}, "f_coups1": {"fw": 376, "fh": 329, "n": 8, "ax": 186, "sens": -1, "src": "/assets/shinato/m/ci_6478c4dc843971.webp"}, "f_garde": {"fw": 273, "fh": 313, "n": 8, "ax": 79, "sens": -1, "src": "/assets/shinato/m/ci_924503e393f3b3.webp"}, "f_course": {"fw": 374, "fh": 266, "n": 4, "ax": 179, "sens": -1, "src": "/assets/shinato/m/ci_5cdd7aa3b99d73.webp"}, "f_saut": {"fw": 388, "fh": 361, "n": 8, "ax": 117, "sens": -1, "src": "/assets/shinato/m/ci_57c7a43746aa24.webp", "debut_e": 157, "debut_r": -36, "fin_e": 36, "fin_r": -31}, "f_coups2": {"fw": 356, "fh": 328, "n": 8, "ax": 159, "sens": -1, "src": "/assets/shinato/m/ci_c2f1e22fb0101b.webp"}, "f_bond": {"fw": 403, "fh": 321, "n": 8, "ax": 213, "sens": -1, "src": "/assets/shinato/m/ci_8e8f39dbca82ab.webp", "debut_e": 34, "debut_r": -145, "fin_e": -52, "fin_r": -58}, "f_touche": {"fw": 406, "fh": 326, "n": 8, "ax": 214, "sens": -1, "src": "/assets/shinato/m/ci_1d26563f77c381.webp"}, "g_pied": {"fw": 491, "fh": 319, "n": 4, "ax": 319, "sens": -1, "src": "/assets/shinato/m/ci_0f5e33c3034bcb.webp"}, "g_enlace": {"fw": 390, "fh": 343, "n": 8, "ax": 219, "sens": 1, "src": "/assets/shinato/m/ci_c6afe42329878d.webp", "debut_e": -97, "debut_r": 10, "fin_e": -14, "fin_r": 32}, "g_touche": {"fw": 396, "fh": 350, "n": 8, "ax": 214, "sens": -1, "src": "/assets/shinato/m/ci_b657072beb56ea.webp"}, "g_poing": {"fw": 409, "fh": 319, "n": 4, "ax": 224, "sens": -1, "src": "/assets/shinato/m/ci_eb1925717aaa6d.webp"}, "g_marche": {"fw": 255, "fh": 321, "n": 8, "ax": 146, "sens": -1, "src": "/assets/shinato/m/ci_b959d84cce6e3f.webp"}, "g_trainee": {"fw": 632, "fh": 344, "n": 12, "ax": 319, "sens": -1, "src": "/assets/shinato/m/ci_1d254e7cce4e87.webp", "debut_e": 140, "debut_r": -52, "fin_e": -18, "fin_r": 0}, "g_garde": {"fw": 252, "fh": 327, "n": 8, "ax": 133, "sens": -1, "src": "/assets/shinato/m/ci_fcafd064036f34.webp"}, "c2_coups1": {"fw": 368, "fh": 286, "n": 8, "ax": 180, "sens": -1, "src": "/assets/shinato/m/ci_21db0476afaca0.webp"}, "c2_garde": {"fw": 249, "fh": 323, "n": 8, "ax": 115, "sens": -1, "src": "/assets/shinato/m/ci_3157b41a4f123e.webp"}, "c2_marche": {"fw": 241, "fh": 322, "n": 8, "ax": 117, "sens": -1, "src": "/assets/shinato/m/ci_0a9a670b276fb2.webp"}, "c2_poing": {"fw": 306, "fh": 291, "n": 8, "ax": 144, "sens": -1, "src": "/assets/shinato/m/ci_843d348c0f124b.webp"}, "c2_touche": {"fw": 304, "fh": 305, "n": 8, "ax": 173, "sens": -1, "src": "/assets/shinato/m/ci_13a44d732f014f.webp"}, "c2_course": {"fw": 476, "fh": 280, "n": 4, "ax": 228, "sens": -1, "src": "/assets/shinato/m/ci_0bcd210bb25669.webp"}, "c2_saut": {"fw": 410, "fh": 330, "n": 8, "ax": 169, "sens": -1, "src": "/assets/shinato/m/ci_b5fe46c1cf76d3.webp", "debut_e": 108, "debut_r": -21, "fin_e": 34, "fin_r": -47}, "c2_prise": {"fw": 344, "fh": 354, "n": 8, "ax": 174, "sens": -1, "src": "/assets/shinato/m/ci_0c3ff3942fe191.webp", "debut_e": 42, "debut_r": -87, "fin_e": -18, "fin_r": -94}, "o_poing": {"fw": 295, "fh": 308, "n": 8, "ax": 155, "sens": -1, "src": "/assets/shinato/m/ci_f599630e1d6748.webp"}, "o_coups2": {"fw": 293, "fh": 322, "n": 8, "ax": 125, "sens": -1, "src": "/assets/shinato/m/ci_e35260b507a2ad.webp"}, "o_touche": {"fw": 300, "fh": 296, "n": 8, "ax": 141, "sens": -1, "src": "/assets/shinato/m/ci_f06e2e80758dbd.webp"}, "o_prise": {"fw": 480, "fh": 383, "n": 8, "ax": 254, "sens": 1, "src": "/assets/shinato/m/ci_d4b4fd7d943e36.webp", "debut_e": -125, "debut_r": 51, "fin_e": 119, "fin_r": 32}, "o_marche": {"fw": 234, "fh": 348, "n": 8, "ax": 132, "sens": -1, "src": "/assets/shinato/m/ci_1c8aaa7c1d5706.webp"}, "o_garde": {"fw": 232, "fh": 322, "n": 8, "ax": 117, "sens": -1, "src": "/assets/shinato/m/ci_00da1bad3f2bbe.webp"}, "o_course": {"fw": 311, "fh": 295, "n": 4, "ax": 230, "sens": 1, "src": "/assets/shinato/m/ci_a2ecd7471c8a26.webp"}, "o_saut": {"fw": 419, "fh": 326, "n": 8, "ax": 203, "sens": 1, "src": "/assets/shinato/m/ci_35309b86899874.webp", "debut_e": -43, "debut_r": 91, "fin_e": 1, "fin_r": 82}, "r_prise_b": {"fw": 390, "fh": 325, "n": 8, "ax": 183, "sens": -1, "src": "/assets/shinato/m/ci_c4b29f43eba433.webp", "debut_e": -111, "debut_r": 40, "fin_e": -88, "fin_r": 38}, "r_prise_p": {"fw": 379, "fh": 321, "n": 8, "ax": 214, "sens": 1, "src": "/assets/shinato/m/ci_79e77a98e9f599.webp", "debut_e": 105, "debut_r": -6, "fin_e": -44, "fin_r": 68}, "r_prise_k": {"fw": 368, "fh": 335, "n": 8, "ax": 171, "sens": -1, "src": "/assets/shinato/m/ci_6f31aa45ae457f.webp", "debut_e": -95, "debut_r": 50, "fin_e": 72, "fin_r": -60}, "r_prise_g": {"fw": 346, "fh": 321, "n": 8, "ax": 154, "sens": 1, "src": "/assets/shinato/m/ci_74600f104e70e4.webp", "debut_e": 72, "debut_r": -57, "fin_e": -34, "fin_r": 71}, "r_prise_f": {"fw": 422, "fh": 339, "n": 8, "ax": 223, "sens": 1, "src": "/assets/shinato/m/ci_47d3d4260a8fce.webp", "debut_e": 77, "debut_r": -45, "fin_e": -88, "fin_r": 17}, "r_prise_c2": {"fw": 312, "fh": 321, "n": 8, "ax": 149, "sens": -1, "src": "/assets/shinato/m/ci_b1e0b63d872068.webp", "debut_e": -65, "debut_r": 86, "fin_e": 54, "fin_r": -34}, "r_prise_o": {"fw": 377, "fh": 321, "n": 8, "ax": 168, "sens": -1, "src": "/assets/shinato/m/ci_820a4f062ad143.webp", "debut_e": -87, "debut_r": 57, "fin_e": -65, "fin_r": 48}, "h_marche": {"fw": 250, "fh": 358, "n": 8, "ax": 117, "sens": -1, "src": "/assets/shinato/m/ci_8a29c8473080c9.webp"}, "h_garde": {"fw": 264, "fh": 326, "n": 8, "ax": 113, "sens": -1, "src": "/assets/shinato/m/ci_2a08d13488e0e8.webp"}, "h_course": {"fw": 383, "fh": 324, "n": 4, "ax": 179, "sens": -1, "src": "/assets/shinato/m/ci_c29829e439a7b4.webp"}, "h_saut": {"fw": 538, "fh": 390, "n": 8, "ax": 265, "sens": -1, "src": "/assets/shinato/m/ci_d93ffcd6993b33.webp", "debut_e": 107, "debut_r": -102, "fin_e": -53, "fin_r": -126}, "h_griffe": {"fw": 369, "fh": 350, "n": 8, "ax": 191, "sens": -1, "src": "/assets/shinato/m/ci_f426f932385043.webp"}, "h_vomi": {"fw": 430, "fh": 275, "n": 4, "ax": 257, "sens": -1, "src": "/assets/shinato/m/ci_c861ecb894cdd3.webp"}, "h_calin": {"fw": 428, "fh": 414, "n": 8, "ax": 224, "sens": -1, "src": "/assets/shinato/m/ci_aeea947ab74920.webp", "debut_e": 93, "debut_r": -93, "fin_e": -26, "fin_r": -141}, "h_touche": {"fw": 347, "fh": 296, "n": 8, "ax": 175, "sens": -1, "src": "/assets/shinato/m/ci_11df7079ae9309.webp"}, "r_prise_h": {"fw": 354, "fh": 326, "n": 8, "ax": 173, "sens": -1, "src": "/assets/shinato/m/ci_c151d64ea7ffc8.webp", "debut_e": -60, "debut_r": 65, "fin_e": -5, "fin_r": -59}, "y_marche": {"fw": 254, "fh": 358, "n": 8, "ax": 143, "sens": -1, "src": "/assets/shinato/m/ci_88996c9bfc78a0.webp"}, "y_garde": {"fw": 281, "fh": 327, "n": 8, "ax": 146, "sens": -1, "src": "/assets/shinato/m/ci_1b30a053a328a0.webp"}, "y_coups": {"fw": 328, "fh": 359, "n": 8, "ax": 207, "sens": -1, "src": "/assets/shinato/m/ci_e69b09920c89b9.webp"}, "y_poing": {"fw": 310, "fh": 327, "n": 8, "ax": 183, "sens": -1, "src": "/assets/shinato/m/ci_c41e7f7f0e0acd.webp"}, "y_touche": {"fw": 368, "fh": 338, "n": 8, "ax": 198, "sens": -1, "src": "/assets/shinato/m/ci_7f833d9a4532e6.webp"}, "y_feu": {"fw": 359, "fh": 336, "n": 8, "ax": 206, "sens": -1, "src": "/assets/shinato/m/ci_7c2f3237642a78.webp"}, "y_prise": {"fw": 243, "fh": 331, "n": 8, "ax": 115, "sens": 1, "src": "/assets/shinato/m/ci_06ffeb3b7788ca.webp", "debut_e": -34, "debut_r": 1, "fin_e": -15, "fin_r": 27}, "r_prise_y": {"fw": 376, "fh": 347, "n": 8, "ax": 177, "sens": -1, "src": "/assets/shinato/m/ci_0ec75ac4392ad2.webp", "debut_e": -94, "debut_r": 55, "fin_e": 26, "fin_r": -96}, "e_pied": {"fw": 395, "fh": 336, "n": 8, "ax": 205, "sens": -1, "src": "/assets/shinato/m/ci_510caa10e27ff2.webp"}, "e_touche": {"fw": 347, "fh": 321, "n": 8, "ax": 166, "sens": -1, "src": "/assets/shinato/m/ci_2273d5e4cb9b22.webp"}, "e_marche": {"fw": 268, "fh": 321, "n": 8, "ax": 135, "sens": -1, "src": "/assets/shinato/m/ci_3481dc3f7e9acb.webp"}, "e_garde": {"fw": 259, "fh": 321, "n": 8, "ax": 137, "sens": -1, "src": "/assets/shinato/m/ci_69a7faca20ff6c.webp"}, "e_poing": {"fw": 473, "fh": 449, "n": 8, "ax": 195, "sens": -1, "src": "/assets/shinato/m/ci_2bedbfaa5a837d.webp"}, "e_course": {"fw": 330, "fh": 298, "n": 4, "ax": 89, "sens": 1, "src": "/assets/shinato/m/ci_322ac8987ee565.webp"}, "e_ventre": {"fw": 310, "fh": 292, "n": 8, "ax": 169, "sens": 1, "src": "/assets/shinato/m/ci_981f458d080ce2.webp", "debut_e": -43, "debut_r": 61, "fin_e": -114, "fin_r": 23}, "e_noyade": {"fw": 394, "fh": 382, "n": 8, "ax": 207, "sens": 1, "src": "/assets/shinato/m/ci_0981772b4a78ee.webp", "debut_e": -101, "debut_r": 98, "fin_e": -20, "fin_r": 45}, "r_prise_e": {"fw": 400, "fh": 334, "n": 8, "ax": 181, "sens": -1, "src": "/assets/shinato/m/ci_b15874034ad427.webp", "debut_e": -51, "debut_r": 102, "fin_e": 40, "fin_r": -79}, "z_garde": {"fw": 225, "fh": 321, "n": 8, "ax": 100, "sens": -1, "src": "/assets/shinato/m/ci_08f119d82e6607.webp"}, "z_ciseaux": {"fw": 346, "fh": 374, "n": 8, "ax": 146, "sens": 1, "src": "/assets/shinato/m/ci_ac6e92c287881b.webp", "debut_e": -1, "debut_r": 120, "fin_e": 31, "fin_r": 114}, "z_bisou": {"fw": 156, "fh": 331, "n": 8, "ax": 78, "sens": -1, "src": "/assets/shinato/m/ci_9ddc5d4af38a23.webp"}, "z_calin": {"fw": 206, "fh": 325, "n": 8, "ax": 60, "sens": -1, "src": "/assets/shinato/m/ci_f3140e28eab6d6.webp", "debut_e": 64, "debut_r": 14, "fin_e": 12, "fin_r": -20}, "z_marche": {"fw": 221, "fh": 397, "n": 8, "ax": 107, "sens": -1, "src": "/assets/shinato/m/ci_7a306928cf9689.webp"}, "z_coups": {"fw": 306, "fh": 321, "n": 8, "ax": 179, "sens": -1, "src": "/assets/shinato/m/ci_43157ebb2ba8d5.webp"}, "z_touche": {"fw": 329, "fh": 312, "n": 8, "ax": 205, "sens": -1, "src": "/assets/shinato/m/ci_6078df3cec5b0d.webp"}, "z_feu": {"fw": 300, "fh": 451, "n": 8, "ax": 126, "sens": -1, "src": "/assets/shinato/m/ci_a251837f80eae9.webp"}, "z_feucombo": {"fw": 306, "fh": 310, "n": 8, "ax": 161, "sens": -1, "src": "/assets/shinato/m/ci_e0397160e6f0c1.webp"}, "z_course": {"fw": 481, "fh": 346, "n": 4, "ax": 262, "sens": 1, "src": "/assets/shinato/m/ci_e1687d6a198e52.webp"}, "z_saut": {"fw": 374, "fh": 310, "n": 8, "ax": 213, "sens": 1, "src": "/assets/shinato/m/ci_1e76ae2e3d9539.webp", "debut_e": -77, "debut_r": 74, "fin_e": 13, "fin_r": 32}, "r_prise_z": {"fw": 343, "fh": 321, "n": 8, "ax": 153, "sens": -1, "src": "/assets/shinato/m/ci_d1cb77b09f72a8.webp", "debut_e": 94, "debut_r": -18, "fin_e": -3, "fin_r": 20}, "a_bloc": {"fw": 228, "fh": 299, "n": 4, "ax": 116, "sens": -1, "src": "/assets/shinato/m/ci_73f9fc608c7e99.webp"}, "g_bloc": {"fw": 267, "fh": 322, "n": 4, "ax": 144, "sens": -1, "src": "/assets/shinato/m/ci_1f70b2968c0430.webp"}, "g_recul": {"fw": 311, "fh": 325, "n": 4, "ax": 190, "sens": -1, "src": "/assets/shinato/m/ci_baea8af3e0facb.webp"}, "r_recul": {"fw": 293, "fh": 247, "n": 4, "ax": 172, "sens": -1, "src": "/assets/shinato/m/ci_d6bfc0ab6d5b13.webp"}, "z_recul": {"fw": 338, "fh": 287, "n": 4, "ax": 202, "sens": -1, "src": "/assets/shinato/m/ci_81db2fddd94e23.webp"}, "e_recul": {"fw": 372, "fh": 287, "n": 4, "ax": 198, "sens": -1, "src": "/assets/shinato/m/ci_7614a103218148.webp"}, "k_bloc": {"fw": 227, "fh": 238, "n": 4, "ax": 136, "sens": -1, "src": "/assets/shinato/m/ci_c85cfb0072b690.webp"}, "p_bloc": {"fw": 202, "fh": 224, "n": 4, "ax": 114, "sens": -1, "src": "/assets/shinato/m/ci_5dfd42907d6ce9.webp"}, "c_bloc": {"fw": 284, "fh": 247, "n": 4, "ax": 155, "sens": -1, "src": "/assets/shinato/m/ci_57a924d19e1253.webp"}, "a_recul": {"fw": 262, "fh": 320, "n": 4, "ax": 131, "sens": -1, "src": "/assets/shinato/m/ci_d9c0a1955cca66.webp"}, "c2_recul": {"fw": 301, "fh": 279, "n": 4, "ax": 117, "sens": -1, "src": "/assets/shinato/m/ci_7d5bc705b0ef82.webp"}, "f_recul": {"fw": 363, "fh": 322, "n": 4, "ax": 161, "sens": -1, "src": "/assets/shinato/m/ci_8b7dffd67c9ed8.webp"}, "b_recul": {"fw": 329, "fh": 267, "n": 4, "ax": 133, "sens": -1, "src": "/assets/shinato/m/ci_ca0052380e3828.webp"}, "k_recul": {"fw": 250, "fh": 238, "n": 4, "ax": 158, "sens": -1, "src": "/assets/shinato/m/ci_3e5fe7d047fa2e.webp"}, "p_recul": {"fw": 229, "fh": 238, "n": 4, "ax": 140, "sens": -1, "src": "/assets/shinato/m/ci_47c34593c15686.webp"}, "c_recul": {"fw": 281, "fh": 247, "n": 4, "ax": 163, "sens": -1, "src": "/assets/shinato/m/ci_9c5b9967a2e7a7.webp"}, "y_recul": {"fw": 358, "fh": 292, "n": 4, "ax": 210, "sens": -1, "src": "/assets/shinato/m/ci_ab936b6eac8a47.webp"}, "h_recul": {"fw": 406, "fh": 287, "n": 4, "ax": 186, "sens": -1, "src": "/assets/shinato/m/ci_f71869791e845f.webp"}, "o_recul": {"fw": 271, "fh": 267, "n": 4, "ax": 165, "sens": -1, "src": "/assets/shinato/m/ci_586156935b348b.webp"}, "y_bloc": {"fw": 330, "fh": 302, "n": 4, "ax": 209, "sens": -1, "src": "/assets/shinato/m/ci_d358e7b430e745.webp"}, "h_bloc": {"fw": 323, "fh": 288, "n": 4, "ax": 142, "sens": -1, "src": "/assets/shinato/m/ci_3e495143b5c17f.webp"}, "o_bloc": {"fw": 278, "fh": 267, "n": 4, "ax": 171, "sens": -1, "src": "/assets/shinato/m/ci_2ab58d1564c074.webp"}, "c2_bloc": {"fw": 304, "fh": 279, "n": 4, "ax": 143, "sens": -1, "src": "/assets/shinato/m/ci_b717a24a12d9ee.webp"}, "f_bloc": {"fw": 305, "fh": 321, "n": 4, "ax": 134, "sens": -1, "src": "/assets/shinato/m/ci_54b8d5e1217617.webp"}, "b_bloc": {"fw": 288, "fh": 263, "n": 4, "ax": 120, "sens": -1, "src": "/assets/shinato/m/ci_5dbf54ffd8141c.webp"}, "r_bloc": {"fw": 318, "fh": 247, "n": 4, "ax": 178, "sens": -1, "src": "/assets/shinato/m/ci_aad77363d366cf.webp"}, "z_bloc": {"fw": 327, "fh": 279, "n": 4, "ax": 186, "sens": -1, "src": "/assets/shinato/m/ci_33731f2b671b9d.webp"}, "e_bloc": {"fw": 356, "fh": 287, "n": 4, "ax": 191, "sens": -1, "src": "/assets/shinato/m/ci_86c847ee996292.webp"}, "e_eau": {"fw": 340, "fh": 323, "n": 9, "ax": 157, "sens": -1, "src": "/assets/shinato/m/ci_3aeb7702dde2fd.webp"}, "g_gomme": {"fw": 345, "fh": 378, "n": 8, "ax": 165, "sens": -1, "src": "/assets/shinato/m/ci_53f58d0a65582f.webp"}, "r_gomme": {"fw": 353, "fh": 346, "n": 8, "ax": 188, "sens": 1, "src": "/assets/shinato/m/ci_2d49b3e7347482.webp"}, "g_fond": {"fw": 249, "fh": 321, "n": 3, "ax": 121, "sens": -1, "src": "/assets/shinato/m/ci_8eeaff0fe16116.webp"}, "g_croque": {"fw": 285, "fh": 431, "n": 5, "ax": 141, "sens": -1, "src": "/assets/shinato/m/ci_6ec20fcccecb84.webp", "debut_e": 0, "debut_r": 0, "fin_e": 0, "fin_r": 0}, "g_serie1": {"fw": 482, "fh": 388, "n": 8, "ax": 260, "sens": -1, "src": "/assets/shinato/m/ci_6abb6f8a049236.webp"}, "g_serie2": {"fw": 786, "fh": 422, "n": 6, "ax": 573, "sens": -1, "src": "/assets/shinato/m/ci_d4ab7fff2cd4bc.webp"}, "e_dragon": {"fw": 543, "fh": 332, "n": 12, "ax": 312, "sens": -1, "src": "/assets/shinato/m/ci_cde5c16591357e.webp"}, "c_mitra": {"fw": 440, "fh": 295, "n": 8, "ax": 235, "sens": 1, "src": "/assets/shinato/m/ci_ef36d6439132a6.webp"}, "c_ruee": {"fw": 431, "fh": 296, "n": 3, "ax": 278, "sens": 1, "src": "/assets/shinato/m/ci_a60118441e2cfe.webp"}, "c_plaque": {"fw": 682, "fh": 404, "n": 9, "ax": 335, "sens": 1, "src": "/assets/shinato/m/ci_bd72da9191cf9a.webp", "debut_e": -12, "debut_r": 263, "fin_e": -73, "fin_r": 134}, "y_epees": {"fw": 486, "fh": 339, "n": 11, "ax": 306, "sens": 1, "src": "/assets/shinato/m/ci_707fb1aa1c2b6d.webp"}, "y_course2": {"fw": 352, "fh": 311, "n": 4, "ax": 172, "sens": 1, "src": "/assets/shinato/m/ci_d50f7742a6e6cb.webp"}, "y_arrache": {"fw": 478, "fh": 337, "n": 8, "ax": 204, "sens": 1, "src": "/assets/shinato/m/ci_28cbabe2c459c4.webp", "debut_e": -56, "debut_r": 180, "fin_e": -135, "fin_r": 67}, "h_pet": {"fw": 311, "fh": 330, "n": 7, "ax": 113, "sens": 1, "src": "/assets/shinato/m/ci_77451843e9a585.webp"}, "r_puant": {"fw": 296, "fh": 310, "n": 1, "ax": 158, "sens": -1, "src": "/assets/shinato/m/ci_56dc99049869a7.webp"}, "h_pet2": {"fw": 537, "fh": 349, "n": 8, "ax": 284, "sens": 1, "src": "/assets/shinato/m/ci_e8e74fdd7fa6c7.webp", "debut_e": 0, "debut_r": 171, "fin_e": 0, "fin_r": -148}, "a_gifle": {"fw": 502, "fh": 332, "n": 12, "ax": 282, "sens": 1, "src": "/assets/shinato/m/ci_95cc0e55260df3.webp", "debut_e": -186, "debut_r": 0, "fin_e": -186, "fin_r": 0}, "a_arbre": {"fw": 642, "fh": 385, "n": 12, "ax": 319, "sens": 1, "src": "/assets/shinato/m/ci_1cee4b2a088adb.webp", "debut_e": -281, "debut_r": 0, "fin_e": -202, "fin_r": 0}, "b_transfo": {"fw": 568, "fh": 307, "n": 12, "ax": 287, "sens": -1, "src": "/assets/shinato/m/ci_6b694beec315cc.webp"}, "b_charge": {"fw": 445, "fh": 337, "n": 12, "ax": 184, "sens": -1, "src": "/assets/shinato/m/ci_4dbeca15ba1e2d.webp"}, "b_course2": {"fw": 402, "fh": 306, "n": 3, "ax": 220, "sens": 1, "src": "/assets/shinato/m/ci_c547319244dda4.webp"}, "b_plaque": {"fw": 495, "fh": 389, "n": 9, "ax": 327, "sens": 1, "src": "/assets/shinato/m/ci_c0c881ef6f117a.webp", "debut_e": -198, "debut_r": 128, "fin_e": -233, "fin_r": 128}, "o_course2": {"fw": 303, "fh": 304, "n": 4, "ax": 157, "sens": 1, "src": "/assets/shinato/m/ci_43b67164521d55.webp"}, "o_plaque": {"fw": 784, "fh": 401, "n": 7, "ax": 428, "sens": 1, "src": "/assets/shinato/m/ci_76ceb737e79f2e.webp", "debut_e": -247, "debut_r": 0, "fin_e": -191, "fin_r": 0}, "c2_grenade": {"fw": 402, "fh": 306, "n": 7, "ax": 219, "sens": -1, "src": "/assets/shinato/m/ci_542b2553d19f88.webp"}, "o_ours_t": {"fw": 336, "fh": 318, "n": 4, "ax": 180, "sens": 1, "src": "/assets/shinato/m/ci_23415d6ddc5a7b.webp"}, "o_ours": {"fw": 552, "fh": 415, "n": 8, "ax": 366, "sens": 1, "src": "/assets/shinato/m/ci_cff7d8219254ca.webp", "debut_e": -298, "debut_r": 0, "fin_e": -268, "fin_r": 0}, "f_feu2": {"fw": 356, "fh": 323, "n": 12, "ax": 265, "sens": -1, "src": "/assets/shinato/m/ci_1811093da45326.webp"}, "f_rampe": {"fw": 288, "fh": 171, "n": 4, "ax": 170, "sens": -1, "src": "/assets/shinato/m/ci_87350a71b7e24a.webp"}, "f_griffe": {"fw": 355, "fh": 305, "n": 8, "ax": 121, "sens": -1, "src": "/assets/shinato/m/ci_ba594fda96c146.webp", "debut_e": 0, "debut_r": 0, "fin_e": -128, "fin_r": 0}, "c2_cle": {"fw": 374, "fh": 311, "n": 8, "ax": 255, "sens": 1, "src": "/assets/shinato/m/ci_d2029992ea317b.webp", "debut_e": -89, "debut_r": 45, "fin_e": -119, "fin_r": 30}, "l_transfo": {"fw": 329, "fh": 326, "n": 4, "ax": 106, "sens": 1, "src": "/assets/shinato/m/ci_b540d56b4aec64.webp"}, "l_etreinte": {"fw": 577, "fh": 361, "n": 8, "ax": 362, "sens": 1, "src": "/assets/shinato/m/ci_7781a980f3dfaf.webp", "debut_e": -160, "debut_r": 117, "fin_e": -181, "fin_r": 64}, "l_poing": {"fw": 567, "fh": 400, "n": 11, "ax": 307, "sens": -1, "src": "/assets/shinato/m/ci_a7e886ee07875b.webp"}, "p_avale": {"fw": 258, "fh": 331, "n": 7, "ax": 61, "sens": 1, "src": "/assets/shinato/m/ci_756dda5e25392c.webp", "debut_e": 0, "debut_r": 122, "fin_e": -16, "fin_r": 219}, "p_mange": {"fw": 387, "fh": 350, "n": 8, "ax": 189, "sens": -1, "src": "/assets/shinato/m/ci_e0662b74fb0e58.webp", "debut_e": 106, "debut_r": -26, "fin_e": 106, "fin_r": -26}, "p_mange2": {"fw": 359, "fh": 310, "n": 4, "ax": 204, "sens": -1, "src": "/assets/shinato/m/ci_a0336882bb4719.webp", "debut_e": -33, "debut_r": 43, "fin_e": -33, "fin_r": 43}, "r_glu": {"fw": 296, "fh": 326, "n": 4, "ax": 114, "sens": 1, "src": "/assets/shinato/m/ci_50c1f4cdb351f0.webp"}, "p_lianes": {"fw": 225, "fh": 429, "n": 4, "ax": 87, "sens": -1, "src": "/assets/shinato/m/ci_79ad5338f7dc74.webp", "debut_e": 0, "debut_r": 0, "fin_e": 90, "fin_r": 0}, "p_crache": {"fw": 435, "fh": 345, "n": 5, "ax": 198, "sens": -1, "src": "/assets/shinato/m/ci_756e55e56eb8ae.webp"}, "p_plonge": {"fw": 377, "fh": 226, "n": 4, "ax": 171, "sens": -1, "src": "/assets/shinato/m/ci_11478cf0f26d75.webp"}, "k_course": {"fw": 394, "fh": 288, "n": 8, "ax": 237, "sens": 1, "src": "/assets/shinato/m/ci_602467b0d12c67.webp"}, "k_bulle": {"fw": 400, "fh": 333, "n": 5, "ax": 152, "sens": 1, "src": "/assets/shinato/m/ci_bbc29607782769.webp"}, "r_gomme2": {"fw": 280, "fh": 299, "n": 2, "ax": 157, "sens": -1, "src": "/assets/shinato/m/ci_b63c1ad32c5b62.webp"}, "k_frappe": {"fw": 327, "fh": 301, "n": 5, "ax": 222, "sens": 1, "src": "/assets/shinato/m/ci_6ad9b01bcb8964.webp", "debut_e": -108, "debut_r": 0, "fin_e": -158, "fin_r": 0}, "k_sac": {"fw": 335, "fh": 365, "n": 8, "ax": 203, "sens": 1, "src": "/assets/shinato/m/ci_f2212561997738.webp", "debut_e": -134, "debut_r": 45, "fin_e": -134, "fin_r": 71}, "kd_dessin": {"fw": 441, "fh": 342, "n": 4, "ax": 228, "sens": 1, "src": "/assets/shinato/m/ci_92a53229c07703.webp"}, "kd_bazooka": {"fw": 388, "fh": 369, "n": 7, "ax": 210, "sens": 1, "src": "/assets/shinato/m/ci_cc96ad905b0737.webp"}, "z_geant": {"fw": 648, "fh": 528, "n": 8, "ax": 239, "sens": 1, "src": "/assets/shinato/m/ci_fe61e2c15c37dd.webp", "debut_e": 98, "debut_r": 266, "fin_e": 0, "fin_r": 189}, "y_riposte": {"fw": 403, "fh": 376, "n": 8, "ax": 189, "sens": 1, "src": "/assets/shinato/m/ci_6e05fb6d7479b2.webp", "debut_e": -92, "debut_r": 69, "fin_e": -101, "fin_r": 47}, "o_riposte": {"fw": 490, "fh": 467, "n": 8, "ax": 307, "sens": -1, "src": "/assets/shinato/m/ci_46c1e2f141a583.webp", "debut_e": 80, "debut_r": -109, "fin_e": 80, "fin_r": -109}, "e_geante": {"fw": 500, "fh": 553, "n": 8, "ax": 203, "sens": 1, "src": "/assets/shinato/m/ci_9ff4b1db39b494.webp", "debut_e": 50, "debut_r": 0, "fin_e": 166, "fin_r": 0}, "g_double": {"fw": 504, "fh": 330, "n": 5, "ax": 250, "sens": 1, "src": "/assets/shinato/m/ci_2f4d1845936158.webp", "debut_e": 0, "debut_r": 0, "fin_e": 128, "fin_r": 0}, "b_dino": {"fw": 388, "fh": 350, "n": 8, "ax": 308, "sens": 1, "src": "/assets/shinato/m/ci_7ffc2ac309a62b.webp", "debut_e": -195, "debut_r": 0, "fin_e": -183, "fin_r": -27}, "c_gorille": {"fw": 343, "fh": 374, "n": 8, "ax": 270, "sens": 1, "src": "/assets/shinato/m/ci_191ea3af23fd5a.webp", "debut_e": -160, "debut_r": 0, "fin_e": -160, "fin_r": 32}, "h_avale": {"fw": 317, "fh": 385, "n": 12, "ax": 100, "sens": 1, "src": "/assets/shinato/m/ci_e470ff92881ea2.webp", "debut_e": 0, "debut_r": 138, "fin_e": 0, "fin_r": 160}, "z_combo": {"fw": 357, "fh": 344, "n": 8, "ax": 263, "sens": 1, "src": "/assets/shinato/m/ci_ac92153e84420d.webp", "debut_e": -163, "debut_r": 0, "fin_e": -163, "fin_r": 30}, "boule": {"fw": 145, "fh": 160, "n": 1, "ax": 72, "sens": -1, "src": "/assets/shinato/m/ci_3b9783aa0979be.webp"}, "eauz": {"fw": 170, "fh": 184, "n": 1, "ax": 0, "sens": -1, "src": "/assets/shinato/m/ci_a690080d3a7d48.webp"}, "eaudz": {"fw": 225, "fh": 93, "n": 1, "ax": 0, "sens": -1, "src": "/assets/shinato/m/ci_61c8e9b7ce2b78.webp"}, "poingf": {"fw": 373, "fh": 293, "n": 1, "ax": 0, "sens": -1, "src": "/assets/shinato/m/ci_c14119d1a5c883.webp"}, "feuf": {"fw": 248, "fh": 214, "n": 1, "ax": 0, "sens": -1, "src": "/assets/shinato/m/ci_98988fe201f744.webp"}, "grenade": {"fw": 34, "fh": 34, "n": 1, "ax": 0, "sens": -1, "src": "/assets/shinato/m/ci_96ab1f60fe2a6d.webp"}, "explosion": {"fw": 275, "fh": 338, "n": 1, "ax": 0, "sens": -1, "src": "/assets/shinato/m/ci_fe5b6ad4768930.webp"}, "canonz": {"fw": 287, "fh": 327, "n": 1, "ax": 0, "sens": -1, "src": "/assets/shinato/m/ci_6a865a05caabb1.webp"}, "petz": {"fw": 230, "fh": 211, "n": 1, "ax": 0, "sens": -1, "src": "/assets/shinato/m/ci_17469317dc1f24.webp"}, "epee": {"fw": 263, "fh": 126, "n": 1, "ax": 0, "sens": -1, "src": "/assets/shinato/m/ci_439b3a42276c88.webp"}, "gommek": {"fw": 268, "fh": 154, "n": 1, "ax": 0, "sens": -1, "src": "/assets/shinato/m/ci_d7310b79025134.webp"}, "missilek": {"fw": 253, "fh": 105, "n": 1, "ax": 0, "sens": 1, "src": "/assets/shinato/m/ci_88b067d54f8b13.webp"}, "explok": {"fw": 388, "fh": 459, "n": 1, "ax": 250, "sens": 1, "src": "/assets/shinato/m/ci_0c229405e0e154.webp"}, "gluez": {"fw": 312, "fh": 196, "n": 1, "ax": 0, "sens": -1, "src": "/assets/shinato/m/ci_3f15896a544109.webp"}, "gommez": {"fw": 139, "fh": 111, "n": 1, "ax": 0, "sens": -1, "src": "/assets/shinato/m/ci_1e53d7286da437.webp"}, "feuz": {"fw": 193, "fh": 114, "n": 1, "ax": 0, "sens": -1, "src": "/assets/shinato/m/ci_06b77f34237dc0.webp"}, "feu": {"fw": 82, "fh": 81, "n": 1, "ax": 0, "sens": -1, "src": "/assets/shinato/m/ci_9c24cd293f4297.webp"}};
+const LASER = {"bx": 126, "by": 229, "ep": 25};
+const W = 1774, H = 887;
+const SOL_HAUT = 618, SOL_BAS = 862;           // bande du sol où l'on peut marcher
+const prof = y => 0.80 + (y - 600) / 287 * 0.40; // plus gros devant, plus petit au fond
+
+const img = {};
+let aCharger = 0;
+// chaque image est décodée une seule fois en mémoire graphique (ImageBitmap) : plus de saccades
+function charge(k){
+  aCharger++; const i = new Image();
+  i.onload = () => {
+    const fini = b => { if (b) img[k] = b; delete SPR[k].src; aCharger--; };
+    if (window.createImageBitmap) createImageBitmap(i).then(fini, () => fini(null)); else fini(null);
+  };
+  i.onerror = () => { aCharger--; };
+  i.src = SPR[k].src; return i;
+}
+for (const k in SPR) img[k] = charge(k);
+const decor = document.getElementById('decor');
+decor.srcdoc = document.getElementById('impasseSrc').textContent.split('<\u00a7/script').join('</script');
+let aCacher = undefined, cacheFait = false;
+function evalImpasse(code){ try { return decor.contentWindow.eval(code); } catch(e){ return undefined; } }
+function placeImpasse(id){
+  const p = evalImpasse(`(()=>{const a=anims.find(a=>a.p.id===${JSON.stringify(id)});return a&&[a.p.x,a.p.y]})()`);
+  return Array.isArray(p) ? p : null;
+}
+function cacherImpasse(id){
+  aCacher = id;
+  cacheFait = evalImpasse(`anims.forEach(a=>{const v=a.p.id===${JSON.stringify(id)}?'hidden':'';a.el.style.visibility=v;a.om.style.visibility=v;if(a.m)a.m.style.visibility=v;});true`) === true;
+}
+decor.addEventListener('load', () => { setTimeout(() => { if (aCacher !== undefined) cacherImpasse(aCacher); }, 50); });
+
+const cv = document.getElementById('jeu'), ctx = cv.getContext('2d');
+
+/* =================== PERSONNAGES =================== */
+// a: [planche, images, ms par image, boucle ?]
+const PERSOS = {
+  rudy: { nom: 'RUDY', h: 330, pv: 120,
+    a: {
+      intro: ['r_garde', [0,0,0,1,2,3], 140],
+      garde: ['r_garde', [3,4,6,7,6,4], 160, true],
+      marche: ['r_marche', [0,1,2,3,4,5,6,7], 85, true],
+      poingA: ['r_poing', [0,1,1,0], 75], poingB: ['r_poing', [2,3,3,2], 75], poingC: ['r_poing', [4,5,6,6,7], 80],
+      piedA: ['r_pied', [0,1,2,2,3], 80], piedB: ['r_pied', [4,5,5,6,7], 85],
+      energie: ['r_energie', [0,1,2,3,4,5,6,7,7], 75],
+      rate: ['r_poing', [0,1,1,0], 80],
+      touche: ['r_touche', [1,2,2], 90],
+      chute: ['r_touche', [3,4,5,6,7], 110],
+      sol: ['r_touche', [7], 200, true],
+      releve: ['r_touche', [7,6,5,3,0], 110],
+      englue: ['r_gomme', [1,2,3,4,5,6,7], 130],
+      englueV: ['r_glu', [2,3], 170],
+      englueK: ['r_gomme2', [0,0,1], 160],   // pris dans la gomme d'Oma, tenu par la femme chewing-gum   // enveloppé dans les lianes gluantes de Piki
+      victoire: ['r_garde', [1,0], 300],
+      paralyse: ['r_touche', [1], 200, true],
+      puant: ['r_puant', [0], 200, true],
+    },
+    coups: {
+      poingA: { img: 1, deg: 5, portee: .62, lourd: false },
+      poingB: { img: 1, deg: 6, portee: .66, lourd: false },
+      poingC: { img: 2, deg: 9, portee: .60, lourd: false },
+      piedA:  { img: 2, deg: 8, portee: .82, lourd: false },
+      piedB:  { img: 2, deg: 11, portee: .86, lourd: true },
+    }
+  },
+  costaud: { nom: 'SELFRID', h: 372, pv: 150,
+    a: {
+      intro: ['c_garde', [0,0,0,1,2,3,4], 140],
+      garde: ['c_garde', [4,5,6,7,6,5], 170, true],
+      marche: ['c_marche', [0,1,2,3,4,5,6,7,8,9,10,11], 80, true],
+      poingA: ['c_poing', [0,1,2,2,3], 95], poingB: ['c_poing', [4,5,6,6,7], 100],
+      piedA: ['c_pied', [0,1,2,2,3], 95], piedB: ['c_pied', [4,5,6,6,7], 100],
+      chargeDepart: ['c_charge', [0,1], 150],
+      mitra: ['c_mitra', [0,1,2,3,4,5,6,5,6,4,5,6,7], 95],
+      ruee: ['c_ruee', [0,1,2], 85, true],
+      charge: ['c_charge', [2,3,4,5,6,7], 70, true],
+      retour: ['c_garde', [4], 100, true],
+      touche: ['c_touche', [1,2,2], 90],
+      chute: ['c_touche', [3,4,5,6,7], 110],
+      sol: ['c_touche', [7], 200, true],
+      releve: ['c_touche', [7,6,5,3,0], 120],
+      victoire: ['c_garde', [3,2,1,0], 200],
+    },
+    coups: {
+      poingA: { img: 2, deg: 8, portee: .70, lourd: false },
+      poingB: { img: 2, deg: 12, portee: .62, lourd: true },
+      piedA:  { img: 2, deg: 10, portee: .88, lourd: false },
+      piedB:  { img: 2, deg: 12, portee: .80, lourd: true },
+    },
+    attaques: ['poingA','poingB','piedA','piedB'],
+    prise: 'c_prise', priseRudy: 'r_prise_c', vitesse: 210
+  },
+  aventuriere: { nom: 'KIMY', h: 340, pv: 140,
+    a: {
+      intro: ['a_boire', [0,1,2,3,3,4,5,6,7], 170],
+      garde: ['a_garde', [0,1,2,3,2,1], 160, true],
+      marche: ['a_marche', [0,1,2,3,4,5,6,7], 85, true],
+      pied1A: ['a_pied1', [0,1,2,2,3], 85], pied1B: ['a_pied1', [4,5,6,6,7], 85],
+      pied2A: ['a_pied2', [0,1,2,2,3], 85], pied2B: ['a_pied2', [4,5,6,6,7], 90],
+      course: ['a_saut', [1,2], 95, true],
+      saut: ['a_saut', [3,4,5,6,6,6,7], 95],
+      retour: ['a_garde', [0], 100, true],
+      touche: ['a_touche', [1,2,3], 90],
+      chute: ['a_touche', [4,5,6,7], 120],
+      sol: ['a_touche', [7], 200, true],
+      releve: ['a_touche', [7,6,5,3,0], 120],
+      victoire: ['a_boire', [0,1,2,3,3,4,5,6,7], 170, true],
+    },
+    coups: {
+      pied1A: { img: 2, deg: 8, portee: .86, lourd: false },
+      pied1B: { img: 2, deg: 9, portee: .80, lourd: false },
+      pied2A: { img: 2, deg: 9, portee: .88, lourd: false },
+      pied2B: { img: 2, deg: 12, portee: .90, lourd: true },
+    },
+    attaques: ['pied1A','pied1B','pied2A','pied2B'],
+    prise: 'a_prise', priseRudy: 'r_prise_a', vitesse: 240,
+    // hauteur en l'air pendant le coup de pied sauté (par image de la planche)
+    envol: { 3: 0, 4: 70, 5: 105, 6: 105, 7: 0 }
+  },
+  leopard: { nom: 'GUEPARIA', h: 335, pv: 150,
+    a: {
+      intro: ['l_garde', [0,0,0,1,2], 150],
+      garde: ['l_garde', [1,2,3,4,5,4,3,2], 150, true],
+      marche: ['l_marche', [0,1,2,3], 120, true],
+      piedA: ['l_pied', [0,1,2,2,3], 85],  queue: ['l_pied', [4,5,5,6,7], 85],
+      griffeA: ['l_griffe', [0,1,2,2,3], 80], griffeB: ['l_griffe', [4,5,6,6,7], 85],
+      course: ['l_bond', [0,1,2], 85, true],
+      retour: ['l_garde', [1], 100, true],
+      touche: ['l_touche', [1,2,3], 90],
+      chute: ['l_touche', [4,5,6,7], 120],
+      sol: ['l_touche', [7], 200, true],
+      releve: ['l_touche', [7,6,5,3,0], 120],
+      victoire: ['l_garde', [0], 300, true],
+      bloc: ['l_bloc', [1], 100, true],   // sa planche de protection (image 3 quand elle encaisse)
+      transfoL: ['l_transfo', [0,1,1,2,3], 110],
+      detransfoL: ['l_transfo', [3,2,1,1,0], 110],
+      poingsFeu: ['l_poing', [0,1,2,3,4,5,5,6,7,8,8,9,10,10], 110],
+    },
+    coups: {
+      piedA:   { img: 2, deg: 9,  portee: .95, lourd: false },
+      queue:   { img: 2, deg: 10, portee: 1.0, lourd: true },
+      griffeA: { img: 2, deg: 8,  portee: .78, lourd: false },
+      griffeB: { img: 2, deg: 11, portee: .78, lourd: true },
+    },
+    attaques: ['piedA','queue','griffeA','griffeB'],
+    prise: 'l_prise', bond: 'l_bond', priseRudy: 'r_prise_l', vitesse: 260
+  },
+  robot: { nom: 'CIBORA', h: 345, pv: 170,
+    a: {
+      intro: ['b_garde', [0,1,2,3], 160],
+      garde: ['b_garde', [0,3,4,7,4,3], 170, true],
+      marche: ['b_marche', [0,1,2,3,4,5,6,7], 90, true],
+      poingA: ['b_poing', [0,1,1,2,3], 85], poingB: ['b_poing', [4,5,6,6,7], 90],
+      hacheA: ['b_hache', [0,1,2,3,3], 110], hacheB: ['b_hache', [4,5,6,6,7], 100],
+      ruee: ['b_course2', [0,1,2], 85, true],
+      transfo: ['b_transfo', [0,1,2,3,4,5,6,7,8,9,10,11], 65],
+      chargeBoule: ['b_charge', [0,1,2,3,4,5,6,7,8,9,10,11,11], 105],
+      apresTir: ['b_transfo', [11,11,10,8,6,4,2,0], 70],
+      laser: ['b_laser', [0,1,2,3,3,4,4,5,5,6,7], 100],
+      retour: ['b_garde', [0], 100, true],
+      touche: ['b_touche', [0,1,2], 90],
+      chute: ['b_touche', [3,4,5,6,7], 120],
+      sol: ['b_touche', [7], 200, true],
+      releve: ['b_touche', [7,6,5,3,2], 120],
+      victoire: ['b_garde', [0,1,2,3], 200, true],
+    },
+    coups: {
+      poingA: { img: 2, deg: 8,  portee: .78, lourd: false },
+      poingB: { img: 3, deg: 10, portee: .80, lourd: false },
+      hacheA: { img: 3, deg: 13, portee: .98, lourd: true },
+      hacheB: { img: 2, deg: 14, portee: .92, lourd: true },
+    },
+    attaques: ['poingA','poingB','hacheA','hacheB'],
+    prise: 'b_prise', priseRudy: 'r_prise_b', vitesse: 200
+  },
+  poupee: { nom: 'PIKI', h: 280, pv: 130,
+    a: {
+      intro: ['p_garde', [3,4,5,6,7], 140],
+      garde: ['p_garde', [0,1,2,1], 170, true],
+      marche: ['p_marche', [0,1,2,3,4,5,6,7], 80, true],
+      poingA: ['p_poing', [0,1,2,2,3], 80], poingB: ['p_poing', [4,5,6,6,7], 90],
+      fesseA: ['p_fesse', [0,1,2,2,3], 95], fesseB: ['p_fesse', [4,5,6,6,7], 95],
+      course: ['p_course', [0,1], 90, true],
+      vol: ['p_course', [2,3], 110, true],
+      retour: ['p_garde', [0], 100, true],
+      touche: ['p_touche', [1,2,3], 90],
+      chute: ['p_touche', [4,5,6,7], 120],
+      sol: ['p_touche', [7], 200, true],
+      releve: ['p_touche', [7,6,5,0], 120],
+      victoire: ['p_garde', [3,4,5,6,7], 160, true],
+      crache: ['p_crache', [0,1,1,2,2,3,4,3], 110],   // elle gonfle les joues et crache une boule gluante
+      fond: ['p_plonge', [0,1,2,3], 170],             // …puis plonge dans la flaque verte
+      flaque: ['p_plonge', [3], 100, true],
+    },
+    coups: {
+      poingA: { img: 2, deg: 7,  portee: .62, lourd: false },
+      poingB: { img: 2, deg: 10, portee: .60, lourd: true },
+      fesseA: { img: 2, deg: 8,  portee: .60, lourd: false },
+      fesseB: { img: 2, deg: 11, portee: .62, lourd: true },
+    },
+    attaques: ['poingA','poingB','fesseA','fesseB'],
+    prise: 'p_tourne', bond: 'p_saut', priseRudy: 'r_prise_p', croque: 'p_lianes', vitesse: 230
+  },
+  clown: { nom: 'OMA', h: 330, pv: 160,
+    a: {
+      intro: ['k_garde', [0,1,2,3], 180],
+      garde: ['k_garde', [0,2,4,6], 190, true],
+      marche: ['k_marche', [0,1,2,3,4,5,6,7], 90, true],
+      batteA: ['k_batte', [0,1,2,2,3], 90], batteB: ['k_batte', [4,5,6,6,7], 95],
+      marteauA: ['k_marteau', [0,1,2,3,4,4], 110], marteauB: ['k_marteau', [3,5,5,6,7], 120],
+      tir: ['k_tir', [0,1,2,3,4,5,6,7], 110],
+      retour: ['k_garde', [1], 100, true],
+      touche: ['k_touche', [1,2,3], 90],
+      chute: ['k_touche', [4,5,6,7], 120],
+      sol: ['k_touche', [7], 200, true],
+      releve: ['k_touche', [7,6,5,0], 120],
+      victoire: ['k_garde', [0,1,2,3,4,5,6,7], 160, true],
+      bulleK: ['k_bulle', [0,1,1,2,2,3,3,4,4], 120],   // elle gonfle sa bulle de gomme et la lance
+      courseK: ['k_course', [0,1,2,3,4,5,6,7], 70, true],
+      dessin: ['kd_dessin', [0,0,1,1,2,2,3,3,3], 170],      // elle dessine son bazooka…
+      bazooka: ['kd_bazooka', [0,1,2,3,3,4,5,6,6], 140],   // …le fait apparaître et tire
+    },
+    coups: {
+      batteA:   { img: 2, deg: 9,  portee: .85, lourd: false },
+      batteB:   { img: 2, deg: 12, portee: .85, lourd: true },
+      marteauA: { img: 4, deg: 14, portee: .95, lourd: true },
+      marteauB: { img: 1, deg: 16, portee: .90, lourd: true },
+    },
+    attaques: ['batteA','batteB','marteauA','marteauB'],
+    prise: 'k_prise', priseRudy: 'r_prise_k', vitesse: 210
+  },
+  renardeRouge: { nom: 'GAGAVI', h: 215, pv: 140,
+    a: {
+      intro: ['f_marche', [0,1,2,3], 110],
+      garde: ['f_garde', [0,1,2,3,4,5,6,7], 140, true],
+      marche: ['f_marche', [0,1,2,3,4,5,6,7], 80, true],
+      griffe: ['f_coups1', [0,1,2,2,3], 80], piedA: ['f_coups1', [4,5,6,6,7], 85],
+      piedHaut: ['f_coups2', [0,1,2,2,3], 85], ruee: ['f_coups2', [4,5,6,6,7], 80],
+      cigare: ['f_feu2', [0,1,2,3,4,5,6,7,8,9,10,11,11], 105],
+      rampe: ['f_rampe', [0,1,2,3], 90],
+      course: ['f_course', [0,1,2,3], 75, true],
+      retour: ['f_garde', [0], 100, true],
+      touche: ['f_touche', [1,2,3], 90],
+      chute: ['f_touche', [4,5,6,7], 120],
+      sol: ['f_touche', [7], 200, true],
+      releve: ['f_touche', [7,6,5,0], 120],
+      victoire: ['f_garde', [0,1,2,3], 160, true],
+    },
+    coups: {
+      griffe:   { img: 2, deg: 8,  portee: .80, lourd: false },
+      piedA:    { img: 2, deg: 9,  portee: .85, lourd: false },
+      piedHaut: { img: 2, deg: 11, portee: .85, lourd: true },
+      ruee:     { img: 2, deg: 10, portee: .95, lourd: true },
+    },
+    attaques: ['griffe','piedA','piedHaut','ruee'],
+    prise: 'f_bond', bond: 'f_saut', priseRudy: 'r_prise_f', vitesse: 270
+  },
+  chewing: { nom: 'LA FEMME CHEWING-GUM', h: 350, pv: 160,
+    a: {
+      intro: ['g_marche', [0,1,2,3], 130],
+      garde: ['g_garde', [0,1,2,3,4,5,6,7], 140, true],
+      marche: ['g_marche', [0,1,2,3,4,5,6,7], 95, true],
+      piedK: ['g_pied', [0,1,2,2,3], 95],
+      poing: ['g_poing', [0,1,2,3,3,2], 85],
+      serieProche: ['g_serie1', [0,1,2,3,4,5,6,7,7], 85],
+      serieLoin: ['g_serie2', [0,1,2,3,4,5,5], 100],
+      course: ['g_trainee', [0,1,2], 80, true],
+      retour: ['g_garde', [0], 100, true],
+      touche: ['g_touche', [1,1,2,2], 85],
+      chute: ['g_touche', [3,4,5], 120],
+      sol: ['g_touche', [5], 200, true],
+      koSol: ['g_touche', [5,6,7], 260],
+      releve: ['g_touche', [5,4,2,0], 120],
+      victoire: ['g_garde', [0,1,2,3,4,5,6,7], 140, true],
+      forme: ['g_touche', [7,7,7,6,5,4,0], 150],
+      gomme: ['g_gomme', [0,1,2,3,4,5,6,7,7], 105],
+      fond: ['g_fond', [0,1,2], 190],
+      flaque: ['g_fond', [2], 100, true],
+    },
+    coups: {
+      piedK:       { img: 2, deg: 12, portee: .98, lourd: true },
+      poing:       { img: 3, deg: 10, portee: .72, lourd: false },
+      serieProche: { hits: [2,5,6,7], deg: 5, portee: .75, lourd: true },
+      serieLoin:   { hits: [2,3,4,5], deg: 5, portee: 1.3, lourd: true },
+    },
+    attaques: ['piedK','poing','serieProche','poing','piedK','serieProche'],
+    loin: ['serieLoin','serieLoin','piedK'],
+    prise: 'g_enlace', bond: 'g_trainee', priseRudy: 'r_prise_g', vitesse: 200
+  },
+  casquette: { nom: 'GUERIYA', h: 350, pv: 170,
+    a: {
+      intro: ['c2_garde', [0,1,2,3,4,5,6,7], 130],
+      garde: ['c2_garde', [0,1,2,3,4,5,6,7], 150, true],
+      marche: ['c2_marche', [0,1,2,3,4,5,6,7], 90, true],
+      jab: ['c2_poing', [0,1,2,2,3], 80], crochet: ['c2_poing', [4,5,6,6,7], 90],
+      pied: ['c2_coups1', [0,1,2,2,3], 90], coupTete: ['c2_coups1', [4,5,6,6,7], 90],
+      course: ['c2_course', [0,1,2,3], 80, true],
+      grenade: ['c2_grenade', [0,1,2,3,3,4,4,5,6,6], 110],
+      retour: ['c2_garde', [0], 100, true],
+      touche: ['c2_touche', [1,2,3], 90],
+      chute: ['c2_touche', [4,5,6,7], 120],
+      sol: ['c2_touche', [7], 200, true],
+      releve: ['c2_touche', [7,6,5,4,0], 120],
+      victoire: ['c2_garde', [0,1,2,3,4,5,6,7], 150, true],
+    },
+    coups: {
+      jab:      { img: 2, deg: 8,  portee: .72, lourd: false },
+      crochet:  { img: 2, deg: 10, portee: .68, lourd: false },
+      pied:     { img: 2, deg: 11, portee: .92, lourd: true },
+      coupTete: { img: 2, deg: 12, portee: .65, lourd: true },
+    },
+    attaques: ['jab','crochet','pied','coupTete'],
+    prise: 'c2_prise', bond: 'c2_saut', priseRudy: 'r_prise_c2', vitesse: 230
+  },
+  ourson: { nom: 'NOUZA', h: 315, pv: 150,
+    a: {
+      intro: ['o_garde', [0,1,2,3], 150],
+      garde: ['o_garde', [0,1,2,3,4,5,6,7], 150, true],
+      marche: ['o_marche', [0,1,2,3,4,5,6,7], 90, true],
+      direct: ['o_poing', [0,1,1,2,3], 85], crochet: ['o_poing', [4,5,5,6,7], 90],
+      uppercut: ['o_coups2', [0,1,2,2,3], 95], ruee: ['o_coups2', [4,5,6,6,7], 90],
+      courseO: ['o_course2', [0,1,2,3], 80, true],
+      transfoOurs: ['o_ours_t', [0,0,1,1,2,2,3,3], 120],
+      oursCourt: ['o_ours_t', [3], 100, true],
+      detransfo: ['o_ours_t', [3,3,2,2,1,1,0,0], 120],
+      course: ['o_course', [0,1,2,3], 80, true],
+      retour: ['o_garde', [0], 100, true],
+      touche: ['o_touche', [1,2,3], 90],
+      chute: ['o_touche', [4,5,6,7], 120],
+      sol: ['o_touche', [7], 200, true],
+      releve: ['o_touche', [7,6,5,4,0], 120],
+      victoire: ['o_garde', [0,1,2,3,4,5,6,7], 150, true],
+    },
+    coups: {
+      direct:   { img: 1, deg: 8,  portee: .78, lourd: false },
+      crochet:  { img: 2, deg: 9,  portee: .70, lourd: false },
+      uppercut: { img: 2, deg: 12, portee: .65, lourd: true },
+      ruee:     { img: 2, deg: 11, portee: .95, lourd: true },
+    },
+    attaques: ['direct','crochet','uppercut','ruee'],
+    prise: 'o_prise', bond: 'o_saut', priseRudy: 'r_prise_o', vitesse: 230
+  },
+  cochonne: { nom: 'COCOCHE', h: 335, pv: 170,
+    a: {
+      intro: ['h_garde', [0,1,2,3], 150],
+      garde: ['h_garde', [0,1,2,3,4,5,6,7], 150, true],
+      marche: ['h_marche', [0,1,2,3,4,5,6,7], 95, true],
+      griffeA: ['h_griffe', [0,1,2,2,3], 90], griffeB: ['h_griffe', [4,5,6,6,7], 95],
+      vomi: ['h_vomi', [0,1,2,2,2,3], 120],
+      pet: ['h_pet', [0,1,2,3,4,4,5,6,6], 120],
+      course: ['h_course', [0,1,2,3], 85, true],
+      retour: ['h_garde', [0], 100, true],
+      touche: ['h_touche', [1,2,3], 90],
+      chute: ['h_touche', [4,5,6,7], 120],
+      sol: ['h_touche', [7], 200, true],
+      releve: ['h_touche', [7,6,5,3,0], 120],
+      victoire: ['h_garde', [0,1,2,3,4,5,6,7], 150, true],
+    },
+    coups: {
+      griffeA: { img: 2, deg: 9,  portee: .80, lourd: false },
+      griffeB: { img: 2, deg: 11, portee: .80, lourd: true },
+      vomi:    { img: 2, deg: 10, portee: 1.15, lourd: false },
+    },
+    attaques: ['griffeA','griffeB','vomi','vomi'],
+    prise: 'h_calin', prise2: 'h_pet2', bond: 'h_saut', priseRudy: 'r_prise_h', vitesse: 200
+  },
+  yoga: { nom: 'AVALDA', h: 340, pv: 170,
+    a: {
+      intro: ['y_garde', [0,1,2,3], 150],
+      garde: ['y_garde', [0,1,2,3,4,5,6,7], 140, true],
+      marche: ['y_marche', [0,1,2,3,4,5,6,7], 90, true],
+      pied: ['y_coups', [0,1,2,2,3], 90], paume: ['y_coups', [4,5,5,6,7,7], 90],
+      poingA: ['y_poing', [0,1,2,3], 85], rafale: ['y_poing', [4,5,6,6,7], 85],
+      feu: ['y_feu', [0,1,2,3,4,5,5,7,7], 110],
+      epees: ['y_epees', [0,1,2,3,4,5,6,7,8,9,10], 105],
+      ruee: ['y_course2', [0,1,2,3], 85, true],
+      retour: ['y_garde', [0], 100, true],
+      touche: ['y_touche', [1,2,3], 90],
+      chute: ['y_touche', [4,5,6,7], 120],
+      sol: ['y_touche', [7], 200, true],
+      releve: ['y_touche', [7,6,5,3,0], 120],
+      victoire: ['y_garde', [0,1,2,3,4,5,6,7], 140, true],
+    },
+    coups: {
+      pied:   { img: 2, deg: 10, portee: .92, lourd: true },
+      paume:  { img: 1, deg: 9,  portee: .80, lourd: false },
+      poingA: { img: 1, deg: 8,  portee: .75, lourd: false },
+      rafale: { img: 2, deg: 12, portee: .78, lourd: true },
+    },
+    attaques: ['pied','paume','poingA','rafale'],
+    prise: 'y_prise', priseRudy: 'r_prise_y', vitesse: 220
+  },
+  eau: { nom: 'ZIDOROA', h: 335, pv: 160,
+    a: {
+      intro: ['e_garde', [0,1,2,3], 150],
+      garde: ['e_garde', [0,1,2,3,4,5,6,7], 140, true],
+      marche: ['e_marche', [0,1,2,3,4,5,6,7], 90, true],
+      piedA: ['e_pied', [0,1,2,2,3], 90], tourbillon: ['e_pied', [4,5,6,6,7], 95],
+      poingEau: ['e_poing', [0,1,2,2,3], 100], massue: ['e_poing', [4,5,6,6,7], 110],
+      eauBoule: ['e_eau', [0,1,2,3,4,5,6,7,8,8], 100],
+      dragon: ['e_dragon', [0,1,2,3,4,5,6,6,7,8,8,9,10,11], 115],
+      course: ['e_course', [0,1,2,3], 80, true],
+      retour: ['e_garde', [0], 100, true],
+      touche: ['e_touche', [1,2,3], 90],
+      chute: ['e_touche', [4,5,6,7], 120],
+      sol: ['e_touche', [7], 200, true],
+      releve: ['e_touche', [7,6,5,4,0], 120],
+      victoire: ['e_garde', [0,1,2,3,4,5,6,7], 140, true],
+    },
+    coups: {
+      piedA:      { img: 2, deg: 9,  portee: .90, lourd: false },
+      tourbillon: { img: 2, deg: 11, portee: .95, lourd: true },
+      poingEau:   { img: 2, deg: 10, portee: 1.25, lourd: false },
+      massue:     { img: 2, deg: 13, portee: 1.10, lourd: true },
+    },
+    attaques: ['piedA','tourbillon','poingEau','massue'],
+    prise: 'e_noyade', bond: 'e_ventre', priseRudy: 'r_prise_e', vitesse: 230
+  },
+  boss: { nom: 'INGRID', h: 318, pv: 260, boss: true, enchaine: true,
+    a: {
+      intro: ['z_marche', [0,1,2,3,4,5,6,7], 160],
+      garde: ['z_garde', [0,1,2,3,4,5,6,7], 130, true],
+      marche: ['z_marche', [0,6,7,6], 120, true],
+      genou: ['z_coups', [0,1,1,1], 80], piedHaut: ['z_coups', [2,3,3,3], 85], direct: ['z_coups', [4,4,5,6], 75],
+      feuJab: ['z_feucombo', [0,1,1,2], 75], feuDirect: ['z_feucombo', [2,3,3,4,5], 85],
+      feu: ['z_feu', [0,1,2,3,4,5,5,7,7], 100],
+      bisou: ['z_bisou', [0,1,2,2,3,4,5,6,7], 110],
+      course: ['z_course', [0,1,2], 85, true],
+      retour: ['z_garde', [0], 100, true],
+      touche: ['z_touche', [1,2,3], 90],
+      chute: ['z_touche', [4,5,6,7], 120],
+      sol: ['z_touche', [7], 200, true],
+      releve: ['z_touche', [7,6,5,4,0], 120],
+      victoire: ['z_bisou', [0,1,2,3,4,5,6,7], 130, true],
+    },
+    coups: {
+      genou:     { img: 1, deg: 9,  portee: .95, lourd: false },
+      piedHaut:  { img: 1, deg: 12, portee: 1.0, lourd: true },
+      direct:    { img: 1, deg: 8,  portee: .80, lourd: false },
+      feuJab:    { img: 1, deg: 10, portee: 1.05, lourd: false },
+      feuDirect: { img: 1, deg: 15, portee: 1.15, lourd: true },
+    },
+    attaques: ['genou','piedHaut','direct','feuJab','feuDirect'],
+    prise: 'z_ciseaux', bond: 'z_saut', contre: ['r_prise_z'], priseRudy: null, vitesse: 250
+  }
+};
+const FEUZ = {"bx": 126, "by": 195}, BISOU = {"bx": 71, "by": 164};
+const LETTRES = { rudy:'r', costaud:'c', aventuriere:'a', robot:'b', poupee:'p', clown:'k', renardeRouge:'f', chewing:'g',
+  casquette:'c2', ourson:'o', cochonne:'h', yoga:'y', eau:'e', boss:'z' };
+for (const q in LETTRES){
+  const l = LETTRES[q];
+  if (SPR[l + '_bloc']) PERSOS[q].a.bloc = [l + '_bloc', [1], 100, true];
+  if (SPR[l + '_recul']) PERSOS[q].a.recul = [l + '_recul', [0,1,2,2,3], 90];
+  PERSOS[q].blocChance = PERSOS[q].boss ? .45 : .25;
+  if (q === 'aventuriere' || q === 'renardeRouge' || q === 'casquette') PERSOS[q].blocChance = .4;
+}
+{ PERSOS.leopard.blocChance = .4; PERSOS.poupee.blocChance = .4; PERSOS.clown.blocChance = .4; PERSOS.yoga.blocChance = .4; PERSOS.ourson.blocChance = .4; PERSOS.eau.blocChance = .4; PERSOS.chewing.blocChance = .4; PERSOS.robot.blocChance = .4; PERSOS.costaud.blocChance = .4; PERSOS.cochonne.blocChance = .4;    // elles se protègent souvent (pour riposter)
+}
+const FEU = {"cx": -161, "cy": 232};
+/* prises sans bouton pour s'échapper : images où Rudy prend des dégâts */
+const PRISE_COUPS = { h_pet2: { ms: 190, coups: { 1: 6, 5: 8, 6: 5, 7: 5 } },
+  p_mange: { ms: 230, coups: {}, suite: 'p_mange2' } };   // Piki fait tomber Rudy et monte sur lui (sans dégâts, pas d'échappée) puis elle grossit
+/* emprises : l'ennemi tient Rudy et lui pompe son énergie, il faut taper vite pour s'échapper */
+const EMPRISES = {
+  a_prise: { intro: [0],       boucle: [1,2,3,4,5,6,7], ms: 130, pompe: 7, sol: true },
+  l_prise: { intro: [0,1],     boucle: [2,3,4,5,6,7],   ms: 140, pompe: 8, sol: false },
+  l_bond:  { intro: [3,4,5],   boucle: [6,7],           ms: 150, pompe: 8, sol: true },
+  b_prise: { intro: [0,1],     boucle: [2,3,4,5,6,7],   ms: 150, pompe: 9, sol: false },
+  p_saut:  { intro: [0,1,2],   boucle: [3,4,5,6,7],     ms: 150, pompe: 8, sol: true },
+  p_tourne:{ intro: [0,1,2],   boucle: [3,4,5],         ms: 110, pompe: 8, sol: true },
+  k_prise: { intro: [0,1,2],   boucle: [3,4,5,6,7],     ms: 160, pompe: 9, sol: true },
+  f_saut:  { intro: [0,1,2,3], boucle: [4,5,6,7],       ms: 140, pompe: 8, sol: false },
+  f_bond:  { intro: [0,1,2,3], boucle: [4,5,6,7],       ms: 140, pompe: 8, sol: true },
+  // poing armé puis impact, en alternance : on voit bien chaque coup de poing
+  p_avale: { intro: [0,0,1,2], boucle: [3,4,5,4], ms: 170, pompe: 11, sol: false, fuite: 6, impacts: [4] },
+  l_etreinte: { intro: [0,1,2,3], boucle: [4,5,6,7,6,5], ms: 150, pompe: 11, sol: true, impacts: [6] },
+  c2_cle: { intro: [0,1,2,3], boucle: [4,5,6,7,6,5], ms: 150, pompe: 11, sol: true, impacts: [5,6] },
+  f_griffe: { intro: [0,1,2], boucle: [3,4,5,6,7], ms: 120, pompe: 10, sol: true, impacts: [3,4,5,6,7] },
+  o_ours: { intro: [0,1,2,3], boucle: [4,5,6,7], ms: 150, pompe: 12, sol: true },
+  o_plaque: { intro: [0,1,2], boucle: [3,4,5,6], ms: 150, pompe: 10, sol: true, plaques: { 4: 3, 6: 3 } },
+  b_plaque: { intro: [0,1,2,3,4], boucle: [5,6,7,8,7,6], ms: 130, pompe: 11, sol: true },
+  a_gifle: { intro: [0,0,0,0,1,1,1,1,1,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,5,5,5,5,5,5,6,6,6,6],   /* elle prend son temps pour montrer ses fesses avant que Rudy tombe à genoux */ boucle: [7,7,8,8,7,7,9,9,7,7,10,10,7,7,11,11], ms: 75, pompe: 10, sol: true, impacts: [8,9,10,11] },
+  a_arbre: { intro: [0,1,2,3,4], boucle: [5,5,6,6,5,5,7,7,5,5,8,8,5,5,9,9,5,5,10,10,5,5,11,11], ms: 75, pompe: 10, sol: false, impacts: [6,7,8,9,10,11] },
+  y_arrache:{ intro: [0,1,2,3], boucle: [4,5,6,7], ms: 150, pompe: 10, sol: true },
+  c_plaque:{ intro: [0,1,2,3], boucle: [4,5,3,6,7,3,1,2,3], ms: 170, pompe: 0, sol: true, plaques: { 5: 6, 7: 6, 2: 5 } },
+  // Piki a grossi et essaie d'avaler Rudy : images 9-10-11 en boucle ; s'il ne s'échappe pas à temps, image 12 et KO
+  p_mange2:{ intro: [],      boucle: [0,1,2],         ms: 260, pompe: 10, sol: true, impacts: [], mort: { apres: 6500, img: 3, duree: 1600 } },
+  z_combo: { intro: [], boucle: [0,1,2,3,4,5,6,7], ms: 115, pompe: 12, sol: false, impacts: [0,1,2,3,4,5,6,7] },   // riposte d'Ingrid : tous les coups de poing à la suite, sans arrêt
+  h_avale: { intro: [0,1,2,3,4,5,6,7,8,9], boucle: [10,11], ms: 190, pompe: 11, sol: false },   // riposte de Cocoche : une fois avalé, images 11-12 en boucle
+  c_gorille:{ intro: [0,1,2,3], boucle: [4,5,6,7], ms: 170, pompe: 11, sol: true, impacts: [4,5,6,7] },   // riposte de Selfrid
+  b_dino:  { intro: [0,1,2,3,4], boucle: [5,6], ms: 200, pompe: 11, sol: true, fuite: 7, impacts: [6] },   // riposte de Cibora : boucle 6-7, image 8 quand Rudy s'échappe
+  g_double:{ intro: [0,0,1], boucle: [2,3,4,3], ms: 190, pompe: 11, sol: false },   // riposte de la femme chewing-gum
+  e_geante:{ intro: [0,1,2,3], boucle: [4,5,6,7], ms: 170, pompe: 11, sol: true, impacts: [4,5,6,7] },   // riposte de Zidoroa : coups de poing de la géante
+  o_riposte:{ intro: [0,1,2], boucle: [3,4,5,6,7], ms: 170, pompe: 11, sol: true, impacts: [4,5,6,7] },   // riposte de Nouza : images 4 à 8 en boucle
+  y_riposte:{ intro: [0,1,2,3], boucle: [4,5,6,7,6,5], ms: 170, pompe: 11, sol: true, impacts: [7] },   // riposte d'Avalda
+  z_geant: { intro: [0,0,1,1,2,3], boucle: [4,5,6,7,6,5], ms: 170, pompe: 11, sol: true },   // riposte d'Ingrid : géante, elle tord Rudy
+  k_sac:   { intro: [0,0,1,2,3], boucle: [4,5,6,7], ms: 180, pompe: 10, sol: false, impacts: [4,5,6,7] },   // riposte d'Oma : le sac et les quatre coups de poing
+  k_frappe:{ intro: [0],     boucle: [0,1,2,3,4],     ms: 170, pompe: 9, sol: false, impacts: [0,1,2,3,4] },   // Oma frappe Rudy tenu par la femme chewing-gum
+  p_lianes:{ intro: [0],     boucle: [1,2,3,2],       ms: 190, pompe: 11, sol: false },   // Piki ressort dans les lianes et pompe l'énergie de Rudy
+  g_croque:{ intro: [0,1,2],   boucle: [3,4,3,4],       ms: 190, pompe: 11, sol: false },
+  g_enlace:{ intro: [0,1,2],   boucle: [3,4,5,6,7],     ms: 150, pompe: 9, sol: false },
+  g_trainee:{ intro: [3,4,5,6], boucle: [7,8,9,10,11],  ms: 140, pompe: 9, sol: true },
+  c2_saut: { intro: [0,1,2,3], boucle: [4,5,6,7],       ms: 150, pompe: 9, sol: true },
+  c2_prise:{ intro: [0,1,2],   boucle: [3,4,5,6,7],     ms: 150, pompe: 9, sol: true },
+  o_saut:  { intro: [0,1],     boucle: [2,3,4,5,6,7],   ms: 140, pompe: 8, sol: true },
+  h_calin: { intro: [0,1,2],   boucle: [3,4,5,6,7],     ms: 150, pompe: 9, sol: false },
+  h_saut:  { intro: [0,1,2],   boucle: [3,4,5,6,7],     ms: 150, pompe: 9, sol: true },
+  y_prise: { intro: [0,1],     boucle: [2,3,4,5,6,7],   ms: 140, pompe: 9, sol: false },
+  z_ciseaux:{ intro: [0,1,2,3], boucle: [4,5,6,7],      ms: 140, pompe: 10, sol: true },
+  z_saut:  { intro: [0,1,2,3], boucle: [4,5,6,7],       ms: 140, pompe: 10, sol: true },
+  r_prise_z:{ intro: [0,1,2,3], boucle: [4,5,6,7],      ms: 140, pompe: 10, sol: true },
+  z_calin: { intro: [0,1,2,3], boucle: [4,5,6,7],       ms: 170, pompe: 10, sol: false },
+  e_ventre:{ intro: [0],       boucle: [1,2,3,4,5,6,7], ms: 150, pompe: 9, sol: false },
+  e_noyade:{ intro: [0,1,2,3], boucle: [4,5,6,7],       ms: 150, pompe: 9, sol: true },
+  o_prise: { intro: [0,1,2,3], boucle: [4,5,6,7],       ms: 150, pompe: 8, sol: true },
+};
+/* place de chaque combattant dans l'impasse (nom dans impasse.html) */
+const DANS_IMPASSE = { costaud: 'costaud', aventuriere: 'aventuriere', leopard: 'guepard', robot: 'cyborg', poupee: 'blonde', clown: 'clown', renardeRouge: 'renarde', casquette: 'casquette', ourson: 'ourson', cochonne: 'cochonne', yoga: 'yoga', eau: 'bain', boss: 'canape' };
+const PLACE_DEFAUT = { costaud: [318,612], aventuriere: [405,598], guepard: [759,374], cyborg: [1080,547], blonde: [790,594], clown: [112,732], renarde: [1625,618], casquette: [619,565], ourson: [205,600], cochonne: [1675,749], yoga: [1366,600], bain: [1225,560], canape: [857,572] };
+const COEUR = { bx: 80, by1: 273, by2: 259 };
+
+/* =================== SONS =================== */
+let ac = null;
+/* vidéos jouées après une victoire (la vidéo coupe les bruitages du jeu) */
+const VIDEO_INTRO = '/assets/shinato/m/ci_intro.mp4';
+const VIDEOS_PERDU = { clown: '/assets/shinato/m/ci_ko_clown.mp4', costaud: '/assets/shinato/m/ci_ko_costaud.mp4', chewing: '/assets/shinato/m/ci_ko_chewing.mp4', renardeRouge: '/assets/shinato/m/ci_ko_renardeRouge.mp4', eau: '/assets/shinato/m/ci_ko_eau.mp4', robot: '/assets/shinato/m/ci_ko_robot.mp4', cochonne: '/assets/shinato/m/ci_ko_cochonne.mp4', leopard: '/assets/shinato/m/ci_ko_leopard.mp4', ourson: '/assets/shinato/m/ci_ko_ourson.mp4', yoga: '/assets/shinato/m/ci_ko_yoga.mp4', casquette: '/assets/shinato/m/ci_ko_casquette.mp4', aventuriere: '/assets/shinato/m/ci_ko_aventuriere.mp4' };   // vidéos quand Rudy perd
+const VIDEOS = { boss: '/assets/shinato/m/ci_win_boss.mp4', poupee: '/assets/shinato/m/ci_win_poupee.mp4', clown: '/assets/shinato/m/ci_win_clown.mp4', chewing: '/assets/shinato/m/ci_win_chewing.mp4', renardeRouge: '/assets/shinato/m/ci_win_renardeRouge.mp4', eau: '/assets/shinato/m/ci_win_eau.mp4', robot: '/assets/shinato/m/ci_win_robot.mp4', cochonne: '/assets/shinato/m/ci_win_cochonne.mp4', leopard: '/assets/shinato/m/ci_win_leopard.mp4', ourson: '/assets/shinato/m/ci_win_ourson.mp4', casquette: '/assets/shinato/m/ci_win_casquette.mp4', yoga: '/assets/shinato/m/ci_win_yoga.mp4', aventuriere: '/assets/shinato/m/ci_win_aventuriere.mp4', costaud: '/assets/shinato/m/ci_win_costaud.mp4' };
+let finVideo = null;
+// musique du jeu : elle tourne en boucle et se coupe pendant les vidéos
+const musique = new Audio(); musique.src = '/assets/shinato/m/ci_e4395cb813b985.mp3'; musique.loop = true; musique.volume = .45;
+let musiqueOn = false, enVideo = false;
+function lancerMusique(){ musiqueOn = true; if (!enVideo){ const p = musique.play(); if (p && p.catch) p.catch(() => {}); } }
+function jouerVideo(src, ensuite){
+  enVideo = true; musique.pause();
+  const boite = document.getElementById('video'), v = document.getElementById('vid');
+  finVideo = () => { if (!finVideo) return; finVideo = null; v.pause(); v.removeAttribute('src'); v.load(); boite.style.display = 'none'; enVideo = false; if (musiqueOn){ const p = musique.play(); if (p && p.catch) p.catch(() => {}); } ensuite(); };
+  v.src = src; boite.style.display = 'flex'; v.currentTime = 0;
+  const p = v.play(); if (p && p.catch) p.catch(() => { v.muted = true; v.play().catch(() => finVideo && finVideo()); });
+}
+document.getElementById('vid').addEventListener('ended', () => finVideo && finVideo());
+document.getElementById('passer').addEventListener('click', () => finVideo && finVideo());
+function bruit(len, pente){
+  const b = ac.createBuffer(1, Math.max(1, ac.sampleRate * len | 0), ac.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, pente);
+  const s = ac.createBufferSource(); s.buffer = b; return s;
+}
+function tonne(t, f0, f1, dur, vol, type){   // coup sourd (grave qui descend)
+  const o = ac.createOscillator(), g = ac.createGain(); o.type = type || 'sine';
+  o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+  o.connect(g); g.connect(sortie()); o.start(t); o.stop(t + dur + .02);
+}
+function claque(t, len, type, freq, q, vol, pente){   // bruit filtré
+  const s = bruit(len, pente || 3), f = ac.createBiquadFilter(), g = ac.createGain();
+  f.type = type; f.frequency.value = freq; if (q) f.Q.value = q; g.gain.value = vol;
+  s.connect(f); f.connect(g); g.connect(sortie()); s.start(t);
+  return f;
+}
+let sortieG = null;
+function sortie(){   // compresseur général : le son reste fort sans saturer
+  if (!sortieG){ sortieG = ac.createDynamicsCompressor(); sortieG.threshold.value = -14; sortieG.ratio.value = 4; sortieG.connect(ac.destination); }
+  return sortieG;
+}
+function son(type){
+  if (phase === 'video') return;
+  if (!ac) return;
+  const t = ac.currentTime, g = ac.createGain(); g.connect(sortie());
+  if (type === 'coeur'){
+    const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(900, t);
+    o.frequency.exponentialRampToValueAtTime(1500, t + .12); g.gain.setValueAtTime(.12, t);
+    g.gain.exponentialRampToValueAtTime(.001, t + .2); o.connect(g); o.start(t); o.stop(t + .22); return;
+  }
+  if (type === 'laser'){
+    const o = ac.createOscillator(); o.type = 'square'; o.frequency.setValueAtTime(1400, t);
+    o.frequency.exponentialRampToValueAtTime(220, t + .45); g.gain.setValueAtTime(.08, t);
+    g.gain.exponentialRampToValueAtTime(.001, t + .5); o.connect(g); o.start(t); o.stop(t + .52); return;
+  }
+  if (type === 'boule'){   // boule d'énergie / de feu : souffle qui gronde
+    const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(140, t);
+    o.frequency.exponentialRampToValueAtTime(520, t + .35); g.gain.setValueAtTime(.09, t);
+    g.gain.exponentialRampToValueAtTime(.001, t + .5); o.connect(g); o.start(t); o.stop(t + .52);
+    const f = claque(t, .55, 'bandpass', 500, 1.2, .55, 1.2); f.frequency.exponentialRampToValueAtTime(2200, t + .5); return;
+  }
+  if (type === 'souffle'){   // coup dans le vide : « fwip »
+    const f = claque(t, .2, 'bandpass', 700, 2.5, .5, 1.5);
+    f.frequency.setValueAtTime(600, t); f.frequency.exponentialRampToValueAtTime(2600, t + .09); f.frequency.exponentialRampToValueAtTime(900, t + .2); return;
+  }
+  if (type === 'coup'){   // coup qui touche : claque + choc sourd
+    tonne(t, 150, 55, .12, .7);
+    claque(t, .07, 'lowpass', 2600, 0, .7, 4);
+    claque(t, .03, 'highpass', 3000, 0, .25, 2); return;
+  }
+  if (type === 'lourd'){   // gros coup : choc grave et long
+    tonne(t, 110, 35, .3, 1);
+    tonne(t, 60, 30, .35, .6, 'triangle');
+    claque(t, .16, 'lowpass', 1500, 0, .9, 3);
+    claque(t, .05, 'highpass', 2500, 0, .3, 2); return;
+  }
+  if (type === 'bloc'){   // coup paré : choc sec sur les avant-bras
+    tonne(t, 420, 260, .06, .35, 'triangle');
+    claque(t, .05, 'bandpass', 1800, 3, .5, 4); return;
+  }
+  if (type === 'prise'){   // il l'attrape : froissement de vêtements + choc
+    claque(t, .25, 'bandpass', 900, .8, .45, 1.2);
+    tonne(t + .05, 120, 50, .15, .6); return;
+  }
+  if (type === 'sol'){   // le corps tombe par terre
+    tonne(t, 90, 30, .28, .9);
+    claque(t, .12, 'lowpass', 700, 0, .7, 2.5);
+    claque(t + .08, .1, 'lowpass', 500, 0, .35, 3); return;
+  }
+  if (type === 'explosion'){
+    tonne(t, 80, 25, .8, 1); claque(t, .9, 'lowpass', 900, 0, 1, 1.5); return;
+  }
+  // autres : petit bruit
+  claque(t, .12, 'lowpass', 1100, 0, .5, 3);
+}
+/* cris des combattants (voix de synthèse, façon jeux de combat) */
+const VOIX = { rudy: { f: 125 }, costaud: { f: 92 }, boss: { f: 230 }, robot: { f: 210, robot: true }, poupee: { f: 380 }, clown: { f: 300 } };
+function cri(f, sorte){
+  if (!ac || phase === 'video' || !f) return;
+  const now = performance.now(); if (now - (f.criT || 0) < (sorte === 'hup' ? 600 : 220)) return; f.criT = now;
+  const V = VOIX[f.qui] || { f: 265 }, t = ac.currentTime;
+  // durée, contour de hauteur, voyelle (formants) selon la sorte de cri
+  const S = { aie: [.16, 1.15, .8, [700, 1150]], ah: [.32, 1.25, .7, [820, 1250]], ko: [.9, 1.3, .45, [780, 1100]],
+              hup: [.11, 1.05, 1.15, [600, 1050]], effort: [.28, .95, 1.1, [500, 950]], ri: [.5, 1.4, 1.2, [700, 1600]] }[sorte] || [.2, 1, 1, [700, 1100]];
+  const [dur, k0, k1, form] = S, base = V.f * (.95 + Math.random() * .1);
+  const o = ac.createOscillator(); o.type = V.robot ? 'square' : 'sawtooth';
+  o.frequency.setValueAtTime(base * k0, t); o.frequency.exponentialRampToValueAtTime(base * k1, t + dur);
+  const vib = ac.createOscillator(), vg = ac.createGain(); vib.frequency.value = V.robot ? 40 : 6; vg.gain.value = base * (V.robot ? .15 : .03);
+  vib.connect(vg); vg.connect(o.frequency);
+  const env = ac.createGain(); env.gain.setValueAtTime(.0001, t); env.gain.exponentialRampToValueAtTime(.35, t + .02);
+  env.gain.setValueAtTime(.35, t + dur * .55); env.gain.exponentialRampToValueAtTime(.001, t + dur);
+  const mix = ac.createGain(); mix.gain.value = .9;
+  form.forEach((fr, i) => { const b = ac.createBiquadFilter(); b.type = 'bandpass'; b.frequency.value = fr * (base > 200 ? 1.15 : 1); b.Q.value = 6;
+    const gg = ac.createGain(); gg.gain.value = i ? .6 : 1; o.connect(b); b.connect(gg); gg.connect(env); });
+  const souffle = bruit(dur, .8), bf = ac.createBiquadFilter(), sg = ac.createGain(); bf.type = 'bandpass'; bf.frequency.value = 1800; sg.gain.value = .12;
+  souffle.connect(bf); bf.connect(sg); sg.connect(env);
+  env.connect(mix); mix.connect(sortie());
+  o.start(t); vib.start(t); souffle.start(t); o.stop(t + dur + .05); vib.stop(t + dur + .05);
+}
+
+/* =================== ÉTAT DU JEU =================== */
+const ORDRE = ['costaud', 'aventuriere', 'yoga', 'casquette', 'ourson', 'leopard', 'cochonne', 'robot', 'eau', 'renardeRouge', 'chewing', 'clown', 'poupee', 'boss'];
+let bisous = [], feux = [], bulle = null, combat = 0, rudy, enn, boules = [], lasers = [], coeurs = [], etincelles = [], scene = null, phase = 'menu', phaseT = 0,
+    texte = '', tremble = 0, pressions = 0, rechargeBoule = 0;
+
+function nouveau(qui, x, y, face){
+  const P = PERSOS[qui];
+  return { qui, P, x, y, face, pv: P.pv, etat: 'intro', t: 0, anim: 'intro', ai: 0, lift: 0,
+           cache: false, invul: 0, combo: 0, comboT: 0, touche: false, cool: 1.2, chargeCool: 4, priseCool: 4,
+           depart: x, vx: 0, attente: 0 };
+}
+function lancerCombat(i){
+  combat = i; bisous = []; feux = []; boules = []; lasers = []; coeurs = []; etincelles = []; scene = null;
+  const id = DANS_IMPASSE[ORDRE[i]];
+  const place = (id && (placeImpasse(id) || PLACE_DEFAUT[id])) || [1700, 760];   // pas dans l'impasse : elle arrive par le côté
+  const gauche = place[0] < W / 2;
+  rudy = nouveau('rudy', gauche ? 1320 : 430, 760, gauche ? -1 : 1);
+  const yS = Math.max(SOL_HAUT, Math.min(SOL_BAS, place[1]));
+  enn = nouveau(ORDRE[i], Math.max(90, Math.min(W - 90, place[0])), yS, gauche ? 1 : -1);
+  enn.etat = 'entree'; enn.lift = Math.max(0, yS - place[1]); enn.vl = 0;
+  enn.cibleX = gauche ? 450 : 1320; enn.cibleY = 760;
+  aCacher = id; cacherImpasse(id);
+  if (ORDRE[i] === 'chewing'){
+    // la clown, assise sur son muret, crache une boule de chewing-gum qui devient la combattante
+    const c = evalImpasse(`(()=>{const a=anims.find(a=>a.p.id==='clown');return a&&[a.p.x,a.p.y,a.p.h,a.p.inverse?1:0]})()`) || [112, 732, 282, 0];
+    enn.cache = true; enn.etat = 'bulle'; enn.lift = 0; enn.x = enn.cibleX; enn.y = enn.cibleY;
+    bulle = { x0: c[0] + c[2] * .05 * (c[3] ? -1 : 1), y0: c[1] - c[2] * .86, x1: enn.cibleX, y1: enn.cibleY, t: 0, d: 1.25 };
+  }
+  if (i > 0) rudy.pv = PERSOS.rudy.pv;
+  phase = 'annonce'; phaseT = 0;
+  texte = enn.P.boss ? 'COMBAT FINAL — ' + enn.P.nom : 'COMBAT ' + (i + 1) + ' — ' + enn.P.nom;
+}
+
+function jouer(f, anim, garder){
+  if (f.anim === anim && garder) return;
+  f.anim = anim; f.t = 0; f.touche = false;
+}
+function animInfo(f){ return f.P.a[f.anim]; }
+function imageCourante(f){
+  const a = animInfo(f), n = a[1].length, k = Math.floor(f.t / a[2]);
+  return a[1][a[3] ? k % n : Math.min(k, n - 1)];
+}
+function indexCourant(f){ const a = animInfo(f); return Math.floor(f.t / a[2]); }
+function animFinie(f){ const a = animInfo(f); return !a[3] && f.t >= a[1].length * a[2]; }
+
+/* =================== COMMANDES =================== */
+const cmd = { x: 0, y: 0, poing: false, pied: false, energie: false, prise: false };
+const appui = { poing: 0, pied: 0, energie: 0, prise: 0 };   // appuis à traiter
+function presser(b){
+  if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){} }
+  appui[b] = 0.25; if (scene && scene.type === 'emprise') pressions++;
+}
+const touches = {};
+addEventListener('keydown', e => {
+  if (touches[e.code]) return; touches[e.code] = true;
+  const m = { KeyJ: 'poing', Space: 'poing', KeyK: 'pied', KeyL: 'energie', KeyU: 'prise', KeyI: 'prise' }[e.code];
+  if (m) { presser(m); e.preventDefault(); }
+  if (e.code.startsWith('Arrow')) e.preventDefault();
+});
+addEventListener('keyup', e => { touches[e.code] = false; });
+function clavierXY(){
+  let x = 0, y = 0;
+  if (touches.ArrowLeft || touches.KeyA || touches.KeyQ) x -= 1;
+  if (touches.ArrowRight || touches.KeyD) x += 1;
+  if (touches.ArrowUp || touches.KeyW || touches.KeyZ) y -= 1;
+  if (touches.ArrowDown || touches.KeyS) y += 1;
+  return [x, y];
+}
+// joystick tactile
+const man = document.getElementById('manette'), bout = document.getElementById('bouton');
+let joyId = null, joy = [0, 0];
+function joyMaj(e){
+  const r = man.getBoundingClientRect(), cx = r.left + r.width/2, cy = r.top + r.height/2;
+  let sx = e.clientX - cx, sy = e.clientY - cy;
+  let dx = TOURNE ? sy : sx, dy = TOURNE ? -sx : sy;            // remettre dans le sens du jeu
+  const R = man.offsetWidth/2 * .8, d = Math.hypot(dx, dy);
+  if (d > R) { dx *= R/d; dy *= R/d; }
+  bout.style.transform = `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`;
+  joy = [dx / R, dy / R];
+}
+man.addEventListener('pointerdown', e => { joyId = e.pointerId; man.setPointerCapture(e.pointerId); joyMaj(e); presserRien(); });
+man.addEventListener('pointermove', e => { if (e.pointerId === joyId) joyMaj(e); });
+const finJoy = e => { if (e.pointerId === joyId) { joyId = null; joy = [0, 0]; bout.style.transform = 'translate(-50%,-50%)'; } };
+man.addEventListener('pointerup', finJoy); man.addEventListener('pointercancel', finJoy);
+function presserRien(){ if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){} } }
+let gardeBouton = false;
+{ const el = document.getElementById('bGarde');
+  el.addEventListener('pointerdown', e => { e.preventDefault(); el.classList.add('on'); gardeBouton = true; presserRien();
+    if (scene && scene.type === 'emprise') pressions++; });
+  const fin = () => { el.classList.remove('on'); gardeBouton = false; };
+  el.addEventListener('pointerup', fin); el.addEventListener('pointercancel', fin); el.addEventListener('pointerleave', fin); }
+for (const [id, b] of [['bPoing','poing'],['bPied','pied'],['bEnergie','energie'],['bPrise','prise']]){
+  const el = document.getElementById(id);
+  el.addEventListener('pointerdown', e => { e.preventDefault(); el.classList.add('on'); presser(b); });
+  const fin = () => el.classList.remove('on');
+  el.addEventListener('pointerup', fin); el.addEventListener('pointercancel', fin); el.addEventListener('pointerleave', fin);
+}
+document.getElementById('plein').onclick = () => {
+  const d = document.documentElement;
+  (d.requestFullscreen || d.webkitRequestFullscreen || (()=>{})).call(d);
+  try { screen.orientation.lock('landscape').catch(()=>{}); } catch(e){}
+};
+
+/* =================== OUTILS =================== */
+const libre = f => ['garde','marche','intro'].includes(f.etat);
+const aTerre = f => ['chute','sol','releve','ko','projete','bulle','forme'].includes(f.etat);
+function hauteur(f){ return f.P.h * prof(f.y); }
+function portH(f){ return Math.max(hauteur(f), 290 * prof(f.y)); }   // portée mini, même pour la petite poupée
+function etincelle(x, y, gros){
+  for (let i = 0; i < (gros ? 16 : 9); i++){
+    const a = Math.random() * 6.28, v = (gros ? 260 : 170) * (0.4 + Math.random());
+    etincelles.push({ x, y, vx: Math.cos(a)*v, vy: Math.sin(a)*v, vie: 1, r: gros ? 5 : 3.5 });
+  }
+  etincelles.push({ x, y, vx: 0, vy: 0, vie: 1, r: gros ? 46 : 30, flash: true });
+}
+
+function reculer(f){
+  if (!f.P.a.recul) return false;
+  f.etat = 'recul'; jouer(f, 'recul'); f.recT = 0; f.recDe = f.x; f.lift = 0;
+  f.recVers = clampX(f.x - f.face * 270 * prof(f.y)); f.invul = Math.max(f.invul, .3);
+  son('souffle'); return true;
+}
+function frapper(att, cible, deg, lourd, hx, hy){
+  if (cible.invul > 0 || aTerre(cible) || cible.cache || cible.etat === 'ko') return false;
+  // l'ennemie peut parer au dernier moment
+  if (cible !== rudy && cible.P.a.bloc && (libre(cible) || cible.etat === 'bloc') && cible.etat !== 'intro'
+      && Math.random() < cible.P.blocChance){ cible.etat = 'bloc'; jouer(cible, 'bloc'); }
+  // celui qui pare regarde toujours celui qui l'attaque
+  if (cible.etat === 'bloc' && att !== cible) cible.face = att.x >= cible.x ? 1 : -1;
+  if (cible.etat === 'bloc' && (att.x - cible.x) * cible.face >= 0){
+    // coup paré : très peu de dégâts, juste un petit recul
+    cible.pv = Math.max(1, cible.pv - Math.ceil(deg * .12));
+    cible.blocHit = .28; cible.blocT = Math.max(cible.blocT || 0, .45);
+    // Kimy : si Rudy la frappe au moins 3 fois pendant qu'elle est en garde, elle riposte avec sa prise
+    if ((cible.qui === 'aventuriere' || cible.qui === 'renardeRouge' || cible.qui === 'casquette' || cible.qui === 'leopard' || cible.qui === 'poupee' || cible.qui === 'clown' || cible.qui === 'boss' || cible.qui === 'yoga' || cible.qui === 'ourson' || cible.qui === 'eau' || cible.qui === 'chewing' || cible.qui === 'robot' || cible.qui === 'costaud' || cible.qui === 'cochonne') && att === rudy){
+      // 3 coups parés à la suite (moins de 3 s entre deux) : elle riposte
+      const t = performance.now();
+      if (t - (cible.blocDernier || 0) > 3000) cible.blocCompte = 0;
+      cible.blocDernier = t; cible.blocCompte = (cible.blocCompte || 0) + 1;
+      cible.blocT = Math.max(cible.blocT, 1.2);   // elle reste en garde le temps que Rudy frappe encore
+      if (cible.blocCompte >= 3) cible.riposte = true;
+    }
+    cible.x = clampX(cible.x - cible.face * ((cible.qui === 'aventuriere' || cible.qui === 'renardeRouge' || cible.qui === 'casquette' || cible.qui === 'leopard' || cible.qui === 'poupee' || cible.qui === 'clown' || cible.qui === 'boss' || cible.qui === 'yoga' || cible.qui === 'ourson' || cible.qui === 'eau' || cible.qui === 'chewing' || cible.qui === 'robot' || cible.qui === 'costaud' || cible.qui === 'cochonne') ? 5 : (lourd ? 30 : 16)));   // Kimy et Gagavi restent à portée pour riposter
+    for (let i = 0; i < 8; i++){ const a = Math.random() * 6.28, v = 120 + Math.random() * 150;
+      etincelles.push({ x: hx, y: hy, vx: Math.cos(a) * v, vy: Math.sin(a) * v, vie: .8, r: 3 }); }
+    son('bloc'); return true;
+  }
+  cible.pv = Math.max(0, cible.pv - deg);
+  etincelle(hx, hy, lourd);
+  son(lourd ? 'lourd' : 'coup');
+  if (cible.pv <= 0) { cri(cible, 'ko'); renverser(cible, att.face, true); tremble = .35; return true; }
+  if (cible.armure){ cri(cible, 'aie'); return true; }   // elle encaisse sans s'arrêter (Oma et son bazooka)
+  cri(cible, lourd ? 'ah' : 'aie');
+  if (lourd) { renverser(cible, att.face); tremble = .25; }
+  else {
+    cible.etat = 'touche'; jouer(cible, 'touche'); cible.x += att.face * 26;
+    if (att !== cible) cible.face = att.x >= cible.x ? 1 : -1;   // touché : il reste tourné vers celui qui frappe
+    cible.attente = 0;
+  }
+  return true;
+}
+function renverser(f, dir, ko){
+  f.etat = 'chute'; jouer(f, 'chute'); f.vx = dir * 260; f.lift = 0; f.ko = !!ko;
+  f.face = -dir;
+}
+
+/* =================== RUDY =================== */
+function majRudy(dt){
+  const f = rudy, k = clavierXY();
+  if (f.etat === 'englue') return;   // enveloppé dans la boule de gomme
+  if (f.etat === 'explose') return;   // pris dans l'explosion du missile d'Oma
+  if (f.etat === 'charme'){
+    // touché par le bisou : il marche tout seul vers elle
+    const d = enn.x - f.x; f.face = d >= 0 ? 1 : -1; f.recule = false;
+    f.x += f.face * 150 * dt; f.y += Math.sign(enn.y - f.y) * Math.min(Math.abs(enn.y - f.y), 100 * dt);
+    jouer(f, 'marche', true);
+    if (Math.abs(d) < hauteur(f) * .5 && Math.abs(enn.y - f.y) < 40 && !enn.cache && libre(enn)){
+      f.etat = 'garde'; demarrerScene('enn', 'z_calin');
+    }
+    return;
+  }
+  let mx = joy[0] || k[0], my = joy[1] || k[1];
+  if (Math.abs(mx) < .2) mx = 0; if (Math.abs(my) < .2) my = 0;
+  if (f.comboT > 0) f.comboT -= dt; else f.combo = 0;
+  // double appui en arrière : bond arrière
+  const arriere = mx * f.face < -.55;
+  if (arriere && !f.arrPrec){
+    const t = performance.now();
+    if (t - (f.arrT || 0) < 330 && (libre(f) || f.etat === 'bloc') && f.etat !== 'intro'){ f.arrPrec = true; f.arrT = 0; reculer(f); return; }
+    f.arrT = t;
+  }
+  f.arrPrec = arriere;
+  // garde : on reste protégé tant que le bouton est maintenu
+  const garde = gardeBouton || touches.KeyO || touches.ShiftLeft;
+  if (f.etat === 'bloc' && !garde && !(f.blocHit > 0)){ f.etat = 'garde'; jouer(f, 'garde'); }
+  if (garde && (libre(f) || f.etat === 'bloc') && f.etat !== 'intro'){
+    if (enn && !enn.cache) f.face = enn.x >= f.x ? 1 : -1;
+    f.etat = 'bloc'; jouer(f, 'bloc', true); f.blocT = 99; return;
+  }
+
+  if (libre(f) && f.etat !== 'intro'){
+    if (enn && !enn.cache) f.face = enn.x >= f.x ? 1 : -1;
+    // attaques
+    if (appui.energie > 0 && rechargeBoule <= 0){ appui.energie = 0; f.etat = 'energie'; jouer(f, 'energie'); rechargeBoule = 2.2; return; }
+    if (appui.prise > 0){ appui.prise = 0; tenterPrise(); return; }
+    if (appui.poing > 0){
+      appui.poing = 0; f.combo = (f.combo % 3) + 1; f.comboT = .7;
+      f.etat = 'coup'; jouer(f, ['poingA','poingB','poingC'][f.combo - 1]); if (f.combo === 3 || Math.random() < .3) cri(f, 'hup'); return;
+    }
+    if (appui.pied > 0){
+      appui.pied = 0; f.combo = f.combo === 9 ? 0 : 9; f.comboT = .7;
+      f.etat = 'coup'; jouer(f, f.combo === 9 ? 'piedA' : 'piedB'); if (Math.random() < .4) cri(f, 'hup'); return;
+    }
+    if (mx || my){
+      const ral = f.lent > 0 ? .35 : 1;   // touché par la boule d'eau : il avance au ralenti
+      f.x += mx * 340 * dt * ral; f.y += my * 210 * dt * ral;
+      f.etat = 'marche'; jouer(f, 'marche', true);
+      f.recule = mx !== 0 && Math.sign(mx) !== f.face;
+    } else { f.etat = 'garde'; jouer(f, 'garde', true); }
+  }
+}
+function tenterPrise(){
+  const f = rudy, e = enn, hp = hauteur(f);
+  if ((libre(e) || e.etat === 'touche' || e.etat === 'coup' || e.etat === 'marche') && !e.cache && e.etat !== 'intro'){
+    if (Math.abs(e.x - f.x) < hp * .78 && Math.abs(e.y - f.y) < 50){
+      if (e.P.contre){ demarrerScene('enn', e.P.contre[Math.floor(Math.random() * e.P.contre.length)]); return; }   // elle retourne la prise (coups de tête)
+      if (e.P.priseRudy){ demarrerScene('rudy'); return; }
+      // pas de planche : Rudy l'attrape et la jette par-dessus lui
+      f.etat = 'coup'; jouer(f, 'poingC'); f.touche = true;
+      e.etat = 'projete'; jouer(e, 'chute'); e.projT = 0; e.projDe = e.x;
+      e.projVers = clampX(f.x - f.face * hp * .55); e.cool = 1.2;
+      son('souffle'); return;
+    }
+  }
+  f.etat = 'coup'; jouer(f, 'rate');
+}
+
+/* =================== PRISES (scènes à deux) =================== */
+function demarrerScene(qui, force){
+  const parRudy = qui === 'rudy';
+  const nom = force || (parRudy ? enn.P.priseRudy : enn.P.prise);
+  const sp = SPR[nom];
+  const y = rudy.y; enn.y = y;
+  // sens : pour une prise de Rudy, c'est Rudy qui regarde ; sinon l'ennemi
+  const regard = parRudy ? (enn.x >= rudy.x ? 1 : -1) : (rudy.x >= enn.x ? 1 : -1);
+  const dir = nom === 'p_lianes' ? rudy.face : regard === sp.sens ? 1 : -1;   // dans les lianes, Rudy garde son sens
+  const sc = hauteur(rudy) / 320;
+  let X = rudy.x - sp.debut_r * sc * dir;
+  if (['b_plaque', 'o_plaque', 'c_plaque', 'y_arrache', 'c2_cle', 'p_mange', 'k_frappe', 'k_sac', 'z_geant', 'y_riposte', 'o_riposte', 'e_geante'].includes(nom)){   // la scène au sol reste entière dans l'écran
+    const g = (dir > 0 ? sp.ax : sp.fw - sp.ax) * sc, d = (dir > 0 ? sp.fw - sp.ax : sp.ax) * sc;
+    X = Math.max(40 + g, Math.min(W - 40 - d, X));
+  }
+  enn.x = X + sp.debut_e * sc * dir;
+  scene = { type: EMPRISES[nom] ? 'emprise' : 'prise', nom, parRudy, X, y, dir, sc, t: 0, frappes: {}, regard };
+  rudy.cache = enn.cache = true;
+  rudy.etat = enn.etat = 'scene';
+  pressions = 0;
+  son('prise'); cri(parRudy ? rudy : enn, 'hup'); setTimeout(() => cri(parRudy ? enn : rudy, 'effort'), 180);
+}
+function majScene(dt){
+  const s = scene, sp = SPR[s.nom];
+  s.t += dt * 1000;
+  if (s.type === 'prise'){
+    const PC = PRISE_COUPS[s.nom];
+    const ms = PC ? PC.ms : s.parRudy ? 140 : 150, i = Math.floor(s.t / ms);
+    s.img = Math.min(i, sp.n - 1);
+    // coups pendant la prise
+    const coupsAux = PC ? PC.coups : s.parRudy ? { 5: 18 } : { 4: 7, 6: 7 };
+    if (coupsAux[s.img] && !s.frappes[s.img]){
+      s.frappes[s.img] = true;
+      const cible = s.parRudy ? enn : rudy;
+      cible.pv = Math.max(0, cible.pv - coupsAux[s.img]);
+      etincelle(s.X + (s.parRudy ? 0 : sp.debut_r * s.sc * s.dir), s.y - 200 * s.sc, true);
+      son('lourd'); tremble = .25;
+    }
+    if (i >= sp.n + 2 && PC && PC.suite){   // on passe directement à la planche suivante, au même endroit
+      const sp2 = SPR[PC.suite];
+      let X2 = s.X; const g = (s.dir > 0 ? sp2.ax : sp2.fw - sp2.ax) * s.sc, d = (s.dir > 0 ? sp2.fw - sp2.ax : sp2.ax) * s.sc;
+      X2 = Math.max(40 + g, Math.min(W - 40 - d, X2));
+      scene = { type: 'emprise', nom: PC.suite, parRudy: false, X: X2, y: s.y, dir: s.dir, sc: s.sc, t: 0, frappes: {}, regard: s.regard };
+      pressions = 0; cri(enn, 'ri'); setTimeout(() => cri(rudy, 'ah'), 200);
+      return;
+    }
+    if (i >= sp.n + 2){
+      rudy.cache = enn.cache = false;
+      rudy.x = s.X + sp.fin_r * s.sc * s.dir; enn.x = s.X + sp.fin_e * s.sc * s.dir;
+      if (s.parRudy){
+        rudy.etat = 'garde'; jouer(rudy, 'garde');
+        enn.etat = 'sol'; jouer(enn, 'sol'); enn.ko = enn.pv <= 0; enn.solT = 0;
+        enn.face = rudy.x > enn.x ? 1 : -1;
+      } else {
+        enn.etat = 'garde'; jouer(enn, 'garde'); enn.cool = .9;
+        renverser(rudy, enn.x < rudy.x ? 1 : -1, rudy.pv <= 0);
+      }
+      scene = null;
+    }
+  } else {
+    // emprise : l'ennemi pompe l'énergie de Rudy tant qu'il ne se libère pas
+    const E = EMPRISES[s.nom], ni = E.intro.length, k = Math.floor(s.t / E.ms);
+    s.img = k < ni ? E.intro[k] : E.boucle[(k - ni) % E.boucle.length];
+    if (E.mort){   // pas libéré à temps : elle l'avale (dernière image) et c'est KO
+      if (s.mortT !== undefined){ s.img = E.mort.img; if (s.t - s.mortT < E.mort.duree) return; rudy.pv = 0; }
+      else if ((s.t >= E.mort.apres || rudy.pv <= 1) && pressions < 12){ s.mortT = s.t; s.img = E.mort.img; son('lourd'); tremble = .3; cri(rudy, 'ko'); return; }
+    }
+    if (E.fuite !== undefined){   // image de fuite : jouée seulement quand Rudy réussit à se libérer
+      if (s.fuiteT !== undefined){ s.img = E.fuite; if (s.t - s.fuiteT < 700) return; }
+      else if (pressions >= 12 && k >= ni){ s.fuiteT = s.t; s.img = E.fuite; cri(rudy, 'effort'); son('prise'); return; }
+    }
+    if (k >= ni) rudy.pv = Math.max(E.mort ? 1 : 0, rudy.pv - E.pompe * dt);   // avec une image de mort, c'est elle qui donne le KO
+    if (E.plaques && E.plaques[s.img] && s.dernierK !== k){   // plaqué au sol : il perd de l'énergie à chaque fois
+      s.dernierK = k; rudy.pv = Math.max(0, rudy.pv - E.plaques[s.img]);
+      etincelle(s.X + sp.debut_r * s.sc * s.dir * .5, s.y - 40 * s.sc, true); son('lourd'); tremble = .3;
+    }
+    if (E.impacts){   // chaque coup de poing : éclair, bruit et petite secousse
+      const prec = k > 0 ? (k - 1 < ni ? E.intro[k - 1] : E.boucle[(k - 1 - ni) % E.boucle.length]) : -1;
+      if (k >= ni && E.impacts.includes(s.img) && prec !== s.img && !s.frappes[k]){
+        s.frappes[k] = true; son('coup'); tremble = .12; if (Math.random() < .5) cri(rudy, 'aie');
+        etincelle(s.X + sp.debut_r * s.sc * s.dir * .9, s.y - (E.sol ? 190 : 230) * s.sc, false);
+      }
+    } else if (k >= ni && (k % 4 === 0) && !s.frappes[k]){ s.frappes[k] = true; etincelle(s.X + sp.debut_r * s.sc * s.dir, s.y - 230 * s.sc, false); son('coup'); cri(rudy, Math.random() < .5 ? 'aie' : 'effort'); }
+    if ((pressions >= 12 && k >= ni) || rudy.pv <= 0){
+      rudy.cache = enn.cache = false; scene = null;
+      const rx = s.X + sp.fin_r * s.sc * s.dir, ex = s.X + sp.fin_e * s.sc * s.dir;
+      rudy.x = clampX(rx);
+      if (rudy.pv <= 0){ rudy.etat = 'sol'; rudy.ko = true; jouer(rudy, 'sol'); enn.x = ex; enn.etat = 'garde'; jouer(enn, 'garde'); return; }
+      if (E.sol){ rudy.etat = 'releve'; jouer(rudy, 'releve'); }
+      else { rudy.etat = 'touche'; jouer(rudy, 'touche'); }
+      rudy.invul = 1.2;
+      // l'ennemi est repoussé et revient en arrière en sautant
+      let d = Math.sign(ex - rx) || -s.regard;
+      enn.x = clampX(ex); enn.etat = 'retour'; jouer(enn, 'retour'); enn.retourDe = enn.x; enn.retourVers = clampX(enn.x + d * 330);
+      enn.retourT = 0; enn.face = -d; enn.priseCool = 5; cri(rudy, 'hup');
+      if (s.nom === 'l_etreinte'){ enn.x = clampX(ex + d * 120); enn.etat = 'detransfoL'; jouer(enn, 'detransfoL'); enn.invul = 9; }   // elle reprend sa forme normale
+      if (s.nom === 'o_ours'){ enn.x = clampX(ex + d * 120); enn.etat = 'detransfo'; jouer(enn, 'detransfo'); enn.invul = 99; }   // Rudy s'échappe : elle reprend forme humaine
+      son('lourd');
+    }
+  }
+}
+
+/* =================== ENNEMI (IA) =================== */
+const clampX = x => Math.max(90, Math.min(W - 90, x));
+function majEnnemi(dt){
+  const e = enn, r = rudy, P = e.P;
+  e.cool -= dt; e.chargeCool -= dt; e.priseCool -= dt;
+  if (e.etat === 'entree'){
+    // il descend de sa place dans l'impasse puis vient se mettre en face de Rudy
+    if (e.lift > 0){ e.vl += 1800 * dt; e.lift = Math.max(0, e.lift - e.vl * dt); jouer(e, 'retour', true); return; }
+    const dx = e.cibleX - e.x, dy = e.cibleY - e.y, d = Math.hypot(dx, dy);
+    if (d < 8){ e.etat = 'intro'; jouer(e, 'intro'); e.face = r.x >= e.x ? 1 : -1; return; }
+    const v = Math.min(d, 360 * dt); e.x += dx / d * v; e.y += dy / d * v;
+    e.face = dx >= 0 ? 1 : -1; e.recule = false; jouer(e, 'marche', true); return;
+  }
+  if (e.etat === 'bulle'){
+    bulle.t += dt;
+    if (bulle.t >= bulle.d){
+      e.cache = false; e.etat = 'forme'; jouer(e, 'forme'); e.face = r.x >= e.x ? 1 : -1;
+      for (let i = 0; i < 18; i++){ const a = Math.random() * 6.28, v = 150 + Math.random() * 260;
+        etincelles.push({ x: e.x, y: e.y - 20, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120, vie: 1, r: 6, rose: true }); }
+      bulle = null; son('coeur');
+    }
+    return;
+  }
+  if (e.etat === 'forme'){ if (animFinie(e)){ e.etat = 'intro'; jouer(e, 'intro'); } return; }
+  if (e.etat === 'projete'){
+    // Rudy la projette par-dessus lui
+    e.projT += dt; const k = Math.min(1, e.projT / .6);
+    e.x = e.projDe + (e.projVers - e.projDe) * k; e.lift = Math.sin(k * Math.PI) * hauteur(r) * .85;
+    if (k >= 1){
+      e.lift = 0; e.pv = Math.max(0, e.pv - 16); e.ko = e.pv <= 0;
+      etincelle(e.x, e.y - 30, true); son('lourd'); tremble = .3;
+      e.etat = e.ko ? 'ko' : 'sol'; jouer(e, e.ko && e.P.a.koSol ? 'koSol' : 'sol'); e.solT = 0; e.face = r.x >= e.x ? 1 : -1;
+    }
+    return;
+  }
+  if (e.etat === 'intro'){ return; }
+  if (e.etat === 'feuZ'){
+    if (!e.touche && indexCourant(e) >= 5){
+      e.touche = true; const sc = hauteur(e) / 320;
+      feux.push({ x: e.x + FEUZ.bx * sc * e.face, y: e.y, haut: FEUZ.by * sc, dir: e.face, vie: 2.4, sc, sp: 'feuz' });
+      son('boule');
+    }
+    if (animFinie(e)){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .5; }
+    return;
+  }
+  if (e.etat === 'bisou'){
+    if (!e.touche && indexCourant(e) >= 3){
+      e.touche = true; const sc = hauteur(e) / 320;
+      bisous.push({ x: e.x + BISOU.bx * sc * e.face, y: e.y, haut: BISOU.by * sc, dir: e.face, vie: 2.6, t: 0, sc: prof(e.y) });
+      son('coeur');
+    }
+    if (animFinie(e)){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .4; }
+    return;
+  }
+  if (e.etat === 'gomme'){
+    if (!e.touche && indexCourant(e) >= 6){
+      e.touche = true; const h = hauteur(e);
+      feux.push({ x: e.x + h * .55 * e.face, y: e.y, haut: h * .5, dir: e.face, vie: 2.6, sc: h / 320, sp: 'gommez', gomme: true, v: 430, grow: 2.4, age: 0 });
+      son('boule');
+    }
+    if (animFinie(e)){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .7; }
+    return;
+  }
+  if (e.etat === 'fuiteB'){   // Oma s'éloigne pour préparer son bazooka
+    e.fuiteT += dt; if (e.fuiteX === undefined) e.fuiteX = Math.max(230, Math.min(W - 230, r.x + (e.x >= r.x ? 1 : -1) * 620)) === r.x ? 230 : Math.max(230, Math.min(W - 230, r.x + (e.x >= r.x ? 1 : -1) * 620));
+    const cible = Math.abs(e.fuiteX - r.x) < 300 ? (r.x < W / 2 ? W - 230 : 230) : e.fuiteX, d = cible - e.x;
+    e.face = d >= 0 ? 1 : -1; e.x += Math.sign(d) * Math.min(Math.abs(d), 480 * dt);
+    if (Math.abs(d) < 8 || e.fuiteT > 2.6){ e.face = r.x >= e.x ? 1 : -1; e.etat = 'dessin'; jouer(e, 'dessin'); son('coeur'); }
+    return;
+  }
+  if (e.etat === 'dessin'){ e.face = r.x >= e.x ? 1 : -1; if (animFinie(e)){ e.etat = 'bazooka'; jouer(e, 'bazooka'); e.touche = false; son('coeur'); } return; }
+  if (e.etat === 'bazooka'){
+    if (!e.touche && indexCourant(e) >= 7){
+      e.touche = true; const h = hauteur(e);
+      feux.push({ x: e.x + h * .8 * e.face, y: e.y, haut: h * .55, dir: e.face, vie: 3.5, sc: h / 320, sp: 'missilek', missile: true, droite: true, v: 640, age: 0 });
+      son('explosion'); tremble = .2;
+    }
+    if (animFinie(e)){ e.armure = false; e.etat = 'garde'; jouer(e, 'garde'); e.cool = .8; }
+    return;
+  }
+  if (e.etat === 'bulleK'){   // Oma lance sa bulle de gomme
+    if (!e.touche && indexCourant(e) >= 7){
+      e.touche = true; const h = hauteur(e);
+      feux.push({ x: e.x + h * .55 * e.face, y: e.y, haut: h * .55, dir: e.face, vie: 2.8, sc: h / 320, sp: 'gommek', gomme: true, oma: true, v: 470, grow: 1.2, age: 0 });
+      son('boule');
+    }
+    if (animFinie(e)){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .6; }
+    return;
+  }
+  if (e.etat === 'courseK'){   // Rudy est tenu : Oma court vers lui pour le frapper
+    const d = r.x - e.x; e.face = d >= 0 ? 1 : -1;
+    e.x += Math.sign(d) * Math.min(Math.abs(d), 560 * dt);
+    e.y += Math.sign(r.y - e.y) * Math.min(Math.abs(r.y - e.y), 220 * dt);
+    if (r.etat !== 'englue'){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .5; return; }
+    if (Math.abs(d) < hauteur(r) * .38 && animFinie(r)){ e.y = r.y; demarrerScene('enn', 'k_frappe'); }
+    return;
+  }
+  if (e.etat === 'crache'){   // Piki crache sa boule gluante
+    if (!e.touche && indexCourant(e) >= 7){
+      e.touche = true; const h = hauteur(e);
+      feux.push({ x: e.x + h * .44 * e.face, y: e.y, haut: h * .4, dir: e.face, vie: 2.8, sc: h / 320, sp: 'gluez', gomme: true, glu: true, v: 450, grow: 1.3, age: 0 });
+      son('boule');
+    }
+    if (animFinie(e)){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .6; }
+    return;
+  }
+  if (e.etat === 'fond'){   // elle fond dans le sol…
+    if (animFinie(e)){ e.etat = 'flaque'; jouer(e, 'flaque', true); }
+    return;
+  }
+  if (e.etat === 'flaque'){   // …glisse sous le sol jusqu'à Rudy…
+    const d = r.x - e.x; e.face = d >= 0 ? 1 : -1;
+    e.x += Math.sign(d) * Math.min(Math.abs(d), 420 * dt);
+    e.y += Math.sign(r.y - e.y) * Math.min(Math.abs(r.y - e.y), 200 * dt);
+    if (r.etat !== 'englue'){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .5; return; }
+    if (Math.abs(d) < 6 && animFinie(r)) demarrerScene('enn', e.P.croque || 'g_croque');   // …et ressort pour le croquer
+    return;
+  }
+  if (e.etat === 'mitra'){   // Selfrid sort sa mitrailleuse et arrose Rudy
+    const a = animInfo(e), k = Math.floor(e.t / a[2]), img = a[1][Math.min(k, a[1].length - 1)];
+    if ((img === 4 || img === 5 || img === 6) && !e.tirs[k]){
+      e.tirs[k] = true; const h = hauteur(e);
+      feux.push({ x: e.x + h * .3 * e.face, y: e.y, haut: h * (.66 + (Math.random() - .5) * .04), dir: e.face, vie: 1.4, sc: h / 320, balle: true, v: 1500 });
+      son('coup');
+    }
+    if (animFinie(e)){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .6; }
+    return;
+  }
+  if (e.etat === 'canon'){   // Cibora : transformation rapide, charge de la boule, tir, puis elle range ses canons
+    if (e.etape === 0 && animFinie(e)){ e.etape = 1; jouer(e, 'chargeBoule'); son('coeur'); }
+    else if (e.etape === 1){
+      if (Math.random() < .5){ const h = hauteur(e), a = Math.random() * 6.28;
+        etincelles.push({ x: e.x + e.face * h * .8 + Math.cos(a) * h * .4, y: e.y - h * .55 + Math.sin(a) * h * .3, vx: -Math.cos(a) * 160, vy: -Math.sin(a) * 160, vie: .6, r: 3, eau: true }); }
+      if (animFinie(e)){
+        e.etape = 2; jouer(e, 'apresTir'); const h = hauteur(e);
+        feux.push({ x: e.x + h * .62 * e.face, y: e.y, haut: h * .5, dir: e.face, vie: 3, sc: h / 320, sp: 'canonz', canon: true, v: 620 });
+        son('lourd'); tremble = .3; e.x = clampX(e.x - e.face * 30);
+      }
+    }
+    else if (e.etape === 2 && animFinie(e)){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .7; }
+    return;
+  }
+  if (e.etat === 'transfoOurs'){   // Nouza se change en ourse…
+    if (Math.random() < .6){ const h = hauteur(e), a = Math.random() * 6.28;
+      etincelles.push({ x: e.x + Math.cos(a) * h * .3, y: e.y - h * (.2 + Math.random() * .7), vx: Math.cos(a) * 90, vy: -60, vie: .8, r: 3.5 }); }
+    if (animFinie(e)){ e.etat = 'oursCourt'; jouer(e, 'oursCourt', true); e.rueeT = 0; }
+    return;
+  }
+  if (e.etat === 'oursCourt'){   // …fonce à quatre pattes sur Rudy…
+    e.rueeT += dt; const d = r.x - e.x; e.face = d >= 0 ? 1 : -1;
+    e.x = clampX(e.x + e.face * 700 * dt); e.y += Math.sign(r.y - e.y) * Math.min(Math.abs(r.y - e.y), 260 * dt);
+    if (Math.abs(d) < hauteur(e) * .7 && !aTerre(r) && !r.cache && !scene){ e.y = r.y; e.invul = 0; demarrerScene('enn', 'o_ours'); return; }
+    if (e.rueeT > 3){ e.invul = 0; e.etat = 'detransfo'; jouer(e, 'detransfo'); }
+    return;
+  }
+  if (e.etat === 'detransfo'){   // …et redevient humaine
+    if (animFinie(e)){ e.invul = 0; e.etat = 'garde'; jouer(e, 'garde'); e.cool = .6; }
+    return;
+  }
+  if (e.etat === 'poingsFeu'){   // Gueparia se transforme et lance deux poings de feu, puis redevient elle-même
+    const a = animInfo(e), k = Math.floor(e.t / a[2]), img = a[1][Math.min(k, a[1].length - 1)];
+    if ((img === 5 || img === 8) && !e.tirs[img]){
+      e.tirs[img] = true; const h = hauteur(e);
+      feux.push({ x: e.x + h * .55 * e.face, y: e.y, haut: h * .62, dir: e.face, vie: 2.6, sc: h / 320, sp: 'poingf', v: 820, poingF: true });
+      son('boule'); cri(e, 'hup');
+    }
+    if (animFinie(e)){ e.etat = 'detransfoL'; jouer(e, 'detransfoL'); e.apres = null; }
+    return;
+  }
+  if (e.etat === 'transfoL'){
+    if (animFinie(e)){ e.invul = 0;
+      if (e.apres === 'etreinte' && !aTerre(r) && !r.cache && !scene){ e.y = r.y; demarrerScene('enn', 'l_etreinte'); }
+      else { e.etat = 'detransfoL'; jouer(e, 'detransfoL'); } }
+    return;
+  }
+  if (e.etat === 'detransfoL'){ if (animFinie(e)){ e.invul = 0; e.etat = 'garde'; jouer(e, 'garde'); e.cool = .5; } return; }
+  if (e.etat === 'cigare'){   // Gagavi allume son cigare et souffle une boule de feu
+    if (!e.touche && indexCourant(e) >= 11){
+      e.touche = true; const h = hauteur(e);
+      feux.push({ x: e.x + h * .55 * e.face, y: e.y, haut: h * .78, dir: e.face, vie: 2.6, sc: h / 320, sp: 'feuf', v: 700 });
+      son('boule');
+    }
+    if (animFinie(e)){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .6; }
+    return;
+  }
+  if (e.etat === 'rampe'){   // à quatre pattes, puis elle bondit sur Rudy
+    e.face = r.x >= e.x ? 1 : -1; e.x = clampX(e.x + e.face * 120 * dt);
+    if (animFinie(e)){ e.invul = 0; if (!aTerre(r) && !r.cache && !scene){ e.y = r.y; demarrerScene('enn', 'f_griffe'); } else { e.etat = 'garde'; jouer(e, 'garde'); } }
+    return;
+  }
+  if (e.etat === 'grenade'){   // elle dégoupille et lance la grenade en cloche vers Rudy
+    if (!e.touche && indexCourant(e) >= 7){
+      e.touche = true; const h = hauteur(e), x0 = e.x + h * .45 * e.face;
+      feux.push({ grenade: true, x: x0, x0, x1: clampX(r.x + (Math.random() - .5) * 40), y: e.y, y0: e.y, y1: r.y, haut: h * .6,
+        t: 0, T: .9, dir: e.face, vie: 3, sc: h / 320, sp: 'grenade' });
+      son('souffle');
+    }
+    if (animFinie(e)){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .6; }
+    return;
+  }
+  if (e.etat === 'pet'){
+    if (!e.touche && indexCourant(e) >= 6){
+      e.touche = true; const h = hauteur(e);
+      feux.push({ x: e.x + h * .35 * e.face, y: e.y, haut: h * .42, dir: e.face, vie: 3, sc: h / 320, sp: 'petz', pet: true, v: 420, grow: 1.6, age: 0 });
+      son('souffle');
+    }
+    if (animFinie(e)){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .6; }
+    return;
+  }
+  if (e.etat === 'epees'){   // Avalda fait apparaître ses épées et les lance une à une (six en tout)
+    const i = indexCourant(e), H = [.78, .62, .46, .7, .54, .38];
+    if (i >= 4 && i <= 9 && !e.tirs[i]){
+      e.tirs[i] = true; const h = hauteur(e);
+      feux.push({ x: e.x + h * .45 * e.face, y: e.y, haut: h * H[i - 4], dir: e.face, vie: 2, sc: h / 320, sp: 'epee', epee: true, v: 950 });
+      son('souffle');
+    }
+    if (animFinie(e)){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .6; }
+    return;
+  }
+  if (e.etat === 'ruee'){   // il court vers Rudy pour l'attraper et le plaquer
+    e.rueeT += dt; const d = r.x - e.x; e.face = d >= 0 ? 1 : -1;
+    e.x = clampX(e.x + e.face * 620 * dt); e.y += Math.sign(r.y - e.y) * Math.min(Math.abs(r.y - e.y), 220 * dt);
+    if (e.qui === 'ourson' && Math.abs(d) < hauteur(e) * .6 && !aTerre(r) && !r.cache && !scene){ e.y = r.y; demarrerScene('enn', 'o_plaque'); return; }
+    if (Math.abs(d) < hauteur(e) * .55 && Math.abs(r.y - e.y) < 40 && !aTerre(r) && !r.cache && r.etat !== 'bloc' && !scene){
+      demarrerScene('enn', e.qui === 'yoga' ? 'y_arrache' : e.qui === 'robot' ? 'b_plaque' : e.qui === 'ourson' ? 'o_plaque' : 'c_plaque'); return;
+    }
+    if (e.rueeT > (e.qui === 'ourson' ? 2.6 : 1.6) || (Math.abs(d) < hauteur(e) * .4)){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .5; }
+    return;
+  }
+  if (e.etat === 'dragon'){   // elle se change en dragon d'eau et crache trois boules
+    if (!e.touche && indexCourant(e) >= 9){
+      e.touche = true; const h = hauteur(e);
+      [[.91, 0], [.68, .12], [.46, .05]].forEach(([hh, dx], k) => feux.push({ x: e.x + h * (.62 + dx) * e.face, y: e.y, haut: h * hh,
+        dir: e.face, vie: 2.6, sc: h / 320, sp: 'eaudz', eau: true, trempe: true, v: 700 - k * 40 }));
+      son('boule');
+    }
+    if (animFinie(e)){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .8; }
+    return;
+  }
+  if (e.etat === 'eauBoule'){
+    if (!e.touche && indexCourant(e) >= 8){
+      e.touche = true; const h = hauteur(e);
+      feux.push({ x: e.x + h * .62 * e.face, y: e.y, haut: h * .6, dir: e.face, vie: 2.4, sc: h / 320, sp: 'eauz', eau: true });
+      son('boule');
+    }
+    if (animFinie(e)){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .7; }
+    return;
+  }
+  if (e.etat === 'feu'){
+    if (!e.touche && indexCourant(e) >= 6){
+      e.touche = true; const sc = hauteur(e) / 320;
+      feux.push({ x: e.x + FEU.cx * sc * e.face, y: e.y, haut: FEU.cy * sc, dir: e.face, vie: 2.4, sc });
+      son('boule');
+    }
+    if (animFinie(e)){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .7; }
+    return;
+  }
+  if (e.etat === 'tir'){
+    // la clown tire des cœurs avec ses deux pistolets
+    const k = indexCourant(e);
+    if (k >= 4 && !e.tir1){ e.tir1 = true; tirerCoeurs(e); }
+    if (k >= 6 && !e.tir2){ e.tir2 = true; tirerCoeurs(e); }
+    if (animFinie(e)){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .7; }
+    return;
+  }
+  if (e.etat === 'retour'){
+    // saut en arrière pour revenir à sa place
+    e.retourT += dt; const k = Math.min(1, e.retourT / .55);
+    e.x = e.retourDe + (e.retourVers - e.retourDe) * k; e.lift = Math.sin(k * Math.PI) * 120 * prof(e.y);
+    if (k >= 1){ e.lift = 0; e.etat = 'garde'; jouer(e, 'garde'); e.cool = .5; }
+    return;
+  }
+  if (e.etat === 'chargeDepart'){ if (animFinie(e)){ e.etat = 'charge'; jouer(e, 'charge'); } return; }
+  if (e.etat === 'charge'){
+    e.x += e.face * 1050 * dt;
+    e.y += Math.sign(r.y - e.y) * Math.min(Math.abs(r.y - e.y), 120 * dt);
+    if (!e.touche && !aTerre(r) && !r.cache && Math.abs(r.y - e.y) < 50 && (r.x - e.x) * e.face < hauteur(e) * .45 && (r.x - e.x) * e.face > -hauteur(e) * .2){
+      e.touche = true; frapper(e, r, 15, true, (e.x + r.x) / 2, e.y - hauteur(e) * .62);
+    }
+    if ((e.x - e.chargeVers) * e.face >= 0 || e.x < 80 || e.x > W - 80){
+      e.x = clampX(e.x); e.etat = 'retour'; jouer(e, 'retour'); e.retourDe = e.x; e.retourVers = e.depart; e.retourT = 0;
+    }
+    return;
+  }
+  if (e.etat === 'bond'){
+    // elle court vers Rudy pour lui sauter dessus (léopard, poupée)
+    e.x += e.face * 820 * dt;
+    e.y += Math.sign(r.y - e.y) * Math.min(Math.abs(r.y - e.y), 200 * dt);
+    if (aTerre(r) || r.cache){ e.etat = 'garde'; jouer(e, 'garde'); e.lift = 0; return; }
+    const reste = (r.x - e.x) * e.face;
+    if (P.a.vol && reste < 330){ jouer(e, 'vol', true); e.lift = 70 * prof(e.y) * Math.sin(Math.PI * Math.min(1, Math.max(0, (330 - reste) / 330)) * .8); }
+    if (reste < portH(e) * .55 && Math.abs(r.y - e.y) < 45){ e.lift = 0; demarrerScene('enn', P.bond); return; }
+    if (reste < -40 || e.x < 80 || e.x > W - 80){ e.x = clampX(e.x); e.lift = 0; e.etat = 'garde'; jouer(e, 'garde'); }
+    return;
+  }
+  if (e.etat === 'laser'){
+    if (!e.touche && indexCourant(e) >= 5){
+      e.touche = true;
+      const sc = hauteur(e) / 320, L = LASER;
+      lasers.push({ x: e.x + L.bx * sc * e.face, y: e.y, haut: L.by * sc, ep: L.ep * sc, dir: e.face, vie: .5, max: .5, touche: false });
+      son('laser'); tremble = .15;
+    }
+    if (animFinie(e)){ e.etat = 'garde'; jouer(e, 'garde'); e.cool = .8; }
+    return;
+  }
+  if (e.etat === 'course'){
+    e.x += e.face * 760 * dt;
+    e.y += Math.sign(r.y - e.y) * Math.min(Math.abs(r.y - e.y), 160 * dt);
+    if ((r.x - e.x) * e.face < hauteur(e) * 1.05){ e.etat = 'saut'; jouer(e, 'saut'); }
+    if (e.x < 80 || e.x > W - 80){ e.x = clampX(e.x); e.etat = 'garde'; jouer(e, 'garde'); }
+    return;
+  }
+  if (e.etat === 'saut'){
+    const im = imageCourante(e); e.lift = (P.envol[im] || 0) * prof(e.y);
+    if (im >= 4 && im <= 6) e.x += e.face * 560 * dt;
+    if ((im === 5 || im === 6) && !e.touche && !aTerre(r) && !r.cache && Math.abs(r.y - e.y) < 55
+        && (r.x - e.x) * e.face < hauteur(e) * .95 && (r.x - e.x) * e.face > -hauteur(e) * .2){
+      e.touche = true; frapper(e, r, 14, true, e.x + e.face * hauteur(e) * .6, e.y - hauteur(e) * .5);
+    }
+    e.x = clampX(e.x);
+    if (animFinie(e)){ e.lift = 0; e.etat = 'garde'; jouer(e, 'garde'); e.cool = .7; }
+    return;
+  }
+  if (e.qui === 'ourson' && (libre(e) || e.etat === 'coup') && !scene && !aTerre(r) && !r.cache && phase === 'combat'){
+    const n = e.oursN || 0, seuil = [.65, .30][n];
+    if (seuil !== undefined && e.pv > 0 && e.pv <= P.pv * seuil){
+      e.oursN = n + 1; e.etat = 'transfoOurs'; jouer(e, 'transfoOurs'); e.invul = 99; e.face = r.x >= e.x ? 1 : -1;
+      son('coeur'); return;
+    }
+  }
+  if (e.qui === 'clown' && !e.bazFait && e.pv > 0 && e.pv <= P.pv * .4 && (libre(e) || e.etat === 'touche' || e.etat === 'bloc') && !scene && phase === 'combat' && !r.cache){
+    e.bazFait = true; e.armure = true; e.etat = 'fuiteB'; jouer(e, 'courseK', true); e.fuiteT = 0; return;   // 60 % de sa vie perdue : une seule fois
+  }
+  if (e.contreGlu && libre(e) && !scene && !aTerre(r) && !r.cache && phase === 'combat' && r.etat !== 'englue'){
+    e.contreGlu = false; e.face = r.x >= e.x ? 1 : -1; e.etat = 'crache'; jouer(e, 'crache'); e.touche = false; return;
+  }
+  if (e.riposte && (e.etat === 'bloc' || libre(e)) && !scene && !aTerre(r) && !r.cache && Math.abs(r.x - e.x) < hauteur(e) * 1.8 && Math.abs(r.y - e.y) < 80){
+    e.riposte = false; e.blocCompte = 0;
+    if (e.qui === 'casquette'){ e.y = r.y; demarrerScene('enn', 'c2_cle'); return; }
+    if (e.qui === 'poupee'){ e.y = r.y; demarrerScene('enn', 'p_avale'); return; }
+    if (e.qui === 'clown'){ e.y = r.y; demarrerScene('enn', 'k_sac'); return; }
+    if (e.qui === 'boss'){ e.y = r.y; e.altRip = !e.altRip; demarrerScene('enn', e.altRip ? 'z_combo' : 'z_geant'); return; }   // Ingrid : une fois la série de coups de poing, une fois la géante
+    if (e.qui === 'yoga'){ e.y = r.y; demarrerScene('enn', 'y_riposte'); return; }
+    if (e.qui === 'ourson'){ e.y = r.y; demarrerScene('enn', 'o_riposte'); return; }
+    if (e.qui === 'eau'){ e.y = r.y; demarrerScene('enn', 'e_geante'); return; }
+    if (e.qui === 'chewing'){ e.y = r.y; demarrerScene('enn', 'g_double'); return; }
+    if (e.qui === 'robot'){ e.y = r.y; demarrerScene('enn', 'b_dino'); return; }
+    if (e.qui === 'costaud'){ e.y = r.y; demarrerScene('enn', 'c_gorille'); return; }
+    if (e.qui === 'cochonne'){ e.y = r.y; demarrerScene('enn', 'h_avale'); return; }   // Cocoche avale Rudy   // Selfrid se transforme en gorille et frappe Rudy   // Cibora devient un dinosaure robot et mord Rudy   // la femme chewing-gum se dédouble et l'enlace   // Zidoroa devient géante et frappe Rudy à terre   // Nouza : l'ours tient Rudy à l'envers et elle le frappe   // Avalda le projette et le piétine   // Ingrid devient géante, l'attrape et le tord   // Oma enferme Rudy dans un sac et le boxe   // Piki grandit et avale Rudy
+    if (e.qui === 'leopard'){ e.etat = 'transfoL'; jouer(e, 'transfoL'); e.invul = 9; e.apres = 'etreinte'; son('coeur'); return; }   // Gueparia : elle se transforme puis l'attrape   // Gueriya : clé de bras au sol
+    if (e.qui === 'renardeRouge'){ e.etat = 'rampe'; jouer(e, 'rampe'); e.invul = 2; return; }   // Gagavi : elle se met à quatre pattes puis bondit
+    demarrerScene('enn', 'a_gifle'); return;   // riposte de Kimy après 3 coups parés
+  }
+  if (e.riposte && performance.now() - (e.blocDernier || 0) > 3000) e.riposte = false;
+  if (!libre(e)) return;
+  if (phase !== 'combat'){ e.etat = 'garde'; jouer(e, 'garde', true); return; }
+
+  e.face = r.x >= e.x ? 1 : -1;
+  const dx = Math.abs(r.x - e.x), dy = r.y - e.y, h = portH(e), rudyBloque = r.etat === 'paralyse';
+  if (aTerre(r) || r.cache || r.etat === 'charme'){   // Rudy est au sol ou charmé : on attend
+    e.etat = 'garde'; jouer(e, 'garde', true); return;
+  }
+  // coups à distance
+  if (e.qui === 'costaud' && dx > 420 && e.chargeCool <= 0 && e.cool <= 0 && Math.random() < 1.1 * dt * 2){
+    const t = Math.random();
+    // de loin, il choisit entre ses trois attaques : mitrailleuse, ruée pour le plaquer, ou sa charge au coude
+    if (t < .34){ e.etat = 'mitra'; jouer(e, 'mitra'); e.tirs = {}; e.chargeCool = 3.5 + Math.random() * 2; return; }
+    if (t < .67){ e.etat = 'ruee'; jouer(e, 'ruee', true); e.rueeT = 0; e.chargeCool = 4 + Math.random() * 2; return; }
+    e.etat = 'chargeDepart'; jouer(e, 'chargeDepart'); e.depart = e.x; e.chargeVers = clampX(r.x + e.face * 260);
+    e.chargeCool = 4 + Math.random() * 2; return;
+  }
+  if (e.qui === 'costaud' && dx > 460 && e.chargeCool <= 0 && e.cool <= 0 && Math.random() < .9 * dt * 2){
+    e.etat = 'chargeDepart'; jouer(e, 'chargeDepart'); e.depart = e.x; e.chargeVers = clampX(r.x + e.face * 260);
+    e.chargeCool = 4 + Math.random() * 2; return;
+  }
+  if (P.boss && dx > 380 && e.chargeCool <= 0 && e.cool <= 0 && Math.random() < 1.5 * dt * 2){
+    const t = Math.random();
+    if (t < .4){ e.etat = 'feuZ'; jouer(e, 'feu'); e.touche = false; }
+    else if (t < .75){ e.etat = 'bisou'; jouer(e, 'bisou'); e.touche = false; }
+    else { e.etat = 'bond'; jouer(e, 'course'); }
+    e.chargeCool = 2 + Math.random() * 1.5; return;
+  }
+  if (e.qui === 'cochonne' && dx > 380 && e.chargeCool <= 0 && e.cool <= 0 && Math.random() < 1.1 * dt * 2){
+    e.etat = 'pet'; jouer(e, 'pet'); e.touche = false; e.chargeCool = 4 + Math.random() * 2; return;
+  }
+  if (e.qui === 'chewing' && dx > 360 && e.chargeCool <= 0 && e.cool <= 0 && Math.random() < 1.1 * dt * 2){
+    e.etat = 'gomme'; jouer(e, 'gomme'); e.touche = false; e.chargeCool = 3.5 + Math.random() * 2; return;
+  }
+  if (e.qui === 'eau' && dx > 400 && e.chargeCool <= 0 && e.cool <= 0 && Math.random() < 1.2 * dt * 2){
+    if (Math.random() < .45){ e.etat = 'dragon'; jouer(e, 'dragon'); e.touche = false; e.chargeCool = 4 + Math.random() * 2; return; }
+    e.etat = 'eauBoule'; jouer(e, 'eauBoule'); e.touche = false; e.chargeCool = 2.8 + Math.random() * 2; return;
+  }
+  if (e.qui === 'yoga' && dx > 420 && e.chargeCool <= 0 && e.cool <= 0 && Math.random() < 1.2 * dt * 2){
+    // de loin : boule de feu, pluie de six épées, ou elle court pour l'attraper
+    const t = Math.random();
+    if (t < .34){ e.etat = 'epees'; jouer(e, 'epees'); e.tirs = {}; e.chargeCool = 3.5 + Math.random() * 2; return; }
+    if (t < .67){ e.etat = 'ruee'; jouer(e, 'ruee', true); e.rueeT = 0; e.chargeCool = 4.5 + Math.random() * 2; return; }
+    e.etat = 'feu'; jouer(e, 'feu'); e.touche = false; e.chargeCool = 2.8 + Math.random() * 2; return;
+  }
+  if (e.qui === 'clown' && dx > 380 && e.chargeCool <= 0 && e.cool <= 0 && Math.random() < 1.2 * dt * 2){
+    if (e.bulleMax === undefined){ e.bulleMax = Math.random() < .5 ? 1 : 2; e.bulleN = 0; }   // une ou deux fois par combat, au hasard
+    if (e.bulleN < e.bulleMax && Math.random() < .35 && !r.cache && !aTerre(r)){
+      e.bulleN++; e.etat = 'bulleK'; jouer(e, 'bulleK'); e.touche = false; e.chargeCool = 4 + Math.random() * 2; return;
+    }
+    e.etat = 'tir'; jouer(e, 'tir'); e.tir1 = e.tir2 = false; e.chargeCool = 2.6 + Math.random() * 2; return;
+  }
+  if (e.qui === 'leopard' && dx > 380 && e.chargeCool <= 0 && e.cool <= 0 && Math.random() < 1.5 * dt * 2){
+    e.cycle = ((e.cycle || 0) + 1) % 2;
+    if (e.cycle === 1){ e.etat = 'poingsFeu'; jouer(e, 'poingsFeu'); e.tirs = {}; e.chargeCool = 3.5 + Math.random() * 1.5; son('coeur'); return; }
+    e.etat = 'bond'; jouer(e, 'course'); e.chargeCool = 3 + Math.random() * 1.5; return;
+  }
+  if (e.qui === 'renardeRouge' && dx > 380 && e.chargeCool <= 0 && e.cool <= 0 && Math.random() < 1.5 * dt * 2){
+    e.cycle = ((e.cycle || 0) + 1) % 2;
+    if (e.cycle === 1){ e.etat = 'cigare'; jouer(e, 'cigare'); e.touche = false; e.chargeCool = 3 + Math.random() * 1.5; return; }
+    e.etat = 'bond'; jouer(e, 'course'); e.chargeCool = 3 + Math.random() * 1.5; return;
+  }
+  if (e.qui === 'casquette' && dx > 330 && e.chargeCool <= 0 && e.cool <= 0 && Math.random() < 1.8 * dt * 2){
+    // de loin, Gueriya alterne : une fois la grenade, une fois sa course avec le saut
+    e.cycle = ((e.cycle || 0) + 1) % 2;
+    if (e.cycle === 1){ e.etat = 'grenade'; jouer(e, 'grenade'); e.touche = false; e.chargeCool = 2.5 + Math.random() * 1.5; return; }
+    e.etat = 'bond'; jouer(e, 'course'); e.chargeCool = 3 + Math.random() * 1.5; return;
+  }
+  if (P.bond && e.qui !== 'casquette' && e.qui !== 'renardeRouge' && e.qui !== 'leopard' && !(e.qui === 'ourson' && boules.length) && dx > 430 && e.chargeCool <= 0 && e.cool <= 0 && Math.random() < 1.2 * dt * 2){
+    e.etat = 'bond'; jouer(e, 'course'); e.chargeCool = 4 + Math.random() * 2; return;
+  }
+  if (e.qui === 'robot' && dx > 420 && e.chargeCool <= 0 && e.cool <= 0 && Math.random() < 1.1 * dt * 2){
+    // de loin, elle change d'attaque à chaque fois : laser, puis grosse boule, puis course pour le plaquer au sol
+    e.cycle = ((e.cycle || 0) + 1) % 3;
+    if (e.cycle === 1){ e.etat = 'canon'; jouer(e, 'transfo'); e.etape = 0; e.touche = false; e.chargeCool = 5 + Math.random() * 2; return; }
+    if (e.cycle === 2){ e.etat = 'ruee'; jouer(e, 'ruee', true); e.rueeT = 0; e.chargeCool = 4.5 + Math.random() * 2; return; }
+    e.etat = 'laser'; jouer(e, 'laser'); e.touche = false; e.chargeCool = 3.2 + Math.random() * 2; return;
+  }
+  if (e.qui === 'aventuriere' && dx > 430 && e.chargeCool <= 0 && e.cool <= 0 && Math.random() < 1.2 * dt * 2){
+    // de loin : un arbre sort du sol sous Rudy et l'attache, ou sa course avec le coup de pied sauté
+    if (Math.random() < .65 && !aTerre(r) && !r.cache && r.etat !== 'bloc'){ e.chargeCool = 4 + Math.random() * 2; demarrerScene('enn', 'a_arbre'); return; }
+    e.etat = 'course'; jouer(e, 'course'); e.chargeCool = 3 + Math.random() * 2; return;
+  }
+  if (P.a.recul && !(e.blocCompte > 0 && performance.now() - (e.blocDernier || 0) < 3000) && dx < h * .46 && Math.abs(dy) < 40 && Math.random() < (r.etat === 'coup' ? 4 : 2) * dt){ reculer(e); return; }
+  const portee = h * .55;
+  if (P.loin && dx > portee && dx < h * 1.2 && Math.abs(dy) < 28 && e.cool <= 0 && Math.random() < 1.3 * dt * 2){
+    e.etat = 'coup'; jouer(e, P.loin[Math.floor(Math.random() * P.loin.length)]);
+    e.cool = .6 + Math.random() * .6; return;
+  }
+  if (dx > portee || Math.abs(dy) > 28){
+    // s'approcher (plus vite si Rudy est paralysé par un cœur)
+    const vit = P.vitesse * (rudyBloque ? 1.5 : 1);
+    const vx = dx > portee ? e.face * vit : 0;
+    const vy = Math.abs(dy) > 20 ? Math.sign(dy) * 150 : 0;
+    e.recule = dx < h * .32;
+    if (e.recule) { e.x -= e.face * P.vitesse * .6 * dt; }
+    e.x += vx * dt; e.y += vy * dt;
+    e.etat = 'marche'; jouer(e, 'marche', true); return;
+  }
+  e.etat = 'garde'; jouer(e, 'garde', true);
+  if (e.cool > 0 && !rudyBloque) return;
+  // à portée : choisir une attaque (Rudy paralysé : elle en profite pour l'attraper)
+  if ((e.priseCool <= 0 || rudyBloque) && Math.random() < (rudyBloque ? .55 : .22) && Math.abs(dy) < 35 && dx < h * .62){
+    e.priseCool = 6 + Math.random() * 3;
+    if (e.qui === 'aventuriere'){ demarrerScene('enn'); return; }
+    if (e.qui === 'poupee'){ e.altPrise = !e.altPrise; demarrerScene('enn', e.altPrise ? 'p_mange' : undefined); return; }   // une fois l'ancienne, une fois la nouvelle
+    demarrerScene('enn', P.prise2 && Math.random() < .5 ? P.prise2 : undefined); return;
+  }
+  const at = P.attaques[Math.floor(Math.random() * P.attaques.length)];
+  e.etat = 'coup'; jouer(e, at); if (Math.random() < .35) cri(e, 'hup');
+  e.cool = P.enchaine ? .18 + Math.random() * .35 : .55 + Math.random() * .7;
+}
+
+/* =================== COUPS (images actives) =================== */
+function verifierCoup(f, cible){
+  if (f.etat !== 'coup') return;
+  const c = f.P.coups[f.anim]; if (!c) return;
+  if (c.hits){
+    const i = indexCourant(f);
+    if (!f.serie || f.serie.anim !== f.anim || i < f.serie.last) f.serie = { anim: f.anim, n: 0, last: i };
+    f.serie.last = i;
+    if (f.serie.n >= c.hits.length || i < c.hits[f.serie.n]) return;
+    f.serie.n++;
+    const dernier = f.serie.n === c.hits.length, h = portH(f), d = (cible.x - f.x) * f.face;
+    if (d > -h * .1 && d < h * c.portee + portH(cible) * .14 && Math.abs(cible.y - f.y) < 46){
+      frapper(f, cible, c.deg, dernier && c.lourd, f.x + f.face * h * Math.min(c.portee, d / h + .05), f.y - h * (.5 + Math.random() * .25));
+    } else son('souffle');
+    return;
+  }
+  if (f.touche) return;
+  if (indexCourant(f) < c.img) return;
+  f.touche = true;
+  const h = portH(f), d = (cible.x - f.x) * f.face;
+  // on compte aussi la largeur du corps de celui qui est frappé
+  if (d > -h * .1 && d < h * c.portee + portH(cible) * .14 && Math.abs(cible.y - f.y) < 46){
+    let lourd = c.lourd;
+    if (f === rudy && f.combo === 3) lourd = true;   // 3e coup de poing de la série : il tombe
+    frapper(f, cible, c.deg, lourd, f.x + f.face * h * Math.min(c.portee, d / h + .05), f.y - h * (f.anim.startsWith('pied') ? .55 : .68));
+  } else son('souffle');
+}
+
+/* =================== MISE À JOUR COMMUNE =================== */
+function majCommun(f, dt){
+  if (f.lent > 0){ f.lent -= dt; if (f.lent <= 0) f.lent = 0; }
+  if (f.trempe > 0){ f.trempe -= dt; if (f.trempe <= 0) f.trempe = 0; }
+  f.t += dt * 1000 * (f.lent > 0 ? .45 : 1);
+  if (f.invul > 0) f.invul -= dt;
+  if (f.blocHit > 0) f.blocHit -= dt;
+  if (f.etat === 'bloc' && f !== rudy){ f.blocT -= dt; if (f.blocT <= 0){ f.etat = 'garde'; jouer(f, 'garde'); } }
+  // en garde (parade), on regarde toujours l'adversaire
+  if (f.etat === 'bloc'){ const o = f === rudy ? enn : rudy; if (o && !o.cache) f.face = o.x >= f.x ? 1 : -1; }
+  if (f.etat === 'recul'){
+    f.recT += dt; const k = Math.min(1, f.recT / .45);
+    f.x = f.recDe + (f.recVers - f.recDe) * k; f.lift = Math.sin(k * Math.PI) * 55 * prof(f.y);
+    if (k >= 1){ f.lift = 0; f.etat = 'garde'; jouer(f, 'garde'); if (f !== rudy) f.cool = Math.min(f.cool, .3); }
+  }
+  if (f.etat === 'intro' && animFinie(f)){ f.etat = 'garde'; jouer(f, 'garde'); }
+  if (f.etat === 'coup' || f.etat === 'energie'){
+    if (f.etat === 'energie' && !f.touche && indexCourant(f) >= 7){
+      f.touche = true;
+      const h = hauteur(f);
+      boules.push({ x: f.x + f.face * h * .62, y: f.y, lift: h * .64, dir: f.face, vie: 2.2, sc: prof(f.y) * f.P.h / 320 });
+      son('boule');
+    }
+    if (animFinie(f)){ f.etat = 'garde'; jouer(f, 'garde'); }
+  }
+  if (f.etat === 'touche' && animFinie(f)){ f.etat = 'garde'; jouer(f, 'garde'); }
+  if (f.etat === 'paralyse'){ f.paraT -= dt; if (f.paraT <= 0){ f.etat = 'garde'; jouer(f, 'garde'); f.puant = false; } }
+  if (f.etat !== 'paralyse') f.puant = false;
+  if (f.etat === 'chute'){
+    f.x += f.vx * dt; f.vx *= Math.pow(.02, dt);
+    if (animFinie(f)){ son('sol'); f.etat = f.ko ? 'ko' : 'sol'; jouer(f, f.ko && f.P.a.koSol ? 'koSol' : 'sol'); f.solT = 0; }
+  }
+  if (f.etat === 'sol'){
+    f.solT = (f.solT || 0) + dt;
+    if (f.ko || f.pv <= 0){ f.etat = 'ko'; }
+    else if (f.solT > .75){ f.etat = 'releve'; jouer(f, 'releve'); }
+  }
+  if (f.etat === 'releve' && animFinie(f)){ f.etat = 'garde'; jouer(f, 'garde'); f.invul = .5; }
+  f.x = clampX(f.x); f.y = Math.max(SOL_HAUT, Math.min(SOL_BAS, f.y));
+}
+
+function separer(){
+  if (rudy.cache || enn.cache || aTerre(rudy) || aTerre(enn)) return;
+  if (['charge','course','saut','retour','recul','fond','flaque'].includes(enn.etat) || rudy.etat === 'recul') return;
+  const min = hauteur(rudy) * .34;
+  if (Math.abs(rudy.y - enn.y) < 40 && Math.abs(rudy.x - enn.x) < min){
+    const s = rudy.x < enn.x ? -1 : 1, pousse = (min - Math.abs(rudy.x - enn.x)) / 2;
+    rudy.x += s * pousse; enn.x -= s * pousse;
+  }
+}
+
+function majBisous(dt){
+  for (let i = bisous.length - 1; i >= 0; i--){
+    const b = bisous[i]; b.x += b.dir * 560 * dt; b.vie -= dt; b.t += dt;
+    const r = rudy;
+    if (r.etat === 'bloc' && Math.abs(r.y - b.y) < 48 && Math.abs(r.x - b.x) < hauteur(r) * .18){ r.blocHit = .25; etincelle(b.x, b.y - b.haut, false); bisous.splice(i, 1); continue; }
+    if (!r.cache && !aTerre(r) && r.invul <= 0 && r.etat !== 'charme' && Math.abs(r.y - b.y) < 48 && Math.abs(r.x - b.x) < hauteur(r) * .18){
+      r.etat = 'charme'; r.combo = 0; etincelle(b.x, b.y - b.haut, false); son('coeur');
+      bisous.splice(i, 1); continue;
+    }
+    if (b.vie <= 0 || b.x < -60 || b.x > W + 60) bisous.splice(i, 1);
+  }
+}
+function dessinerBisou(b){
+  const y = b.y - b.haut, s = 15 * b.sc;
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(b.x, y, 0, b.x, y, s * 3);
+  g.addColorStop(0, 'rgba(255,110,190,.5)'); g.addColorStop(1, 'rgba(255,60,150,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, y, s * 3, 0, 6.3); ctx.fill(); ctx.restore();
+  coeur(b.x, y + Math.sin(b.t * 9) * 4, s, '#ff5aa8');
+  coeur(b.x - b.dir * s * 1.6, y - s * .9 + Math.sin(b.t * 9 + 2) * 4, s * .6, '#ff7fbf');
+  coeur(b.x - b.dir * s * 1.4, y + s * .9 + Math.sin(b.t * 9 + 4) * 4, s * .5, '#ff9ccf');
+}
+function majFeux(dt){
+  for (let i = feux.length - 1; i >= 0; i--){
+    const f = feux[i];
+    if (f.grenade){   // vol en cloche, puis explosion à l'endroit où elle tombe
+      f.t += dt; const k = Math.min(1, f.t / f.T);
+      f.x = f.x0 + (f.x1 - f.x0) * k; f.y = f.y0 + (f.y1 - f.y0) * k;
+      f.lift = f.haut * (1 - k) + Math.sin(k * Math.PI) * 220 * f.sc;
+      if (k >= 1){
+        feux.splice(i, 1);
+        feux.push({ explo: true, x: f.x, y: f.y, t: 0, sc: f.sc, vie: 9, dir: 1 });
+        son('explosion'); tremble = .45;
+        const r = rudy;
+        if (!r.cache && !aTerre(r) && r.invul <= 0 && Math.abs(r.x - f.x) < hauteur(r) * .55 && Math.abs(r.y - f.y) < 70)
+          frapper(enn, r, 18, true, f.x, f.y - hauteur(r) * .4);
+      }
+      continue;
+    }
+    if (f.explo){ f.t += dt; if (f.t > .7) feux.splice(i, 1); continue; }
+    if (f.exploK){   // explosion du missile : Rudy est pris dedans puis il tombe
+      f.t += dt;
+      if (f.t > .95){ feux.splice(i, 1); rudy.cache = false; if (rudy.pv <= 0) cri(rudy, 'ko'); renverser(rudy, f.dir, rudy.pv <= 0); }
+      continue;
+    }
+    f.x += f.dir * (f.v || 820) * dt; f.vie -= dt; f.age = (f.age || 0) + dt;
+    const r = rudy;
+    if (!r.cache && !aTerre(r) && r.invul <= 0 && Math.abs(r.y - f.y) < 46 && Math.abs(r.x - f.x) < hauteur(r) * (f.gomme || f.canon ? .32 : .2)){
+      if (f.missile){   // missile du bazooka d'Oma : ça fait beaucoup plus mal qu'un tir normal
+        feux.splice(i, 1);
+        if (r.etat === 'bloc' || scene){ frapper(enn, r, 8, false, f.x, f.y - f.haut); feux.push({ explo: true, x: f.x, y: f.y, t: 0, sc: f.sc, vie: 9, dir: 1 }); son('explosion'); tremble = .4; continue; }
+        r.pv = Math.max(0, r.pv - 26); r.cache = true; r.etat = 'explose'; r.combo = 0; r.invul = 0;
+        feux.push({ exploK: true, x: r.x, y: r.y, dir: f.dir, t: 0, sc: hauteur(r) / 320, vie: 9 });
+        son('explosion'); tremble = .55; cri(rudy, 'ah'); continue;
+      }
+      if (f.gomme){   // boule de gomme : elle l'enveloppe, puis la femme fond dans le sol
+        feux.splice(i, 1);
+        if (r.etat === 'bloc' || scene){ frapper(enn, r, 3, false, f.x, f.y - f.haut); continue; }
+        r.etat = 'englue'; jouer(r, f.glu ? 'englueV' : f.oma ? 'englueK' : 'englue'); r.invul = 0; r.lent = 0;
+        r.face = enn.x >= r.x ? 1 : -1; r.pv = Math.max(1, r.pv - 4);
+        if (!enn.cache && enn.etat !== 'scene'){ if (f.oma){ enn.etat = 'courseK'; jouer(enn, 'courseK', true); } else { enn.etat = 'fond'; jouer(enn, 'fond'); } }
+        for (let k = 0; k < 16; k++){ const a = Math.random() * 6.28, v = 90 + Math.random() * 220;
+          etincelles.push({ x: f.x, y: f.y - f.haut, vx: Math.cos(a) * v, vy: Math.sin(a) * v, vie: .9, r: 5, rose: !f.glu, vert: !!f.glu }); }
+        son('coeur'); continue;
+      }
+      if (f.poingF){ frapper(enn, r, 12, true, f.x, f.y - f.haut); feux.splice(i, 1); continue; }
+      if (f.canon){ frapper(enn, r, 20, true, f.x, f.y - f.haut); tremble = .35; feux.splice(i, 1); continue; }   // plus fort qu'une boule de feu (13)
+      if (f.balle){ frapper(enn, r, 4, false, f.x, f.y - f.haut); feux.splice(i, 1); continue; }
+      if (f.pet){   // le nuage l'enveloppe : un peu de dégât et il reste paralysé 3 secondes, le nez bouché
+        feux.splice(i, 1);
+        if (r.etat === 'bloc'){ frapper(enn, r, 3, false, f.x, f.y - f.haut); continue; }
+        r.pv = Math.max(0, r.pv - 5); r.etat = 'paralyse'; jouer(r, 'puant'); r.paraT = 3; r.puant = true; r.combo = 0;
+        son('souffle'); continue;
+      }
+      if (f.epee){ frapper(enn, r, 6, false, f.x, f.y - f.haut); feux.splice(i, 1); continue; }
+      if (f.trempe){   // boules du dragon : ça fait mal, et Rudy est trempé une seconde
+        const paree = r.etat === 'bloc';
+        frapper(enn, r, 8, false, f.x, f.y - f.haut); if (!paree) r.trempe = 1;
+        for (let k = 0; k < 14; k++){ const a = Math.random() * 6.28, v = 90 + Math.random() * 200;
+          etincelles.push({ x: f.x, y: f.y - f.haut, vx: Math.cos(a) * v, vy: Math.sin(a) * v, vie: .9, r: 4, eau: true }); }
+        feux.splice(i, 1); continue;
+      }
+      if (f.eau){   // boule d'eau : petit dégât, Rudy marche au ralenti 2 secondes
+        const paree = r.etat === 'bloc';
+        frapper(enn, r, 5, false, f.x, f.y - f.haut); if (!paree) r.lent = 2;
+        for (let k = 0; k < 14; k++){ const a = Math.random() * 6.28, v = 90 + Math.random() * 200;
+          etincelles.push({ x: f.x, y: f.y - f.haut, vx: Math.cos(a) * v, vy: Math.sin(a) * v, vie: .9, r: 4, eau: true }); }
+        feux.splice(i, 1); continue;
+      }
+      frapper(enn, r, 13, true, f.x, f.y - f.haut); feux.splice(i, 1); continue;
+    }
+    if (f.vie <= 0 || f.x < -200 || f.x > W + 200) feux.splice(i, 1);
+  }
+}
+function dessinerFeu(f){
+  if (f.grenade){   // la grenade tourne en volant
+    const sp = SPR.grenade, k = f.sc * 1.5, y = f.y - f.lift;
+    ctx.save(); ctx.translate(f.x, y); ctx.rotate(f.t * 14 * f.dir);
+    ctx.drawImage(img.grenade, -sp.fw * k / 2, -sp.fh * k / 2, sp.fw * k, sp.fh * k); ctx.restore();
+    ombre(f.x, f.y, 22 * k); return;
+  }
+  if (f.exploK){
+    const sp = SPR.explok, k = f.sc * (.92 + .08 * Math.min(1, f.t / .15));
+    ctx.save(); ctx.translate(f.x, f.y); if (f.dir < 0) ctx.scale(-1, 1);
+    ctx.globalAlpha = f.t > .78 ? Math.max(0, 1 - (f.t - .78) / .17) : 1;
+    ctx.drawImage(img.explok, -sp.ax * k, -sp.fh * k, sp.fw * k, sp.fh * k); ctx.restore();
+    return;
+  }
+  if (f.explo){   // explosion : elle grossit puis s'efface
+    const sp = SPR.explosion, a = f.t / .7, k = f.sc * (.55 + .6 * Math.min(1, a * 2.5));
+    ctx.save(); ctx.globalAlpha = Math.max(0, 1 - Math.max(0, a - .45) / .55);
+    ctx.drawImage(img.explosion, f.x - sp.fw * k / 2, f.y - sp.fh * k * .8, sp.fw * k, sp.fh * k);
+    ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha *= .6;
+    const g = ctx.createRadialGradient(f.x, f.y - 80 * f.sc, 0, f.x, f.y - 80 * f.sc, 260 * f.sc);
+    g.addColorStop(0, 'rgba(255,200,90,.8)'); g.addColorStop(1, 'rgba(255,120,0,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, f.y - 80 * f.sc, 260 * f.sc, 0, 6.3); ctx.fill(); ctx.restore(); return;
+  }
+  if (f.balle){   // balle de mitrailleuse : une traînée jaune
+    const y = f.y - f.haut, L = 70 * f.sc;
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    const g = ctx.createLinearGradient(f.x - f.dir * L, y, f.x, y);
+    g.addColorStop(0, 'rgba(255,200,80,0)'); g.addColorStop(1, 'rgba(255,240,180,1)');
+    ctx.strokeStyle = g; ctx.lineWidth = 4 * f.sc; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(f.x - f.dir * L, y); ctx.lineTo(f.x, y); ctx.stroke(); ctx.restore();
+    return;
+  }
+  const sp = SPR[f.sp || 'feu'], y = f.y - f.haut;
+  // la boule de gomme gonfle en sortant de ses mains et rebondit un peu en volant
+  const k = f.sc * (1 + Math.sin(performance.now() / 50) * .05) * (f.grow ? 1 + (f.grow - 1) * Math.min(1, (f.age || 0) / .45) : 1);
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(f.x, y, 0, f.x, y, 110 * k);
+  if (f.eau){ g.addColorStop(0, 'rgba(90,190,255,.45)'); g.addColorStop(1, 'rgba(30,120,255,0)'); }
+  else if (f.poingF){ g.addColorStop(0, 'rgba(255,210,90,.5)'); g.addColorStop(1, 'rgba(255,140,0,0)'); }
+  else if (f.canon){ g.addColorStop(0, 'rgba(110,190,255,.55)'); g.addColorStop(1, 'rgba(40,100,255,0)'); }
+  else if (f.epee){ g.addColorStop(0, 'rgba(255,230,140,.3)'); g.addColorStop(1, 'rgba(120,170,255,0)'); }
+  else if (f.missile){ g.addColorStop(0, 'rgba(255,160,90,.4)'); g.addColorStop(1, 'rgba(255,60,140,0)'); }
+  else if (f.glu){ g.addColorStop(0, 'rgba(120,255,60,.35)'); g.addColorStop(1, 'rgba(60,200,0,0)'); }
+  else if (f.gomme){ g.addColorStop(0, 'rgba(255,120,190,.35)'); g.addColorStop(1, 'rgba(255,80,160,0)'); }
+  else { g.addColorStop(0, 'rgba(255,170,60,.5)'); g.addColorStop(1, 'rgba(255,90,0,0)'); }
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, y, 110 * k, 0, 6.3); ctx.fill(); ctx.restore();
+  ctx.save(); ctx.translate(f.x, y); if ((f.dir > 0) !== !!f.droite) ctx.scale(-1, 1);   // l'image va vers la gauche (le missile, vers la droite)
+  if (f.canon){ ctx.globalCompositeOperation = 'lighter'; ctx.rotate(performance.now() / 300); }
+  ctx.drawImage(img[f.sp || 'feu'], -sp.fw * k * (f.canon ? .5 : f.droite ? .85 : .3), -sp.fh * k / 2, sp.fw * k, sp.fh * k);
+  ctx.restore(); ombre(f.x, f.y, 45 * k);
+}
+function tirerCoeurs(e){
+  const sc = hauteur(e) / 320;
+  for (const by of [COEUR.by1, COEUR.by2])
+    coeurs.push({ x: e.x + COEUR.bx * sc * e.face, y: e.y, haut: by * sc, dir: e.face, vie: 2.2, t: Math.random() * 6, sc: prof(e.y) });
+  son('coeur');
+}
+function majCoeurs(dt){
+  for (let i = coeurs.length - 1; i >= 0; i--){
+    const c = coeurs[i]; c.x += c.dir * 760 * dt; c.vie -= dt; c.t += dt * 8;
+    const r = rudy;
+    if (r.etat === 'bloc' && Math.abs(r.y - c.y) < 46 && Math.abs(r.x - c.x) < hauteur(r) * .16){ r.blocHit = .25; etincelle(c.x, c.y - c.haut, false); coeurs.splice(i, 1); continue; }
+    if (!r.cache && !aTerre(r) && r.invul <= 0 && r.etat !== 'paralyse' && Math.abs(r.y - c.y) < 46 && Math.abs(r.x - c.x) < hauteur(r) * .16){
+      r.pv = Math.max(0, r.pv - 3);
+      r.etat = 'paralyse'; jouer(r, 'paralyse'); r.paraT = 1.4; r.combo = 0;
+      etincelle(c.x, c.y - c.haut, false); son('coeur');
+      coeurs.splice(i, 1); continue;
+    }
+    if (c.vie <= 0 || c.x < -60 || c.x > W + 60) coeurs.splice(i, 1);
+  }
+}
+function coeur(x, y, s, couleur){
+  ctx.beginPath(); ctx.moveTo(x, y + s * .35);
+  ctx.bezierCurveTo(x - s * 1.1, y - s * .45, x - s * .45, y - s * 1.05, x, y - s * .45);
+  ctx.bezierCurveTo(x + s * .45, y - s * 1.05, x + s * 1.1, y - s * .45, x, y + s * .35);
+  ctx.fillStyle = couleur; ctx.fill();
+}
+function dessinerBulle(){
+  const b = bulle, k = Math.min(1, b.t / b.d);
+  const x = b.x0 + (b.x1 - b.x0) * k, y = b.y0 + (b.y1 - b.y0) * k - Math.sin(k * Math.PI) * 260;
+  const r = 7 + 34 * k * k;
+  ctx.save();
+  // fil de chewing-gum qui suit la boule
+  ctx.strokeStyle = 'rgba(255,140,190,.55)'; ctx.lineWidth = 3 * (1 - k) + 1; ctx.beginPath();
+  for (let j = 0; j <= 10; j++){ const kk = k * j / 10;
+    const xx = b.x0 + (b.x1 - b.x0) * kk, yy = b.y0 + (b.y1 - b.y0) * kk - Math.sin(kk * Math.PI) * 260;
+    j ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); }
+  ctx.stroke();
+  const g = ctx.createRadialGradient(x - r * .35, y - r * .4, r * .1, x, y, r);
+  g.addColorStop(0, '#ffd3e6'); g.addColorStop(.5, '#ff7fb6'); g.addColorStop(1, '#e0458c');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.3); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.ellipse(x - r * .38, y - r * .42, r * .22, r * .13, -.6, 0, 6.3); ctx.fill();
+  ctx.restore();
+}
+function dessinerCoeur(c){
+  const s = 17 * c.sc * (1 + Math.sin(c.t) * .12), y = c.y - c.haut;
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(c.x, y, 0, c.x, y, s * 2.4);
+  g.addColorStop(0, 'rgba(255,90,170,.55)'); g.addColorStop(1, 'rgba(255,60,140,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c.x, y, s * 2.4, 0, 6.3); ctx.fill(); ctx.restore();
+  coeur(c.x, y, s, '#ff3d8f'); coeur(c.x - s * .2, y - s * .25, s * .35, 'rgba(255,220,235,.9)');
+}
+function majLasers(dt){
+  for (let i = lasers.length - 1; i >= 0; i--){
+    const l = lasers[i]; l.vie -= dt;
+    const r = rudy;
+    if (!l.touche && !r.cache && !aTerre(r) && r.invul <= 0 && Math.abs(r.y - l.y) < 42 && (r.x - l.x) * l.dir > -20){
+      l.touche = true; frapper(enn, r, 16, true, r.x - l.dir * hauteur(r) * .1, l.y - l.haut);
+    }
+    if (l.vie <= 0) lasers.splice(i, 1);
+  }
+}
+function majBoules(dt){
+  for (let i = boules.length - 1; i >= 0; i--){
+    const b = boules[i];
+    b.x += b.dir * 980 * dt; b.vie -= dt;
+    const e = enn, h = hauteur(e);
+    if (!e.cache && !aTerre(e) && e.etat !== 'ko' && Math.abs(e.y - b.y) < 55 && Math.abs(e.x - b.x) < h * .3 && e.lift < 60){
+      frapper(rudy, e, 14, true, b.x, b.y - b.lift);
+      boules.splice(i, 1);
+      if (e.qui === 'ourson' && e.pv > 0 && !e.cache && !scene && !['transfoOurs','oursCourt','detransfo'].includes(e.etat)){   // Nouza : touchée ou en garde, elle fonce aussitôt sur Rudy pour l'écraser
+        e.lift = 0; e.vx = 0; e.ko = false; e.invul = .4; e.face = rudy.x >= e.x ? 1 : -1;
+        e.etat = 'ruee'; jouer(e, 'courseO', true); e.rueeT = 0;
+      }
+      if (e.qui === 'poupee' && e.pv > 0) e.contreGlu = true;   // Piki : touchée ou en garde, elle répond avec sa boule gluante
+      continue;
+    }
+    if (b.vie <= 0 || b.x < -200 || b.x > W + 200) boules.splice(i, 1);
+  }
+}
+
+/* =================== DÉROULEMENT =================== */
+function majPhase(dt){
+  phaseT += dt;
+  if (phase === 'annonce' && ((phaseT > 2.4 && enn.etat !== 'entree' && enn.etat !== 'intro' && enn.etat !== 'bulle' && enn.etat !== 'forme') || phaseT > 9)){ if (enn.etat !== 'garde'){ enn.etat = 'garde'; jouer(enn, 'garde'); enn.lift = 0; } phase = 'combat'; phaseT = 0; texte = 'COMBATTEZ !'; }
+  if (phase === 'combat'){
+    if (phaseT > 1.1) texte = '';
+    if (enn.pv <= 0 && VIDEOS[ORDRE[combat]] && !scene){ phase = 'ko'; phaseT = 0; texte = ''; son('lourd'); }   // vidéo : on n'attend pas la fin de la chute
+    else if (rudy.pv <= 0 && VIDEOS_PERDU[ORDRE[combat]] && !scene){ phase = 'perdu'; phaseT = 0; texte = ''; }
+    else if (enn.etat === 'ko' && enn.pv <= 0){ phase = 'ko'; phaseT = 0; texte = 'K.O. !'; son('lourd'); }
+    else if (rudy.pv <= 0 && (rudy.etat === 'ko' || rudy.etat === 'sol')){ phase = 'perdu'; phaseT = 0; texte = 'K.O. !'; rudy.etat = 'ko'; }
+  }
+  if (phase === 'ko'){
+    if (phaseT > .8 && libre(rudy)){ rudy.etat = 'victoire'; jouer(rudy, 'victoire'); }
+    if (phaseT > (VIDEOS[ORDRE[combat]] ? .15 : 3)){   // avec une vidéo, elle se lance tout de suite
+      if (VIDEOS[ORDRE[combat]]) texte = '';
+      if (combat + 1 < ORDRE.length){
+        const suite = () => lancerCombat(combat + 1);
+        if (VIDEOS[ORDRE[combat]]){ phase = 'video'; jouerVideo(VIDEOS[ORDRE[combat]], suite); }
+        else suite();
+      }
+      else {
+        const fin = () => { phase = 'fin'; cacherImpasse(null); if (versAppli('combatImpasse:victoire')) return; montrer('VICTOIRE !', 'Tu as battu les treize combattants et la boss. L\'impasse est à toi.', 'REJOUER', () => { rudy = null; lancerCombat(0); cacher(); });; };
+        if (VIDEOS[ORDRE[combat]]){ phase = 'video'; jouerVideo(VIDEOS[ORDRE[combat]], fin); } else fin();   // vidéo de la boss finale, puis l'écran de victoire
+      }
+    }
+  }
+  if (phase === 'perdu'){
+    if (phaseT > 1 && enn.etat !== 'victoire' && libre(enn)){ enn.etat = 'victoire'; jouer(enn, 'victoire'); }
+    if (phaseT > (VIDEOS_PERDU[ORDRE[combat]] ? .15 : 3.2)){   // avec une vidéo, elle se lance tout de suite, PERDU vient après
+      if (VIDEOS_PERDU[ORDRE[combat]]) texte = '';
+      const fin = () => { phase = 'fin';
+        // dans ChambreRudy : la vidéo de l'infirmière, puis devant l'hôpital de Vaviel (comme les autres jeux)
+        if (versAppli('combatImpasse:ko')) return;
+        montrer('PERDU…', enn.P.nom + ' t\'a mis K.O.', 'RECOMMENCER LE COMBAT', () => { lancerCombat(combat); cacher(); }); };
+      if (VIDEOS_PERDU[ORDRE[combat]]){ phase = 'video'; jouerVideo(VIDEOS_PERDU[ORDRE[combat]], fin); } else fin();   // vidéo quand elle met Rudy K.O.
+    }
+  }
+}
+const ecran = document.getElementById('ecran');
+function montrer(titre, txt, bouton, fn){
+  ecran.innerHTML = `<h1>${titre}</h1><p>${txt}</p><button id="go">${bouton}</button>`;
+  ecran.style.display = 'flex'; document.getElementById('go').onclick = () => { presserRien(); fn(); };
+}
+function cacher(){ ecran.style.display = 'none'; }
+// dans ChambreRudy (le jeu est ouvert dans l'impasse) : on prévient l'impasse et on coupe la musique du combat
+function versAppli(type){
+  try { if (window.parent && window.parent !== window){ musiqueOn = false; musique.pause(); window.parent.postMessage({ type }, '*'); return true; } } catch(e){}
+  return false;
+}
+document.getElementById('go').onclick = () => { presserRien(); cacher(); musique.play().then(() => { if (enVideo) musique.pause(); }).catch(() => {}); musiqueOn = true; phase = 'video'; jouerVideo(VIDEO_INTRO, () => lancerCombat(0)); };
+// pas de menu : la vidéo d'ouverture puis le combat démarrent tout de suite
+setTimeout(() => { const g = document.getElementById('go'); if (g && g.onclick) g.onclick(); }, 60);
+
+/* =================== DESSIN =================== */
+// même taille du personnage sur toutes ses planches (les planches de protection étaient dessinées plus petites)
+const ECHELLE = {"r_bloc": 1.159, "r_recul": 1.136, "c_bloc": 1.259, "c_recul": 1.203, "b_bloc": 1.232, "b_recul": 1.167, "p_bloc": 1.211, "p_recul": 1.109, "k_bloc": 1.381, "k_recul": 1.265, "c2_bloc": 1.215, "c2_recul": 1.124, "o_bloc": 1.193, "o_recul": 1.171, "h_bloc": 1.185, "h_recul": 1.102, "y_bloc": 1.137, "y_recul": 1.09, "e_bloc": 1.125, "e_recul": 1.085, "z_bloc": 1.125, "z_recul": 1.085, "p_crache": 0.788};
+function dessinerSprite(nom, image, x, y, sc, dir, lift, alpha){
+  const sp = SPR[nom], im = img[nom]; if (im.complete === false) return;
+  ctx.save(); ctx.translate(x, y - (lift || 0));
+  if (dir < 0) ctx.scale(-1, 1);
+  if (alpha !== undefined) ctx.globalAlpha = alpha;
+  ctx.drawImage(im, image * sp.fw, 0, sp.fw, sp.fh, -sp.ax * sc, -sp.fh * sc + 2 * sc, sp.fw * sc, sp.fh * sc);
+  ctx.restore();
+}
+function ombre(x, y, larg){
+  ctx.save(); ctx.translate(x, y); ctx.scale(1, .22);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, larg);
+  g.addColorStop(0, 'rgba(0,0,0,.55)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, larg, 0, 6.3); ctx.fill(); ctx.restore();
+}
+function dessinerPerso(f){
+  if (f.cache) return;
+  const a = animInfo(f), nom = a[0], sp = SPR[nom], h = hauteur(f), sc = h / 320 * (ECHELLE[nom] || 1);
+  ombre(f.x, f.y, h * .32);
+  let image = imageCourante(f);
+  if (f.etat === 'bloc') image = f.blocHit > 0 ? 2 : 1;
+  if (f.anim === 'marche' && f.recule){ const n = a[1].length; image = a[1][n - 1 - (Math.floor(f.t / a[2]) % n)]; }
+  const dir = f.face === sp.sens ? 1 : -1;
+  const clign = f.invul > 0 && f.etat !== 'releve' && Math.floor(f.invul * 14) % 2 === 0;
+  const mouille = (f.lent > 0 || f.trempe > 0) && f.etat !== 'charme';
+  if (f.etat === 'charme'){ ctx.save(); ctx.filter = 'sepia(1) saturate(2.6) hue-rotate(295deg) brightness(1.08)'; }
+  if (mouille){ ctx.save(); ctx.filter = f.trempe > 0 ? 'saturate(.6) brightness(.85) sepia(.25) hue-rotate(170deg) drop-shadow(0 0 9px rgba(80,170,255,1))' : 'saturate(.7) brightness(.95) hue-rotate(-10deg) drop-shadow(0 0 6px rgba(80,170,255,.9))'; }
+  dessinerSprite(nom, image, f.x, f.y, sc, dir, f.lift, clign ? .45 : undefined);
+  if (f.etat === 'charme' || mouille) ctx.restore();
+  if (mouille && Math.random() < .5){   // gouttes qui tombent pendant le ralenti
+    etincelles.push({ x: f.x + (Math.random() - .5) * h * .3, y: f.y - h * (.3 + Math.random() * .6), vx: 0, vy: 140, vie: .5, r: 3, eau: true });
+  }
+  if (f.trempe > 0){   // trempé par le dragon : l'eau ruisselle de partout
+    for (let k = 0; k < 2; k++) etincelles.push({ x: f.x + (Math.random() - .5) * h * .4, y: f.y - h * (.15 + Math.random() * .85), vx: (Math.random() - .5) * 30, vy: 160, vie: .6, r: 3.5, eau: true });
+  }
+  if ((f.etat === 'paralyse' && !f.puant) || f.etat === 'charme'){
+    const t = performance.now() / 300, hy = f.y - h * 1.02;
+    for (let i = 0; i < 3; i++){ const a = t + i * 2.09; coeur(f.x + Math.cos(a) * h * .16, hy + Math.sin(a) * h * .04, 9 * sc, '#ff3d8f'); }
+  }
+}
+function dessinerScene(){
+  const s = scene, sp = SPR[s.nom];
+  ombre(s.X, s.y, hauteur(rudy) * .6);
+  dessinerSprite(s.nom, s.img || 0, s.X, s.y, s.sc, s.dir, 0);
+}
+function dessinerLaser(l){
+  const k = l.vie / l.max, ep = l.ep * (k > .8 ? (1 - k) / .2 : 1) * (0.9 + Math.random() * .2);
+  const y = l.y - l.haut, x0 = l.x, x1 = l.dir > 0 ? W + 50 : -50;
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = Math.min(1, k * 2.2);
+  const g = ctx.createLinearGradient(0, y - ep, 0, y + ep);
+  g.addColorStop(0, 'rgba(40,140,255,0)'); g.addColorStop(.3, 'rgba(60,170,255,.65)');
+  g.addColorStop(.5, 'rgba(230,250,255,1)'); g.addColorStop(.7, 'rgba(60,170,255,.65)'); g.addColorStop(1, 'rgba(40,140,255,0)');
+  ctx.fillStyle = g; ctx.fillRect(Math.min(x0, x1), y - ep, Math.abs(x1 - x0), ep * 2);
+  ctx.fillStyle = 'rgba(200,240,255,.9)'; ctx.fillRect(Math.min(x0, x1), y - ep * .18, Math.abs(x1 - x0), ep * .36);
+  const r = ctx.createRadialGradient(x0, y, 0, x0, y, ep * 2.2);
+  r.addColorStop(0, 'rgba(220,250,255,1)'); r.addColorStop(1, 'rgba(40,140,255,0)');
+  ctx.fillStyle = r; ctx.beginPath(); ctx.arc(x0, y, ep * 2.2, 0, 6.3); ctx.fill();
+  ctx.restore();
+}
+function dessinerBoule(b){
+  const sp = SPR.boule, sc = b.sc * (1 + Math.sin(performance.now() / 60) * .06);
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(b.x, b.y - b.lift, 0, b.x, b.y - b.lift, 120 * sc);
+  g.addColorStop(0, 'rgba(255,220,90,.55)'); g.addColorStop(1, 'rgba(255,180,0,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y - b.lift, 120 * sc, 0, 6.3); ctx.fill(); ctx.restore();
+  // l'image de la boule regarde vers la gauche : on la retourne si elle part à droite
+  ctx.save(); ctx.translate(b.x, b.y - b.lift); if (b.dir > 0) ctx.scale(-1, 1);
+  const larg = sp.fw * sc, haut = sp.fh * sc;
+  ctx.drawImage(img.boule, -larg * .32, -haut / 2, larg, haut);
+  ctx.restore();
+  ombre(b.x, b.y, 50 * sc);
+}
+function barre(x, y, w, pv, max, nom, droite){
+  const k = Math.max(0, pv / max);
+  ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(x - 4, y - 4, w + 8, 34);
+  ctx.fillStyle = '#4a0d0d'; ctx.fillRect(x, y, w, 26);
+  const g = ctx.createLinearGradient(0, y, 0, y + 26);
+  g.addColorStop(0, k > .3 ? '#ffe46a' : '#ff6a5a'); g.addColorStop(1, k > .3 ? '#d98a00' : '#a01c12');
+  ctx.fillStyle = g;
+  if (droite) ctx.fillRect(x + w * (1 - k), y, w * k, 26); else ctx.fillRect(x, y, w * k, 26);
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, 26);
+  ctx.font = '900 30px Impact, system-ui, sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign = droite ? 'right' : 'left';
+  ctx.lineWidth = 5; ctx.strokeStyle = '#000';
+  ctx.strokeText(nom, droite ? x + w : x, y + 62); ctx.fillText(nom, droite ? x + w : x, y + 62);
+}
+function grandTexte(t, y, taille){
+  ctx.save(); ctx.textAlign = 'center'; ctx.font = `900 ${taille}px Impact, system-ui, sans-serif`;
+  ctx.lineWidth = 10; ctx.strokeStyle = '#3a1200'; ctx.strokeText(t, W / 2, y);
+  const g = ctx.createLinearGradient(0, y - taille, 0, y);
+  g.addColorStop(0, '#fff4b0'); g.addColorStop(1, '#ffb000'); ctx.fillStyle = g; ctx.fillText(t, W / 2, y);
+  ctx.restore();
+}
+/* =================== CAMÉRA : elle suit les deux combattants et zoome quand ils sont proches =================== */
+const cam = { x: W / 2, y: H / 2, z: 1 };
+let kEcran = 1;
+function majCamera(dt){
+  let cx = W / 2, cy = H / 2, z = 1;
+  if (rudy && enn && (phase === 'combat' || phase === 'annonce' || phase === 'ko' || phase === 'perdu')){
+    const xs = [rudy.x], ys = [rudy.y];
+    if (!enn.cache) { xs.push(enn.x); ys.push(enn.y); }
+    if (scene) { xs.push(scene.X); ys.push(scene.y); }
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), d = x1 - x0;
+    z = Math.max(1, Math.min(1.38, (W * .82) / (d + 620)));          // proches : zoom ; loin : vue large
+    cx = (x0 + x1) / 2;
+    const pied = Math.max(...ys), h = hauteur(rudy);
+    cy = pied - h * .55;                                              // on cadre les corps, pas le ciel
+    if (scene && (scene.nom === 'z_geant' || scene.nom === 'o_riposte' || scene.nom === 'e_geante' || scene.nom === 'g_double' || scene.nom === 'b_dino' || scene.nom === 'c_gorille' || scene.nom === 'h_avale')){ z = 1; cy = pied - h * .9; }   // Ingrid géante : on dézoome pour la voir en entier
+  }
+  const a = Math.min(1, dt * 3.2);                                    // mouvement doux
+  cam.x += (cx - cam.x) * a; cam.y += (cy - cam.y) * a; cam.z += (z - cam.z) * a;
+}
+function transfoCamera(){
+  const z = cam.z;
+  let tx = W / 2 - cam.x * z, ty = H * .56 - cam.y * z;
+  tx = Math.min(0, Math.max(W - W * z, tx)); ty = Math.min(0, Math.max(H - H * z, ty));   // jamais hors de l'impasse
+  return { tx, ty, z };
+}
+let decorDernier = '';
+function appliquerCameraDecor(c){
+  const k = kEcran, wk = W * k, hk = H * k;
+  // on ne touche au décor que s'il a vraiment bougé (évite de redessiner l'impasse à chaque image)
+  const tr = `translate(${(c.tx * k).toFixed(1)}px, ${(c.ty * k).toFixed(1)}px) scale(${c.z.toFixed(4)})`;
+  if (tr === decorDernier) return; decorDernier = tr;
+  decor.style.transformOrigin = '0 0';
+  decor.style.transform = tr;
+  // on ne montre l'impasse que dans le cadre du jeu
+  const g = -c.tx * k / c.z, h = -c.ty * k / c.z, dr = wk - (wk - c.tx * k) / c.z, b = hk - (hk - c.ty * k) / c.z;
+  decor.style.clipPath = `inset(${h}px ${dr}px ${b}px ${g}px)`;
+}
+function dessiner(){
+  ctx.save();
+  const c = transfoCamera(); appliquerCameraDecor(c);
+  ctx.translate(c.tx, c.ty); ctx.scale(c.z, c.z);
+  if (tremble > 0) ctx.translate((Math.random() - .5) * 18 * tremble, (Math.random() - .5) * 12 * tremble);
+  ctx.clearRect(-W, -H, W * 3, H * 3);
+  if (rudy){
+    const liste = [rudy, enn].filter(Boolean).map(f => ({ y: f.y, d: () => dessinerPerso(f) }));
+    if (scene) liste.push({ y: scene.y + .5, d: dessinerScene });
+    boules.forEach(b => liste.push({ y: b.y + 1, d: () => dessinerBoule(b) }));
+    lasers.forEach(l => liste.push({ y: l.y + 1, d: () => dessinerLaser(l) }));
+    coeurs.forEach(c => liste.push({ y: c.y + 1, d: () => dessinerCoeur(c) }));
+    feux.forEach(f => liste.push({ y: f.y + 1, d: () => dessinerFeu(f) }));
+    bisous.forEach(b => liste.push({ y: b.y + 1, d: () => dessinerBisou(b) }));
+    if (bulle) liste.push({ y: 9999, d: dessinerBulle });
+    liste.sort((a, b) => a.y - b.y).forEach(o => o.d());
+    // étincelles des coups
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (const s of etincelles){
+      if (s.flash){
+        const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * (1.4 - s.vie * .4));
+        g.addColorStop(0, `rgba(255,255,220,${s.vie})`); g.addColorStop(1, 'rgba(255,200,80,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(s.x, s.y, s.r * (1.4 - s.vie * .4), 0, 6.3); ctx.fill();
+      } else {
+        ctx.fillStyle = s.eau ? `rgba(110,200,255,${s.vie})` : s.vert ? `rgba(120,240,60,${s.vie})` : s.rose ? `rgba(255,120,180,${s.vie})` : `rgba(255,${180 + 60 * s.vie | 0},80,${s.vie})`;
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r * s.vie + .5, 0, 6.3); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+  // nuit : coins assombris
+  /* (la nuit et les coins sombres viennent maintenant de l'impasse) */
+  if (false){ const v = ctx.createRadialGradient(W / 2, H * .55, H * .35, W / 2, H * .55, H * 1.1);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(5,3,12,.55)');
+  ctx.fillStyle = v; ctx.fillRect(-20, -20, W + 40, H + 40); }
+  ctx.restore();
+
+  if (rudy){
+    barre(40, 34, 640, rudy.pv, rudy.P.pv, 'RUDY', false);
+    barre(W - 680, 34, 640, enn.pv, enn.P.pv, enn.P.nom, true);
+    ctx.save(); ctx.font = '900 34px Impact, system-ui'; ctx.textAlign = 'center'; ctx.fillStyle = '#ffd84a';
+    ctx.lineWidth = 5; ctx.strokeStyle = '#000'; const c = 'COMBAT ' + (combat + 1) + ' / ' + ORDRE.length;
+    ctx.strokeText(c, W / 2, 58); ctx.fillText(c, W / 2, 58); ctx.restore();
+    if (texte) grandTexte(texte, H * .42, phase === 'annonce' ? 76 : 120);
+    if (scene && scene.type === 'emprise'){
+      grandTexte('TAPE VITE SUR LES BOUTONS !', H * .30, 58);
+      ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(W / 2 - 260, H * .34, 520, 30);
+      ctx.fillStyle = '#6be07a'; ctx.fillRect(W / 2 - 256, H * .34 + 4, 512 * Math.min(1, pressions / 12), 22);
+    }
+  }
+}
+function majRecharge(){
+  const c = document.getElementById('recharge'), x = c.getContext('2d');
+  x.clearRect(0, 0, 84, 84);
+  if (rechargeBoule > 0){
+    x.fillStyle = 'rgba(0,0,0,.55)'; x.beginPath(); x.moveTo(42, 42);
+    x.arc(42, 42, 42, -Math.PI / 2, -Math.PI / 2 + 6.283 * (rechargeBoule / 2.2)); x.fill();
+  }
+}
+
+/* =================== BOUCLE =================== */
+let avant = performance.now();
+function boucle(t){
+  const dt = Math.min(.05, (t - avant) / 1000); avant = t;
+  for (const k in appui) if (appui[k] > 0) appui[k] -= dt;
+  if (rudy && aCharger === 0){
+    if (rechargeBoule > 0) rechargeBoule -= dt;
+    if (tremble > 0) tremble -= dt;
+    majPhase(dt);
+    if (scene) majScene(dt);
+    if (phase === 'combat' || phase === 'annonce'){
+      if (!scene && phase === 'combat') majRudy(dt);
+      if (!scene) majEnnemi(dt);
+    } else if (phase === 'ko' || phase === 'perdu'){
+      if (phase === 'ko' && libre(rudy) === false && rudy.etat !== 'victoire') {}
+    }
+    if (!scene){
+      if (phase === 'combat'){ verifierCoup(rudy, enn); verifierCoup(enn, rudy); separer(); }
+      majCommun(rudy, dt); majCommun(enn, dt);
+      if (phase === 'annonce' && rudy.etat === 'garde' && phaseT < 2.4) {}
+    } else { rudy.t += dt * 1000; enn.t += dt * 1000; }
+    if (phase === 'annonce' && enn.etat === 'intro' && enn.qui === 'aventuriere' && enn.t > 1600) { enn.etat = 'garde'; jouer(enn, 'garde'); }
+    majBoules(dt); majLasers(dt); majCoeurs(dt); majFeux(dt); majBisous(dt);
+    for (let i = etincelles.length - 1; i >= 0; i--){
+      const s = etincelles[i]; s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 500 * dt; s.vie -= dt * (s.flash ? 4 : 2.2);
+      if (s.vie <= 0) etincelles.splice(i, 1);
+    }
+    majRecharge();
+    if (aCacher !== undefined && !cacheFait) cacherImpasse(aCacher);
+  }
+  majCamera(dt); dessiner();
+  requestAnimationFrame(boucle);
+}
+let TOURNE = false;
+function ajuster(){
+  decorDernier = '';
+  const vw = innerWidth, vh = innerHeight, cadre = document.getElementById('cadre');
+  TOURNE = vh > vw;                                  // téléphone tenu droit : on tourne le jeu
+  const L = TOURNE ? vh : vw, C = TOURNE ? vw : vh;  // longueur et hauteur du cadre horizontal
+  cadre.style.width = L + 'px'; cadre.style.height = C + 'px';
+  cadre.style.transform = TOURNE ? `translate(${vw}px,0) rotate(90deg)` : 'none';
+  const k = Math.min(L / W, C / H); kEcran = k;
+  cv.style.width = W * k + 'px'; cv.style.height = H * k + 'px';
+  cv.style.left = (L - W * k) / 2 + 'px'; cv.style.top = (C - H * k) / 2 + 'px';
+  Object.assign(decor.style, { left: cv.style.left, top: cv.style.top, width: W * k + 'px', height: H * k + 'px' });
+  cadre.style.setProperty('--u', (C / 100) + 'px');
+}
+addEventListener('resize', ajuster); addEventListener('orientationchange', () => setTimeout(ajuster, 200)); ajuster();
+requestAnimationFrame(boucle);
+</script>
+</body>
+</html>

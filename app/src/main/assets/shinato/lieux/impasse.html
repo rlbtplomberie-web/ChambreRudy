@@ -44,6 +44,8 @@
   #sortirI:active{transform:scale(.94)}
   #parlerI{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:26vmin;z-index:3000;display:none;padding:3vmin 5vmin;border-radius:6vmin;touch-action:none;font:900 clamp(13px,3.2vmin,24px)/1 Arial,sans-serif;letter-spacing:2px;color:#ffe27a;background:linear-gradient(rgba(12,12,14,.92),rgba(30,30,34,.92));border:2px solid rgba(255,226,122,.7);box-shadow:0 6px 18px rgba(0,0,0,.55)}
   #parlerI:active{transform:scale(.94)}
+  #plaquetteI{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:42vmin;z-index:3000;display:none;padding:3vmin 4vmin;border-radius:6vmin;touch-action:none;font:900 clamp(12px,3vmin,22px)/1 Arial,sans-serif;letter-spacing:1px;color:#ffe27a;background:linear-gradient(rgba(12,12,14,.92),rgba(30,30,34,.92));border:2px solid rgba(255,226,122,.7);box-shadow:0 6px 18px rgba(0,0,0,.55)}
+  #plaquetteI:active{transform:scale(.94)}
   #compteI{position:fixed;top:calc(9vmin + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:3001;display:none;pointer-events:none;text-align:center;color:#ff3b3b;font:900 clamp(34px,11vmin,90px)/1 Arial,sans-serif;text-shadow:0 0 14px #000,0 4px 0 #000,0 0 24px rgba(255,0,0,.7)}
   #compteI small{display:block;color:#fff;font:800 clamp(11px,2.6vmin,18px)/1.2 Arial,sans-serif;letter-spacing:2px;margin-top:.6vmin}
   #videoI{position:fixed;inset:0;z-index:5000;background:#000;display:none}
@@ -51,6 +53,9 @@
   #bulleI{position:absolute;z-index:2003;display:none;transform:translate(-50%,-100%);max-width:420px;padding:16px 22px;background:#fff;color:#111;border:5px solid #111;border-radius:50%/42%;font:900 26px/1.2 'Comic Sans MS','Comic Neue',Arial,sans-serif;text-align:center;box-shadow:7px 7px 0 rgba(0,0,0,.55);pointer-events:none;animation:popI .35s cubic-bezier(.2,1.6,.4,1)}
   #bulleI:after{content:'';position:absolute;left:46%;bottom:-30px;border:16px solid transparent;border-top:30px solid #111;border-bottom:0}
   #bulleI:before{content:'';position:absolute;left:calc(46% + 8px);bottom:-18px;z-index:1;border:9px solid transparent;border-top:19px solid #fff;border-bottom:0}
+  #bulleR{position:absolute;z-index:2003;display:none;transform:translate(-50%,-100%);max-width:420px;padding:16px 22px;background:#fff;color:#111;border:5px solid #111;border-radius:50%/42%;font:900 26px/1.2 'Comic Sans MS','Comic Neue',Arial,sans-serif;text-align:center;box-shadow:7px 7px 0 rgba(0,0,0,.55);pointer-events:none;animation:popI .35s cubic-bezier(.2,1.6,.4,1)}
+  #bulleR:after{content:'';position:absolute;left:46%;bottom:-30px;border:16px solid transparent;border-top:30px solid #111;border-bottom:0}
+  #bulleR:before{content:'';position:absolute;left:calc(46% + 8px);bottom:-18px;z-index:1;border:9px solid transparent;border-top:19px solid #fff;border-bottom:0}
   @keyframes popI{from{transform:translate(-50%,-100%) scale(.2)}to{transform:translate(-50%,-100%) scale(1)}}
   #flecheI{position:absolute;display:none;pointer-events:none;width:60px;height:80px;margin-left:-30px;animation:bondI .8s ease-in-out infinite;filter:drop-shadow(0 0 8px #ffd400) drop-shadow(0 0 18px rgba(255,212,0,.9))}
   @keyframes bondI{0%,100%{margin-top:0}50%{margin-top:14px}}
@@ -65,11 +70,13 @@
   <canvas id="fumees" width="1774" height="887"></canvas>
   <div id="nuit"></div>
   <div id="bulleI"></div>
+  <div id="bulleR" class="bulleR"></div>
   <div id="flecheI"><svg viewBox="0 0 60 80" width="100%" height="100%"><path d="M18 0h24v42h16L30 80 2 42h16z" fill="#ffd400" stroke="#fff6b0" stroke-width="3" stroke-linejoin="round"/></svg></div>
 </div></div>
 <div id="titreI">RUDY STYLE<small>L'IMPASSE</small></div>
 <div id="joyI"><div id="knobI"></div></div>
 <div id="sortirI">SORTIR</div>
+<div id="plaquetteI">LA PLAQUETTE GUERRIÈRE</div>
 <div id="parlerI">PARLER</div>
 <div id="compteI"></div>
 <div id="videoI"><video playsinline></video></div>
@@ -374,7 +381,7 @@ addEventListener('resize',ajuster); ajuster();
 
 /* ================== RUDY dans l'impasse (planche de Rudy de l'aéroport : 8 directions) ================== */
 (function(){
-const SRC={"up": "/assets/shinato/m/aero_up.webp", "upR": "/assets/shinato/m/aero_upR.webp", "upL": "/assets/shinato/m/aero_upL.webp", "right": "/assets/shinato/m/aero_right.webp", "left": "/assets/shinato/m/aero_left.webp", "down": "/assets/shinato/m/aero_down.webp", "downL": "/assets/shinato/m/aero_downL.webp", "downR": "/assets/shinato/m/aero_downR.webp", "idle": "/assets/shinato/m/aero_idle.webp"}, META={"up": {"n": 12, "w": 217, "h": 302}, "upR": {"n": 12, "w": 261, "h": 302}, "upL": {"n": 12, "w": 289, "h": 302}, "right": {"n": 12, "w": 412, "h": 302}, "left": {"n": 12, "w": 372, "h": 302}, "down": {"n": 12, "w": 235, "h": 302}, "downL": {"n": 12, "w": 267, "h": 302}, "downR": {"n": 12, "w": 227, "h": 302}, "idle": {"n": 6, "w": 157, "h": 302}}, SRC_VIDEO="/assets/shinato/m/impasse_patronne.mp4";
+const SRC={"up": "/assets/shinato/m/aero_up.webp", "upR": "/assets/shinato/m/aero_upR.webp", "upL": "/assets/shinato/m/aero_upL.webp", "right": "/assets/shinato/m/aero_right.webp", "left": "/assets/shinato/m/aero_left.webp", "down": "/assets/shinato/m/aero_down.webp", "downL": "/assets/shinato/m/aero_downL.webp", "downR": "/assets/shinato/m/aero_downR.webp", "idle": "/assets/shinato/m/aero_idle.webp"}, META={"up": {"n": 12, "w": 217, "h": 302}, "upR": {"n": 12, "w": 261, "h": 302}, "upL": {"n": 12, "w": 289, "h": 302}, "right": {"n": 12, "w": 412, "h": 302}, "left": {"n": 12, "w": 372, "h": 302}, "down": {"n": 12, "w": 235, "h": 302}, "downL": {"n": 12, "w": 267, "h": 302}, "downR": {"n": 12, "w": 227, "h": 302}, "idle": {"n": 6, "w": 157, "h": 302}}, SRC_VIDEO="/assets/shinato/m/impasse_patronne.mp4", COMBAT='/assets/shinato/jeux/combat-impasse.html';
 const vue=document.getElementById('vue');
 const DIRS=["right","downR","down","downL","left","upL","up","upR"];
 const REPOS={right:0,downR:5,down:1,downL:4,left:2,upL:3,up:3,upR:3};
@@ -471,10 +478,27 @@ function montreBulle(a){
   bulleFin=performance.now()+(a.p.id==='canape'?4500:3600)}
 setInterval(()=>{
   proche=plusProche();
-  bP.style.display=proche&&!fin&&!(R.y>SOL.y1-34)?'block':'none';
+  if(plaquette()&&proche&&proche.p.id!=='canape')proche=null;          // « La plaquette guerrière » : seule la patronne parle
+  bP.style.display=proche&&!fin&&!dialogueP&&!(R.y>SOL.y1-34)?'block':'none';
+  bPl.style.display=plaquette()&&proche&&proche.p.id==='canape'&&!fin&&!dialogueP&&!(R.y>SOL.y1-34)?'block':'none';
   if(bul.style.display==='block'&&(performance.now()>bulleFin||(bulleQui&&bulleQui!==proche)))bul.style.display='none';
 },120);
-bP.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(!proche)return;montreBulle(proche);if(proche.p.id==='canape')lanceCompte()});
+bP.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(!proche)return;
+  montreBulle(proche);if(proche.p.id==='canape')lanceCompte()});
+// ---------- « LA PLAQUETTE GUERRIÈRE » : après avoir battu Astra et demandé à Monsieur Loyal « Pourquoi il y a personne ici ? » ----------
+function plaquette(){ try{ return localStorage.getItem('mitsuda_usine_gagnee')==='1'&&localStorage.getItem('cirque_loyal_personne_vu')==='1'; }catch(e){ return false; } }
+const bulR=document.getElementById('bulleR'); let dialogueP=false;
+const bPl=document.getElementById('plaquetteI');
+bPl.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(proche&&proche.p.id==='canape')dialoguePlaquette(proche)});
+function ditRudy(txt){ const h=taille(R.y); bulR.textContent=txt; bulR.style.display='block'; bulR.style.animation='none';void bulR.offsetWidth;bulR.style.animation='';
+  bulR.style.left=Math.max(230,Math.min(1544,R.x))+'px'; bulR.style.top=Math.max(130,R.y-h*1.02)+'px'; }
+function dialoguePlaquette(a){ if(dialogueP)return; dialogueP=true;
+  bulleQui=a; bul.textContent="Mais qu'est-ce que tu veux à la fin, Rudy ?!"; bul.style.display='block'; bul.style.animation='none';void bul.offsetWidth;bul.style.animation='';
+  bul.style.left=Math.max(230,Math.min(1544,a.p.x))+'px'; bul.style.top=Math.max(130,a.top+a.p.h*.06)+'px'; bulleFin=performance.now()+3200;
+  setTimeout(()=>{ bul.style.display='none'; ditRudy("Tu as quelque chose dont j'ai besoin… ta plaque de métal."); },3200);
+  setTimeout(()=>{ bulR.style.display='none'; dialogueP=false;
+    // ici se lancera le jeu de « La plaquette guerrière » (à venir)
+    try{ if(typeof window.lancePlaquette==='function') window.lancePlaquette(); }catch(e){} },7400); }
 // ---------- la patronne : 10 secondes pour partir, sinon sa vidéo puis l'hôpital ----------
 const cpt=document.getElementById('compteI'), vbox=document.getElementById('videoI'), vid=vbox.querySelector('video');
 let compte=null, fin=false;
@@ -488,6 +512,27 @@ function tue(){ if(fin)return; fin=true; js(); for(const k in clav)clav[k]=0;
   let fait=false; const suite=()=>{ if(fait)return; fait=true; try{window.parent.postMessage({type:'impasse:ko'},'*')}catch(_){} };
   vid.addEventListener('ended',suite); vid.addEventListener('error',suite);
   const q=vid.play(); if(q&&q.catch) q.catch(()=>{ vid.muted=true; vid.play().catch(suite); }); }
+// ---------- le combat de l'impasse : lancé juste après « La plaquette guerrière » ----------
+window.lancePlaquette=function(){
+  if(document.getElementById('combatI'))return;
+  js();for(const k in clav)clav[k]=0;
+  try{const a=window.top.RUDY_AUDIO;if(a){window.top.PONTLADES_MUSIQUE=!a.paused;a.pause();}}catch(_){}   // le combat a sa propre musique
+  const f=document.createElement('iframe');f.id='combatI';f.setAttribute('allow','autoplay; fullscreen');
+  f.style.cssText='position:fixed;inset:0;width:100%;height:100%;border:0;z-index:6000;background:#000';
+  f.src=COMBAT;document.body.appendChild(f);setTimeout(()=>{try{f.focus()}catch(_){}},300);
+};
+addEventListener('message',e=>{
+  if(!e.data)return;
+  if(e.data.type==='combatImpasse:ko'){   // Rudy K.O. : l'infirmière, puis devant l'hôpital de Vaviel
+    try{window.parent.postMessage({type:'impasse:ko'},'*')}catch(_){}
+  }
+  if(e.data.type==='combatImpasse:victoire'){
+    try{localStorage.setItem('impasse_combat_gagne','1')}catch(_){}
+    const f=document.getElementById('combatI');if(f)f.remove();
+    try{const a=window.top.RUDY_AUDIO;if(a&&window.top.PONTLADES_MUSIQUE){const q=a.play();if(q&&q.catch)q.catch(()=>{});}window.top.PONTLADES_MUSIQUE=false;}catch(_){}
+    js();for(const k in clav)clav[k]=0;
+  }
+});
 requestAnimationFrame(avance);
 })();
 </script>

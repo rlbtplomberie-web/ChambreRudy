@@ -1,5 +1,6 @@
-maj-205
-- Impasse : apres avoir parle a la patronne (canape), compte a rebours de 10 secondes en haut de l'ecran
-- Si Rudy n'est pas sorti a temps : sa video (impasse_patronne.mp4), puis la video de l'infirmiere, puis Rudy devant l'hopital de Vaviel
-- Si Rudy sort avant la fin : le compte a rebours s'arrete
-- Deverrouillage : video ajoutee dans Ville delabree
+maj-207 (partie 1/5)
+- Combat dans l'impasse (shinato/jeux/combat-impasse.html) : se lance directement apres le dialogue LA PLAQUETTE GUERRIERE avec la patronne, sans menu (video d'ouverture puis combat)
+- Rudy K.O. : la video de la combattante (s'il y en a une), puis l'infirmiere, puis devant l'hopital de Vaviel
+- Videos et images du combat dans shinato/m/ci_* ; videos ajoutees dans Deverrouillage (Combat dans l'impasse)
+- Installer toutes les parties avant de jouer
+- Statue : la plaque GUERRIERE apparait dans le 1er rectangle a gauche quand le combat de l'impasse est gagne (web/statue.html + web/statue/plaque_guerriere.webp)

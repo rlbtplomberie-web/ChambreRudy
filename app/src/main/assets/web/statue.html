@@ -16,6 +16,8 @@ html,body{margin:0;height:100%;background:var(--fond);overflow:hidden;touch-acti
 /* les losanges : les diamants des boss vaincus */
 .gem{position:absolute;width:18.6%;transform:translate(-50%,-50%);display:none;filter:drop-shadow(0 0 2.4cqw rgba(255,210,90,.55));animation:brille 2.6s ease-in-out infinite alternate}
 .gem.on{display:block}
+.plaqueG{position:absolute;object-fit:fill;border-radius:.4cqw;transform:translate(-50%,-50%);display:none;filter:drop-shadow(0 0 1.6cqw rgba(255,210,90,.45));animation:brille 2.6s ease-in-out infinite alternate}
+.plaqueG.on{display:block}
 @keyframes brille{from{filter:drop-shadow(0 0 1.2cqw rgba(255,210,90,.35))}to{filter:drop-shadow(0 0 3.2cqw rgba(255,220,120,.85))}}
 /* les nombres */
 .val{position:absolute;display:flex;align-items:baseline;justify-content:center;font-weight:700;letter-spacing:.02em;white-space:nowrap;line-height:1;padding-top:.9cqw;
@@ -105,6 +107,7 @@ html,body{margin:0;height:100%;background:var(--fond);overflow:hidden;touch-acti
   <img class="gem rond" id="gemHotel" alt="Diamant rond étoilé" style="left:13.23%;top:40.19%;width:13.6%" src="statue/gem_rond_hotel.webp">
   <img class="gem rond" id="gemPontlades" alt="Diamant jaune au cœur" style="left:30.82%;top:40.19%;width:13.6%" src="statue/gem_rond_jaune.webp">
   <img class="gem rond" id="gemChasseur" alt="Diamant rose à la plume" style="left:48.57%;top:40.19%;width:13.6%" src="statue/gem_rond_rose.webp">
+  <img class="plaqueG" id="plaqueGuerriere" alt="Plaque Guerrière" style="left:13.06%;top:48.07%;width:14.6%;height:3.72%" src="statue/plaque_guerriere.webp">
   <div class="val" id="vArgent"  style="left:38.9%;top:54.9%;width:17.4%;height:4.2%;font-size:6.2cqw"></div>
   <div class="val" id="vContacts" style="left:39.9%;top:63.3%;width:16.2%;height:4.2%;font-size:6.6cqw"></div>
   <div class="val" id="vVideos"  style="left:39.9%;top:71.7%;width:16.2%;height:4.2%;font-size:5.6cqw"></div>
@@ -182,7 +185,8 @@ function maj(){
  $('gemFarah').classList.toggle('on',A||lit('foret_gagnee')==='1');
  $('gemHotel').classList.toggle('on',A||lit('hotel_palace_gagne')==='1');
  $('gemPontlades').classList.toggle('on',A||lit('pontlades_gagne')==='1');
- $('gemChasseur').classList.toggle('on',A||lit('chasseur_gagne')==='1');   // la géante de « Chasseur de nuit » vaincue   // la boss du Grand Terrain (Pont-l'Ades) vaincue          // la boss de l'Hôtel Palace vaincue              // Farah la Rousse vaincue (la forêt)
+ $('gemChasseur').classList.toggle('on',A||lit('chasseur_gagne')==='1');
+ $('plaqueGuerriere').classList.toggle('on',A||lit('impasse_combat_gagne')==='1');   // le combat de l'impasse gagné : la plaque « Guerrière » (1er rectangle)   // la géante de « Chasseur de nuit » vaincue   // la boss du Grand Terrain (Pont-l'Ades) vaincue          // la boss de l'Hôtel Palace vaincue              // Farah la Rousse vaincue (la forêt)
 }
 maj(); setInterval(maj,1500); addEventListener('storage',maj);
 
