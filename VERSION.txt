@@ -1,4 +1,4 @@
-maj-207 (partie 4/5)
+maj-207 (partie 5/5)
 - Combat dans l'impasse (shinato/jeux/combat-impasse.html) : se lance directement apres le dialogue LA PLAQUETTE GUERRIERE avec la patronne, sans menu (video d'ouverture puis combat)
 - Rudy K.O. : la video de la combattante (s'il y en a une), puis l'infirmiere, puis devant l'hopital de Vaviel
 - Videos et images du combat dans shinato/m/ci_* ; videos ajoutees dans Deverrouillage (Combat dans l'impasse)
