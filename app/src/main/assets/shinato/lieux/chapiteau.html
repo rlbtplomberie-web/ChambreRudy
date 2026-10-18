@@ -381,6 +381,7 @@ window.RUDY=RUDY;
     bQ.style.display=(debloque()&&!occupe&&vb.style.display!=='block'&&R.etat==='debout'&&Math.abs(R.x-LX)<170&&R.y>=500)?'block':'none'; },150);
   let t2=0;
   const go2=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t2<400) return; t2=n;
+    try{ localStorage.setItem('cirque_loyal_personne_vu','1'); }catch(e){}   // débloque « La plaquette guerrière » dans l'impasse (si Astra est battue)
     occupe=true; bQ.style.display='none'; bP.style.display='none'; v.src='/assets/shinato/m/cirque_loyal_personne.mp4'; vb.style.display='block'; const q=v.play(); if(q&&q.catch) q.catch(()=>{});
     const fini=()=>{ v.removeEventListener('ended',fini); v.removeEventListener('error',fini); vb.style.display='none'; occupe=false; };
     v.addEventListener('ended',fini); v.addEventListener('error',fini); };
