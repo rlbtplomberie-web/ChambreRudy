@@ -1,1 +1,1 @@
-maj-210 : Combat dans l'impasse - correction des freezes / écrans noirs (mémoire)
+maj-211 : Combat dans l'impasse - vidéo quand Piki met Rudy K.O. (puis infirmière, puis hôpital de Vaviel) + Déverrouillage
