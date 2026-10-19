@@ -1,1 +1,1 @@
-maj-209 : Shinato Soccer - vidéo quand ton équipe gagne (remplace l'image) + ajoutée dans Déverrouillage
+maj-210 : Combat dans l'impasse - correction des freezes / écrans noirs (mémoire)

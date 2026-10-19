@@ -421,17 +421,29 @@ const prof = y => 0.80 + (y - 600) / 287 * 0.40; // plus gros devant, plus petit
 
 const img = {};
 let aCharger = 0;
-// chaque image est décodée une seule fois en mémoire graphique (ImageBitmap) : plus de saccades
-function charge(k){
-  aCharger++; const i = new Image();
+// Mémoire : on ne garde décodées que les planches de Rudy, des effets, de l'adversaire en cours et du suivant
+// (toutes ensemble faisaient plus de 700 Mo : le téléphone saturait → écrans noirs et freezes)
+const SRC = {}; for (const k in SPR) SRC[k] = SPR[k].src;
+let voulu = new Set();
+const enCours = {};   // planches en train de se charger
+function charge(k, bloque){
+  if (enCours[k]){ if (bloque && !enCours[k].b){ enCours[k].b = true; aCharger++; } return; }
+  const e = enCours[k] = { b: !!bloque }; if (e.b) aCharger++;
+  const i = new Image(); img[k] = i;
+  const fin = () => { if (e.b) aCharger--; delete enCours[k]; };
   i.onload = () => {
-    const fini = b => { if (b) img[k] = b; delete SPR[k].src; aCharger--; };
+    const fini = b => {
+      fin();
+      if (!voulu.has(k)){ if (b && b.close) b.close(); if (img[k] === i) delete img[k]; return; }
+      img[k] = b || i;
+    };
     if (window.createImageBitmap) createImageBitmap(i).then(fini, () => fini(null)); else fini(null);
   };
-  i.onerror = () => { aCharger--; };
-  i.src = SPR[k].src; return i;
+  i.onerror = () => { fin(); };
+  i.src = SRC[k];
 }
-for (const k in SPR) img[k] = charge(k);
+// au besoin (planche oubliée) : on la charge sans bloquer
+function besoin(k){ if (!img[k] && SRC[k]){ voulu.add(k); charge(k, false); } }
 const decor = document.getElementById('decor');
 decor.srcdoc = document.getElementById('impasseSrc').textContent.split('<\u00a7/script').join('</script');
 let aCacher = undefined, cacheFait = false;
@@ -1067,7 +1079,33 @@ function nouveau(qui, x, y, face){
            cache: false, invul: 0, combo: 0, comboT: 0, touche: false, cool: 1.2, chargeCool: 4, priseCool: 4,
            depart: x, vx: 0, attente: 0 };
 }
+// les planches de chaque adversaire (préfixe de ses planches + prises de Rudy sur lui)
+const GROUPES = {};
+function planchesDe(q){
+  if (GROUPES[q]) return GROUPES[q];
+  const pre = new Set();
+  const vu = o => { if (typeof o === 'string'){ if (SRC[o] && o.indexOf('_') > 0 && o.split('_')[0] !== 'r') pre.add(o.split('_')[0]); }
+                    else if (o && typeof o === 'object') for (const k in o) vu(o[k]); };
+  vu(PERSOS[q]); if (LETTRES[q]) pre.add(LETTRES[q]);
+  const s = new Set();
+  for (const k in SRC){ const p = k.split('_'); if (p.length < 2) continue;
+    if (pre.has(p[0]) || (p[0] === 'r' && p.length > 2 && pre.has(p[p.length - 1]))) s.add(k); }
+  return GROUPES[q] = s;
+}
+let COMMUN = null;
+function chargerPour(i){
+  if (!COMMUN){ const pris = new Set(); for (const q in PERSOS) if (q !== 'rudy') planchesDe(q).forEach(k => pris.add(k));
+    COMMUN = Object.keys(SRC).filter(k => !pris.has(k)); }
+  const maintenant = new Set(COMMUN); planchesDe(ORDRE[i]).forEach(k => maintenant.add(k));
+  const ensuite = ORDRE[i + 1] ? planchesDe(ORDRE[i + 1]) : new Set();
+  voulu = new Set([...maintenant, ...ensuite]);
+  for (const k in img) if (!voulu.has(k)){ const b = img[k]; delete img[k]; if (b && b.close) b.close(); }
+  maintenant.forEach(k => { if (!img[k] || enCours[k]) charge(k, true); });
+  ensuite.forEach(k => { if (!img[k]) charge(k, false); });
+}
+chargerPour(0);
 function lancerCombat(i){
+  chargerPour(i);
   combat = i; bisous = []; feux = []; boules = []; lasers = []; coeurs = []; etincelles = []; scene = null;
   const id = DANS_IMPASSE[ORDRE[i]];
   const place = (id && (placeImpasse(id) || PLACE_DEFAUT[id])) || [1700, 760];   // pas dans l'impasse : elle arrive par le côté
@@ -2223,7 +2261,7 @@ setTimeout(() => { const g = document.getElementById('go'); if (g && g.onclick) 
 // même taille du personnage sur toutes ses planches (les planches de protection étaient dessinées plus petites)
 const ECHELLE = {"r_bloc": 1.159, "r_recul": 1.136, "c_bloc": 1.259, "c_recul": 1.203, "b_bloc": 1.232, "b_recul": 1.167, "p_bloc": 1.211, "p_recul": 1.109, "k_bloc": 1.381, "k_recul": 1.265, "c2_bloc": 1.215, "c2_recul": 1.124, "o_bloc": 1.193, "o_recul": 1.171, "h_bloc": 1.185, "h_recul": 1.102, "y_bloc": 1.137, "y_recul": 1.09, "e_bloc": 1.125, "e_recul": 1.085, "z_bloc": 1.125, "z_recul": 1.085, "p_crache": 0.788};
 function dessinerSprite(nom, image, x, y, sc, dir, lift, alpha){
-  const sp = SPR[nom], im = img[nom]; if (im.complete === false) return;
+  const sp = SPR[nom], im = img[nom]; if (!im){ besoin(nom); return; } if (im.complete === false) return;
   ctx.save(); ctx.translate(x, y - (lift || 0));
   if (dir < 0) ctx.scale(-1, 1);
   if (alpha !== undefined) ctx.globalAlpha = alpha;
