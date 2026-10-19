@@ -41,6 +41,7 @@
 <body>
 <div id="cadre">
 <iframe id="decor" title="Impasse" scrolling="no" style="position:absolute;border:0;pointer-events:none;background:#000"></iframe>
+<canvas id="decorCv" style="position:absolute;display:block;pointer-events:none;background:#000"></canvas>
 <canvas id="jeu" width="1774" height="887"></canvas>
 <div id="manette" class="ctrl"><div id="bouton"></div></div>
 <div id="boutons" class="ctrl">
@@ -2388,9 +2389,132 @@ function appliquerCameraDecor(c){
   const g = -c.tx * k / c.z, h = -c.ty * k / c.z, dr = wk - (wk - c.tx * k) / c.z, b = hk - (hk - c.ty * k) / c.z;
   decor.style.clipPath = `inset(${h}px ${dr}px ${b}px ${g}px)`;
 }
+/* =================== L'IMPASSE DESSINÉE DANS UNE TOILE ===================
+   L'impasse tourne toujours dans sa page (mêmes personnages, mêmes animations, même vent),
+   mais au lieu que le téléphone redessine toute cette page à chaque mouvement de la caméra
+   (c'était la cause des rectangles noirs), on recopie chaque image de l'impasse dans une
+   toile, comme les combattants. Si quoi que ce soit échoue, on revient à l'ancien affichage. */
+const decorCv = document.getElementById('decorCv'), dcx = decorCv.getContext('2d');
+let decorToile = true;                       // false = ancien affichage (la page de l'impasse zoomée)
+const imgDecor = {};
+function imageDecor(url){ let i = imgDecor[url]; if (!i){ i = imgDecor[url] = new Image(); i.src = url; } return i; }
+function urlFond(el, cs){ const m = /url\(["']?([^"')]+)["']?\)/.exec(el.style.backgroundImage || (cs && cs.backgroundImage) || ''); return m ? m[1] : null; }
+function px(v){ return parseFloat(v) || 0; }
+// textures préparées une seule fois (le téléphone n'a plus qu'à les recopier à chaque image)
+function toileVide(w, h){ const t = document.createElement('canvas'); t.width = Math.max(1, Math.round(w)); t.height = Math.max(1, Math.round(h)); return t; }
+function texteDegrade(arrets, taille){
+  const t = toileVide(taille, taille), g2 = t.getContext('2d'), r = taille / 2;
+  const g = g2.createRadialGradient(r, r, 0, r, r, r); for (const [o, c] of arrets) g.addColorStop(o, c);
+  g2.fillStyle = g; g2.fillRect(0, 0, taille, taille); return t;
+}
+const TEX_OMBRE = texteDegrade([[0, 'rgba(0,0,0,.6)'], [.6, 'rgba(0,0,0,.28)'], [1, 'rgba(0,0,0,0)']], 128);
+const TEX_LUEUR = texteDegrade([[0, 'rgba(255,180,90,.55)'], [.45, 'rgba(255,140,50,.18)'], [1, 'rgba(255,120,40,0)']], 256);
+// dégradé elliptique « farthest-corner » d'une boîte w×h centré en (fx, fy), dessiné dans une petite toile
+function texteEllipse(w, h, ech, couches){
+  const t = toileVide(w * ech, h * ech), g2 = t.getContext('2d');
+  g2.scale(ech, ech);
+  for (const [fx, fy, arrets] of couches){
+    const cx = w * fx, cy = h * fy, rx = Math.max(cx, w - cx) * Math.SQRT2, ry = Math.max(cy, h - cy) * Math.SQRT2;
+    g2.save(); g2.translate(cx, cy); g2.scale(rx, ry);
+    const g = g2.createRadialGradient(0, 0, 0, 0, 0, 1); for (const [o, c] of arrets) g.addColorStop(o, c);
+    g2.fillStyle = g; g2.fillRect(-cx / rx, -cy / ry, w / rx, h / ry); g2.restore();
+  }
+  return t;
+}
+let TEX_NUIT = null, TEX_BRUME = null;
+const texPerso = new Map(), texMuret = new Map();
+// planche d'un personnage avec son filtre (assombri pour la nuit…) déjà appliqué, à la bonne finesse
+function plancheFiltree(el, im, bw, bh, h){
+  const cle = el.__url + '|' + el.style.filter + '|' + bw;
+  let t = texPerso.get(cle); if (t) return t;
+  const b = decorCv.width / W, haut = Math.min(im.naturalHeight, Math.ceil(h * 1.4 * b)), ech = haut / im.naturalHeight;
+  const marge = Math.ceil(10 * ech * (im.naturalHeight / bh));
+  t = toileVide(im.naturalWidth * ech, haut);
+  const g2 = t.getContext('2d'); g2.filter = el.style.filter || 'none';
+  g2.drawImage(im, 0, 0, t.width, t.height);
+  t.__k = ech; texPerso.set(cle, t); return t;
+}
+function muretPret(el, x, y, w, h, b){
+  const cle = [x, y, w, h, el.style.filter].join('|');
+  let t = texMuret.get(cle); if (t) return t;
+  const tx = imageDecor('/assets/shinato/m/ci_9754ff52cc7997.webp'); if (!tx.complete || !tx.naturalWidth) return null;
+  const e = 1.4 * b, m = 12;   // marge pour l'ombre portée
+  t = toileVide((w + 2 * m) * e, (h + 2 + 2 * m) * e); const g2 = t.getContext('2d');
+  g2.scale(e, e); g2.translate(m, m); g2.filter = el.style.filter || 'none';
+  const tmp = toileVide((w + 2 * m) * e, (h + 2 + 2 * m) * e), t2 = tmp.getContext('2d');
+  t2.scale(e, e); t2.translate(m, m);
+  t2.shadowColor = 'rgba(0,0,0,.5)'; t2.shadowBlur = 10 * e; t2.fillStyle = '#14100e'; t2.fillRect(0, 0, w, h + 2); t2.shadowColor = 'transparent';
+  const mo = t2.createPattern(tx, 'repeat'); mo.setTransform(new DOMMatrix().translate(0, 2).scale(80 / tx.naturalWidth, 110 / tx.naturalHeight));
+  t2.fillStyle = mo; t2.fillRect(0, 0, w, h + 2);
+  let g = t2.createLinearGradient(0, 0, w, 0);
+  g.addColorStop(0, 'rgba(0,0,0,.35)'); g.addColorStop(.12, 'rgba(0,0,0,0)'); g.addColorStop(.88, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.4)');
+  t2.fillStyle = g; t2.fillRect(0, 0, w, h + 2);
+  g = t2.createLinearGradient(0, 0, 0, h + 2);
+  g.addColorStop(0, 'rgba(0,0,0,.55)'); g.addColorStop(.18, 'rgba(0,0,0,.15)'); g.addColorStop(1, 'rgba(0,0,0,.35)');
+  t2.fillStyle = g; t2.fillRect(0, 0, w, h + 2);
+  t2.fillStyle = 'rgba(20,16,14,.8)'; t2.fillRect(0, 0, w, 2);
+  g2.setTransform(1, 0, 0, 1, 0, 0); g2.drawImage(tmp, 0, 0);
+  t.__m = m; texMuret.set(cle, t); return t;
+}
+function dessinerImpasse(c){
+  const d = decor.contentDocument, sc = d && d.getElementById('scene');
+  if (!sc) return false;
+  const vu = d.defaultView, b = decorCv.width / W;
+  if (!TEX_NUIT) TEX_NUIT = texteEllipse(W, H, .5, [[.5, .55, [[0, 'rgba(5,3,12,0)'], [.45, 'rgba(5,3,12,0)'], [1, 'rgba(5,3,12,.55)']]]]);
+  if (!TEX_BRUME) TEX_BRUME = texteEllipse(3548, 220, .5, [
+    [.9, .6, [[0, 'rgba(170,160,190,.45)'], [.6, 'rgba(170,160,190,0)'], [1, 'rgba(170,160,190,0)']]],
+    [.6, .4, [[0, 'rgba(170,160,190,.4)'], [.55, 'rgba(170,160,190,0)'], [1, 'rgba(170,160,190,0)']]],
+    [.2, .5, [[0, 'rgba(170,160,190,.5)'], [.6, 'rgba(170,160,190,0)'], [1, 'rgba(170,160,190,0)']]]]);
+  dcx.setTransform(1, 0, 0, 1, 0, 0); dcx.globalAlpha = 1; dcx.globalCompositeOperation = 'source-over';
+  dcx.fillStyle = '#000'; dcx.fillRect(0, 0, decorCv.width, decorCv.height);
+  dcx.setTransform(b * c.z, 0, 0, b * c.z, b * c.tx, b * c.ty);
+  // ordre d'affichage de la page : z-index, puis ordre dans la page
+  const els = []; let n = 0;
+  for (const el of sc.children){ els.push([parseInt(el.style.zIndex) || 0, n++, el]); }
+  els.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  for (const [, , el] of els){
+    if (el.style.visibility === 'hidden') continue;
+    const id = el.id, cl = el.className;
+    if (id === 'fond'){ if (el.complete && el.naturalWidth) dcx.drawImage(el, 0, 0, W, H); continue; }
+    if (el.tagName === 'CANVAS'){ dcx.drawImage(el, 0, 0, W, H); continue; }
+    if (id === 'brume'){
+      const cs = vu.getComputedStyle(el), m = /matrix\(([^)]+)\)/.exec(cs.transform), tx = m ? px(m[1].split(',')[4]) : 0;
+      dcx.globalAlpha = px(cs.opacity); dcx.drawImage(TEX_BRUME, -887 + tx, 470, 3548, 220); dcx.globalAlpha = 1; continue;
+    }
+    if (id === 'nuit'){ dcx.drawImage(TEX_NUIT, 0, 0, W, H); continue; }
+    const x = px(el.style.left), y = px(el.style.top), w = px(el.style.width), h = px(el.style.height);
+    if (cl === 'ombre'){ dcx.drawImage(TEX_OMBRE, x, y, w, h); continue; }
+    if (cl === 'lueur'){
+      dcx.globalCompositeOperation = 'screen'; dcx.globalAlpha = px(vu.getComputedStyle(el).opacity);
+      dcx.drawImage(TEX_LUEUR, x, y, w, h); dcx.globalCompositeOperation = 'source-over'; dcx.globalAlpha = 1; continue;
+    }
+    if (cl === 'muret'){ const t = muretPret(el, x, y, w, h, b); if (t){ const e = t.width / (w + 2 * t.__m); dcx.drawImage(t, x - t.__m, y - t.__m, t.width / e, t.height / e); } continue; }
+    if (cl === 'perso'){
+      const u = el.__url || (el.__url = urlFond(el, vu.getComputedStyle(el))); if (!u) continue;
+      const im = imageDecor(u); if (!im.complete || !im.naturalWidth) continue;
+      const bs = (el.style.backgroundSize || '').split(' '), bw = px(bs[0]), bh = px(bs[1]) || h;
+      const bp = px((el.style.backgroundPosition || '0').split(' ')[0]);
+      const t = plancheFiltree(el, im, bw, bh, h), kx = t.width / bw, ky = t.height / bh;
+      if ((el.style.transform || '').indexOf('-1') >= 0){
+        dcx.save(); dcx.translate(x + w, y); dcx.scale(-1, 1);
+        dcx.drawImage(t, -bp * kx, 0, w * kx, h * ky, 0, 0, w, h); dcx.restore();
+      } else dcx.drawImage(t, -bp * kx, 0, w * kx, h * ky, x, y, w, h);
+      continue;
+    }
+  }
+  dcx.setTransform(1, 0, 0, 1, 0, 0);
+  return true;
+}
 function dessiner(){
   ctx.save();
-  const c = transfoCamera(); appliquerCameraDecor(c);
+  const c = transfoCamera();
+  if (decorToile){
+    let ok = false;
+    try { ok = dessinerImpasse(c); } catch(e){ decorToile = false; }
+    if (ok && decor.style.visibility !== 'hidden'){ decor.style.visibility = 'hidden'; decorCv.style.visibility = ''; }
+    if (!ok && decor.style.visibility === 'hidden'){ decor.style.visibility = ''; decorCv.style.visibility = 'hidden'; }
+  }
+  if (!decorToile){ decorCv.style.visibility = 'hidden'; decor.style.visibility = ''; appliquerCameraDecor(c); }
   ctx.translate(c.tx, c.ty); ctx.scale(c.z, c.z);
   if (tremble > 0) ctx.translate((Math.random() - .5) * 18 * tremble, (Math.random() - .5) * 12 * tremble);
   ctx.clearRect(-W, -H, W * 3, H * 3);
@@ -2493,6 +2617,10 @@ function ajuster(){
   cv.style.width = W * k + 'px'; cv.style.height = H * k + 'px';
   cv.style.left = (L - W * k) / 2 + 'px'; cv.style.top = (C - H * k) / 2 + 'px';
   Object.assign(decor.style, { left: cv.style.left, top: cv.style.top, width: W * k + 'px', height: H * k + 'px' });
+  // la toile de l'impasse : à la finesse réelle de l'écran
+  const dpr = Math.min(2, window.devicePixelRatio || 1);   // assez fin, sans trop charger le téléphone
+  Object.assign(decorCv.style, { left: cv.style.left, top: cv.style.top, width: W * k + 'px', height: H * k + 'px' });
+  decorCv.width = Math.round(W * k * dpr); decorCv.height = Math.round(H * k * dpr);
   cadre.style.setProperty('--u', (C / 100) + 'px');
 }
 addEventListener('resize', ajuster); addEventListener('orientationchange', () => setTimeout(ajuster, 200)); ajuster();
