@@ -1,1 +1,1 @@
-maj-214 : Combat dans l'impasse - correction des écrans noirs pendant le zoom de la caméra
+maj-215 : combat-impasse.html remis exactement comme la maj-212 (la 214 est annulée) ; pendant le combat, l'impasse et la ville délabrée derrière sont cachées et en pause

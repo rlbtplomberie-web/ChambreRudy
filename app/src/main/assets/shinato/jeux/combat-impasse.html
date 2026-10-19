@@ -40,7 +40,7 @@
 </head>
 <body>
 <div id="cadre">
-<div id="decorBoite" style="position:absolute;overflow:hidden;pointer-events:none;background:#000;contain:strict"><iframe id="decor" title="Impasse" scrolling="no" style="position:absolute;left:0;top:0;border:0;pointer-events:none;background:#000;will-change:transform;transform-origin:0 0"></iframe></div>
+<iframe id="decor" title="Impasse" scrolling="no" style="position:absolute;border:0;pointer-events:none;background:#000"></iframe>
 <canvas id="jeu" width="1774" height="887"></canvas>
 <div id="manette" class="ctrl"><div id="bouton"></div></div>
 <div id="boutons" class="ctrl">
@@ -2384,8 +2384,9 @@ function appliquerCameraDecor(c){
   if (tr === decorDernier) return; decorDernier = tr;
   decor.style.transformOrigin = '0 0';
   decor.style.transform = tr;
-  // l'impasse reste dans le cadre du jeu grâce à sa boîte (overflow caché) : plus de clip-path recalculé à chaque image,
-  // et will-change garde le décor en une seule texture → le zoom ne le redessine plus (fini les rectangles noirs)
+  // on ne montre l'impasse que dans le cadre du jeu
+  const g = -c.tx * k / c.z, h = -c.ty * k / c.z, dr = wk - (wk - c.tx * k) / c.z, b = hk - (hk - c.ty * k) / c.z;
+  decor.style.clipPath = `inset(${h}px ${dr}px ${b}px ${g}px)`;
 }
 function dessiner(){
   ctx.save();
@@ -2491,8 +2492,7 @@ function ajuster(){
   const k = Math.min(L / W, C / H); kEcran = k;
   cv.style.width = W * k + 'px'; cv.style.height = H * k + 'px';
   cv.style.left = (L - W * k) / 2 + 'px'; cv.style.top = (C - H * k) / 2 + 'px';
-  Object.assign(document.getElementById('decorBoite').style, { left: cv.style.left, top: cv.style.top, width: W * k + 'px', height: H * k + 'px' });
-  Object.assign(decor.style, { width: W * k + 'px', height: H * k + 'px' }); decorDernier = '';
+  Object.assign(decor.style, { left: cv.style.left, top: cv.style.top, width: W * k + 'px', height: H * k + 'px' });
   cadre.style.setProperty('--u', (C / 100) + 'px');
 }
 addEventListener('resize', ajuster); addEventListener('orientationchange', () => setTimeout(ajuster, 200)); ajuster();

@@ -421,6 +421,7 @@ function dessine(){
 let tP=0;
 function avance(t){
   requestAnimationFrame(avance);
+  if(document.getElementById('combatI')){tP=t;return;}   // en pause pendant le combat
   const dt=Math.min(.05,(t-(tP||t))/1000);tP=t;
   let ix=jx,iy=jy;if(clav.l)ix=-1;if(clav.r)ix=1;if(clav.u)iy=-1;if(clav.d)iy=1;
   const m=Math.min(1,Math.hypot(ix,iy));
@@ -520,7 +521,10 @@ window.lancePlaquette=function(){
   const f=document.createElement('iframe');f.id='combatI';f.setAttribute('allow','autoplay; fullscreen');
   f.style.cssText='position:fixed;inset:0;width:100%;height:100%;border:0;z-index:6000;background:#000';
   f.src=COMBAT;document.body.appendChild(f);setTimeout(()=>{try{f.focus()}catch(_){}},300);
+  // pendant le combat, l'impasse de derrière n'est plus dessinée (le téléphone garde sa mémoire pour le combat)
+  for(const el of document.body.children){ if(el!==f&&el.tagName!=='SCRIPT'&&el.tagName!=='STYLE'){ el.dataset.visAvant=el.style.visibility||''; el.style.visibility='hidden'; } }
 };
+function reafficheImpasse(){ for(const el of document.body.children){ if(el.dataset&&'visAvant' in el.dataset){ el.style.visibility=el.dataset.visAvant; delete el.dataset.visAvant; } } }
 addEventListener('message',e=>{
   if(!e.data)return;
   if(e.data.type==='combatImpasse:ko'){   // Rudy K.O. : l'infirmière, puis devant l'hôpital de Vaviel
@@ -528,7 +532,7 @@ addEventListener('message',e=>{
   }
   if(e.data.type==='combatImpasse:victoire'){
     try{localStorage.setItem('impasse_combat_gagne','1')}catch(_){}
-    const f=document.getElementById('combatI');if(f)f.remove();
+    const f=document.getElementById('combatI');if(f)f.remove();reafficheImpasse();
     try{const a=window.top.RUDY_AUDIO;if(a&&window.top.PONTLADES_MUSIQUE){const q=a.play();if(q&&q.catch)q.catch(()=>{});}window.top.PONTLADES_MUSIQUE=false;}catch(_){}
     js();for(const k in clav)clav[k]=0;
   }

@@ -579,7 +579,8 @@ function finEvasion(ok){if(!evasionEnCours)return;evasionEnCours=false;musiqueVi
   else{closeGame();PEINE=60}}                                                                                          // capturé : retour en cellule, une minute d'attente (jamais plus)
 addEventListener('message',e=>{if(!e.data)return;if(e.data.type==='infiltration:reussi')finEvasion(true);else if(e.data.type==='infiltration:echec')finEvasion(false)});
 quit.addEventListener('click',()=>{if(evasionEnCours)finEvasion(false)});
-function frame(now){if(gameFrame){last=now;requestAnimationFrame(frame);return}   // la ville est en pause pendant qu'on joue à une borne
+function frame(now){if(gameFrame){last=now;if(cv.style.visibility!=='hidden')cv.style.visibility='hidden';requestAnimationFrame(frame);return}   // la ville est cachée et en pause pendant un jeu ou un lieu
+  if(cv.style.visibility)cv.style.visibility='';   // la ville est en pause pendant qu'on joue à une borne
   const dt=Math.min(.05,(now-last)/1000);last=now;const sc0=scene;
   const dir=Math.abs(jx)>.2?Math.sign(jx):((keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0));
   const vdir=Math.abs(jy)>.25?jy:((keys.ArrowDown?1:0)-(keys.ArrowUp?1:0));
