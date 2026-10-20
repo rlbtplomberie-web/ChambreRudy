@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Le Baril</title>
+<style>
+  html,body{margin:0;height:100%;background:#120a05;overflow:hidden}
+  #vue{position:fixed;inset:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  #vue::-webkit-scrollbar{display:none}
+  #boite{position:relative}
+  #scene{position:absolute;left:0;top:0;width:1983px;height:793px;transform-origin:0 0;overflow:hidden}
+  #scene img{position:absolute;user-select:none;-webkit-user-drag:none;pointer-events:none}
+  #decor{left:0;top:0;width:1983px;height:793px}
+  #derriere{position:absolute;left:0;top:0;width:1983px;height:471px;overflow:hidden}
+  .lum{position:absolute;border-radius:50%;pointer-events:none;mix-blend-mode:screen;
+       background:radial-gradient(circle,rgba(255,190,90,.34) 0%,rgba(255,150,50,.12) 40%,rgba(255,120,40,0) 70%)}
+  #fumee{position:absolute;left:0;top:0;width:1983px;height:793px;pointer-events:none}
+
+  #rudyCv{position:absolute;left:0;top:0;width:1983px;height:793px;pointer-events:none}
+  #flecheS{position:absolute;pointer-events:none;display:none;width:70px;height:94px;transform:translateX(-50%);animation:bondS .9s ease-in-out infinite;filter:drop-shadow(0 0 8px #ffd400) drop-shadow(0 0 16px rgba(255,212,0,.8))}
+  @keyframes bondS{0%,100%{margin-top:0}50%{margin-top:14px}}
+  #titreR{position:fixed;top:calc(2vmin + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:20;text-align:center;pointer-events:none;color:#fff;font:900 clamp(14px,3vmin,26px)/1.15 Arial,sans-serif;letter-spacing:3px;text-shadow:0 3px 0 #000,0 0 14px rgba(0,0,0,.9)}
+  #titreR small{display:block;margin-top:.5vmin;color:#ffe27a;letter-spacing:4px;font:800 clamp(8px,1.6vmin,13px)/1 Arial,sans-serif}
+  #joyR{position:fixed;left:calc(4.5vmin + env(safe-area-inset-left,0px));bottom:5vmin;width:30vmin;height:30vmin;border-radius:50%;z-index:20;touch-action:none;background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.10),rgba(0,0,0,.34));border:2px solid rgba(255,226,122,.45);box-shadow:0 6px 18px rgba(0,0,0,.5)}
+  #knobR{position:absolute;left:50%;top:50%;width:13vmin;height:13vmin;margin:-6.5vmin 0 0 -6.5vmin;border-radius:50%;pointer-events:none;background:radial-gradient(circle at 42% 36%,#fbf0c6,#c9a33c 60%,#7d6118);box-shadow:0 4px 12px rgba(0,0,0,.6)}
+  #sortirR{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:31vmin;width:24vmin;height:12vmin;border-radius:6vmin;z-index:20;display:none;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;font:900 clamp(11px,2.8vmin,20px)/1 Arial,sans-serif;letter-spacing:1px;color:#111;background:linear-gradient(#ffe56b,#e0a800);border:2px solid #fff3b0;box-shadow:0 0 14px rgba(255,212,0,.7),0 6px 18px rgba(0,0,0,.55)}
+  #sortirR:active{transform:scale(.93)}
+  #parlerR{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:31vmin;width:24vmin;height:12vmin;border-radius:6vmin;z-index:20;display:none;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;font:900 clamp(11px,2.8vmin,20px)/1 Arial,sans-serif;letter-spacing:1px;color:#fff;background:linear-gradient(#e0a24a,#8a4f12);border:2px solid #ffe2b0;box-shadow:0 0 14px rgba(255,170,60,.7),0 6px 18px rgba(0,0,0,.55)}
+  #parlerR:active{transform:scale(.93)}
+  .bulleR{position:fixed;z-index:58;display:none;transform:translate(-50%,-100%);max-width:46vw;padding:2vmin 3vmin;background:#fff;color:#111;border:.8vmin solid #111;border-radius:50%/42%;font:900 clamp(13px,3.6vmin,26px)/1.2 'Comic Sans MS','Comic Neue',Arial,sans-serif;text-align:center;box-shadow:1.1vmin 1.1vmin 0 rgba(0,0,0,.55);pointer-events:none;animation:popR .35s cubic-bezier(.2,1.6,.4,1)}
+  .bulleR:after{content:'';position:absolute;left:var(--q,46%);bottom:-4.6vmin;margin-left:-2.5vmin;border:2.5vmin solid transparent;border-top:4.6vmin solid #111;border-bottom:0}
+  .bulleR:before{content:'';position:absolute;left:var(--q,46%);bottom:-2.8vmin;margin-left:-1.4vmin;z-index:1;border:1.4vmin solid transparent;border-top:2.9vmin solid #fff;border-bottom:0}
+  @keyframes popR{0%{transform:translate(-50%,-100%) scale(.3);opacity:0}100%{transform:translate(-50%,-100%);opacity:1}}
+  #choixR{position:fixed;inset:auto 0 0 0;z-index:55;display:none;flex-wrap:wrap;justify-content:center;align-items:center;gap:2.2vmin;padding:0 4vmin 8vmin;background:linear-gradient(transparent,rgba(20,8,0,.75))}
+  #choixR div{padding:2.4vmin 4.5vmin;border-radius:3.5vmin;font:900 clamp(12px,3vmin,22px)/1 Arial,sans-serif;letter-spacing:.06em;color:#fff;border:.5vmin solid #ffe2b0;background:linear-gradient(#e0a24a,#7a3f0a);box-shadow:0 0 18px rgba(255,170,60,.6);touch-action:none;user-select:none;-webkit-user-select:none}
+  #choixR div.x{padding:3.2vmin 4vmin;background:rgba(0,0,0,.6);border-color:#888;box-shadow:none}
+  #vidR{position:fixed;inset:0;z-index:60;background:#000;display:none}#vidR video{width:100%;height:100%;object-fit:contain}
+</style>
+</head>
+<body>
+<div id="hp" style="position:fixed;top:10px;right:10px;z-index:5;width:40px;height:40px;border-radius:50%;background:rgba(20,10,4,.6);color:#f5d9a8;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;user-select:none">🔇</div>
+<div id="astuce" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:5;padding:8px 14px;border-radius:18px;background:rgba(20,10,4,.65);color:#f5d9a8;font:14px sans-serif;transition:opacity .8s;pointer-events:none">Touchez l'écran pour le son</div>
+<div id="vue"><div id="boite"><div id="scene">
+  <img id="decor" src="/assets/shinato/m/baril_805323e6c1f392.webp" alt="">
+  <div id="derriere"></div>
+  <canvas id="fumee" width="1983" height="793"></canvas>
+</div></div></div>
+<div id="titreR">RUDY STYLE<small>LE BARIL</small></div>
+<div id="joyR"><div id="knobR"></div></div>
+<div id="sortirR">SORTIR</div>
+<div id="parlerR">PARLER</div>
+<div class="bulleR" id="bulleBarry"></div>
+<div id="choixR"><div id="chDiamant" data-v="/assets/shinato/m/baril_barry_diamant_lune.mp4">LE DIAMANT DE LUNE</div><div id="chMort" data-v="/assets/shinato/m/baril_barry_diamant_mort.mp4">LE DIAMANT DE MORT</div><div id="chPlantes" data-v="/assets/shinato/m/baril_barry_diamant_plantes.mp4">LE DIAMANT DE PLANTES</div><div id="chEtoiles" data-v="/assets/shinato/m/baril_barry_diamant_etoiles.mp4">LE DIAMANT D'ÉTOILES</div><div id="chCoeur" data-v="/assets/shinato/m/baril_barry_diamant_coeur.mp4">LE DIAMANT DE CŒUR</div><div id="chPlume" data-v="/assets/shinato/m/baril_barry_diamant_plume.mp4">LE DIAMANT DE PLUME</div><div id="chPlaquette" data-v="/assets/shinato/m/baril_barry_plaquette.mp4">LA PLAQUETTE MÉTALLIQUE</div><div class="x" id="chFermerR">✕</div></div>
+<div id="vidR"><video playsinline preload="auto"></video></div>
+<script>
+const FR={"back00": {"src": "/assets/shinato/m/baril_c48fe5bff49058.webp", "w": 215, "h": 351, "ax": 103.8}, "back01": {"src": "/assets/shinato/m/baril_8dc1267bb8a603.webp", "w": 210, "h": 350, "ax": 106.5}, "back02": {"src": "/assets/shinato/m/baril_fb16f89a510112.webp", "w": 209, "h": 352, "ax": 104.6}, "back10": {"src": "/assets/shinato/m/baril_0aa9e38d9ea6f9.webp", "w": 177, "h": 363, "ax": 86.0}, "back11": {"src": "/assets/shinato/m/baril_d3b0dee84fff49.webp", "w": 160, "h": 363, "ax": 88.9}, "back12": {"src": "/assets/shinato/m/baril_b515c0f3ff2e11.webp", "w": 157, "h": 363, "ax": 90.1}, "back20": {"src": "/assets/shinato/m/baril_ad4e22e5e31b28.webp", "w": 222, "h": 354, "ax": 110.0}, "back21": {"src": "/assets/shinato/m/baril_47a87f24bd10d9.webp", "w": 191, "h": 353, "ax": 106.6}, "back22": {"src": "/assets/shinato/m/baril_b6ac7775aac324.webp", "w": 191, "h": 354, "ax": 107.0}, "prof00": {"src": "/assets/shinato/m/baril_1a594d5196871d.webp", "w": 188, "h": 351, "ax": 124.8}, "prof01": {"src": "/assets/shinato/m/baril_5cb78c50afb8e7.webp", "w": 179, "h": 352, "ax": 116.1}, "prof02": {"src": "/assets/shinato/m/baril_b6352cbc8392f2.webp", "w": 177, "h": 351, "ax": 115.7}, "prof10": {"src": "/assets/shinato/m/baril_2db8daee74c427.webp", "w": 239, "h": 376, "ax": 134.4}, "prof11": {"src": "/assets/shinato/m/baril_8e5e6a4b1b040e.webp", "w": 235, "h": 376, "ax": 130.6}, "prof12": {"src": "/assets/shinato/m/baril_bb12cfafdc325c.webp", "w": 233, "h": 376, "ax": 131.7}, "prof20": {"src": "/assets/shinato/m/baril_a92ca48f4505da.webp", "w": 217, "h": 370, "ax": 124.4}, "prof21": {"src": "/assets/shinato/m/baril_7e81eab9293be2.webp", "w": 197, "h": 370, "ax": 124.8}, "prof22": {"src": "/assets/shinato/m/baril_fa7e3c7dc3b4c3.webp", "w": 195, "h": 370, "ax": 122.2}, "prof30": {"src": "/assets/shinato/m/baril_84bb69e5a4584c.webp", "w": 227, "h": 366, "ax": 141.4}, "prof31": {"src": "/assets/shinato/m/baril_ab8399dafabc5f.webp", "w": 230, "h": 367, "ax": 142.0}, "prof32": {"src": "/assets/shinato/m/baril_89c548483c3522.webp", "w": 231, "h": 368, "ax": 138.3}, "vx0": {"src": "/assets/shinato/m/baril_52c60b08323d8b.webp", "w": 326, "h": 944, "ax": 197.0}, "vx1": {"src": "/assets/shinato/m/baril_e4481667a97c6e.webp", "w": 342, "h": 944, "ax": 198.1}, "vx2": {"src": "/assets/shinato/m/baril_91e3b381490839.webp", "w": 370, "h": 944, "ax": 197.4}, "vx3": {"src": "/assets/shinato/m/baril_9b51321027a020.webp", "w": 323, "h": 943, "ax": 189.7}, "bl0": {"src": "/assets/shinato/m/baril_15c47ae4d45c78.webp", "w": 358, "h": 693, "ax": 174}, "bl1": {"src": "/assets/shinato/m/baril_79cfce6c75ecab.webp", "w": 502, "h": 691, "ax": 163}, "bl2": {"src": "/assets/shinato/m/baril_18d5d9903afe3d.webp", "w": 651, "h": 682, "ax": 162}, "bl3": {"src": "/assets/shinato/m/baril_9ecb8167536a86.webp", "w": 481, "h": 686, "ax": 159}};
+const BM=[{"src": "/assets/shinato/m/baril_682f085d354272.webp", "w": 266, "h": 710, "ax": 127}, {"src": "/assets/shinato/m/baril_f70ee1acd42a37.webp", "w": 255, "h": 679, "ax": 123}, {"src": "/assets/shinato/m/baril_06c34ab13d538d.webp", "w": 273, "h": 696, "ax": 162}, {"src": "/assets/shinato/m/baril_aaf08c332213ca.webp", "w": 214, "h": 672, "ax": 101}, {"src": "/assets/shinato/m/baril_161fc9dae05652.webp", "w": 287, "h": 716, "ax": 114}, {"src": "/assets/shinato/m/baril_214285f59b11bb.webp", "w": 258, "h": 704, "ax": 102}, {"src": "/assets/shinato/m/baril_c19b112fd3dbb2.webp", "w": 234, "h": 654, "ax": 146}, {"src": "/assets/shinato/m/baril_34551bb3149fce.webp", "w": 243, "h": 723, "ax": 110}];
+const ST={"965": "/assets/shinato/m/baril_21d8e3720143e0.webp", "1118": "/assets/shinato/m/baril_02e972e2a0da74.webp", "1515": "/assets/shinato/m/baril_3b52896dc4488f.webp", "1740": "/assets/shinato/m/baril_5f76a5ff50e4bb.webp"};
+const MUSIQUE='/assets/shinato/m/baril_612d49cfb0e3fc.mp3';
+const scene=document.getElementById('scene');
+const derriere=document.getElementById('derriere');
+const cv=document.getElementById('fumee'),ctx=cv.getContext('2d');
+const rnd=(a,b)=>a+Math.random()*(b-a);
+
+/* ---------- mise à l'échelle : remplit la hauteur, on glisse pour se déplacer ---------- */
+const vue=document.getElementById('vue'),boite=document.getElementById('boite');
+function ajuste(){
+  const W=innerWidth,H=innerHeight;
+  let s=H/793; if(1983*s<W) s=W/1983;
+  scene.style.transform='scale('+s+')';
+  boite.style.width=(1983*s)+'px'; boite.style.height=(793*s)+'px';
+  boite.style.marginTop=Math.max(0,(H-793*s)/2)+'px';
+  vue.scrollLeft=Math.max(0,(1983*s-W)*0.62);
+}
+addEventListener('resize',ajuste);
+
+/* ---------- lueurs des lanternes ---------- */
+const lumieres=[];
+[[178,470,150],[598,470,150],[1228,452,130],[920,445,110],[1865,470,150],[365,215,120],[853,295,110],
+ [925,195,110],[1612,195,110],[1683,295,110],[187,268,90],[480,228,90],[562,95,190]]
+.forEach(([x,y,r])=>{
+  const d=document.createElement('div');d.className='lum';
+  d.style.left=(x-r)+'px';d.style.top=(y-r)+'px';d.style.width=d.style.height=(2*r)+'px';
+  scene.insertBefore(d,cv); d._p=rnd(0,6); lumieres.push(d);
+});
+
+/* ---------- personnages assis ---------- */
+const PERSOS=[];
+function persoAssis(o){
+  /* o: pre, x (centre du tabouret), seat (y du dessus de l'assise), s (échelle), seatFrac,
+     flip, buttX (abscisse des fesses dans l'image), smoke:{tips:[[x,y]x3], mouth:[x,y]}, kind */
+  const el=document.createElement('img'); scene.insertBefore(el,cv);
+  const imgs=(o.nb?[...Array(o.nb).keys()]:[0,1,2]).map(i=>FR[o.pre+i]);
+  const p=Object.assign({el,imgs,frame:-1,t:0,seq:[],timer:rnd(1,5),breath:rnd(0,6),puffT:rnd(0,1)},o);
+  if(o.poitrine){ const box=document.createElement('div'); box.style.cssText='position:absolute;transform-origin:50% 100%;pointer-events:none';
+    const im=document.createElement('img'); im.style.cssText='left:0;top:0;width:100%;height:100%;transform-origin:50% 30%';
+    box.appendChild(im); scene.insertBefore(box,cv); p.jig=Object.assign({box,img:im,y:0,v:0},o.poitrine); }
+  setFrame(p,o.repos||0); PERSOS.push(p); return p;
+}
+function geo(p,i){ /* position de l'image i dans la scène */
+  const f=p.imgs[i],f0=p.imgs[0],s=p.s;
+  const h=f.h*s,w=f.w*s;
+  const bottom=p.seat+(1-p.seatFrac)*f0.h*s;
+  let left;
+  if(p.buttX!==undefined){ /* profil : on aligne les jambes, fesses sur le tabouret */
+    const legsX = p.x + (p.flip?-1:1)*(f0.ax-p.buttX)*s;
+    left = p.flip ? legsX-(f.w-f.ax)*s : legsX-f.ax*s;
+  } else left=p.x-f.ax*s;
+  return {left,top:bottom-h,w,h};
+}
+function setFrame(p,i){
+  if(p.frame===i) return; p.frame=i;
+  const f=p.imgs[i],g=geo(p,i);
+  p.el.src=f.src; p.el.style.left=g.left+'px'; p.el.style.top=g.top+'px';
+  p.el.style.width=g.w+'px'; p.el.style.height=g.h+'px';
+  p.el.style.transformOrigin='50% 100%';
+  p.g=g;
+  if(p.jig){ const J=p.jig,c=J.c[i],s=p.s;
+    J.box.style.left=g.left+'px'; J.box.style.top=g.top+'px'; J.box.style.width=g.w+'px'; J.box.style.height=g.h+'px';
+    J.img.src=f.src;
+    const m=`radial-gradient(ellipse ${J.rx*s}px ${J.ry*s}px at ${c[0]*s}px ${c[1]*s}px, #000 45%, transparent 100%)`;
+    J.box.style.webkitMaskImage=m; J.box.style.maskImage=m;
+    J.v += (i===0? 18 : 34)*(Math.random()<0.5?1:-1)*0.6 + (i===0?14:28); }
+}
+function pointScene(p,pt){ /* point (coordonnées de l'image courante) -> scène */
+  const f=p.imgs[p.frame],g=p.g;
+  const x = p.flip ? g.left+(f.w-pt[0])*p.s : g.left+pt[0]*p.s;
+  return [x,g.top+pt[1]*p.s];
+}
+/* séquences : [image, durée] */
+function nouvelleSequence(p){
+  if(p.kind==='balai'){ const s=[]; const n=3+Math.floor(Math.random()*4);
+    for(let i=0;i<n;i++) s.push([1,0.32],[2,0.42],[3,0.36]);
+    s.push([0,0]); return s; }
+  if(p.kind==='vieux') return Math.random()<0.5
+    ? [[2,rnd(1.4,2.2)],[1,0]]
+    : [[0,rnd(0.9,1.3)],[3,rnd(1.0,1.5)],[1,0,'souffle']];
+  if(p.kind==='parle' && Math.random()<0.5)
+    return [[1,rnd(1.2,2.4)],[0,rnd(0.6,1.2)],[1,rnd(1,2)],[0,0]];
+  if(p.kind==='fume')
+    return [[1,0.45],[2,rnd(1.3,2.0)],[1,0.45],[0,0,'souffle']];
+  return [[1,0.45],[2,rnd(1.0,1.8)],[1,0.45],[0,0,'verre']];
+}
+function majPerso(p,dt){
+  p.timer-=dt;
+  if(p.timer<=0){
+    if(!p.seq.length){ p.seq=nouvelleSequence(p); }
+    const [img,dur,ev]=p.seq.shift(); setFrame(p,img);
+    if(ev==='souffle') p.souffle=1.6;
+    if(ev==='verre') SON.verrePose(p.x,0.9);
+    if(p.kind==='balai' && img===2) SON.balai(p.x+60);
+    p.timer = p.seq.length? dur : rnd(3,8);
+  }
+  p.breath+=dt*1.6;
+  const b=1+Math.sin(p.breath)*0.006;
+  p.el.style.transform=(p.flip?'scaleX(-1) ':'')+'scaleY('+b+')';
+  if(p.jig){ const J=p.jig;
+    J.v += (-110*J.y - 5.5*J.v)*dt; J.y += J.v*dt;          /* ressort amorti */
+    J.y=Math.max(-5,Math.min(5,J.y));
+    J.box.style.transform=p.el.style.transform;
+    J.img.style.transform='translateY('+J.y.toFixed(2)+'px) scaleY('+(1+J.y*0.006).toFixed(4)+')'; }
+  if(p.smoke){
+    /* fumée qui monte de la cigarette */
+    p.puffT-=dt;
+    if(p.puffT<=0){ p.puffT=0.09; let tp=p.smoke.tips[p.frame];
+      if(Array.isArray(tp[0])) tp=tp[Math.floor(Math.random()*tp.length)];
+      const [x,y]=pointScene(p,tp); fil(x,y); }
+    /* bouffée recrachée */
+    if(p.souffle>0){
+      p.souffle-=dt;
+      if(p.souffle<1.2 && p.souffle>0.2){
+        const [x,y]=pointScene(p,p.smoke.mouth);
+        for(let k=0;k<(p.smoke.k?1:2);k++) bouffee(x,y,p.smoke.dir*(p.flip?-1:1),p.smoke.k||1);
+      }
+    }
+  }
+}
+
+/* ---------- fumée ---------- */
+const parts=[];
+function fil(x,y){ parts.push({x,y,vx:rnd(-4,4),vy:rnd(-22,-30),r:rnd(1.5,2.5),gr:rnd(5,8),a:0.38,da:rnd(0.11,0.15),ph:rnd(0,6),w:rnd(6,12)}); }
+function bouffee(x,y,dir,k=1){ parts.push({x:x+rnd(-3,3),y:y+rnd(-3,3),vx:dir*rnd(14,30)+rnd(-6,6),vy:rnd(-14,-26),r:rnd(3,6)*k,gr:rnd(10,16)*k,a:0.30*k,da:rnd(0.10,0.15),ph:rnd(0,6),w:rnd(4,8)}); }
+function majFumee(dt){
+  ctx.clearRect(0,0,1983,793);
+  for(let i=parts.length-1;i>=0;i--){
+    const q=parts[i];
+    q.ph+=dt*1.5; q.x+=(q.vx+Math.sin(q.ph)*q.w)*dt; q.y+=q.vy*dt; q.vx*=0.985;
+    q.r+=q.gr*dt; q.a-=q.da*dt;
+    if(q.a<=0){parts.splice(i,1);continue;}
+    const g=ctx.createRadialGradient(q.x,q.y,0,q.x,q.y,q.r);
+    g.addColorStop(0,'rgba(225,215,205,'+q.a+')'); g.addColorStop(1,'rgba(225,215,205,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(q.x,q.y,q.r,0,6.283); ctx.fill();
+  }
+}
+
+/* --- au comptoir, de dos : 2 à gauche, un tabouret vide, 1 à droite --- */
+const SB=0.54;
+persoAssis({pre:'back0',x:965,seat:528,s:SB,seatFrac:0.73});
+persoAssis({pre:'back1',x:1118,seat:528,s:SB,seatFrac:0.72});
+persoAssis({pre:'back2',x:1515,seat:528,s:SB,seatFrac:0.73,kind:'fume',
+  smoke:{tips:[[220,181],[146,55],[139,52]],mouth:[160,48],dir:1}});
+/* l'avant des tabourets passe devant les jambes de ceux qui sont de dos */
+[965,1118,1515].forEach(c=>{const im=document.createElement('img');im.src=ST[c];
+  im.style.cssText='left:'+(c-60)+'px;top:505px;width:120px;height:145px';scene.insertBefore(im,cv);});
+/* --- le monsieur debout contre le mur de droite, derrière le tabouret --- */
+persoAssis({pre:'vx',nb:4,repos:1,x:1750,seat:632,s:0.29,seatFrac:1,kind:'vieux',
+  smoke:{tips:[[80,123],[9,536],[9,536],[82,123]],mouth:[194,121],dir:-1,k:0.6}});
+{const im=document.createElement('img');im.src=ST[1740];
+  im.style.cssText='left:1690px;top:540px;width:100px;height:120px';scene.insertBefore(im,cv);}
+/* --- autour des tonneaux, de profil, face à face --- */
+const SP=0.6;
+persoAssis({pre:'prof0',x:50,seat:556,s:SP,seatFrac:0.70,buttX:55});
+persoAssis({pre:'prof1',x:305,seat:556,s:SP,seatFrac:0.71,buttX:60,flip:true});
+persoAssis({pre:'prof2',x:487,seat:556,s:SP,seatFrac:0.70,buttX:50,kind:'fume',
+  smoke:{tips:[[215,220],[157,65],[147,60]],mouth:[160,74],dir:1}});
+persoAssis({pre:'prof3',x:735,seat:556,s:SP,seatFrac:0.71,buttX:60,flip:true,kind:'parle'});
+
+
+/* --- la femme qui passe le balai, entre la dame aux cheveux gris et l'homme à la chemise verte --- */
+persoAssis({pre:'bl',nb:4,repos:0,x:850,seat:676,s:0.40,seatFrac:1,kind:'balai',
+  poitrine:{c:[[166,201],[243,220],[264,199],[198,198]],rx:66,ry:56},
+  smoke:{tips:[[[160,111],[206,110]],[[254,144],[300,138]],[[285,123],[322,125]],[[217,135],[260,135]]]}});
+
+/* ---------- le barman (derrière le comptoir) ---------- */
+const bm={el:document.createElement('img'),x:1322,cible:1322,etat:'pose',timer:3,pose:0,seq:[],pas:0,s:0.385,pied:630};
+derriere.appendChild(bm.el);
+const MAISON=1322;
+function poseBM(i){
+  const f=BM[i]; if(bm.pose!==i){ if(i===2) SON.verser(bm.x); if(i===6) SON.verrePose(bm.x,1); } bm.pose=i;
+  bm.el.src=f.src; bm.el.style.width=(f.w*bm.s)+'px'; bm.el.style.height=(f.h*bm.s)+'px';
+}
+function placeBM(){
+  const f=BM[bm.pose];
+  const bob = bm.etat==='marche' ? -Math.abs(Math.sin(bm.pas))*4 : 0;
+  bm.el.style.left=(bm.x-f.ax*bm.s)+'px';
+  bm.el.style.top=(bm.pied-f.h*bm.s+bob)+'px';
+}
+/* poses : 0 essuie verre, 1 essuie, 2 sert, 3 surpris, 4 se gratte la tête, 5 bras croisés, 6 tend le verre, 7 pouce levé */
+function seqBarman(){
+  const choix=[
+    [[0,2.2],[1,2.2],[0,2.0],[1,2.0]],
+    [[2,3.0],[6,2.5],[7,1.8]],
+    [[5,rnd(3,5)]],
+    [[4,2.2],[5,2.5]],
+    [[0,1.8],[1,1.8],[7,1.6]],
+    [[3,1.2],[4,1.8]],
+    [[6,2.2],[5,2.5]],
+  ];
+  return choix[Math.floor(Math.random()*choix.length)].slice();
+}
+function majBM(dt){
+  if(bm.etat==='marche'){
+    const d=bm.cible-bm.x, v=95*dt;
+    bm.pas+=dt*7.5;
+    if(Math.abs(d)<=v){ bm.x=bm.cible; bm.etat='pose'; bm.timer=0; bm.surPlace = bm.cible!==MAISON; bm.seq = bm.surPlace ? [[[0,1,5,7,6][Math.floor(Math.random()*5)], rnd(2.5,4.5)]] : []; }
+    else bm.x+=Math.sign(d)*v;
+  } else {
+    bm.timer-=dt;
+    if(bm.timer<=0){
+      if(!bm.seq.length){
+        if(bm.surPlace){ /* il a fait sa petite affaire ailleurs : retour devant le tabouret vide */
+          bm.surPlace=false; partir(MAISON); return;
+        }
+        if(bm.x===MAISON && Math.random()<0.22){
+          let c; do{ c=Math.random()<0.5? rnd(860,1180) : rnd(1430,1620);}while(Math.abs(c-MAISON)<90);
+          partir(Math.round(c)); return;
+        }
+        bm.seq = seqBarman();
+      }
+      const [i,dur]=bm.seq.shift(); poseBM(i); bm.timer=dur;
+    }
+  }
+  placeBM();
+}
+function partir(c){ bm.cible=c; bm.etat='marche'; poseBM(Math.random()<0.5?0:5); }
+poseBM(0); placeBM();
+
+
+/* ---------- son : musique + petits bruits de bar ---------- */
+document.getElementById('hp').addEventListener('pointerdown',e=>{e.stopPropagation(); if(!sonOn){initSon();return;}
+  if(musique.paused){musique.play();maitre&&(maitre.gain.value=0.9);e.target.textContent='🔊';} else {musique.pause();maitre&&(maitre.gain.value=0);e.target.textContent='🔇';}});
+const musique=new Audio(MUSIQUE); musique.loop=true; musique.volume=0.22;
+let AC=null, sonOn=false, maitre=null, bruitBuf=null;
+function initSon(){
+  if(sonOn) return; sonOn=true;
+  try{ AC=new (window.AudioContext||window.webkitAudioContext)(); maitre=AC.createGain(); maitre.gain.value=0.9; maitre.connect(AC.destination);
+       const n=AC.sampleRate*2; bruitBuf=AC.createBuffer(1,n,AC.sampleRate); const d=bruitBuf.getChannelData(0); for(let i=0;i<n;i++) d[i]=Math.random()*2-1;
+  }catch(e){ AC=null; }
+  musique.play().catch(()=>{});
+  const a=document.getElementById('astuce'); if(a) a.style.opacity=0;
+  document.getElementById('hp').textContent='🔊';
+}
+function sortie(x){ /* panoramique selon la place dans le bar */
+  const p=AC.createStereoPanner?AC.createStereoPanner():null;
+  if(p){ p.pan.value=Math.max(-0.8,Math.min(0.8,(x/1983)*1.6-0.8)); p.connect(maitre); return p; } return maitre;
+}
+function tinte(x,t,freqs,vol,dec){
+  freqs.forEach((f,i)=>{ const o=AC.createOscillator(),g=AC.createGain(); o.type='sine'; o.frequency.value=f*(1+rnd(-0.01,0.01));
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol/(i+1),t+0.003); g.gain.exponentialRampToValueAtTime(0.0001,t+dec*(1-i*0.15));
+    o.connect(g); g.connect(sortie(x)); o.start(t); o.stop(t+dec+0.05); });
+}
+function souffleBruit(x,t,f,q,vol,dur,att){
+  const s=AC.createBufferSource(); s.buffer=bruitBuf; const bp=AC.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=f; bp.Q.value=q;
+  const g=AC.createGain(); g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+(att||0.005)); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  s.connect(bp); bp.connect(g); g.connect(sortie(x)); s.start(t,rnd(0,1)); s.stop(t+dur+0.05); return bp;
+}
+const SON={
+  verrePose(x,v=1){ if(!AC) return; const t=AC.currentTime+0.02;
+    souffleBruit(x,t,260,1.2,0.22*v,0.07);                 /* petit « toc » sur le bois */
+    tinte(x,t+0.004,[1850,2950,4700],0.035*v,0.22); },
+  trinque(x,v=1){ if(!AC) return; const t=AC.currentTime+0.02;
+    tinte(x,t,[2700,4300,6800],0.04*v,0.7); tinte(x,t+0.07,[2550,4100,6500],0.03*v,0.6); },
+  verser(x){ if(!AC) return; const t=AC.currentTime+0.05,d=1.6;
+    const bp=souffleBruit(x,t,900,6,0.07,d,0.12); bp.frequency.linearRampToValueAtTime(1900,t+d);
+    for(let k=0;k<7;k++) souffleBruit(x,t+0.12+k*0.2+rnd(0,0.05),rnd(500,750),4,0.05,0.09); },
+  balai(x){ if(!AC) return; const t=AC.currentTime+0.01; souffleBruit(x,t,3200,0.6,0.035,0.32,0.08); },
+};
+/* bruits d'ambiance au hasard : verres qui trinquent ou qu'on pose, au loin */
+let ambT=4;
+function majAmbiance(dt){
+  ambT-=dt; if(ambT>0) return; ambT=rnd(5,13);
+  const x=rnd(0,1983); if(Math.random()<0.5) SON.trinque(x,0.55); else SON.verrePose(x,0.6);
+}
+addEventListener('pointerdown',initSon,{once:false});
+
+/* ---------- boucle ---------- */
+let last=performance.now();
+function boucle(t){
+  const dt=Math.min(0.05,(t-last)/1000); last=t;
+  PERSOS.forEach(p=>majPerso(p,dt));
+  majBM(dt); majFumee(dt); if(AC) majAmbiance(dt);
+  lumieres.forEach(d=>{ d._p+=dt*(3+Math.random()*4); d.style.opacity=0.82+Math.sin(d._p)*0.1+Math.random()*0.06; });
+  requestAnimationFrame(boucle);
+}
+ajuste(); requestAnimationFrame(boucle);
+/* ================= Rudy dans le Baril (planche de Rudy du Pixel Bar) ================= */
+(function(){
+const RB={"droite": {"img": ["/assets/shinato/m/ef1f0b8c2cc9473b.webp", "/assets/shinato/m/8f16b04582ccd18f.webp", "/assets/shinato/m/b76af52210dcf554.webp", "/assets/shinato/m/335b72042ef27bbc.webp", "/assets/shinato/m/50c8697489c2c907.webp", "/assets/shinato/m/cbd0a1ad22fab3ba.webp", "/assets/shinato/m/680d616f4c29d575.webp", "/assets/shinato/m/3316119779970e96.webp", "/assets/shinato/m/47efa18c2f9698a9.webp"], "w": 134, "h": 206, "ax": 63.612575574365174, "ay": 203.0}, "gauche": {"img": ["/assets/shinato/m/6f1bf8da705a8911.webp", "/assets/shinato/m/f02a3a5feed4f7c4.webp", "/assets/shinato/m/ede9f664436f25f2.webp", "/assets/shinato/m/51aa1ca8a5dd4922.webp", "/assets/shinato/m/9600fe3909581e0b.webp", "/assets/shinato/m/037ddbda857ff35b.webp", "/assets/shinato/m/946210da6e0395a1.webp", "/assets/shinato/m/ba4398dc080de701.webp", "/assets/shinato/m/70e4515f71136159.webp"], "w": 130, "h": 197, "ax": 63.97493036211699, "ay": 195.0}, "haut": {"img": ["/assets/shinato/m/8a8dcc61508e73cc.webp", "/assets/shinato/m/0625bc5499c17775.webp", "/assets/shinato/m/d130e78bd96cbf58.webp", "/assets/shinato/m/85e77196dae0a364.webp", "/assets/shinato/m/f112a083b3eac8ab.webp", "/assets/shinato/m/fe5eff60eeb2ac4d.webp", "/assets/shinato/m/6be13897791b903d.webp", "/assets/shinato/m/dd80719f53df96e6.webp", "/assets/shinato/m/38e6d2bce0ca6363.webp"], "w": 89, "h": 218, "ax": 44.04040242733951, "ay": 215.0}, "bas": {"img": ["/assets/shinato/m/d67456269af20e2b.webp", "/assets/shinato/m/d227cf6f358b0526.webp", "/assets/shinato/m/0f7f9a1e518986f4.webp", "/assets/shinato/m/0a266f69d86aa01d.webp", "/assets/shinato/m/d513893fbe84847c.webp", "/assets/shinato/m/6f705304ece6820d.webp", "/assets/shinato/m/ff9a36731da1dafd.webp", "/assets/shinato/m/4d7a4f90f39f828c.webp", "/assets/shinato/m/3e7f67122e98fbfb.webp"], "w": 100, "h": 241, "ax": 50.24630667345899, "ay": 238.0}};
+for(const k in RB) RB[k].fr=RB[k].img.map(u=>{const i=new Image();i.src=u;return i;});
+const rcv=document.createElement('canvas'); rcv.id='rudyCv'; rcv.width=1983; rcv.height=793; scene.insertBefore(rcv,cv);
+const rx=rcv.getContext('2d');
+const fl=document.createElement('div'); fl.id='flecheS';
+fl.innerHTML='<svg viewBox="0 0 60 80" width="100%" height="100%"><path d="M18 0h24v42h16L30 80 2 42h16z" fill="#ffd400" stroke="#fff6b0" stroke-width="3" stroke-linejoin="round"/></svg>';
+scene.appendChild(fl);
+const Y0=662, Y1=708, X0=70, X1=1915;           // le plancher où il marche
+const SORTIE_X=150;                              // la porte de sortie est à gauche
+fl.style.left=SORTIE_X+'px'; fl.style.top='300px';
+const R={x:SORTIE_X+250,y:690,dir:'droite',pas:0,bouge:false};
+function taille(y){return 290+(y-690)*0.9}
+let jx=0,jy=0,occupe=false;
+function dessine(){
+  rx.clearRect(0,0,1983,793);
+  const set=R.dir, P=RB[set], h=taille(R.y), k=h/P.h;
+  const i=R.bouge?Math.floor(R.pas/(h*0.13)):0, ph=R.bouge?R.pas/(h*0.34):null;
+  const im=P.fr[i%P.fr.length]; if(!im.complete||!im.naturalWidth) return;
+  rx.fillStyle='rgba(0,0,0,.38)';rx.beginPath();rx.ellipse(R.x,R.y,h*0.17,h*0.035,0,0,7);rx.fill();
+  const X=R.x-P.ax*k, Y=R.y-P.ay*k;
+  if((set==='droite'||set==='gauche')&&ph!=null){
+    const ouv=0.30+0.70*Math.abs(Math.cos(ph*Math.PI)), bob=-Math.abs(Math.sin(ph*Math.PI))*h*0.018;
+    const hanche=Math.round(P.h*0.50), N=14, bas=P.h-hanche;
+    rx.drawImage(im,0,0,P.w,hanche,X,Y+bob,P.w*k,hanche*k);
+    for(let n=0;n<N;n++){ const s0=hanche+bas*n/N, s1=hanche+bas*(n+1)/N, f=(n+0.5)/N, sx=1-(1-ouv)*f;
+      rx.drawImage(im,0,s0,P.w,s1-s0+0.6,X+P.ax*k-P.ax*k*sx,Y+s0*k+bob*(1-f),P.w*k*sx,(s1-s0)*k+0.6); }
+  } else rx.drawImage(im,X,Y,P.w*k,P.h*k);
+}
+// la caméra suit Rudy (le décor ne se fait plus glisser au doigt : c'est Rudy qui avance)
+vue.style.overflowX='hidden';
+function camera(direct){
+  const s=innerHeight/793<innerWidth/1983?innerWidth/1983:innerHeight/793;
+  const cible=Math.max(0,Math.min(1983*s-innerWidth,R.x*s-innerWidth/2));
+  vue.scrollLeft=direct?cible:vue.scrollLeft+(cible-vue.scrollLeft)*0.14;
+}
+const bS=document.getElementById('sortirR');
+let tP=0;
+function avance(t){
+  requestAnimationFrame(avance);
+  const dt=Math.min(.05,(t-(tP||t))/1000); tP=t;
+  let ax=jx,ay=jy; if(clav.l)ax=-1; if(clav.r)ax=1; if(clav.u)ay=-1; if(clav.d)ay=1; if(occupe){ax=ay=0;}
+  const m=Math.hypot(ax,ay);
+  if(m>0.2){
+    const v=270*Math.min(1,m), nx=Math.max(X0,Math.min(X1,R.x+ax/m*v*dt)), ny=Math.max(Y0,Math.min(Y1,R.y+ay/m*v*dt*0.45));
+    R.pas+=Math.hypot(nx-R.x,ny-R.y); R.x=nx; R.y=ny; R.bouge=true;
+    R.dir=Math.abs(ax)>=Math.abs(ay)*0.8?(ax>0?'droite':'gauche'):(ay>0?'bas':'haut');
+  } else R.bouge=false;
+  const pres=R.x<SORTIE_X+170&&!occupe; bS.style.display=pres?'flex':'none'; fl.style.display=pres?'block':'none';
+  bP.style.display=!occupe&&quiParle()?'flex':'none';     // face au barman (ou à la balayeuse, après la plaquette) : PARLER
+  dessine(); camera(false);
+}
+// SORTIR : on sort quand le doigt se relève, la musique du Baril s'arrête
+let arme=false;
+bS.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();arme=true;});
+bS.addEventListener('pointerup',e=>{e.preventDefault();e.stopPropagation();if(!arme)return;arme=false;occupe=true;js();for(const k in clav)clav[k]=0;
+  try{musique.pause();if(maitre)maitre.gain.value=0;}catch(_){}
+  setTimeout(()=>{try{window.parent.postMessage({type:'baril:sortie'},'*');}catch(_){}},60);});
+bS.addEventListener('pointercancel',()=>{arme=false;});
+// ===== PARLER à Barry, le barman : sa bulle, puis les choix =====
+const bP=document.getElementById('parlerR'), bulle=document.getElementById('bulleBarry'), choix=document.getElementById('choixR');
+const vbox=document.getElementById('vidR'), vid=vbox.querySelector('video');
+function appuiR(el,fn){el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();fn();});}
+const balai=PERSOS.find(p=>p.kind==='balai');
+function plaquetteVue(){ try{ return localStorage.getItem('baril_plaquette_vu')==='1'; }catch(e){ return false; } }
+function quiParle(){
+  const dB=Math.abs(R.x-bm.x), dF=balai?Math.abs(R.x-balai.x-40):1e9;
+  if(plaquetteVue()&&dF<120&&dF<=dB) return 'balai';
+  return dB<120?'barry':null;
+}
+function rectRudy(){ const r=rcv.getBoundingClientRect(), k=r.width/1983, h=taille(R.y);
+  return {left:r.left+(R.x-h*0.2)*k, top:r.top+(R.y-h)*k, width:h*0.4*k, height:h*k}; }
+function montreBulle(txt,qui){
+  bulle.textContent=txt;bulle.style.display='block';bulle.style.animation='none';void bulle.offsetWidth;bulle.style.animation='';
+  const r=qui==='rudy'?rectRudy():qui==='balai'?balai.el.getBoundingClientRect():bm.el.getBoundingClientRect(), bw=bulle.offsetWidth, cx=r.left+r.width/2, x=Math.max(bw/2+8,Math.min(innerWidth-bw/2-8,cx));
+  bulle.style.left=x+'px'; bulle.style.top=Math.max(bulle.offsetHeight+12,r.top+r.height*0.02)+'px';
+  bulle.style.setProperty('--q',Math.max(12,Math.min(88,50+(cx-x)/bw*100))+'%');
+}
+let musiqueAvant=false;
+function finDialogue(){choix.style.display='none';bulle.style.display='none';occupe=false;js();for(const k in clav)clav[k]=0;}
+appuiR(bP,()=>{ if(occupe)return; if(quiParle()==='balai'){ dialogueBalai(); return; } occupe=true; js(); for(const k in clav)clav[k]=0; bP.style.display='none';
+  R.dir='haut'; montreBulle("Salut, je m'appelle Barry. Si tu veux des informations… tu payes.");
+  setTimeout(()=>{ if(occupe) choix.style.display='flex'; },2000); });
+appuiR(document.getElementById('chFermerR'),finDialogue);
+// chaque information coûte 100 € (le porte-monnaie de Rudy, comme au Barding)
+const PRIX=100;
+function pont(){ for(const w of [window,parent,top]){ try{ if(w.Chambre&&w.Chambre.argent) return w.Chambre; }catch(e){} } return null; }
+function argent(){ const p=pont(); try{ return p?p.argent():null; }catch(e){ return null; } }
+function payer(n){ const p=pont(); try{ if(p&&p.ajouterArgent) p.ajouterArgent(-n); }catch(e){} }
+// chaque choix lance sa vidéo
+['chDiamant','chMort','chPlantes','chEtoiles','chCoeur','chPlume','chPlaquette'].forEach(id=>{ const el=document.getElementById(id); appuiR(el,()=>{
+  const a=argent(); if(a!==null&&a<PRIX){ montreBulle("Il te faut "+PRIX+" € 😏"); return; }
+  payer(PRIX);
+  if(id==='chPlaquette'){ try{ localStorage.setItem('baril_plaquette_vu','1'); }catch(_){} }   // la balayeuse aura quelque chose à dire
+  choix.style.display='none'; bulle.style.display='none';
+  musiqueAvant=!musique.paused; try{musique.pause();}catch(_){}
+  vid.src=el.dataset.v; vbox.style.display='block'; vid.currentTime=0;
+  const fin=()=>{ vid.onended=null; vid.pause(); vbox.style.display='none'; if(musiqueAvant) musique.play().catch(()=>{}); finDialogue(); };
+  vid.onended=fin; vid.play().catch(fin); }); });
+// ===== le dialogue secret de la balayeuse (après avoir payé Barry pour la plaquette métallique) =====
+const SECRET=[['balai',"Si tu es venu me voir… c'est que tu as compris de quoi je voulais parler."],['rudy',"Ça m'intéresse."],
+  ['balai',"Tu ne vas pas être déçu. Viens, on va derrière… il y a un lit de paille."],['rudy',"Je te suis."],['balai',"T'as intérêt."]];
+let etapeS=-1, minuteS=null;
+function dialogueBalai(){ occupe=true; js(); for(const k in clav)clav[k]=0; bP.style.display='none';
+  R.dir=balai.x+40<R.x?'gauche':'droite'; etapeS=-1; suiteBalai(); }
+function suiteBalai(){
+  clearTimeout(minuteS); etapeS++;
+  if(etapeS>=SECRET.length){ etapeS=-1; bulle.style.display='none';
+    musiqueAvant=!musique.paused; try{musique.pause();}catch(_){}
+    vid.src='/assets/shinato/m/baril_balayeuse.mp4'; vbox.style.display='block'; vid.currentTime=0;
+    const fin=()=>{ vid.onended=null; vid.pause(); vbox.style.display='none'; if(musiqueAvant) musique.play().catch(()=>{}); finDialogue(); };
+    vid.onended=fin; vid.play().catch(fin); return; }
+  const [qui,txt]=SECRET[etapeS]; montreBulle(txt,qui); minuteS=setTimeout(suiteBalai,2000);   // chaque bulle dure 2 secondes
+}
+// un appui sur l'écran fait passer à la bulle suivante
+addEventListener('pointerdown',()=>{ if(etapeS>=0) suiteBalai(); });
+// joystick
+const joy=document.getElementById('joyR'),knob=document.getElementById('knobR');let jid=null;
+function jm(e){const r=joy.getBoundingClientRect(),Rr=r.width/2;let dx=e.clientX-r.left-Rr,dy=e.clientY-r.top-Rr;const dd=Math.hypot(dx,dy),mm=Rr*0.62;if(dd>mm){dx*=mm/dd;dy*=mm/dd;}knob.style.transform=`translate(${dx}px,${dy}px)`;jx=dx/mm;jy=dy/mm;}
+function js(){jid=null;jx=jy=0;knob.style.transform='';}
+joy.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();jid=e.pointerId;try{joy.setPointerCapture(jid)}catch(_){}jm(e);});
+joy.addEventListener('pointermove',e=>{if(e.pointerId===jid)jm(e);});
+joy.addEventListener('pointerup',e=>{if(e.pointerId===jid)js();});joy.addEventListener('pointercancel',e=>{if(e.pointerId===jid)js();});
+const clav={};const T={ArrowLeft:'l',KeyA:'l',KeyQ:'l',ArrowRight:'r',KeyD:'r',ArrowUp:'u',KeyW:'u',KeyZ:'u',ArrowDown:'d',KeyS:'d'};
+addEventListener('keydown',e=>{if(T[e.code])clav[T[e.code]]=1;});addEventListener('keyup',e=>{if(T[e.code])clav[T[e.code]]=0;});
+addEventListener('blur',()=>{js();for(const k in clav)clav[k]=0;});
+addEventListener('resize',()=>camera(true));
+// la musique du Baril démarre dès l'entrée
+initSon();
+requestAnimationFrame(()=>{camera(true);requestAnimationFrame(avance);});
+})();
+</script>
+</body>
+</html>

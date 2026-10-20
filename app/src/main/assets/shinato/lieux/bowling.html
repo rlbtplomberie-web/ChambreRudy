@@ -40,6 +40,10 @@
 #choixB div{padding:3.2vmin 6vmin;border-radius:4vmin;font:900 clamp(13px,3.4vmin,24px)/1 Arial,sans-serif;letter-spacing:.06em;color:#fff;border:.5vmin solid #ffc4ec;background:linear-gradient(#ff5fc8,#7a1460);box-shadow:0 0 18px rgba(255,80,200,.6);touch-action:none;user-select:none;-webkit-user-select:none}
 #choixB div.n{background:linear-gradient(#5b4bd8,#2a1d7a);border-color:#c9c2ff;box-shadow:0 0 18px rgba(120,100,255,.6)}
 #choixB div.x{padding:3.2vmin 4vmin;background:rgba(0,0,0,.6);border-color:#888;box-shadow:none}
+.bulleB{position:fixed;z-index:58;display:none;transform:translate(-50%,-100%);max-width:44vw;padding:2vmin 3vmin;background:#fff;color:#111;border:.8vmin solid #111;border-radius:50%/42%;font:900 clamp(13px,3.6vmin,26px)/1.2 'Comic Sans MS','Comic Neue',Arial,sans-serif;text-align:center;box-shadow:1.1vmin 1.1vmin 0 rgba(0,0,0,.55);pointer-events:none;animation:popB .35s cubic-bezier(.2,1.6,.4,1)}
+.bulleB:after{content:'';position:absolute;left:var(--q,46%);bottom:-4.6vmin;margin-left:-2.5vmin;border:2.5vmin solid transparent;border-top:4.6vmin solid #111;border-bottom:0}
+.bulleB:before{content:'';position:absolute;left:var(--q,46%);bottom:-2.8vmin;margin-left:-1.4vmin;z-index:1;border:1.4vmin solid transparent;border-top:2.9vmin solid #fff;border-bottom:0}
+@keyframes popB{0%{transform:translate(-50%,-100%) scale(.3);opacity:0}100%{transform:translate(-50%,-100%);opacity:1}}
 #jeuB{position:fixed;inset:0;z-index:70;display:none;background:#000}#jeuB iframe{width:100%;height:100%;border:0;display:block}
 #quitJeuB{position:absolute;top:calc(1.5vmin + env(safe-area-inset-top,0px));right:calc(1.5vmin + env(safe-area-inset-right,0px));z-index:2;padding:1.6vmin 3vmin;border-radius:3vmin;font:900 clamp(11px,2.6vmin,18px)/1 Arial,sans-serif;color:#fff;background:rgba(0,0,0,.6);border:.4vmin solid #ffc4ec;touch-action:none;user-select:none}
 #btnSortirB{bottom:31vmin;width:24vmin;height:12vmin;border-radius:6vmin;color:#111;background:linear-gradient(#ffe56b,#e0a800);border-color:#fff3b0;box-shadow:0 0 14px rgba(255,212,0,.7),0 6px 18px rgba(0,0,0,.55)}
@@ -59,6 +63,7 @@
 <div class="btnB" id="btnParlerB">PARLER</div>
 <div id="vidB"><video playsinline preload="auto"></video></div>
 <div id="choixB"><div id="chPartieB">FAIRE UNE PARTIE</div><div class="n" id="chDiscuterB">DISCUTER</div><div class="x" id="chFermerB">✕</div></div>
+<div class="bulleB" id="bulleB"></div>
 <div id="jeuB"><div id="quitJeuB">✕ QUITTER</div></div>
 <script>
 const SW=2172,SH=724;
@@ -230,11 +235,32 @@ let musiqueCoupee=false;
 const vidB=document.getElementById('vidB'),vB=vidB.querySelector('video'),choixB=document.getElementById('choixB'),jeuB=document.getElementById('jeuB');
 function libereCommandes(){js();for(const k in clav)clav[k]=0;}
 function finVideo(){vB.onended=null;vB.pause();vidB.style.display='none';choixB.style.display='flex';}
-appui(bP,()=>{if(occupe)return;occupe=true;libereCommandes();bP.style.display='none';musique(true);
+appui(bP,()=>{if(occupe)return;occupe=true;libereCommandes();bP.style.display='none';bF.style.display='none';bJ.style.display='none';musique(true);
   vB.src='/assets/shinato/m/bowling_hotesse.mp4';vidB.style.display='block';vB.currentTime=0;vB.onended=finVideo;vB.play().catch(finVideo);});
 function fermeChoix(){choixB.style.display='none';occupe=false;libereCommandes();musique(false);}
-// pour l'instant DISCUTER referme simplement (la suite viendra)
-appui(document.getElementById('chDiscuterB'),fermeChoix);
+// DISCUTER : la discussion en bulles de manga, puis la vidéo
+const bulleB=document.getElementById('bulleB');
+const DISCUSSION=[['elle',"J'en étais sûre…"],['rudy',"Tu sais que tu es vraiment canon."],['elle',"C'est gentil de dire ça… on me le dit souvent."],
+  ['rudy',"Oui… j'ai du mal à détourner le regard."],['elle',"Qui t'a dit de le détourner ? Viens par ici…"]];
+function bulle(qui,txt){
+  bulleB.textContent=txt;bulleB.style.display='block';bulleB.style.animation='none';void bulleB.offsetWidth;bulleB.style.animation='';
+  const r=(qui==='rudy'?rudy:hot).getBoundingClientRect(), bw=bulleB.offsetWidth, vw=innerWidth;
+  const cx=r.left+r.width/2, x=Math.max(bw/2+8,Math.min(vw-bw/2-8,cx));
+  bulleB.style.left=x+'px';bulleB.style.top=Math.max(bulleB.offsetHeight+12,r.top+r.height*(qui==='rudy'?.04:.02))+'px';
+  bulleB.style.setProperty('--q',Math.max(12,Math.min(88,50+(cx-x)/bw*100))+'%');   // la pointe vise celui qui parle
+}
+let etape=-1,minuteB=null;
+function suiteDiscussion(){
+  clearTimeout(minuteB);etape++;
+  if(etape>=DISCUSSION.length){bulleB.style.display='none';etape=-1;
+    vB.src='/assets/shinato/m/bowling_discuter.mp4';vidB.style.display='block';vB.currentTime=0;
+    vB.onended=()=>{vB.onended=null;vB.pause();vidB.style.display='none';fermeChoix();};
+    vB.play().catch(()=>{vB.onended&&vB.onended();});return;}
+  const [qui,txt]=DISCUSSION[etape];bulle(qui,txt);minuteB=setTimeout(suiteDiscussion,2000);   // chaque bulle dure 2 secondes
+}
+appui(document.getElementById('chDiscuterB'),()=>{choixB.style.display='none';etape=-1;suiteDiscussion();});
+// un appui sur l'écran fait passer à la bulle suivante
+addEventListener('pointerdown',()=>{if(etape>=0&&bulleB.style.display==='block')suiteDiscussion();});
 appui(document.getElementById('chFermerB'),fermeChoix);
 appui(document.getElementById('chPartieB'),()=>{choixB.style.display='none';
   const f=document.createElement('iframe');f.src='/assets/shinato/jeux/bowling-partie.html';f.allow='autoplay; fullscreen';jeuB.appendChild(f);jeuB.style.display='block';});

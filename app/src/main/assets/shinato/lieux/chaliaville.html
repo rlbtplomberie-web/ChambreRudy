@@ -29,6 +29,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#050a1e;color:#fff;f
 #flecheE{position:fixed;z-index:15;display:none;pointer-events:none;transform:translateX(-50%);animation:bondE .8s ease-in-out infinite;filter:drop-shadow(0 0 6px #ffd400) drop-shadow(0 0 16px rgba(255,212,0,.9))}
 @keyframes bondE{0%,100%{margin-top:0}50%{margin-top:-1.6vmin}}
 #bowling{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:80;background:#0b0618}
+#baril{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:80;background:#120a05}
 #courir{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:7vmin;width:22vmin;height:22vmin;border-radius:50%;z-index:20;display:flex;align-items:center;justify-content:center;touch-action:none;
  font:900 clamp(12px,3.2vmin,22px)/1 Arial,sans-serif;letter-spacing:1px;color:#ffe27a;background:radial-gradient(circle at 45% 38%,rgba(60,60,70,.92),rgba(12,12,16,.92));border:2px solid rgba(255,226,122,.65);box-shadow:0 6px 18px rgba(0,0,0,.55)}
 #courir.on{transform:scale(.93);background:radial-gradient(circle at 45% 38%,#c9a33c,#7d6118);color:#fff}
@@ -208,7 +209,8 @@ function ventJS(x,t){return 0.35+0.65*Math.pow(0.5+0.5*Math.sin(x*0.0016-t*0.55)
 let tPrec=0;
 function boucle(ms){
   requestAnimationFrame(boucle);
-  if(enBowling){tPrec=ms;return;}
+  if(enBowling||enBaril){tPrec=ms;if(cvGl.style.visibility!=='hidden'){cvGl.style.visibility='hidden';cvAv.style.visibility='hidden';}return;}   // la ville est cachée et en pause pendant qu'on est dedans
+  if(cvGl.style.visibility){cvGl.style.visibility='';cvAv.style.visibility='';}
   const t=ms/1000, dt=Math.min(.05,(ms-(tPrec||ms))/1000); tPrec=ms;
   // déplacement
   let ax=jx,ay=jy; if(clav.l)ax=-1; if(clav.r)ax=1; if(clav.u)ay=-1; if(clav.d)ay=1; if(menu){ax=ay=0;}
@@ -293,15 +295,29 @@ setInterval(()=>{const b=document.getElementById('versPontLades');let ok=false;t
 // ---------- le bowling : en face de l'entrée, flèche jaune + bouton ENTRER ----------
 const BOWLING={"src": "/assets/shinato/lieux/bowling.html"}, PORTE_X=4350, PORTE_Y=588, ZONE_B=[4270,4740];
 let enBowling=false;
+// ---------- le bar Le Baril : en face de sa porte, flèche jaune + bouton ENTRER ----------
+const BARIL_X=1180, BARIL_Y=560, ZONE_R=[1080,1290];
+let enBaril=false, barilMusique=false;
+const cvGl=document.getElementById('gl'), cvAv=document.getElementById('av');
 const bE=document.getElementById('entrer'), fE=document.getElementById('flecheE');
+function devantBaril(){ return !menu&&P.niv==='haut'&&P.x>ZONE_R[0]&&P.x<ZONE_R[1]; }
 function bowling(){
-  const ici=!menu&&P.niv==='haut'&&P.x>ZONE_B[0]&&P.x<ZONE_B[1];
+  const iciR=devantBaril(), ici=iciR||(!menu&&P.niv==='haut'&&P.x>ZONE_B[0]&&P.x<ZONE_B[1]);
+  const px=iciR?BARIL_X:PORTE_X, py=iciR?BARIL_Y:PORTE_Y;
   bE.style.display=ici?'flex':'none'; fE.style.display=ici?'block':'none';
-  if(ici){const d=DW/innerWidth, k=S/d; Object.assign(fE.style,{left:((PORTE_X-cam.x)*k)+'px',top:((PORTE_Y-cam.y)*k)+'px',width:(34*k)+'px',height:(46*k)+'px'});}
+  if(ici){const d=DW/innerWidth, k=S/d; Object.assign(fE.style,{left:((px-cam.x)*k)+'px',top:((py-cam.y)*k)+'px',width:(34*k)+'px',height:(46*k)+'px'});}
 }
 let sortieBowling=0;
 appui(bE,()=>{
-  if(enBowling||Date.now()-sortieBowling<900)return; enBowling=true; jstop(); clav={}; courir=false;
+  if(enBowling||enBaril||Date.now()-sortieBowling<900)return;
+  if(devantBaril()){                          // Le Baril a sa propre musique : celle de Chaliaville s'arrête
+    enBaril=true; jstop(); clav={}; courir=false; bE.style.display='none'; fE.style.display='none';
+    try{ const a=window.top.RUDY_AUDIO; if(a){ barilMusique=!a.paused; a.pause(); } }catch(e){}
+    const f=document.createElement('iframe'); f.id='baril'; f.setAttribute('allow','autoplay'); f.src='/assets/shinato/lieux/baril.html';
+    document.body.appendChild(f); setTimeout(()=>{try{f.focus();}catch(e){}},300);
+    return;
+  }
+  enBowling=true; jstop(); clav={}; courir=false;
   bE.style.display='none'; fE.style.display='none';
   const f=document.createElement('iframe'); f.id='bowling'; f.setAttribute('allow','autoplay');
   if(BOWLING.src) f.src=BOWLING.src; else f.srcdoc=BOWLING.doc;
@@ -314,6 +330,17 @@ addEventListener('message',e=>{
   jstop(); clav={}; courir=false; try{ bc.classList.remove('on'); }catch(err){}
   sortieBowling=Date.now();
   enBowling=false; P.niv='haut'; P.x=PORTE_X; P.y=Y1-2; P.face=1; P.mode='idle'; camera(false);
+  try{window.focus();}catch(err){}
+});
+
+addEventListener('message',e=>{
+  if(!e.data||e.data.type!=='baril:sortie')return;
+  const f=document.getElementById('baril');
+  if(f){ f.style.display='none'; f.style.pointerEvents='none'; setTimeout(()=>{ try{ f.src='about:blank'; f.remove(); }catch(err){} },500); }
+  jstop(); clav={}; courir=false; try{ bc.classList.remove('on'); }catch(err){}
+  sortieBowling=Date.now();
+  try{ const a=window.top.RUDY_AUDIO; if(a&&barilMusique){ const q=a.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(err){} barilMusique=false;
+  enBaril=false; P.niv='haut'; P.x=BARIL_X; P.y=Y1-2; P.face=1; P.mode='idle'; camera(false);
   try{window.focus();}catch(err){}
 });
 

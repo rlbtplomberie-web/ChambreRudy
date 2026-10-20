@@ -427,6 +427,10 @@ let aCharger = 0;
 const SRC = {}; for (const k in SPR) SRC[k] = SPR[k].src;
 let voulu = new Set();
 const enCours = {};   // planches en train de se charger
+// une planche dessinée une première fois en cachette : la puce graphique l'a déjà en mémoire au premier coup
+const chauffeCv = document.createElement('canvas'); chauffeCv.width = chauffeCv.height = 300;
+const chauffeCx = chauffeCv.getContext('2d');
+function chauffe(k){ const b = img[k]; if (!b || b.complete === false) return; try { chauffeCx.drawImage(b, 0, 0, 300, 300); } catch(e){} }
 function charge(k, bloque){
   if (enCours[k]){ if (bloque && !enCours[k].b){ enCours[k].b = true; aCharger++; } return; }
   const e = enCours[k] = { b: !!bloque }; if (e.b) aCharger++;
@@ -437,6 +441,7 @@ function charge(k, bloque){
       fin();
       if (!voulu.has(k)){ if (b && b.close) b.close(); if (img[k] === i) delete img[k]; return; }
       img[k] = b || i;
+      if (e.b) chauffe(k);
     };
     if (window.createImageBitmap) createImageBitmap(i).then(fini, () => fini(null)); else fini(null);
   };
@@ -1101,7 +1106,7 @@ function chargerPour(i){
   const ensuite = ORDRE[i + 1] ? planchesDe(ORDRE[i + 1]) : new Set();
   voulu = new Set([...maintenant, ...ensuite]);
   for (const k in img) if (!voulu.has(k)){ const b = img[k]; delete img[k]; if (b && b.close) b.close(); }
-  maintenant.forEach(k => { if (!img[k] || enCours[k]) charge(k, true); });
+  maintenant.forEach(k => { if (!img[k] || enCours[k]) charge(k, true); else chauffe(k); });
   ensuite.forEach(k => { if (!img[k]) charge(k, false); });
 }
 chargerPour(0);
@@ -2421,7 +2426,11 @@ function texteEllipse(w, h, ech, couches){
   }
   return t;
 }
-let TEX_NUIT = null, TEX_BRUME = null;
+let TEX_NUIT = null, TEX_BRUME = null, listeImpasse = null;
+// le halo des lanternes qui vacille (mêmes valeurs que dans l'impasse, 3 secondes par tour)
+const VACILLE = [[0, .85], [.2, 1], [.23, .7], [.26, .95], [.6, .9], [.62, .75], [.64, 1], [1, .85]];
+function vacille(t){ const u = (t / 3) % 1; for (let i = 1; i < VACILLE.length; i++){ const [a, va] = VACILLE[i - 1], [b, vb] = VACILLE[i];
+  if (u <= b) return va + (vb - va) * (u - a) / (b - a); } return .85; }
 const texPerso = new Map(), texMuret = new Map();
 // planche d'un personnage avec son filtre (assombri pour la nuit…) déjà appliqué, à la bonne finesse
 function plancheFiltree(el, im, bw, bh, h){
@@ -2468,24 +2477,28 @@ function dessinerImpasse(c){
   dcx.setTransform(1, 0, 0, 1, 0, 0); dcx.globalAlpha = 1; dcx.globalCompositeOperation = 'source-over';
   dcx.fillStyle = '#000'; dcx.fillRect(0, 0, decorCv.width, decorCv.height);
   dcx.setTransform(b * c.z, 0, 0, b * c.z, b * c.tx, b * c.ty);
-  // ordre d'affichage de la page : z-index, puis ordre dans la page
-  const els = []; let n = 0;
-  for (const el of sc.children){ els.push([parseInt(el.style.zIndex) || 0, n++, el]); }
-  els.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-  for (const [, , el] of els){
+  // ordre d'affichage de la page : z-index, puis ordre dans la page (calculé une fois)
+  if (!listeImpasse || listeImpasse.n !== sc.children.length){
+    const els = []; let n = 0, iL = 0;
+    for (const el of sc.children){ if (el.className === 'lueur') el.__i = iL++; els.push([parseInt(el.style.zIndex) || 0, n++, el]); }
+    els.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    listeImpasse = els.map(e => e[2]); listeImpasse.n = sc.children.length;
+  }
+  const temps = performance.now() / 1000;
+  for (const el of listeImpasse){
     if (el.style.visibility === 'hidden') continue;
     const id = el.id, cl = el.className;
     if (id === 'fond'){ if (el.complete && el.naturalWidth) dcx.drawImage(el, 0, 0, W, H); continue; }
     if (el.tagName === 'CANVAS'){ dcx.drawImage(el, 0, 0, W, H); continue; }
     if (id === 'brume'){
-      const cs = vu.getComputedStyle(el), m = /matrix\(([^)]+)\)/.exec(cs.transform), tx = m ? px(m[1].split(',')[4]) : 0;
-      dcx.globalAlpha = px(cs.opacity); dcx.drawImage(TEX_BRUME, -887 + tx, 470, 3548, 220); dcx.globalAlpha = 1; continue;
+      const ph = (temps / 40) % 2, tx = 887 * (ph < 1 ? ph : 2 - ph);   // la brume glisse lentement (40 s aller, 40 s retour)
+      dcx.globalAlpha = .22; dcx.drawImage(TEX_BRUME, -887 + tx, 470, 3548, 220); dcx.globalAlpha = 1; continue;
     }
     if (id === 'nuit'){ dcx.drawImage(TEX_NUIT, 0, 0, W, H); continue; }
     const x = px(el.style.left), y = px(el.style.top), w = px(el.style.width), h = px(el.style.height);
     if (cl === 'ombre'){ dcx.drawImage(TEX_OMBRE, x, y, w, h); continue; }
     if (cl === 'lueur'){
-      dcx.globalCompositeOperation = 'screen'; dcx.globalAlpha = px(vu.getComputedStyle(el).opacity);
+      dcx.globalCompositeOperation = 'screen'; dcx.globalAlpha = vacille(temps + el.__i * .9);
       dcx.drawImage(TEX_LUEUR, x, y, w, h); dcx.globalCompositeOperation = 'source-over'; dcx.globalAlpha = 1; continue;
     }
     if (cl === 'muret'){ const t = muretPret(el, x, y, w, h, b); if (t){ const e = t.width / (w + 2 * t.__m); dcx.drawImage(t, x - t.__m, y - t.__m, t.width / e, t.height / e); } continue; }
