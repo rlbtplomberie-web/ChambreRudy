@@ -10,6 +10,39 @@ rootProject.name = "ChambreRudy"
 include(":app")
 
 /*
+ * Reparation de l'ordinateur de GitHub qui fabrique l'APK.
+ *
+ * Parfois, sur la machine que GitHub prete, un NDK est abime : son dossier
+ * existe mais il lui manque « source.properties ». La compilation s'arrete
+ * alors avec « CXX1101 ... did not have a source.properties file ».
+ * Ici, avant tout le reste : on cherche ces NDK abimes, on les efface et on
+ * les reinstalle proprement. Si tout va bien, cela ne fait rien du tout.
+ */
+run {
+    val sdk = System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT")
+    if (sdk != null) {
+        val dossierNdk = File(sdk, "ndk")
+        val abimes = dossierNdk.listFiles()?.filter { it.isDirectory && !File(it, "source.properties").exists() } ?: emptyList()
+        if (abimes.isNotEmpty()) {
+            val sdkmanager = listOf("cmdline-tools/latest/bin/sdkmanager", "cmdline-tools/bin/sdkmanager", "tools/bin/sdkmanager")
+                .map { File(sdk, it) }.firstOrNull { it.canExecute() }
+            for (d in abimes) {
+                println("NDK abime trouve : ${d.name} -> reinstallation")
+                try { d.deleteRecursively() } catch (e: Exception) { println("  effacement impossible : ${e.message}") }
+                if (sdkmanager != null) {
+                    try {
+                        val p = ProcessBuilder(sdkmanager.absolutePath, "ndk;${d.name}").redirectErrorStream(true).start()
+                        p.outputStream.bufferedWriter().use { w -> repeat(20) { w.write("y\n") } }
+                        p.inputStream.bufferedReader().readLines().takeLast(3).forEach { println("  $it") }
+                        println("  fin de la reinstallation (code ${p.waitFor()})")
+                    } catch (e: Exception) { println("  reinstallation impossible : ${e.message}") }
+                }
+            }
+        }
+    }
+}
+
+/*
  * Mupen64Plus-AE, l'emulateur N64 de Rudy.
  *
  * Il n'est pas fait d'un seul morceau : son ecran s'appuie sur des modules

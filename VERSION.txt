@@ -1,3 +1,1 @@
-maj-220 : jeu de bowling - tableau des scores en petit panneau à droite
-          Chaliaville - la femme en robe noire devant le Baril : NE PAS FAIRE ATTENTION -> vidéo -> bulles manga
-          Chaliaville - la clocharde devant le bowling : DONNER 100 € -> vidéo ; vidéos dans Déverrouillage
+maj-221 : réparation automatique de l'outil NDK abîmé sur la machine de GitHub (erreur CXX1101 source.properties). Ne touche à rien d'autre.
