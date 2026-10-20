@@ -19,6 +19,11 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 #score .mk span{min-width:.95em;border-left:1px solid #ffffff25}
 #score .tot{font-weight:bold}
 #score td.fr.now{background:#ffd23f30}
+/* le tableau des scores en petit panneau à droite (noms + totaux) : il ne cache plus la piste */
+#score{left:auto!important;right:max(8px,env(safe-area-inset-right))!important;top:calc(9vmin + 16px)!important;padding:4px!important;background:#000b!important;border-radius:10px;border:1px solid #ffffff30}
+#score td.fr{display:none}
+#score table{font-size:13px!important;margin:0!important}
+#score td{height:1.25em}
 #banner{position:fixed;left:50%;transform:translateX(-50%);top:calc(max(4px,env(safe-area-inset-top)) + 4.6em);z-index:4;font-size:clamp(13px,3.6vw,20px);font-weight:bold;text-shadow:0 0 8px var(--neon),0 2px 2px #000;white-space:nowrap;display:none}
 #hint{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom));z-index:4;font-size:clamp(12px,3.4vw,17px);background:#000a;padding:4px 12px;border-radius:14px;border:1px solid #ffffff30;display:none;white-space:nowrap}
 #ctl{position:fixed;left:0;right:0;bottom:0;padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom));display:none;justify-content:center;align-items:center;gap:14px;z-index:6}
@@ -362,7 +367,7 @@ function renderScore(){
       h+=`<td class="fr ${pi===G.cur&&f===G.frame&&!G.over?'now':''}"><div class="mk">${ms}</div><div class="tot">${sc[f]??''}</div></td>`;}
     h+=`<td class="tot" style="min-width:2.6em">${liveTotal(p)}</td></tr>`;});
   tb.innerHTML=h;
-  const sh=document.getElementById('score').offsetHeight;document.documentElement.style.setProperty('--sh',sh+'px');document.getElementById('banner').style.top=(sh+6)+'px';document.getElementById('big').style.top=Math.max(H*0.27,sh+60)+'px';
+  const sh=8;document.documentElement.style.setProperty('--sh',sh+'px');document.getElementById('banner').style.top=(sh+6)+'px';document.getElementById('big').style.top=Math.max(H*0.27,sh+60)+'px';
 }
 
 // ---------- results ----------
@@ -658,7 +663,7 @@ function drawAimUI(){
     cx.font='bold 12px Trebuchet MS';cx.fillStyle='#fff';cx.textAlign='left';cx.fillText('◀ effet',gx,gy-8);cx.textAlign='right';cx.fillText('effet ▶',gx+gw,gy-8);cx.textAlign='center';cx.fillText('droit',gx+gw/2,gy+18);}
 }
 function drawPinDiagram(){
-  if(!G)return;const sz=Math.min(W,H)*0.022+4;const x0=W-sz*5.2,y0=(document.getElementById('score').offsetHeight||40)+sz*1.2;
+  if(!G)return;const sz=Math.min(W,H)*0.022+4;const x0=W-sz*5.2,y0=(document.getElementById('score').getBoundingClientRect().bottom||40)+sz*1.2;
   cx.save();cx.fillStyle='rgba(0,0,0,0.45)';cx.beginPath();cx.roundRect?cx.roundRect(x0-sz*0.8,y0-sz*0.9,sz*8.6*0.5+sz*2.6,sz*4.6,8):cx.rect(x0-sz*0.8,y0-sz*0.9,sz*5,sz*4.6);cx.fill();
   const rows=[[0],[-1,1],[-2,0,2],[-3,-1,1,3]];let i=0;
   for(let r=3;r>=0;r--){} // keep standard order
