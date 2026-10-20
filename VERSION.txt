@@ -1,4 +1,1 @@
-maj-219 (partie 1 sur 2) : Chaliaville - flèche jaune + ENTRER devant le bar Le Baril ; nouveau lieu Le Baril (Rudy du Pixel Bar, sa propre musique, SORTIR à gauche)
-  Le Baril : PARLER à Barry (bulle manga), 7 choix à 100 € -> vidéos ; après la plaquette métallique, dialogue secret de la balayeuse -> vidéo
-  + bowling DISCUTER (maj-218) + combat dans l'impasse plus fluide (maj-217)
-  Installer AUSSI la partie 2 (dernières vidéos).
+maj-219 (partie 2 sur 2) : vidéos Barry - diamant de Plume, plaquette métallique + vidéo de la balayeuse
