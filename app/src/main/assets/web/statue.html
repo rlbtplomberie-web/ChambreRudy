@@ -70,6 +70,26 @@ html,body{margin:0;height:100%;background:var(--fond);overflow:hidden;touch-acti
 .tab tr.total td{background:linear-gradient(#3a2a14,#1d140a);border-color:#e0b04e}
 .note{margin:2.6cqw 1cqw 0;text-align:center;font:700 2.7cqw/1.35 "Statue",Georgia,serif;color:#a88d5e}
 #fiche{display:none;background:var(--fond)}#fiche.on{display:flex}
+/* ASTUCES : ce qu'il faut faire pour débloquer chaque donjon */
+#astuce{display:none;background:var(--fond)}#astuce.on{display:flex}
+#bAstuce{position:fixed;z-index:6;top:calc(10px + env(safe-area-inset-top,0px));right:10px;border:2px solid rgba(255,214,110,.85);background:rgba(10,8,6,.82);color:#ffd96e;font:700 16px Georgia,serif;border-radius:999px;padding:9px 16px;box-shadow:0 0 12px rgba(255,190,60,.45);animation:appel 2.2s ease-in-out infinite}
+#astuce .liste{top:17%;height:76%}
+.don{position:relative;margin-bottom:3cqw;border-radius:1.4cqw;padding:2.6cqw 2.4cqw 2.2cqw;background:radial-gradient(120% 140% at 50% 0%,#2b2218,#120e0a 70%);
+ border:.45cqw solid #c99a3c;box-shadow:inset 0 0 0 .35cqw #1a120a,inset 0 0 0 .6cqw rgba(255,214,120,.45),0 .5cqw 1.4cqw rgba(0,0,0,.7)}
+.don.fini{border-color:#6fbf5f;box-shadow:inset 0 0 0 .35cqw #0f1a0c,inset 0 0 0 .6cqw rgba(140,230,120,.4),0 .5cqw 1.4cqw rgba(0,0,0,.7)}
+.don .t{display:flex;align-items:center;gap:2cqw;font:700 4.3cqw/1.1 "Statue",Georgia,serif;background:linear-gradient(#fff2bd,#f0c25b 50%,#b77520);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 .2cqw .15cqw #000)}
+.don .t img{width:7cqw;height:7cqw;object-fit:contain;-webkit-text-fill-color:initial}
+.don .t img.pl{width:16cqw;height:4.4cqw;object-fit:fill;border-radius:.4cqw}
+.don .etat{margin:1cqw 0 1.6cqw;font:700 3cqw/1 "Statue",Georgia,serif;color:#cfb27a}
+.don.fini .etat{color:#8fe08a}
+.don ol{margin:0;padding:0;list-style:none}
+.don li{position:relative;padding:1.1cqw 0 1.1cqw 5.4cqw;font:700 3.3cqw/1.35 "Statue",Georgia,serif;color:#e9d6a8;border-top:.2cqw solid rgba(201,154,60,.25)}
+.don li::before{content:"•";position:absolute;left:1.4cqw;top:1cqw;color:#a88d5e}
+.don li.ok{color:#8fbf86;text-decoration:line-through;text-decoration-color:rgba(143,191,134,.55)}
+.don li.ok::before{content:"✓";color:#8fe08a}
+.don li.suite{color:#fff3c4}
+.don li.suite::before{content:"➜";color:#ffd96e}
+.don .att{margin-top:1.2cqw;font:700 2.8cqw/1.35 "Statue",Georgia,serif;color:#ff9a7a}
 .fzone{position:absolute;left:13.6%;width:72.8%;top:19.2%;height:72%;display:flex;flex-direction:column;align-items:center;gap:3.2cqw}
 .gcadre{position:relative;width:100%;padding:1.6cqw;border-radius:1.8cqw;
  background:linear-gradient(135deg,#ffe9a8,#c58b2c 22%,#7a4f15 45%,#f3cf74 60%,#8b5a17 82%,#ffe3a0);
@@ -139,6 +159,14 @@ html,body{margin:0;height:100%;background:var(--fond);overflow:hidden;touch-acti
  </div>
  <button class="retour" id="sRetour">‹ Mini-jeux</button>
 </div>
+<div class="ecran" id="astuce">
+ <div class="cadre">
+  <img class="fond" alt="" src="statue/595e7d5dcb.webp">
+  <div class="titre">ASTUCES</div>
+  <div class="liste" id="aListe"></div>
+ </div>
+ <button class="retour" id="aRetour">‹ Statue</button>
+</div>
 <div class="ecran" id="fiche">
  <div class="cadre">
   <img class="fond" alt="" src="statue/595e7d5dcb.webp">
@@ -153,6 +181,7 @@ html,body{margin:0;height:100%;background:var(--fond);overflow:hidden;touch-acti
 </div>
 <button class="retour" id="tel" style="display:none">‹ Téléphone</button>
 <button id="apercu">👁 aperçu</button>
+<button id="bAstuce">💡 ASTUCES</button>
 
 <script>
 /* ---------- Statue : l'appli du téléphone qui montre où en est Rudy ----------
@@ -391,6 +420,62 @@ const DANS_TEL=(window.parent!==window);
 if(DANS_TEL){ $('apercu').remove(); $('tel').style.display=''; tap($('tel'),()=>{ try{ window.parent.postMessage({type:'statue:fermer'},'*'); }catch(e){} }); }
 const _ecr2=ecran; ecran=function(id){ _ecr2(id); if(DANS_TEL) $('tel').style.display=(id==='statue'?'':'none'); };
 window.statueAccueil=function(){ ecran('statue'); maj(); };
+
+/* ---------- ASTUCES : chaque donjon, et ce qu'il faut faire pour le débloquer ----------
+   Chaque étape est cochée ✓ dès qu'elle est faite dans la partie ; la prochaine à faire est marquée ➜ */
+const TROIS=()=>['mitsuda_usine_gagnee','rembourg_chateau_gagne','foret_gagnee'].every(k=>lit(k)==='1');
+const DONJONS=[
+ {nom:"L'usine d'Astra", img:'statue/eaf2a7c6c3.webp', fin:'mitsuda_usine_gagnee', etapes:[
+  ['mitsuda_aurore_infos',"À Mitsuda, parle à Aurore (la blonde en jean) et choisis « Avoir des informations »."],
+  ['mitsuda_usine_ok',"Parle ensuite à la policière : le Laboratoire Mécanique s'ouvre."],
+  ['mitsuda_usine_gagnee',"Entre dans le Laboratoire Mécanique (ENTRER puis OUI), traverse l'usine et le labo, et bats Astra dans son bureau."]]},
+ {nom:"Le château de la Reine", img:'statue/1e1c580db6.webp', fin:'rembourg_chateau_gagne', etapes:[
+  ['mitsuda_usine_gagnee',"Bats d'abord Astra à l'usine."],
+  ['mitsuda_vampire_partie',"À Mitsuda, parle à la vampire : elle s'en va."],
+  ['mitsuda_carnet_vu',"Parle à la fille au carnet, devant le salon de thé."],
+  ['mitsuda_cafe_nerveuse',"Parle à la fille au café (devant le Labo) et choisis « Parler de la femme nerveuse »."],
+  ['mitsuda_carnet_ami',"Retourne voir la fille au carnet et choisis « JE SUIS UN AMI D'ANGE »."],
+  ['rembourg_chateau_gagne',"Va à Rembourg, entre dans le château (le cadenas a disparu) et bats la Reine des vampires dans la salle du trône."]]},
+ {nom:"La Forêt Maudite", img:'statue/5b610aa6af.webp', fin:'foret_gagnee', etapes:[
+  ['rembourg_chateau_gagne',"Bats d'abord la Reine des vampires."],
+  ['vaviel_chat_parle',"À Vaviel, parle à la femme chat qui pleure devant le karting."],
+  ['foret_gagnee',"Va tout à droite de Vaviel, ENTRER dans la forêt, bats le Centaure puis Farah la Rousse."]]},
+ {nom:"L'Hôtel Palace", img:'statue/gem_rond_hotel.webp', fin:'hotel_palace_gagne', etapes:[
+  [TROIS,"Bats d'abord Astra, la Reine des vampires et Farah."],
+  ['shinato_valor_parle',"À Shinato, parle à l'homme en panique près de la machine à boissons."],
+  ['hotel_palace_gagne',"Prends la flèche jaune de Shinato vers la rue de nuit, ENTRER dans l'hôtel, bats le boss du 4e étage puis libère l'otage."]]},
+ {nom:"Pont-l'Ades", img:'statue/gem_rond_jaune.webp', fin:'pontlades_gagne', etapes:[
+  ['hotel_palace_gagne',"Gagne d'abord l'Hôtel Palace."],
+  ['shinato_diamant_jaune_vu',"À Shinato, devant le Pixel Bar, parle au buveur de bière : « LE DIAMANT JAUNE »."],
+  ['pontlades_debloque',"Dans la rue de nuit, devant le Barding, le costaud en débardeur blanc : « INFORMATION SUR MIDA »."],
+  ['pontlades_gagne',"Choisis « PONT-L'ADES » en moto, trouve les 5 diamants jaunes cachés dans la ville, puis bats la boss."]]},
+ {nom:"Chasseur de nuit", img:'statue/gem_rond_rose.webp', fin:'chasseur_gagne', etapes:[
+  ['pontlades_gagne',"Gagne d'abord Pont-l'Ades."],
+  ['pixelbar_quoi_vu',"Au Pixel Bar, parle à la fille du canapé : « QU'EST-CE QUI SE PASSE ? »."],
+  ['chasseur_gagne',"Va à l'aéroport, parle au mécanicien, décolle, abats 10 ennemies puis la géante aux cheveux de feu."]]},
+ {nom:"La plaque Guerrière", img:'statue/plaque_guerriere.webp', fin:'impasse_combat_gagne', etapes:[
+  ['mitsuda_usine_gagnee',"Bats d'abord Astra à l'usine."],
+  ['cirque_loyal_parle',"À Mitsuda, entre dans le chapiteau et parle à Monsieur Loyal."],
+  ['cirque_loyal_personne_vu',"Demande-lui ensuite « POURQUOI IL Y A PERSONNE ICI ? »."],
+  ['impasse_combat_gagne',"Dans la ville délabrée, va dans l'impasse, choisis « LA PLAQUETTE GUERRIÈRE » devant la femme du canapé, puis gagne les 14 combats."]],
+  att:"Attention : n'appuie pas sur PARLER devant la femme du canapé, elle te laisse 10 secondes pour partir."}
+];
+function faite(c){ return typeof c==='function' ? c() : lit(c)==='1'; }
+function listeAstuces(){
+ let h='';
+ DONJONS.forEach(D=>{
+  const fini=faite(D.fin); let suite=false;
+  h+='<div class="don'+(fini?' fini':'')+'"><div class="t"><img src="'+D.img+'"'+(D.img.indexOf('plaque')>=0?' class="pl"':'')+' alt="">'+D.nom+'</div>'+
+   '<div class="etat">'+(fini?'✓ Terminé':'À faire')+'</div><ol>';
+  D.etapes.forEach(([c,txt])=>{ const ok=fini||faite(c); let cl=ok?'ok':''; if(!ok&&!suite){ cl='suite'; suite=true; }
+   h+='<li class="'+cl+'">'+txt+'</li>'; });
+  h+='</ol>'+(D.att&&!fini?'<div class="att">'+D.att+'</div>':'')+'</div>';
+ });
+ $('aListe').innerHTML=h;
+}
+const _ecranA=ecran; ecran=function(id){ _ecranA(id); $('astuce').classList.toggle('on',id==='astuce'); if(id==='astuce') $('statue').style.display='none'; $('bAstuce').style.display=(id==='statue'?'':'none'); };
+tap($('bAstuce'),()=>{ listeAstuces(); ecran('astuce'); $('aListe').scrollTop=0; });
+tap($('aRetour'),()=>ecran('statue'));
 </script>
 </body>
 </html>
