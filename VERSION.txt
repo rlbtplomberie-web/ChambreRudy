@@ -1,1 +1,1 @@
-maj-221 : réparation automatique de l'outil NDK abîmé sur la machine de GitHub (erreur CXX1101 source.properties). Ne touche à rien d'autre.
+maj-222 : Chaliaville - l'homme du banc (placement 500/1000 €, 5 % toutes les 10 min de jeu, RÉCUPÉRER) ; le soldat (PARLER -> vidéo) ; le clochard en bas (DONNER 10 € -> vidéo, payé à la fin) ; vidéos dans Déverrouillage

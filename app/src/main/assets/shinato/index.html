@@ -2218,5 +2218,28 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
 #depart .carte .choix{display:block;margin:0!important;width:auto!important;box-sizing:border-box;padding:2.6vmin 2vmin!important;font-size:clamp(12px,3.1vmin,24px)!important;line-height:1.1!important}
 #depart .carte .choix[style*="display:none"],#depart .carte .choix[style*="display: none"]{display:none!important}
 </style>
+<script>
+/* ---------- le placement de l'homme du banc (Chaliaville) ----------
+   5 % de la somme donnée toutes les 10 minutes, seulement pendant qu'on joue :
+   le compteur avance quand Shinato est ouvert (même dans un lieu ou un jeu),
+   et s'arrête quand l'appli est fermée (on ne compte jamais plus de 15 s d'un coup). */
+(function(){
+ var dernier=0;
+ function tic(){
+  try{
+   var maintenant=Date.now(), mise=+localStorage.getItem("placement_mise")||0;
+   if(mise>0 && document.visibilityState!=="hidden"){
+    var dt=dernier?Math.min(maintenant-dernier,15000):0;
+    var reste=(+localStorage.getItem("placement_reste")||0)+dt/1000, gains=+localStorage.getItem("placement_gains")||0;
+    while(reste>=600){ reste-=600; gains+=mise*0.05; }
+    localStorage.setItem("placement_reste",String(reste)); localStorage.setItem("placement_gains",String(gains));
+   }
+   dernier=maintenant;
+  }catch(e){}
+  (window.minuterieLibre||setTimeout)(tic,5000);
+ }
+ tic();
+})();
+</script>
 </body>
 </html>

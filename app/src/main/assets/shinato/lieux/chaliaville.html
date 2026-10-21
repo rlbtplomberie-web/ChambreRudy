@@ -32,6 +32,19 @@ html,body{width:100%;height:100%;overflow:hidden;background:#050a1e;color:#fff;f
 #clochB{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:32vmin;height:12vmin;padding:0 4vmin;border-radius:6vmin;z-index:21;display:none;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;
  font:900 clamp(12px,3vmin,21px)/1 Arial,sans-serif;letter-spacing:1px;color:#fff;background:linear-gradient(#3fbf6a,#16703a);border:2px solid #c9f5d6;box-shadow:0 0 14px rgba(80,220,120,.6),0 6px 18px rgba(0,0,0,.55)}
 #clochB:active{transform:scale(.94)}
+#hbP{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:32vmin;width:24vmin;height:12vmin;border-radius:6vmin;z-index:21;display:none;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;
+ font:900 clamp(12px,3.2vmin,22px)/1 Arial,sans-serif;letter-spacing:2px;color:#fff;background:linear-gradient(#c79a5a,#6e4a1e);border:2px solid #f3dfb0;box-shadow:0 0 14px rgba(230,180,90,.6),0 6px 18px rgba(0,0,0,.55)}
+#hbP:active{transform:scale(.94)}
+#soldatP{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:32vmin;width:24vmin;height:12vmin;border-radius:6vmin;z-index:21;display:none;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;
+ font:900 clamp(12px,3.2vmin,22px)/1 Arial,sans-serif;letter-spacing:2px;color:#fff;background:linear-gradient(#7d8a55,#3b4422);border:2px solid #dfe8c0;box-shadow:0 0 14px rgba(170,190,110,.6),0 6px 18px rgba(0,0,0,.55)}
+#soldatP:active{transform:scale(.94)}
+#clochardB{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:32vmin;height:12vmin;padding:0 4vmin;border-radius:6vmin;z-index:21;display:none;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;
+ font:900 clamp(12px,3vmin,21px)/1 Arial,sans-serif;letter-spacing:1px;color:#fff;background:linear-gradient(#3fbf6a,#16703a);border:2px solid #c9f5d6;box-shadow:0 0 14px rgba(80,220,120,.6),0 6px 18px rgba(0,0,0,.55)}
+#clochardB:active{transform:scale(.94)}
+#hbChoix{position:fixed;left:0;right:0;bottom:0;z-index:84;display:none;flex-wrap:wrap;justify-content:center;align-items:center;gap:2.6vmin;padding:0 4vmin calc(8vmin + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,rgba(10,6,0,.78))}
+#hbChoix div{padding:3vmin 5vmin;border-radius:4vmin;font:900 clamp(12px,3.2vmin,22px)/1 Arial,sans-serif;letter-spacing:.05em;color:#fff;border:.5vmin solid #f3dfb0;background:linear-gradient(#c79a5a,#6e4a1e);box-shadow:0 0 16px rgba(230,180,90,.5);touch-action:none;user-select:none;-webkit-user-select:none}
+#hbChoix div.vert{background:linear-gradient(#3fbf6a,#16703a);border-color:#c9f5d6}
+#hbChoix div.x{padding:3vmin 4vmin;background:rgba(0,0,0,.6);border-color:#888;box-shadow:none}
 #robeV{position:fixed;inset:0;z-index:90;background:#000;display:none}#robeV video{width:100%;height:100%;object-fit:contain}
 .bulleC{position:fixed;z-index:85;display:none;transform:translate(-50%,-100%);max-width:70vw;padding:2vmin 3vmin;background:#fff;color:#111;border:.8vmin solid #111;border-radius:50%/42%;font:900 clamp(13px,3.6vmin,26px)/1.2 'Comic Sans MS','Comic Neue',Arial,sans-serif;text-align:center;box-shadow:1.1vmin 1.1vmin 0 rgba(0,0,0,.55);pointer-events:none;animation:popC .35s cubic-bezier(.2,1.6,.4,1)}
 .bulleC:after{content:'';position:absolute;left:var(--q,46%);bottom:-4.6vmin;margin-left:-2.5vmin;border:2.5vmin solid transparent;border-top:4.6vmin solid #111;border-bottom:0}
@@ -64,6 +77,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#050a1e;color:#fff;f
 <div id="entrer">ENTRER</div>
 <div id="robeB">NE PAS FAIRE ATTENTION</div>
 <div id="clochB">DONNER 100 €</div>
+<div id="hbP">PARLER</div>
+<div id="soldatP">PARLER</div>
+<div id="clochardB">DONNER 10 €</div>
+<div id="hbChoix"><div id="hb500">DONNER 500 €</div><div id="hb1000">DONNER 1000 €</div><div class="vert" id="hbRecup">RÉCUPÉRER</div><div class="x" id="hbFermer">✕</div></div>
 <div id="robeV"><video playsinline preload="auto"></video></div>
 <div class="bulleC" id="bulleC"></div>
 <div id="flecheE"><svg viewBox="0 0 60 80" width="100%" height="100%"><path d="M30 0 58 38H42v42H18V38H2z" fill="#ffd400" stroke="#fff6b0" stroke-width="3" stroke-linejoin="round"/></svg></div>
@@ -361,8 +378,71 @@ appui(clochB,()=>{ if(enScene)return;
     try{ const m=window.top.RUDY_AUDIO; if(m&&robeMusique){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} robeMusique=false;
     enScene=false; jstop(); clav={}; };
   robeVid.onended=fin; const q=robeVid.play(); if(q&&q.catch) q.catch(fin); });
+// ---------- l'homme du banc : PARLER -> vidéo -> placer 500 € / 1000 €, puis récupérer (5 % toutes les 10 min de jeu) ----------
+const HB=PNJ.find(o=>o.n==='homme_banc'), hbP=document.getElementById('hbP'), hbChoix=document.getElementById('hbChoix'), hbRecup=document.getElementById('hbRecup');
+function devantHB(){ return HB&&!menu&&!enScene&&P.niv==='haut'&&Math.abs(P.x-HB.x)<90; }
+function lit(k){ try{ return +localStorage.getItem(k)||0; }catch(e){ return 0; } }
+function ecrit(k,v){ try{ localStorage.setItem(k,String(v)); }catch(e){} }
+function ajouteArgent(n){ const p=pontC(); try{ if(p&&p.ajouterArgent) p.ajouterArgent(n); }catch(e){} }
+function montreChoixHB(){
+  const total=Math.floor(lit('placement_mise')+lit('placement_gains'));
+  hbRecup.style.display=lit('placement_mise')>0?'':'none'; hbRecup.textContent='RÉCUPÉRER '+total+' €';
+  hbChoix.style.display='flex';
+}
+function finHB(){ hbChoix.style.display='none'; enScene=false; jstop(); clav={}; }
+function infoHB(txt,qui){ if(qui==='rudy') bulleChalia(txt,P.x,P.y-TAILLE*1.02); else bulleChalia(txt,HB.x,HB.y-HB.h*1.02);
+  clearTimeout(infoHB.t); infoHB.t=setTimeout(()=>{bulleC.style.display='none';},2000); }
+appui(hbP,()=>{ if(enScene)return; enScene=true; jstop(); clav={}; courir=false; hbP.style.display='none';
+  P.face=HB.x<P.x?-1:1; P.mode='idle';
+  if(lit('placement_mise')>0){ montreChoixHB(); return; }   // de l'argent placé chez lui : pas de vidéo, on va droit aux choix
+  try{ const m=window.top.RUDY_AUDIO; if(m){ robeMusique=!m.paused; m.pause(); } }catch(e){}
+  robeVid.src='/assets/shinato/m/chalia_homme_banc.mp4'; robeV.style.display='block'; robeVid.currentTime=0;
+  const fin=()=>{ robeVid.onended=null; robeVid.pause(); robeV.style.display='none';
+    try{ const m=window.top.RUDY_AUDIO; if(m&&robeMusique){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} robeMusique=false;
+    montreChoixHB(); };
+  robeVid.onended=fin; const q=robeVid.play(); if(q&&q.catch) q.catch(fin); });
+function placeHB(n){
+  const a=argentC(); if(a!==null&&a<n){ infoHB("Je n'ai pas "+n+" €…",'rudy'); return; }
+  payerC(n); ecrit('placement_mise',lit('placement_mise')+n);
+  finHB(); infoHB(n+" € placés. Reviens plus tard.",'lui');
+}
+appui(document.getElementById('hb500'),()=>placeHB(500));
+appui(document.getElementById('hb1000'),()=>placeHB(1000));
+appui(hbRecup,()=>{ const total=Math.floor(lit('placement_mise')+lit('placement_gains')); if(total<=0) return;
+  ajouteArgent(total); ['placement_mise','placement_gains','placement_reste'].forEach(k=>ecrit(k,0));
+  finHB(); infoHB("Voilà tes "+total+" €.",'lui'); });
+appui(document.getElementById('hbFermer'),finHB);
+// ---------- le soldat devant la salle de musculation : PARLER -> sa vidéo ----------
+const SOLDAT=PNJ.find(o=>o.n==='soldat'), soldatP=document.getElementById('soldatP');
+function devantSoldat(){ return SOLDAT&&!menu&&!enScene&&P.niv==='haut'&&Math.abs(P.x-SOLDAT.x)<90; }
+appui(soldatP,()=>{ if(enScene)return; enScene=true; jstop(); clav={}; courir=false; soldatP.style.display='none';
+  P.face=SOLDAT.x<P.x?-1:1; P.mode='idle';
+  try{ const m=window.top.RUDY_AUDIO; if(m){ robeMusique=!m.paused; m.pause(); } }catch(e){}
+  robeVid.src='/assets/shinato/m/chalia_soldat.mp4'; robeV.style.display='block'; robeVid.currentTime=0;
+  const fin=()=>{ robeVid.onended=null; robeVid.pause(); robeV.style.display='none';
+    try{ const m=window.top.RUDY_AUDIO; if(m&&robeMusique){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} robeMusique=false;
+    enScene=false; jstop(); clav={}; };
+  robeVid.onended=fin; const q=robeVid.play(); if(q&&q.catch) q.catch(fin); });
+// ---------- le clochard en bas, près de l'escalier : DONNER 10 € -> sa vidéo, les 10 € partent à la fin ----------
+const CLOCHARD=PNJ.find(o=>o.n==='clochard'), clochardB=document.getElementById('clochardB');
+function devantClochard(){ return CLOCHARD&&!menu&&!enScene&&P.niv==='bas'&&Math.abs(P.x-CLOCHARD.x)<90; }
+appui(clochardB,()=>{ if(enScene)return;
+  const a=argentC(); if(a!==null&&a<10){ bulleChalia("Je n'ai pas 10 €…",P.x,P.y-TAILLE*1.05); setTimeout(()=>{bulleC.style.display='none';},2000); return; }
+  enScene=true; jstop(); clav={}; courir=false; clochardB.style.display='none';
+  P.face=CLOCHARD.x<P.x?-1:1; P.mode='idle';
+  try{ const m=window.top.RUDY_AUDIO; if(m){ robeMusique=!m.paused; m.pause(); } }catch(e){}
+  robeVid.src='/assets/shinato/m/chalia_clochard.mp4'; robeV.style.display='block'; robeVid.currentTime=0;
+  let donne=false;
+  const fin=()=>{ robeVid.onended=null; robeVid.pause(); robeV.style.display='none';
+    if(!donne){ donne=true; payerC(10); }                    // à la fin de la vidéo, les 10 € sont donnés
+    try{ const m=window.top.RUDY_AUDIO; if(m&&robeMusique){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} robeMusique=false;
+    enScene=false; jstop(); clav={}; };
+  robeVid.onended=fin; const q=robeVid.play(); if(q&&q.catch) q.catch(fin); });
 function bowling(){
   robeB.style.display=devantRobe()?'flex':'none';
+  clochardB.style.display=devantClochard()?'flex':'none';
+  soldatP.style.display=devantSoldat()?'flex':'none';
+  hbP.style.display=devantHB()?'flex':'none';
   const iciC=devantCloch(); clochB.style.display=iciC?'flex':'none';      // près de la clocharde, c'est son bouton (pas ENTRER)
   const iciR=devantBaril(), ici=!iciC&&!enScene&&(iciR||(!menu&&P.niv==='haut'&&P.x>ZONE_B[0]&&P.x<ZONE_B[1]));
   const px=iciR?BARIL_X:PORTE_X, py=iciR?BARIL_Y:PORTE_Y;
