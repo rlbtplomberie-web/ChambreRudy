@@ -35,6 +35,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:#050a1e;color:#fff;f
 #hbP{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:32vmin;width:24vmin;height:12vmin;border-radius:6vmin;z-index:21;display:none;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;
  font:900 clamp(12px,3.2vmin,22px)/1 Arial,sans-serif;letter-spacing:2px;color:#fff;background:linear-gradient(#c79a5a,#6e4a1e);border:2px solid #f3dfb0;box-shadow:0 0 14px rgba(230,180,90,.6),0 6px 18px rgba(0,0,0,.55)}
 #hbP:active{transform:scale(.94)}
+#jouerR{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:32vmin;width:24vmin;height:12vmin;border-radius:6vmin;z-index:21;display:none;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;
+ font:900 clamp(12px,3.2vmin,22px)/1 Arial,sans-serif;letter-spacing:2px;color:#111;background:linear-gradient(#ffe56b,#e0a800);border:2px solid #fff3b0;box-shadow:0 0 14px rgba(255,212,0,.75),0 6px 18px rgba(0,0,0,.55)}
+#jouerR:active{transform:scale(.94)}
+#rugChoix{position:fixed;left:0;right:0;bottom:0;z-index:84;display:none;justify-content:center;align-items:center;gap:3vmin;padding:0 4vmin calc(9vmin + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,rgba(0,10,30,.78))}
+#rugChoix div{padding:3.2vmin 6vmin;border-radius:4vmin;font:900 clamp(13px,3.4vmin,24px)/1 Arial,sans-serif;letter-spacing:.06em;color:#fff;border:.5vmin solid #bfe3ff;background:linear-gradient(#2f7a3a,#0f4a1c);box-shadow:0 0 18px rgba(120,220,140,.5);touch-action:none;user-select:none;-webkit-user-select:none}
+#rugChoix div.x{padding:3.2vmin 4vmin;background:rgba(0,0,0,.6);border-color:#888;box-shadow:none}
+#rugbyJeu{position:fixed;inset:0;z-index:95;display:none;background:#000}#rugbyJeu iframe{width:100%;height:100%;border:0;display:block}
+#rugbyQuit{position:absolute;top:8px;right:210px;z-index:2;width:40px;height:40px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:10px;font:900 20px/1 Arial,sans-serif;color:#fff;background:rgba(170,20,30,.75);border:1px solid rgba(255,255,255,.45);touch-action:none;user-select:none;-webkit-user-select:none}
 #soldatP{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:32vmin;width:24vmin;height:12vmin;border-radius:6vmin;z-index:21;display:none;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;
  font:900 clamp(12px,3.2vmin,22px)/1 Arial,sans-serif;letter-spacing:2px;color:#fff;background:linear-gradient(#7d8a55,#3b4422);border:2px solid #dfe8c0;box-shadow:0 0 14px rgba(170,190,110,.6),0 6px 18px rgba(0,0,0,.55)}
 #soldatP:active{transform:scale(.94)}
@@ -78,6 +86,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#050a1e;color:#fff;f
 <div id="robeB">NE PAS FAIRE ATTENTION</div>
 <div id="clochB">DONNER 100 €</div>
 <div id="hbP">PARLER</div>
+<div id="jouerR">JOUER</div>
+<div id="rugChoix"><div id="chRugby">CHALIA RUGBY</div><div class="x" id="rugFermer">✕</div></div>
+<div id="rugbyJeu"><div id="rugbyQuit" title="Quitter">✕</div></div>
 <div id="soldatP">PARLER</div>
 <div id="clochardB">DONNER 10 €</div>
 <div id="hbChoix"><div id="hb500">DONNER 500 €</div><div id="hb1000">DONNER 1000 €</div><div class="vert" id="hbRecup">RÉCUPÉRER</div><div class="x" id="hbFermer">✕</div></div>
@@ -241,7 +252,7 @@ function ventJS(x,t){return 0.35+0.65*Math.pow(0.5+0.5*Math.sin(x*0.0016-t*0.55)
 let tPrec=0;
 function boucle(ms){
   requestAnimationFrame(boucle);
-  if(enBowling||enBaril){tPrec=ms;if(cvGl.style.visibility!=='hidden'){cvGl.style.visibility='hidden';cvAv.style.visibility='hidden';}return;}   // la ville est cachée et en pause pendant qu'on est dedans
+  if(enBowling||enBaril||enRugby){tPrec=ms;if(cvGl.style.visibility!=='hidden'){cvGl.style.visibility='hidden';cvAv.style.visibility='hidden';}return;}   // la ville est cachée et en pause pendant qu'on est dedans
   if(cvGl.style.visibility){cvGl.style.visibility='';cvAv.style.visibility='';}
   const t=ms/1000, dt=Math.min(.05,(ms-(tPrec||ms))/1000); tPrec=ms;
   // déplacement
@@ -329,7 +340,7 @@ const BOWLING={"src": "/assets/shinato/lieux/bowling.html"}, PORTE_X=4350, PORTE
 let enBowling=false;
 // ---------- le bar Le Baril : en face de sa porte, flèche jaune + bouton ENTRER ----------
 const BARIL_X=1180, BARIL_Y=560, ZONE_R=[1080,1290];
-let enScene=false;
+let enScene=false, enRugby=false;
 let enBaril=false, barilMusique=false;
 const cvGl=document.getElementById('gl'), cvAv=document.getElementById('av');
 const bE=document.getElementById('entrer'), fE=document.getElementById('flecheE');
@@ -438,16 +449,43 @@ appui(clochardB,()=>{ if(enScene)return;
     try{ const m=window.top.RUDY_AUDIO; if(m&&robeMusique){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} robeMusique=false;
     enScene=false; jstop(); clav={}; };
   robeVid.onended=fin; const q=robeVid.play(); if(q&&q.catch) q.catch(fin); });
+// ---------- le terrain de rugby (tout à gauche) : flèche jaune + JOUER -> CHALIA RUGBY -> le jeu ----------
+const RUGBY_X=300, RUGBY_Y=575, ZONE_RUG=[170,440];
+const jouerR=document.getElementById('jouerR'), rugChoix=document.getElementById('rugChoix'), rugbyJeu=document.getElementById('rugbyJeu');
+let rugMusique=false;
+function devantRugby(){ return !menu&&!enScene&&!enRugby&&P.niv==='haut'&&P.x>ZONE_RUG[0]&&P.x<ZONE_RUG[1]; }
+appui(jouerR,()=>{ if(enScene)return; enScene=true; jstop(); clav={}; courir=false; jouerR.style.display='none'; fE.style.display='none'; rugChoix.style.display='flex'; });
+appui(document.getElementById('rugFermer'),()=>{ rugChoix.style.display='none'; enScene=false; jstop(); clav={}; });
+appui(document.getElementById('chRugby'),()=>{ rugChoix.style.display='none';
+  try{ const m=window.top.RUDY_AUDIO; if(m){ rugMusique=!m.paused; m.pause(); } }catch(e){}     // le jeu a sa propre musique
+  const f=document.createElement('iframe'); f.setAttribute('allow','autoplay; fullscreen'); f.src='/assets/shinato/jeux/rugby.html';
+  rugbyJeu.appendChild(f); rugbyJeu.style.display='block'; enRugby=true;
+  // QUITTER se range juste à gauche des boutons du jeu (⏸ 🔊 ↺ ⛶), sans rien cacher
+  const q=document.getElementById('rugbyQuit'); q.style.right='210px';
+  const placeQ=()=>{ try{ const t=f.contentDocument&&f.contentDocument.getElementById('tools'); if(!t)return; const r=t.getBoundingClientRect(); if(r.width>0) q.style.right=Math.round(innerWidth-r.left+8)+'px'; }catch(_){} };
+  f.addEventListener('load',()=>{ placeQ(); setTimeout(placeQ,800); setTimeout(placeQ,2500); });
+  const iv=setInterval(()=>{ if(!enRugby){clearInterval(iv);return;} placeQ(); },1500); setTimeout(()=>{try{f.focus();}catch(e){}},300); });
+// QUITTER : on referme le jeu quand le doigt se relève, la ville et sa musique reprennent
+(function(){ const q=document.getElementById('rugbyQuit'); let arme=false;
+  q.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();arme=true;});
+  q.addEventListener('pointercancel',()=>{arme=false;});
+  q.addEventListener('pointerup',e=>{e.preventDefault();e.stopPropagation();if(!arme)return;arme=false;
+    const f=rugbyJeu.querySelector('iframe'); if(f){ try{f.src='about:blank';}catch(_){} f.remove(); }
+    rugbyJeu.style.display='none'; enRugby=false; enScene=false; jstop(); clav={}; courir=false;
+    try{ const m=window.top.RUDY_AUDIO; if(m&&rugMusique){ const p=m.play(); if(p&&p.catch) p.catch(()=>{}); } }catch(_){} rugMusique=false;
+    try{window.focus();}catch(_){} });
+})();
 function bowling(){
   robeB.style.display=devantRobe()?'flex':'none';
+  const iciRug=devantRugby(); jouerR.style.display=iciRug?'flex':'none';
   clochardB.style.display=devantClochard()?'flex':'none';
   soldatP.style.display=devantSoldat()?'flex':'none';
   hbP.style.display=devantHB()?'flex':'none';
   const iciC=devantCloch(); clochB.style.display=iciC?'flex':'none';      // près de la clocharde, c'est son bouton (pas ENTRER)
   const iciR=devantBaril(), ici=!iciC&&!enScene&&(iciR||(!menu&&P.niv==='haut'&&P.x>ZONE_B[0]&&P.x<ZONE_B[1]));
-  const px=iciR?BARIL_X:PORTE_X, py=iciR?BARIL_Y:PORTE_Y;
-  bE.style.display=ici?'flex':'none'; fE.style.display=ici?'block':'none';
-  if(ici){const d=DW/innerWidth, k=S/d; Object.assign(fE.style,{left:((px-cam.x)*k)+'px',top:((py-cam.y)*k)+'px',width:(34*k)+'px',height:(46*k)+'px'});}
+  const px=iciRug?RUGBY_X:iciR?BARIL_X:PORTE_X, py=iciRug?RUGBY_Y:iciR?BARIL_Y:PORTE_Y;
+  bE.style.display=ici?'flex':'none'; fE.style.display=(ici||iciRug)?'block':'none';
+  if(ici||iciRug){const d=DW/innerWidth, k=S/d; Object.assign(fE.style,{left:((px-cam.x)*k)+'px',top:((py-cam.y)*k)+'px',width:(34*k)+'px',height:(46*k)+'px'});}
 }
 let sortieBowling=0;
 appui(bE,()=>{
