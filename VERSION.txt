@@ -1,1 +1,5 @@
-maj-224 (partie 2/2) : Chaliaville - terrain de rugby : flèche jaune qui brille + bouton JOUER -> choix CHALIA RUGBY -> lance le jeu Chalia Rugby (✕ rouge en haut à droite pour revenir en ville)
+maj-225 : Chaliaville
+- femme en robe orange (devant BRAND) : PARLER -> sa vidéo
+- femme en blanc au carnet (devant KINGSPEED) : PARLER -> sa vidéo -> Rudy K.O. : vidéo de l'infirmière puis devant l'hôpital de Vaviel
+- femme aux cheveux gris contre le mur (en bas) : PARLER -> sa vidéo -> à la fin, Rudy perd 100 €
+Les 3 vidéos sont aussi dans Déverrouillage (téléphone).

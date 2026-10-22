@@ -46,6 +46,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#050a1e;color:#fff;f
 #soldatP{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:32vmin;width:24vmin;height:12vmin;border-radius:6vmin;z-index:21;display:none;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;
  font:900 clamp(12px,3.2vmin,22px)/1 Arial,sans-serif;letter-spacing:2px;color:#fff;background:linear-gradient(#7d8a55,#3b4422);border:2px solid #dfe8c0;box-shadow:0 0 14px rgba(170,190,110,.6),0 6px 18px rgba(0,0,0,.55)}
 #soldatP:active{transform:scale(.94)}
+#orangeP{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:32vmin;width:24vmin;height:12vmin;border-radius:6vmin;z-index:21;display:none;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;
+ font:900 clamp(12px,3.2vmin,22px)/1 Arial,sans-serif;letter-spacing:2px;color:#fff;background:linear-gradient(#f08a3c,#a2470f);border:2px solid #ffd9b8;box-shadow:0 0 14px rgba(240,138,60,.6),0 6px 18px rgba(0,0,0,.55)}
+#orangeP:active{transform:scale(.94)}
+#carnetP{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:32vmin;width:24vmin;height:12vmin;border-radius:6vmin;z-index:21;display:none;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;
+ font:900 clamp(12px,3.2vmin,22px)/1 Arial,sans-serif;letter-spacing:2px;color:#2a2018;background:linear-gradient(#ffffff,#d9cfc2);border:2px solid #8a7a66;box-shadow:0 0 14px rgba(255,255,255,.55),0 6px 18px rgba(0,0,0,.55)}
+#carnetP:active{transform:scale(.94)}
+#murP{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:32vmin;width:24vmin;height:12vmin;border-radius:6vmin;z-index:21;display:none;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;
+ font:900 clamp(12px,3.2vmin,22px)/1 Arial,sans-serif;letter-spacing:2px;color:#fff;background:linear-gradient(#6f86a8,#33435c);border:2px solid #d4dbe6;box-shadow:0 0 14px rgba(150,170,200,.6),0 6px 18px rgba(0,0,0,.55)}
+#murP:active{transform:scale(.94)}
 #clochardB{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:32vmin;height:12vmin;padding:0 4vmin;border-radius:6vmin;z-index:21;display:none;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;
  font:900 clamp(12px,3vmin,21px)/1 Arial,sans-serif;letter-spacing:1px;color:#fff;background:linear-gradient(#3fbf6a,#16703a);border:2px solid #c9f5d6;box-shadow:0 0 14px rgba(80,220,120,.6),0 6px 18px rgba(0,0,0,.55)}
 #clochardB:active{transform:scale(.94)}
@@ -90,6 +99,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#050a1e;color:#fff;f
 <div id="rugChoix"><div id="chRugby">CHALIA RUGBY</div><div class="x" id="rugFermer">✕</div></div>
 <div id="rugbyJeu"><div id="rugbyQuit" title="Quitter">✕</div></div>
 <div id="soldatP">PARLER</div>
+<div id="orangeP">PARLER</div>
+<div id="carnetP">PARLER</div>
+<div id="murP">PARLER</div>
 <div id="clochardB">DONNER 10 €</div>
 <div id="hbChoix"><div id="hb500">DONNER 500 €</div><div id="hb1000">DONNER 1000 €</div><div class="vert" id="hbRecup">RÉCUPÉRER</div><div class="x" id="hbFermer">✕</div></div>
 <div id="robeV"><video playsinline preload="auto"></video></div>
@@ -434,6 +446,32 @@ appui(soldatP,()=>{ if(enScene)return; enScene=true; jstop(); clav={}; courir=fa
     try{ const m=window.top.RUDY_AUDIO; if(m&&robeMusique){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} robeMusique=false;
     enScene=false; jstop(); clav={}; };
   robeVid.onended=fin; const q=robeVid.play(); if(q&&q.catch) q.catch(fin); });
+// ---------- la femme en robe orange devant la boutique de vêtements : PARLER -> sa vidéo ----------
+const ORANGE=PNJ.find(o=>o.n==='femme_orange'), orangeP=document.getElementById('orangeP');
+function devantOrange(){ return ORANGE&&!menu&&!enScene&&P.niv==='haut'&&Math.abs(P.x-ORANGE.x)<90; }
+appui(orangeP,()=>{ if(enScene)return; enScene=true; jstop(); clav={}; courir=false; orangeP.style.display='none';
+  P.face=ORANGE.x<P.x?-1:1; P.mode='idle';
+  try{ const m=window.top.RUDY_AUDIO; if(m){ robeMusique=!m.paused; m.pause(); } }catch(e){}
+  robeVid.src='/assets/shinato/m/chalia_femme_orange.mp4'; robeV.style.display='block'; robeVid.currentTime=0;
+  const fin=()=>{ robeVid.onended=null; robeVid.pause(); robeV.style.display='none';
+    try{ const m=window.top.RUDY_AUDIO; if(m&&robeMusique){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} robeMusique=false;
+    enScene=false; jstop(); clav={}; };
+  robeVid.onended=fin; const q=robeVid.play(); if(q&&q.catch) q.catch(fin); });
+// ---------- la femme en blanc au carnet devant le Kingspeed : PARLER -> sa vidéo -> Rudy K.O. -> l'infirmière, puis devant l'hôpital de Vaviel ----------
+const CARNET=PNJ.find(o=>o.n==='femme_carnet'), carnetP=document.getElementById('carnetP');
+function devantCarnet(){ return CARNET&&!menu&&!enScene&&P.niv==='haut'&&Math.abs(P.x-CARNET.x)<90; }
+appui(carnetP,()=>{ if(enScene)return; enScene=true; jstop(); clav={}; courir=false; carnetP.style.display='none';
+  P.face=CARNET.x<P.x?-1:1; P.mode='idle';
+  try{ const m=window.top.RUDY_AUDIO; if(m){ robeMusique=!m.paused; m.pause(); } }catch(e){}
+  robeVid.src='/assets/shinato/m/chalia_femme_carnet.mp4'; robeV.style.display='block'; robeVid.currentTime=0;
+  let fait=false;
+  const fin=()=>{ if(fait)return; fait=true; robeVid.onended=null; robeVid.onerror=null; robeVid.pause();
+    // dans l'appli : Rudy est K.O. -> la ville prévient Shinato (même message que l'impasse) : vidéo de l'infirmière, puis devant l'hôpital de Vaviel
+    if(window.parent&&window.parent!==window){ try{ window.parent.postMessage({type:'impasse:ko'},'*'); return; }catch(e){} }
+    robeV.style.display='none';   // ouverte toute seule : on revient simplement dans la ville
+    try{ const m=window.top.RUDY_AUDIO; if(m&&robeMusique){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} robeMusique=false;
+    enScene=false; jstop(); clav={}; };
+  robeVid.onended=fin; robeVid.onerror=fin; const q=robeVid.play(); if(q&&q.catch) q.catch(fin); });
 // ---------- le clochard en bas, près de l'escalier : DONNER 10 € -> sa vidéo, les 10 € partent à la fin ----------
 const CLOCHARD=PNJ.find(o=>o.n==='clochard'), clochardB=document.getElementById('clochardB');
 function devantClochard(){ return CLOCHARD&&!menu&&!enScene&&P.niv==='bas'&&Math.abs(P.x-CLOCHARD.x)<90; }
@@ -446,6 +484,19 @@ appui(clochardB,()=>{ if(enScene)return;
   let donne=false;
   const fin=()=>{ robeVid.onended=null; robeVid.pause(); robeV.style.display='none';
     if(!donne){ donne=true; payerC(10); }                    // à la fin de la vidéo, les 10 € sont donnés
+    try{ const m=window.top.RUDY_AUDIO; if(m&&robeMusique){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} robeMusique=false;
+    enScene=false; jstop(); clav={}; };
+  robeVid.onended=fin; const q=robeVid.play(); if(q&&q.catch) q.catch(fin); });
+// ---------- la femme aux cheveux gris contre le mur, en bas : PARLER -> sa vidéo -> à la fin, Rudy perd 100 € ----------
+const MUR=PNJ.find(o=>o.n==='femme_mur'), murP=document.getElementById('murP');
+function devantMur(){ return MUR&&!menu&&!enScene&&P.niv==='bas'&&Math.abs(P.x-MUR.x)<90; }
+appui(murP,()=>{ if(enScene)return; enScene=true; jstop(); clav={}; courir=false; murP.style.display='none';
+  P.face=MUR.x<P.x?-1:1; P.mode='idle';
+  try{ const m=window.top.RUDY_AUDIO; if(m){ robeMusique=!m.paused; m.pause(); } }catch(e){}
+  robeVid.src='/assets/shinato/m/chalia_femme_mur.mp4'; robeV.style.display='block'; robeVid.currentTime=0;
+  let pris=false;
+  const fin=()=>{ robeVid.onended=null; robeVid.pause(); robeV.style.display='none';
+    if(!pris){ pris=true; const a=argentC(); const n=a===null?100:Math.max(0,Math.min(100,a)); if(n>0) payerC(n); }   // à la fin de la vidéo, 100 € de perdus (jamais en dessous de 0)
     try{ const m=window.top.RUDY_AUDIO; if(m&&robeMusique){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} robeMusique=false;
     enScene=false; jstop(); clav={}; };
   robeVid.onended=fin; const q=robeVid.play(); if(q&&q.catch) q.catch(fin); });
@@ -480,6 +531,9 @@ function bowling(){
   const iciRug=devantRugby(); jouerR.style.display=iciRug?'flex':'none';
   clochardB.style.display=devantClochard()?'flex':'none';
   soldatP.style.display=devantSoldat()?'flex':'none';
+  orangeP.style.display=devantOrange()?'flex':'none';
+  carnetP.style.display=devantCarnet()?'flex':'none';
+  murP.style.display=devantMur()?'flex':'none';
   hbP.style.display=devantHB()?'flex':'none';
   const iciC=devantCloch(); clochB.style.display=iciC?'flex':'none';      // près de la clocharde, c'est son bouton (pas ENTRER)
   const iciR=devantBaril(), ici=!iciC&&!enScene&&(iciR||(!menu&&P.niv==='haut'&&P.x>ZONE_B[0]&&P.x<ZONE_B[1]));
