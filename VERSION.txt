@@ -1,6 +1,5 @@
-maj-226 :
-- Chaliaville : devant le KINGSPEED, flèche jaune + ENTRER -> le bar fumeur.
-- Bar fumeur : Rudy (planche du Pixel Bar) arrive en bas au milieu, joystick, musique du Baril, S'ASSEOIR sur les 3 tabourets libres / SE LEVER, sortie en bas au milieu.
-- Bar fumeur : PARLER au barman -> sa vidéo -> PARTICIPER AU CONCOURS (lance le jeu Kingspeed, ✕ rouge en haut à droite pour revenir) ou PAS POUR LE MOMENT (bulle du barman).
-- Le Baril : Rudy arrive et ressort en bas au milieu, S'ASSEOIR sur le tabouret libre du comptoir / SE LEVER.
-- Téléphone : vidéo du barman dans Déverrouillage.
+maj-227 (partie 1/3) :
+- Chaliaville : en bas, devant le tunnel de droite, flèche jaune + ENTRER -> La grotte du diamant cuivré (seulement après avoir battu Astra ; sinon « il faut d'abord battre Astra »). ✕ rouge en haut à droite pour ressortir.
+- Chaliaville : le tunnel et l'escalier de gauche (en trop) sont remplacés par le mur couvert de plantes.
+- La grotte (en cours, sans boss) : 2 cartes, 7 ennemies, poitrines animées, bouton FEU, disparition en étoiles, vidéos de K.O. puis infirmière et hôpital de Vaviel.
+- Téléphone : les 7 vidéos de K.O. de la grotte dans Déverrouillage.
