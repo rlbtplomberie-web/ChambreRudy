@@ -1,5 +1,6 @@
-maj-225 : Chaliaville
-- femme en robe orange (devant BRAND) : PARLER -> sa vidéo
-- femme en blanc au carnet (devant KINGSPEED) : PARLER -> sa vidéo -> Rudy K.O. : vidéo de l'infirmière puis devant l'hôpital de Vaviel
-- femme aux cheveux gris contre le mur (en bas) : PARLER -> sa vidéo -> à la fin, Rudy perd 100 €
-Les 3 vidéos sont aussi dans Déverrouillage (téléphone).
+maj-226 :
+- Chaliaville : devant le KINGSPEED, flèche jaune + ENTRER -> le bar fumeur.
+- Bar fumeur : Rudy (planche du Pixel Bar) arrive en bas au milieu, joystick, musique du Baril, S'ASSEOIR sur les 3 tabourets libres / SE LEVER, sortie en bas au milieu.
+- Bar fumeur : PARLER au barman -> sa vidéo -> PARTICIPER AU CONCOURS (lance le jeu Kingspeed, ✕ rouge en haut à droite pour revenir) ou PAS POUR LE MOMENT (bulle du barman).
+- Le Baril : Rudy arrive et ressort en bas au milieu, S'ASSEOIR sur le tabouret libre du comptoir / SE LEVER.
+- Téléphone : vidéo du barman dans Déverrouillage.
