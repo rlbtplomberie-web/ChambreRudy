@@ -1,5 +1,6 @@
-maj-227 (partie 2/3) :
-- Chaliaville : en bas, devant le tunnel de droite, flèche jaune + ENTRER -> La grotte du diamant cuivré (seulement après avoir battu Astra ; sinon « il faut d'abord battre Astra »). ✕ rouge en haut à droite pour ressortir.
-- Chaliaville : le tunnel et l'escalier de gauche (en trop) sont remplacés par le mur couvert de plantes.
-- La grotte (en cours, sans boss) : 2 cartes, 7 ennemies, poitrines animées, bouton FEU, disparition en étoiles, vidéos de K.O. puis infirmière et hôpital de Vaviel.
-- Téléphone : les 7 vidéos de K.O. de la grotte dans Déverrouillage.
+maj-227 (partie 3/3) :
+- Chaliaville : en bas, devant le tunnel de droite, flèche jaune + ENTRER -> La grotte du diamant cuivré (seulement après avoir battu Astra). ✕ rouge en haut à droite pour ressortir.
+- Chaliaville : le tunnel et l'escalier de gauche remplacés par le mur couvert de plantes.
+- Chaliaville : la rousse assise sur le banc (en bas) : passer DEVANT elle lance sa vidéo, puis l'infirmière et l'hôpital de Vaviel (derrière elle, rien ne se passe).
+- La grotte (en cours, sans boss) : 2 cartes, 7 ennemies, poitrines animées, bouton FEU, disparition en étoiles, vidéos de K.O. puis infirmière et Vaviel.
+- Téléphone : vidéos de K.O. de la grotte + la rousse du banc dans Déverrouillage.
