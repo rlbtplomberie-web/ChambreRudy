@@ -539,10 +539,16 @@ function grotteOuverte(){ try{ return localStorage.getItem('mitsuda_usine_gagnee
 function devantGrotte(){ return !menu&&!enScene&&!enGrotte&&P.niv==='bas'&&P.x>ZONE_G[0]&&P.x<ZONE_G[1]; }
 appui(grotteE,()=>{ if(enScene||enGrotte)return;
   if(!grotteOuverte()){ bulleChalia("C'est fermé… il faut d'abord battre Astra.",P.x,P.y-TAILLE*1.05); setTimeout(()=>{bulleC.style.display='none';},2200); return; }
-  enGrotte=true; jstop(); clav={}; courir=false; grotteE.style.display='none'; fE.style.display='none';
+  enScene=true; jstop(); clav={}; courir=false; grotteE.style.display='none'; fE.style.display='none';
   try{ const m=window.top.RUDY_AUDIO; if(m){ grotteMusique=!m.paused; m.pause(); } }catch(e){}     // la grotte a sa propre musique
-  const f=document.createElement('iframe'); f.setAttribute('allow','autoplay; fullscreen'); f.src='/assets/shinato/jeux/grotte.html';
-  grotteJeu.appendChild(f); grotteJeu.style.display='block'; setTimeout(()=>{try{f.focus();}catch(e){}},300); });
+  // d'abord la vidéo d'entrée dans la grotte, puis le jeu démarre tout de suite (sans écran titre)
+  robeVid.src='/assets/shinato/m/grotte_entree.mp4'; robeV.style.display='block'; robeVid.currentTime=0;
+  let fait=false;
+  const lance=()=>{ if(fait)return; fait=true; robeVid.onended=null; robeVid.onerror=null; robeVid.pause();
+    enGrotte=true; enScene=false;
+    const f=document.createElement('iframe'); f.setAttribute('allow','autoplay; fullscreen'); f.src='/assets/shinato/jeux/grotte.html?go=1';
+    grotteJeu.appendChild(f); grotteJeu.style.display='block'; setTimeout(()=>{ robeV.style.display='none'; },150); setTimeout(()=>{try{f.focus();}catch(e){}},300); };
+  robeVid.onended=lance; robeVid.onerror=lance; const q=robeVid.play(); if(q&&q.catch) q.catch(lance); });
 function fermeGrotte(reprendre){
   const f=grotteJeu.querySelector('iframe'); if(f){ try{f.src='about:blank';}catch(_){} f.remove(); }
   grotteJeu.style.display='none'; enGrotte=false; jstop(); clav={}; courir=false;

@@ -1,6 +1,6 @@
-maj-227 (partie 3/3) :
-- Chaliaville : en bas, devant le tunnel de droite, flèche jaune + ENTRER -> La grotte du diamant cuivré (seulement après avoir battu Astra). ✕ rouge en haut à droite pour ressortir.
-- Chaliaville : le tunnel et l'escalier de gauche remplacés par le mur couvert de plantes.
-- Chaliaville : la rousse assise sur le banc (en bas) : passer DEVANT elle lance sa vidéo, puis l'infirmière et l'hôpital de Vaviel (derrière elle, rien ne se passe).
-- La grotte (en cours, sans boss) : 2 cartes, 7 ennemies, poitrines animées, bouton FEU, disparition en étoiles, vidéos de K.O. puis infirmière et Vaviel.
-- Téléphone : vidéos de K.O. de la grotte + la rousse du banc dans Déverrouillage.
+maj-228 : la grotte du diamant cuivré complète.
+- Entrée depuis Chaliaville (tunnel de droite, en bas) seulement après avoir battu Astra ; vidéo d'entrée puis le jeu démarre.
+- 2 maps d'ennemies (7 ennemies, chacune sa vidéo de K.O.), puis la map de la boss : vidéo d'arrivée, combat contre la Gardienne (Rudy avec les gestes du combat de l'impasse, 520 PV chacun).
+- Quand la Gardienne est battue : vidéo de sa transformation, puis combat contre la Gardienne déchaînée (boules de feu, 3 prises, K.O. jusqu'à ce qu'elle devienne grise).
+- N'importe quelle mort dans ce jeu : la vidéo de celle qui a tué Rudy (s'il y en a une), puis l'infirmière, puis Rudy devant l'hôpital de Vaviel.
+- Musique propre à la grotte. Toutes les vidéos ajoutées dans Déverrouillage (dossier « Grotte du diamant cuivré »).
