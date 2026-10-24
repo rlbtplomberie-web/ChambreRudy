@@ -1,1 +1,1 @@
-maj-231 (partie 1 sur 3) : le moteur 3D fourni avec l'appli (shinato/lib/three.min.js) + Pont-l'Ades qui l'utilise. Avant, il venait d'internet : sans connexion, les jeux 3D ne démarraient pas (joystick et touches morts). Installe aussi les parties 2 et 3.
+maj-231 (partie 2 sur 3) : Hôtel Palace, Shinato Soccer et la loupe Game Boy utilisent le moteur 3D de l'appli (partie 1) au lieu d'internet. Installe aussi les parties 1 et 3.
