@@ -99,6 +99,38 @@
   }
   (function boucle(){ try{ garde(document,0); }catch(e){} window.minuterieLibre(boucle,400); })();
  })();
+ // Jamais de changement de lieu pendant qu'un doigt est posé sur l'écran.
+ // Si une page (un lieu, la moto, un jeu) est remplacée pendant qu'un doigt la touche, certains téléphones
+ // gardent ce doigt « fantôme » : sur le lieu suivant, un seul doigt ne fait plus rien (il en faut deux).
+ // Donc : on compte les doigts posés dans toutes les pages, et un cadre qui doit changer de page
+ // attend que le doigt se relève (2,5 s au plus).
+ (function(){
+  var doigts={}, nDoc=0, attente=[], tAttente=0;
+  function actifs(){ var t=Date.now(), n=0; for(var k in doigts){ if(t-doigts[k]>6000) delete doigts[k]; else n++; } return n; }
+  window.doigtsPoses=actifs;
+  function suit(w){
+   if(!w||w.__doigtsSuivis) return; var id="d"+(++nDoc); w.__doigtsSuivis=id;
+   var pose=function(e){ var l=e.changedTouches||[]; if(e.touches&&e.touches.length===l.length){ for(var k in doigts) if(k.indexOf(id+":")===0) delete doigts[k]; }
+     for(var i=0;i<l.length;i++) doigts[id+":"+l[i].identifier]=Date.now(); };
+   var leve=function(e){ var l=e.changedTouches||[]; for(var i=0;i<l.length;i++) delete doigts[id+":"+l[i].identifier];
+     if(e.touches&&e.touches.length===0){ for(var k in doigts) if(k.indexOf(id+":")===0) delete doigts[k]; } if(!actifs()) vide(); };
+   try{ w.addEventListener("touchstart",pose,{capture:true,passive:true}); w.addEventListener("touchend",leve,{capture:true,passive:true}); w.addEventListener("touchcancel",leve,{capture:true,passive:true});
+        w.addEventListener("pagehide",function(){ for(var k in doigts) if(k.indexOf(id+":")===0) delete doigts[k]; }); }catch(e){}
+   // les cadres de cette page attendent que les doigts soient levés avant de changer de page
+   try{ var P=w.HTMLIFrameElement.prototype;
+    ["srcdoc","src"].forEach(function(nom){ var d=Object.getOwnPropertyDescriptor(P,nom); if(!d||!d.set||d.set.__attend) return;
+     var set=function(v){ var f=this; if(actifs()===0){ attente=attente.filter(function(a){ return !(a.f===f&&a.nom===nom); }); d.set.call(f,v); return; }
+      attente=attente.filter(function(a){ return !(a.f===f&&a.nom===nom); }); attente.push({f:f,nom:nom,v:v,set:d.set}); if(!tAttente) tAttente=Date.now(); attendre(); };
+     set.__attend=true; Object.defineProperty(P,nom,{configurable:true,enumerable:d.enumerable,get:d.get,set:set}); });
+   }catch(e){}
+  }
+  function vide(){ var l=attente; attente=[]; tAttente=0; l.forEach(function(a){ try{ a.set.call(a.f,a.v); }catch(e){} }); }
+  function attendre(){ if(!attente.length) return; if(actifs()===0||Date.now()-tAttente>2500){ vide(); return; } window.minuterieLibre(attendre,50); }
+  function partout(doc,prof){ if(!doc||prof>6) return; try{ suit(doc.defaultView); }catch(e){}
+   var fr=doc.getElementsByTagName("iframe"); for(var i=0;i<fr.length;i++){ try{ partout(fr[i].contentDocument,prof+1); }catch(e){} } }
+  suit(window);
+  (function boucle(){ try{ partout(document,0); }catch(e){} window.minuterieLibre(boucle,300); })();
+ })();
 })();
 </script>
 <style>*{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}html,body{touch-action:none;overscroll-behavior:none}</style>
