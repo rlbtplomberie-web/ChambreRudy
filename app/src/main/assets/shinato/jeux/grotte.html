@@ -781,7 +781,7 @@ function startMap(i, keepHp, keepEn){
     for (const f of [0.34, 0.7]) game.crates.push({x: ww*f + (Math.random()-0.5)*90, y: m.yMin + 6 + Math.random()*14, hp:2, shake:0});
   }
   if (keepHp==null) RUDY_MAX = 100*pvDebut();
-  if (m.boss) RUDY_MAX = Math.max(KINDS.bos.hp, KINDS.tit.hp)*PVX;
+  if (m.boss) RUDY_MAX = Math.max(KINDS.bos.hp, KINDS.tit.hp);   // pas de bonus contre la boss
   rudy = newRudy(m.boss ? RUDY_MAX : (keepHp!=null ? keepHp : RUDY_MAX), keepEn);
   game.cam = 0; game.banner = 2.8; game.bannerText = m.name; game.spawnT = 0.8;
   game.boss = null;
@@ -1242,7 +1242,7 @@ function releaseRudy(e, dead){
   setR('down'); r.t = 1.2; r.kb = 0; r.inv = 1.2; SFX.hit();
 }
 function hurtRudy(dmg, heavy, src){
-  if (src && (src.kind==='bos' || src.kind==='tit')) dmg = Math.round(dmg*(src.kind==='tit' ? 2.4 : 1.8));
+  if (src && (src.kind==='bos' || src.kind==='tit')) dmg = Math.round(dmg*(src.kind==='tit' ? 3.0 : 2.4));
   const r = rudy;
   if (r.st==='bloc' && src && (src.x - r.x)*r.face >= -10){   // coup paré
     r.blocHit = 0.28; SFX.crate(); addFx('spark', r.x + r.face*30, r.y - 150*depth(r.y)); r.x -= r.face*6; clampR(); return false; }
@@ -1550,7 +1550,7 @@ function updateShots(dt){
         if (s.hit.includes(e) || !targetable(e)) continue;
         if (Math.abs(e.x-s.x) < (s.big?80:55) && Math.abs(e.y-s.y) < (s.big?48:34)){
           s.hit.push(e); addFx(s.big?'burstR':'burstY', e.x, e.y-100*depth(e.y)); SFX.big(); game.shake = s.big ? 0.3 : 0.16;
-          hurtEnemy(e, (s.big ? 130 : 60)*PVX, true, true);
+          hurtEnemy(e, (s.big ? 130 : 60)*(MAPS[game.map].boss ? 1 : PVX), true, true);
         }
       }
       continue;
@@ -2065,7 +2065,7 @@ function bar(x, y, w, h, v, col, label, right){
 }
 function drawHUD(){
   const m = MAPS[game.map];
-  bar(20, 34, 280, 18, rudy.hp/RUDY_MAX, ['#7dff8a','#1f9a33'], PVX>1?'RUDY \u00d72':'RUDY', false);
+  bar(20, 34, 280, 18, rudy.hp/RUDY_MAX, ['#7dff8a','#1f9a33'], (PVX>1 && !MAPS[game.map].boss)?'RUDY \u00d72':'RUDY', false);
   const full = rudy.en >= 100, full2 = rudy.en >= 200, fl = Math.floor(game.t*6)%2;
   bar(20, 66, 200, 10, Math.min(1, rudy.en/100), (full && !full2 && fl) ? ['#ffffff','#ffe14a'] : ['#fff27a','#e0a800'], '', false);
   if (rudy.en > 100){ // 2e niveau : la barre se remplit de rouge par-dessus

@@ -1,6 +1,3 @@
-maj-229 (partie 2 sur 2) : grotte du diamant cuivré - fin du donjon, plaque Courage, statue.
-- Boss battue : sa vidéo, puis le choix SUCCOMBER (sa vidéo, l'infirmière, l'hôpital de Vaviel - compte comme une défaite) ou RÉSISTER (VICTOIRE en gros, donjon réussi, on sort du jeu).
-- Les vidéos de K.O. de la boss (partie 1) branchées dans le jeu.
-- Pour entrer dans la grotte : battre Astra ET donner 10 € au clochard d'en bas à Chaliaville.
-- Statue : plaque « Courage » dans le rectangle du milieu quand la grotte est réussie ; ASTUCES de la grotte ; mini-jeux ajoutés (Poker, Bowling, Chalia Rugby, Kingspeed, Combat dans l'impasse) ; total des vidéos 602.
-- Déverrouillage : K.O. par la Gardienne, K.O. par la Gardienne déchaînée, Victoire contre la boss, Succomber à la boss.
+maj-230 :
+- Grotte du diamant cuivré : plus de bonus de vie contre la boss (Rudy a toujours 520 PV, comme elle), ses coups font plus mal (elle garde un petit avantage).
+- Shinato : un seul écran ouvert à la fois. Avant d'ouvrir un lieu ou un jeu, les autres (rue de nuit, bar, restaurant, Shinato Soccer, lieu de la moto) sont fermés. Un gardien empêche aussi un ancien écran resté ouvert de prendre le joystick et les boutons, dans tous les lieux et jeux. Corrige le joystick qui ne marchait plus en arrivant quelque part (par exemple à Chaliaville).

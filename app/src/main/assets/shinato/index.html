@@ -48,11 +48,57 @@
   var v=document.getElementById("vue"); if(v) v.style.visibility="";
   var a=attente; attente=[]; a.forEach(function(cb){ if(cb.length) raf(cb); else st(cb,0); });
  };
- // libère la mémoire des lieux chargés (bar, restaurant) avant un gros trajet
- window.libereLieux=function(){
-  ["bar","resto"].forEach(function(id){ var f=document.getElementById(id);
-   if(f){ f.style.display="none"; f.removeAttribute("data-charge"); f.srcdoc=""; } });
+ // Un seul écran plein à la fois : chaque cadre plein écran (lieu ou jeu ouvert depuis la rue) s'inscrit ici
+ // avec sa fonction de fermeture. Avant d'en montrer un, on ferme et on vide tous les autres : sinon un ancien
+ // lieu (rue de nuit, bar…) reste ouvert par-dessus ou par-dessous le nouveau et vole le joystick et les boutons.
+ window.FERMETURES={};
+ window.fermeAutresCadres=function(garde){
+  for(var id in window.FERMETURES){ if(id===garde) continue; var f=document.getElementById(id);
+   if(!f) continue; try{ window.FERMETURES[id](f); }catch(e){} }
+  // n'importe quel autre cadre plein écran oublié (sauf le téléphone) : caché, vidé, il ne capte plus le doigt
+  var fr=document.querySelectorAll("body > iframe");
+  for(var i=0;i<fr.length;i++){ var c=fr[i]; if(c.id===garde||c.id==="telFrame"||window.FERMETURES[c.id]) continue;
+   if(getComputedStyle(c).display!=="none"){ try{ c.blur(); }catch(e){} c.style.pointerEvents="none"; c.style.display="none"; } }
+  try{ if(document.activeElement&&document.activeElement.blur) document.activeElement.blur(); }catch(e){}
  };
+ // un cadre qu'on montre passe toujours devant les autres
+ // libère la mémoire des lieux chargés (bar, restaurant, rue de nuit…) avant un gros trajet
+ window.libereLieux=function(){ window.fermeAutresCadres("moto"); };
+ // Gardien de l'écran (dans la rue ET dans tous les lieux/jeux ouverts dedans, à toute profondeur) :
+ // dans chaque page, le cadre plein écran ouvert en dernier est celui qu'on voit et qui reçoit le doigt.
+ // Les cadres restés ouverts derrière ne captent plus rien (ils reprennent la main dès que celui de devant se ferme),
+ // et si un ancien cadre est resté devant le nouveau, le nouveau repasse devant.
+ (function(){
+  var vu=new WeakMap(), n=0;
+  function plein(f,w){ try{ var r=f.getBoundingClientRect(); return r.width>=w.innerWidth*0.8&&r.height>=w.innerHeight*0.8; }catch(e){ return false; } }
+  function visible(f,w){ try{ var c=w.getComputedStyle(f); return c.display!=="none"&&c.visibility!=="hidden"&&f.isConnected; }catch(e){ return false; } }
+  function garde(doc,prof){
+   if(!doc||prof>6) return; var w=doc.defaultView; if(!w) return;
+   var fr=[].slice.call(doc.getElementsByTagName("iframe")), ouverts=[];
+   fr.forEach(function(f){
+    var ok=f.id!=="telFrame"&&visible(f,w)&&plein(f,w);
+    if(ok){ if(!vu.has(f)) vu.set(f,++n); ouverts.push(f); }
+    else{ if(vu.has(f)) vu.delete(f); if(f.__peGarde!==undefined){ f.style.pointerEvents=f.__peGarde; delete f.__peGarde; } }
+   });
+   if(ouverts.length){
+    ouverts.sort(function(a,b){ return vu.get(a)-vu.get(b); });
+    var haut=ouverts[ouverts.length-1];
+    ouverts.forEach(function(f){
+     if(f===haut){ if(f.__peGarde!==undefined){ f.style.pointerEvents=f.__peGarde; delete f.__peGarde; } }
+     else if(f.__peGarde===undefined){ f.__peGarde=f.style.pointerEvents; f.style.pointerEvents="none"; }
+    });
+    if(ouverts.length>1){   // le dernier ouvert doit être devant
+     try{ var zh=parseInt(w.getComputedStyle(haut).zIndex,10)||0, zmax=null;
+      ouverts.forEach(function(f){ if(f===haut) return; var z=parseInt(w.getComputedStyle(f).zIndex,10)||0;
+       var devant=z>zh||(z===zh&&(haut.compareDocumentPosition(f)&4));   // f est plus haut, ou au même niveau mais après dans la page
+       if(devant&&(zmax===null||z>zmax)) zmax=z; });
+      if(zmax!==null) haut.style.zIndex=String(zmax+1); }catch(e){}
+    }
+   }
+   fr.forEach(function(f){ if(visible(f,w)){ try{ garde(f.contentDocument,prof+1); }catch(e){} } });
+  }
+  (function boucle(){ try{ garde(document,0); }catch(e){} window.minuterieLibre(boucle,400); })();
+ })();
 })();
 </script>
 <style>*{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}html,body{touch-action:none;overscroll-behavior:none}</style>
@@ -1254,6 +1300,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
  q.style.cssText="position:fixed;z-index:91;top:calc(10px + env(safe-area-inset-top,0px));left:10px;display:none;padding:9px 14px;border-radius:999px;background:rgba(0,0,0,.6);color:#ffe27a;border:2px solid rgba(255,226,122,.8);font:900 13px Arial,sans-serif;letter-spacing:.06em";
  document.body.appendChild(q);
  window.pontladesQuitte=function(montre){ q.style.display=montre?"block":"none"; };
+ window.FERMETURES.moto=function(f){ try{ f.blur(); }catch(e){} f.style.pointerEvents="none"; f.style.display="none"; f.removeAttribute("src"); f.srcdoc=""; q.style.display="none"; };
  function ferme(){
   var cm=document.getElementById("moto"); if(cm){ cm.style.pointerEvents="none"; cm.blur(); cm.style.display="none"; cm.removeAttribute("src"); cm.srcdoc=""; }
   q.style.display="none";
@@ -1270,7 +1317,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
   vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
   var v=vb.querySelector("video"), fait=false;
   var fin=function(){ if(fait) return; fait=true;
-   window.pauseRue();
+   window.pauseRue(); window.fermeAutresCadres("moto");
    var mh=document.getElementById("moto");
    if(!mh){ mh=document.createElement("iframe"); mh.id="moto"; mh.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(mh); }
    mh.style.pointerEvents="auto"; mh.style.display="block";
@@ -1368,6 +1415,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
   }
   if(e.data && e.data.type==="hopital:fin"){
    var cv=document.getElementById("moto"); if(!cv) return;
+   window.fermeAutresCadres("moto"); cv.style.pointerEvents="auto"; cv.style.display="block";
    var ov=LIEU_OCTETS("lieux/vaviel.html");
    var hv=new TextDecoder("utf-8").decode(ov);
    // Rudy apparaît devant l'entrée de l'hôpital
@@ -1565,6 +1613,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
   var o=LIEU_OCTETS("lieux/bar.html");
   var cadre=document.getElementById("bar");
   if(!cadre){ cadre=document.createElement("iframe"); cadre.id="bar"; cadre.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(cadre); }
+  window.fermeAutresCadres("bar");
   // le bar n'est chargé qu'une fois : ensuite on entre et on sort instantanément, autant de fois qu'on veut
   cadre.style.pointerEvents="auto";
   if(!cadre.getAttribute("data-charge")){ cadre.srcdoc=new TextDecoder("utf-8").decode(o); cadre.setAttribute("data-charge","1"); }
@@ -1580,6 +1629,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
    dedans=false; dir=0; sens=1; window.repriseRue();          // Rudy ressort devant le bar, prêt à repartir ou à rentrer
   }
  });
+ window.FERMETURES.bar=function(f){ try{ f.blur(); }catch(e){} f.style.pointerEvents="none"; f.style.display="none"; f.removeAttribute("data-charge"); f.srcdoc=""; dedans=false; };
 })();
 </script>
 <style>
@@ -1698,6 +1748,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
   if(e&&e.cancelable) e.preventDefault(); var n=performance.now(); if(n-t0<400) return; t0=n; dir=0;
   var f=document.getElementById("ruenuit");
   if(!f){ f=document.createElement("iframe"); f.id="ruenuit"; f.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(f); }
+  window.fermeAutresCadres("ruenuit");
   if(!f.getAttribute("data-charge")){
    var o=LIEU_OCTETS("lieux/ruenuit.html");
    f.srcdoc=new TextDecoder("utf-8").decode(o); f.setAttribute("data-charge","1");
@@ -1706,11 +1757,12 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
   window.minuterieLibre(function(){ try{ f.focus(); }catch(err){} },300);
  }
  btn.addEventListener("pointerdown",entre); btn.addEventListener("touchstart",entre,{passive:false}); btn.addEventListener("click",entre);
+ window.FERMETURES.ruenuit=function(f){ try{ f.blur(); }catch(e){} f.style.pointerEvents="none"; f.style.display="none"; f.removeAttribute("data-charge"); f.srcdoc=""; dedans=false; };
  window.addEventListener("message",function(e){
   if(e.data && e.data.type==="ruenuit:hopital"){
    // blessé dans la rue de nuit : la chambre d'hôpital (l'infirmière), puis devant l'hôpital de Vaviel
    var fr=document.getElementById("ruenuit"); if(fr){ fr.style.pointerEvents="none"; fr.blur(); fr.style.display="none"; }
-   dedans=false; dir=0;
+   dedans=false; dir=0; window.fermeAutresCadres("moto");
    var ch=document.getElementById("moto");
    if(!ch){ ch=document.createElement("iframe"); ch.id="moto"; ch.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(ch); }
    ch.style.pointerEvents="auto"; ch.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/hopital.html")); ch.style.display="block";
@@ -1720,7 +1772,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
   if(e.data && e.data.type==="ruenuit:devantHopital"){
    // à terre dans l'Hôtel Palace : (vidéo du K.O. et de l'infirmière déjà vues) → devant l'hôpital de Vaviel
    var fh=document.getElementById("ruenuit"); if(fh){ fh.style.pointerEvents="none"; fh.blur(); fh.style.display="none"; }
-   dedans=false; dir=0;
+   dedans=false; dir=0; window.fermeAutresCadres("moto");
    var mh=document.getElementById("moto");
    if(!mh){ mh=document.createElement("iframe"); mh.id="moto"; mh.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(mh); }
    mh.style.pointerEvents="auto"; mh.style.display="block";
@@ -1763,6 +1815,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
   if(e&&e.cancelable) e.preventDefault(); var n=performance.now(); if(n-t0<400) return; t0=n; dir=0;
   var f=document.getElementById("resto");
   if(!f){ f=document.createElement("iframe"); f.id="resto"; f.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(f); }
+  window.fermeAutresCadres("resto");
   if(!f.getAttribute("data-charge")){
    var o=LIEU_OCTETS("lieux/dragon.html");
    f.srcdoc=new TextDecoder("utf-8").decode(o); f.setAttribute("data-charge","1");
@@ -1778,6 +1831,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
    dedans=false; dir=0; window.repriseRue();
   }
  });
+ window.FERMETURES.resto=function(f){ try{ f.blur(); }catch(e){} f.style.pointerEvents="none"; f.style.display="none"; f.removeAttribute("data-charge"); f.srcdoc=""; dedans=false; };
 })();
 </script>
 <style>
@@ -1884,11 +1938,13 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
   ferme(); dir=0;
   var f=document.getElementById("soccer");
   if(!f){ f=document.createElement("iframe"); f.id="soccer"; f.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(f); }
+  window.fermeAutresCadres("soccer");
   try{ if(window.RUDY_AUDIO) window.RUDY_AUDIO.pause(); }catch(e){}   // le jeu a sa propre musique
   window.pauseRue();
   f.src="/assets/shinato/jeux/soccer.html"; f.style.display="block"; quit.style.display="block";
   window.minuterieLibre(function(){ try{ f.focus(); }catch(e){} },300);
  });
+ window.FERMETURES.soccer=function(f){ try{ f.blur(); }catch(e){} f.style.display="none"; f.src="about:blank"; quit.style.display="none"; };
  // « ✕ RUE » : on quitte Shinato Soccer, Rudy est de retour devant le terrain
  window.appuiSur(quit,function(){
   var f=document.getElementById("soccer"); if(f){ f.style.display="none"; f.src="about:blank"; }
@@ -2034,7 +2090,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
    sauf pendant un mini-jeu. Il s'ouvre avec la rue derrière, et la musique de la ville continue. ---------- */
 (function(){
  var btn=document.getElementById("telBtn"), fermer=document.getElementById("telFermer"), ouvert=false, pauseParMoi=false;
- var LIEUX={bar:1,resto:1,moto:1,lieuInfi:1};          // cadres qui contiennent un lieu (et pas un jeu)
+ var LIEUX={bar:1,resto:1,moto:1,lieuInfi:1,ruenuit:1};          // cadres qui contiennent un lieu (et pas un jeu)
  function visibleCadre(f){
   try{
    var d=f.style.display, v=f.style.visibility;
@@ -2066,7 +2122,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
  // Pendant que le téléphone est ouvert, le lieu derrière (plage, Vaviel…) est mis de côté :
  // il ne capte plus le doigt et ne se dessine plus, sinon le tactile du téléphone devient mauvais
  // (surtout après un mini-jeu). Il revient tel quel à la fermeture.
- var CADRES_LIEUX=["moto","bar","resto"], misDeCote=[];
+ var CADRES_LIEUX=["moto","bar","resto","ruenuit"], misDeCote=[];
  function metDeCote(){
   misDeCote=[];
   CADRES_LIEUX.forEach(function(id){
