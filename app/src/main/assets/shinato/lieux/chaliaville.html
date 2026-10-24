@@ -515,6 +515,7 @@ appui(clochardB,()=>{ if(enScene)return;
   let donne=false;
   const fin=()=>{ robeVid.onended=null; robeVid.pause(); robeV.style.display='none';
     if(!donne){ donne=true; payerC(10); }                    // à la fin de la vidéo, les 10 € sont donnés
+    try{ localStorage.setItem('chalia_clochard_vu','1'); }catch(e){}   // il a parlé au clochard : la grotte du diamant cuivré peut s'ouvrir (après Astra)
     try{ const m=window.top.RUDY_AUDIO; if(m&&robeMusique){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} robeMusique=false;
     enScene=false; jstop(); clav={}; };
   robeVid.onended=fin; const q=robeVid.play(); if(q&&q.catch) q.catch(fin); });
@@ -535,10 +536,11 @@ appui(murP,()=>{ if(enScene)return; enScene=true; jstop(); clav={}; courir=false
 const GROTTE_X=1915, GROTTE_Y=770, ZONE_G=[1835,1995];
 const grotteE=document.getElementById('grotteE'), grotteJeu=document.getElementById('grotteJeu');
 let enGrotte=false, grotteMusique=false;
-function grotteOuverte(){ try{ return localStorage.getItem('mitsuda_usine_gagnee')==='1'; }catch(e){ return false; } }
+function astraBattue(){ try{ return localStorage.getItem('mitsuda_usine_gagnee')==='1'; }catch(e){ return false; } }
+function grotteOuverte(){ try{ return astraBattue()&&localStorage.getItem('chalia_clochard_vu')==='1'; }catch(e){ return false; } }
 function devantGrotte(){ return !menu&&!enScene&&!enGrotte&&P.niv==='bas'&&P.x>ZONE_G[0]&&P.x<ZONE_G[1]; }
 appui(grotteE,()=>{ if(enScene||enGrotte)return;
-  if(!grotteOuverte()){ bulleChalia("C'est fermé… il faut d'abord battre Astra.",P.x,P.y-TAILLE*1.05); setTimeout(()=>{bulleC.style.display='none';},2200); return; }
+  if(!grotteOuverte()){ bulleChalia(astraBattue()?"C'est fermé… le clochard d'en bas en sait peut-être plus.":"C'est fermé… il faut d'abord battre Astra.",P.x,P.y-TAILLE*1.05); setTimeout(()=>{bulleC.style.display='none';},2200); return; }
   enScene=true; jstop(); clav={}; courir=false; grotteE.style.display='none'; fE.style.display='none';
   try{ const m=window.top.RUDY_AUDIO; if(m){ grotteMusique=!m.paused; m.pause(); } }catch(e){}     // la grotte a sa propre musique
   // d'abord la vidéo d'entrée dans la grotte, puis le jeu démarre tout de suite (sans écran titre)

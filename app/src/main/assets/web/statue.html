@@ -128,6 +128,7 @@ html,body{margin:0;height:100%;background:var(--fond);overflow:hidden;touch-acti
   <img class="gem rond" id="gemPontlades" alt="Diamant jaune au cœur" style="left:30.82%;top:40.19%;width:13.6%" src="statue/gem_rond_jaune.webp">
   <img class="gem rond" id="gemChasseur" alt="Diamant rose à la plume" style="left:48.57%;top:40.19%;width:13.6%" src="statue/gem_rond_rose.webp">
   <img class="plaqueG" id="plaqueGuerriere" alt="Plaque Guerrière" style="left:13.06%;top:48.07%;width:14.6%;height:3.72%" src="statue/plaque_guerriere.webp">
+  <img class="plaqueG" id="plaqueCourage" alt="Plaque Courage" style="left:30.82%;top:48.07%;width:14.6%;height:3.72%" src="statue/plaque_courage.webp">
   <div class="val" id="vArgent"  style="left:38.9%;top:54.9%;width:17.4%;height:4.2%;font-size:6.2cqw"></div>
   <div class="val" id="vContacts" style="left:39.9%;top:63.3%;width:16.2%;height:4.2%;font-size:6.6cqw"></div>
   <div class="val" id="vVideos"  style="left:39.9%;top:71.7%;width:16.2%;height:4.2%;font-size:5.6cqw"></div>
@@ -189,7 +190,7 @@ html,body{margin:0;height:100%;background:var(--fond);overflow:hidden;touch-acti
 const PAGES=["statue/890d180b34.webp","statue/a3dd3c0457.webp","statue/e030d6cd4d.webp","statue/2a8ce3a127.webp","statue/0c7a0a26c7.webp","statue/bcb4d4aff7.webp","statue/7e7350bfa4.webp","statue/d3c3cbf6f9.webp","statue/0b360bb486.webp","statue/817e5ba814.webp","statue/19e73a0771.webp"];
 const NB_PERSOS=87;          // tous les personnages des pages (sans l'emblème)
 const NB_CONTACTS=11;      // les filles qu'on peut avoir dans le téléphone
-const NB_VIDEOS=479;          // toutes les vidéos du jeu (Déverrouillage)
+const NB_VIDEOS=602;          // toutes les vidéos du jeu (Déverrouillage)
 let APERCU=false;
 const $=id=>document.getElementById(id);
 function lit(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
@@ -215,6 +216,7 @@ function maj(){
  $('gemHotel').classList.toggle('on',A||lit('hotel_palace_gagne')==='1');
  $('gemPontlades').classList.toggle('on',A||lit('pontlades_gagne')==='1');
  $('gemChasseur').classList.toggle('on',A||lit('chasseur_gagne')==='1');
+ $('plaqueCourage').classList.toggle('on',A||lit('grotte_gagnee')==='1');   // la grotte du diamant cuivré réussie (RÉSISTER) : la plaque « Courage » (rectangle du milieu)
  $('plaqueGuerriere').classList.toggle('on',A||lit('impasse_combat_gagne')==='1');   // le combat de l'impasse gagné : la plaque « Guerrière » (1er rectangle)   // la géante de « Chasseur de nuit » vaincue   // la boss du Grand Terrain (Pont-l'Ades) vaincue          // la boss de l'Hôtel Palace vaincue              // Farah la Rousse vaincue (la forêt)
 }
 maj(); setInterval(maj,1500); addEventListener('storage',maj);
@@ -274,7 +276,12 @@ const JEUX=[
  {id:'blackjack',   nom:'Blackjack',          adv:['Le croupier'], nul:true},
  {id:'echecs',      nom:'Échecs',             adv:["L'ordinateur"]},
  {id:'dames',       nom:'Dames',              adv:['Majora']},
- {id:'monopoly',    nom:'Monopoly',           adv:['Camille','Hugo','Nadia','Ludo','Sacha'], nul:true}
+ {id:'monopoly',    nom:'Monopoly',           adv:['Camille','Hugo','Nadia','Ludo','Sacha'], nul:true},
+ {id:'poker',       nom:'Poker',              adv:['Yoel','Kev','Arthur']},
+ {id:'bowling',     nom:'Bowling',            adv:['Ameline','Faty','Rose','Karine','Mifa','Sophie','Katila','Gisèle','Aline','Colica','Miminia']},
+ {id:'rugby',       nom:'Chalia Rugby',       adv:['Les filles']},
+ {id:'kingspeed',   nom:'Kingspeed',          adv:['Ameline','Faty','Rose','Karine','Mifa','Sophie','Katila','Gisèle','Aline','Aurore','Miminia','Théo','Carlos','Valor','Mathis','Commissaire','Mody','Limon','Shanna']},
+ {id:'impasse',     nom:"Combat dans l'impasse",adv:['Selfrid','Kimy','Gueparia','Cibora','Piki','Oma','Gagavi','La femme chewing-gum','Gueriya','Nouza','Cocoche','Avalda','Zidoroa','Ingrid']}
 ];
 function scores(){
  let s={}; try{ s=JSON.parse(lit('rudy_scores')||'{}')||{}; }catch(e){}
@@ -458,7 +465,11 @@ const DONJONS=[
   ['cirque_loyal_parle',"À Mitsuda, entre dans le chapiteau et parle à Monsieur Loyal."],
   ['cirque_loyal_personne_vu',"Demande-lui ensuite « POURQUOI IL Y A PERSONNE ICI ? »."],
   ['impasse_combat_gagne',"Dans la ville délabrée, va dans l'impasse, choisis « LA PLAQUETTE GUERRIÈRE » devant la femme du canapé, puis gagne les 14 combats."]],
-  att:"Attention : n'appuie pas sur PARLER devant la femme du canapé, elle te laisse 10 secondes pour partir."}
+  att:"Attention : n'appuie pas sur PARLER devant la femme du canapé, elle te laisse 10 secondes pour partir."},
+ {nom:"La grotte du diamant cuivré (plaque Courage)", img:'statue/plaque_courage.webp', fin:'grotte_gagnee', etapes:[
+  ['mitsuda_usine_gagnee',"Bats d'abord Astra à l'usine."],
+  ['chalia_clochard_vu',"À Chaliaville, en bas, va voir le clochard et donne-lui 10 € (il te parle)."],
+  ['grotte_gagnee',"À Chaliaville, en bas, entre dans le tunnel de droite (la grotte du diamant cuivré), traverse les 2 cartes, bats la Gardienne puis sa forme déchaînée, et choisis RÉSISTER."]]}
 ];
 function faite(c){ return typeof c==='function' ? c() : lit(c)==='1'; }
 function listeAstuces(){

@@ -430,10 +430,35 @@ function updateTitane(e, dt, dx, dy, adx){
     return; }
   case 'ko': {       // toute la planche jusqu'à ce qu'elle redevienne grise… et elle reste là
     const sp = 0.22; e.fr = Math.min(nf('tit_ko')-1, e.t/sp);
-    if (e.t > nf('tit_ko')*sp + 1.2 && !game.wonT){ game.wonT = 1; pvGagne(); SFX.win();
-      setTimeout(()=>{ game.state = 'win'; try{ if (window.parent && window.parent !== window) window.parent.postMessage({type:'grotte:victoire'}, '*'); }catch(err){} }, 1200); }
+    if (e.t > nf('tit_ko')*sp + 1.2 && !game.wonT){ game.wonT = 1; finDuDonjon(); }
     return; }
   }
+}
+
+// ---------- la boss est battue : sa vidéo, puis le choix SUCCOMBER / RÉSISTER ----------
+function finDuDonjon(){
+  videoAvantBoss('/assets/shinato/m/grotte_victoire.mp4', choixFinal);
+}
+function choixFinal(){
+  window.PAUSE = true; try{ MUSIC.pause(); }catch(e){}
+  const c = document.createElement('div');
+  c.style.cssText = 'position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.72);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5vh;font-family:Georgia,serif';
+  c.innerHTML = '<div style="color:#ffe2b8;font-size:min(7vw,46px);font-weight:900;text-shadow:0 3px 0 #000">Que fait Rudy ?</div>'
+   + '<div style="display:flex;gap:6vw">'
+   + '<button data-c="s" style="font:900 min(5vw,30px) Arial,sans-serif;padding:2.4vh 5vw;border-radius:16px;border:3px solid #ffb0c0;background:linear-gradient(#c2185b,#6a0a2c);color:#fff;letter-spacing:1px">SUCCOMBER</button>'
+   + '<button data-c="r" style="font:900 min(5vw,30px) Arial,sans-serif;padding:2.4vh 5vw;border-radius:16px;border:3px solid #ffe08a;background:linear-gradient(#e0a020,#7a4a06);color:#fff;letter-spacing:1px">RÉSISTER</button></div>';
+  document.body.appendChild(c);
+  let fait = false;
+  c.addEventListener('pointerdown', ev=>{
+    const b = ev.target.closest('button'); if (!b || fait) return; fait = true; ev.preventDefault(); c.remove(); window.PAUSE = false;
+    if (b.dataset.c === 'r'){   // RÉSISTER : VICTOIRE en gros, le donjon est réussi, on sort du jeu
+      pvGagne(); try{ localStorage.setItem('grotte_gagnee', '1'); }catch(e){}
+      SFX.win(); game.finale = true; game.state = 'win';
+      try{ if (window.parent && window.parent !== window) window.parent.postMessage({type:'grotte:victoire'}, '*'); }catch(err){}
+    } else {                    // SUCCOMBER : comme une défaite (l'infirmière, puis l'hôpital de Vaviel)
+      rudy.hp = 0; killRudy('tit_succombe');
+    }
+  });
 }
 const TIT_SP = {intro:'tit_garde', feu:'tit_feu', hurt:'tit_hit', ko:'tit_ko'};
 function drawTitane(e){
@@ -749,7 +774,7 @@ function newRudy(hp, en){
 function startMap(i, keepHp, keepEn){
   startMusic();
   game.map = i; game.kills = 0; game.ents = []; game.fx = []; game.shots = []; game.goShown = false; game.grabCD = 1.5;
-  game.crates = []; game.chickens = []; game.bshots = []; game.wonT = 0; game.shards = []; game.nums = []; game.combo = 0; game.comboT = 0; game.slowT = 0; game.flashT = 0; game.parts = []; game.drops = []; game.phase = 0;
+  game.crates = []; game.chickens = []; game.bshots = []; game.wonT = 0; game.finale = false; game.shards = []; game.nums = []; game.combo = 0; game.comboT = 0; game.slowT = 0; game.flashT = 0; game.parts = []; game.drops = []; game.phase = 0;
   const m = MAPS[i];
   if (!m.boss){
     const ww = worldW();
@@ -769,7 +794,7 @@ function startMap(i, keepHp, keepEn){
   // en arrivant dans la Clairière Maudite (depuis la 3e carte) : la vidéo d'avant le combat contre les boss
   if (m.boss && keepHp!=null) videoAvantBoss('/assets/shinato/m/grotte_boss_intro.mp4');
 }
-function videoAvantBoss(src){
+function videoAvantBoss(src, apres){
   window.PAUSE = true;                                   // le jeu attend la fin de la vidéo
   const prevenir = on=>{ try{ if (window.parent && window.parent !== window) window.parent.postMessage({type:'grotte:video', on:on}, '*'); }catch(e){} };
   prevenir(true); try{ MUSIC.pause(); }catch(e){}
@@ -779,7 +804,7 @@ function videoAvantBoss(src){
   document.body.appendChild(vb);
   const v = vb.querySelector('video');
   let fait = false, wd = 0;
-  const fin = ()=>{ if (fait) return; fait = true; clearInterval(wd); v.removeEventListener('ended',fin); v.removeEventListener('error',fin); try{ v.pause(); v.removeAttribute('src'); v.load(); }catch(e){} vb.remove(); prevenir(false); window.PAUSE = false; try{ const q = MUSIC.play(); if (q && q.catch) q.catch(()=>{}); }catch(e){} };
+  const fin = ()=>{ if (fait) return; fait = true; clearInterval(wd); v.removeEventListener('ended',fin); v.removeEventListener('error',fin); try{ v.pause(); v.removeAttribute('src'); v.load(); }catch(e){} vb.remove(); prevenir(false); window.PAUSE = false; if (apres){ apres(); return; } try{ const q = MUSIC.play(); if (q && q.catch) q.catch(()=>{}); }catch(e){} };
   v.addEventListener('ended',fin); v.addEventListener('error',fin);
   // toucher l'écran relance la vidéo si le téléphone l'a mise en pause
   vb.addEventListener('pointerdown', ()=>{ if (v.paused && !fait){ const q = v.play(); if (q && q.catch) q.catch(()=>{}); } });
@@ -1230,7 +1255,7 @@ function hurtRudy(dmg, heavy, src){
   if (heavy) setR('down'); else setR('hurt');
   return true;
 }
-const KO_VIDEOS = {tre:'/assets/shinato/m/grotte_ko_tre.mp4', jau:'/assets/shinato/m/grotte_ko_jau.mp4', rob:'/assets/shinato/m/grotte_ko_rob.mp4', elf:'/assets/shinato/m/grotte_ko_elf.mp4', bla:'/assets/shinato/m/grotte_ko_bla.mp4', noi:'/assets/shinato/m/grotte_ko_noi.mp4', cat:'/assets/shinato/m/grotte_ko_cat.mp4'};
+const KO_VIDEOS = {tit:'/assets/shinato/m/grotte_ko_tit.mp4', tit_prise:'/assets/shinato/m/grotte_ko_tit.mp4', tit_succombe:'/assets/shinato/m/grotte_succombe.mp4', bos:'/assets/shinato/m/grotte_ko_bos.mp4', bos_prise:'/assets/shinato/m/grotte_ko_bos.mp4', tre:'/assets/shinato/m/grotte_ko_tre.mp4', jau:'/assets/shinato/m/grotte_ko_jau.mp4', rob:'/assets/shinato/m/grotte_ko_rob.mp4', elf:'/assets/shinato/m/grotte_ko_elf.mp4', bla:'/assets/shinato/m/grotte_ko_bla.mp4', noi:'/assets/shinato/m/grotte_ko_noi.mp4', cat:'/assets/shinato/m/grotte_ko_cat.mp4'};
 function videoKO(src, fin){
   window.PAUSE = true; try{ MUSIC.pause(); }catch(e){}
   const vb = document.createElement('div'); vb.style.cssText = 'position:fixed;inset:0;z-index:999;background:#000';
@@ -2149,6 +2174,9 @@ function drawEnd(win){
   ctx.textAlign = 'center';
   ctx.font = '900 70px Georgia,serif'; ctx.lineWidth = 8; ctx.strokeStyle = '#000';
   const t = win ? 'VICTOIRE !' : 'GAME OVER';
+  if (win && game.finale){ ctx.font = '900 128px Georgia,serif'; ctx.lineWidth = 12; const g = ctx.createLinearGradient(0, 130, 0, 250); g.addColorStop(0, '#fff2c0'); g.addColorStop(1, '#ff9a1a'); ctx.strokeText('VICTOIRE', W/2, 240); ctx.fillStyle = g; ctx.fillText('VICTOIRE', W/2, 240);
+    ctx.font = '26px Georgia,serif'; ctx.fillStyle = '#ffe2b8'; ctx.fillText('Rudy a résisté. La grotte du diamant cuivré est réussie !', W/2, 300);
+    if (!(window.parent && window.parent !== window)) drawBtn(W/2, 380, 'REJOUER'); return; }
   ctx.strokeText(t, W/2, 220); ctx.fillStyle = win ? '#ffd34a' : '#ff3b4b'; ctx.fillText(t, W/2, 220);
   ctx.font = '24px Georgia,serif'; ctx.fillStyle = '#e6f2cf';
   if (win) ctx.fillText('La Gardienne du diamant cuivré est vaincue !', W/2, 270);
@@ -2165,6 +2193,7 @@ function tapScreen(p){
   if (game.state==='title'){ if (loaded>=total) startMap(0); return; }
   if (game.state==='over' || game.state==='win'){
     if (p.key){ startMap(game.state==='over' ? game.map : 0); return; }
+    if (game.finale){ if (Math.abs(p.y-380) < 40 && Math.abs(p.x-W/2) < 120 && !(window.parent && window.parent !== window)){ game.finale = false; startMap(0); } return; }
     if (Math.abs(p.y-340) < 40){
       if (p.x < W/2) startMap(0);
       else if (game.state==='over') startMap(game.map);

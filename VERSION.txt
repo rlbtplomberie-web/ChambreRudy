@@ -1,4 +1,6 @@
-maj-229 (partie 1 sur 2) : grotte du diamant cuivré - vidéos de K.O. de la boss.
-- Vidéo quand la Gardienne (1re forme) tue Rudy, puis l'infirmière et l'hôpital de Vaviel.
-- Vidéo quand la Gardienne déchaînée (2e forme) tue Rudy, puis l'infirmière et l'hôpital de Vaviel.
-Installe aussi la partie 2 (le jeu, Chaliaville, le téléphone et la statue).
+maj-229 (partie 2 sur 2) : grotte du diamant cuivré - fin du donjon, plaque Courage, statue.
+- Boss battue : sa vidéo, puis le choix SUCCOMBER (sa vidéo, l'infirmière, l'hôpital de Vaviel - compte comme une défaite) ou RÉSISTER (VICTOIRE en gros, donjon réussi, on sort du jeu).
+- Les vidéos de K.O. de la boss (partie 1) branchées dans le jeu.
+- Pour entrer dans la grotte : battre Astra ET donner 10 € au clochard d'en bas à Chaliaville.
+- Statue : plaque « Courage » dans le rectangle du milieu quand la grotte est réussie ; ASTUCES de la grotte ; mini-jeux ajoutés (Poker, Bowling, Chalia Rugby, Kingspeed, Combat dans l'impasse) ; total des vidéos 602.
+- Déverrouillage : K.O. par la Gardienne, K.O. par la Gardienne déchaînée, Victoire contre la boss, Succomber à la boss.
