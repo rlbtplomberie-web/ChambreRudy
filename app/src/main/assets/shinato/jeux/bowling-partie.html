@@ -443,7 +443,23 @@ function endGame(){
   const rudyLost=r.length>1&&win.p.id!=='rudy';
   document.getElementById('endimg').src=rudyLost&&!tie?S(win.p.id,'cut',0).src:S('rudy','cut',tie?2:0).src;
   document.getElementById('rank').innerHTML=r.map((x,i)=>`${['🥇','🥈','🥉'][i]||(i+1)+'.'} <b style="color:${CHAR[x.p.id].col}">${CHAR[x.p.id].name}</b> — ${x.s} pts`).join('<br>');
-  setTimeout(()=>{if(win.p.id==='rudy'){confetti(200,true);fireworks();cheer(true);}document.getElementById('end').style.display='flex';jingle(win.p.id==='rudy'?'strike':'bad');},400);
+  const montreFin=()=>{if(win.p.id==='rudy'){confetti(200,true);fireworks();cheer(true);}document.getElementById('end').style.display='flex';jingle(win.p.id==='rudy'?'strike':'bad');};
+  const vid=(!tie&&rudyLost)?VIDEOS_VICTOIRE[win.p.id]:null;
+  setTimeout(()=>{ if(vid) videoVictoire(vid,montreFin); else montreFin(); },400);
+}
+// ---------- la vidéo de la fille qui gagne la partie (puis le tableau des scores) ----------
+const VIDEOS_VICTOIRE={sophie:'/assets/shinato/m/bowling_victoire_sophie.mp4', mifa:'/assets/shinato/m/bowling_victoire_mifa.mp4', faty:'/assets/shinato/m/bowling_victoire_faty.mp4', ameline:'/assets/shinato/m/bowling_victoire_ameline.mp4', miminia:'/assets/shinato/m/bowling_victoire_miminia.mp4', rose:'/assets/shinato/m/bowling_victoire_rose.mp4', katila:'/assets/shinato/m/bowling_victoire_katila.mp4', karine:'/assets/shinato/m/bowling_victoire_karine.mp4', gisele:'/assets/shinato/m/bowling_victoire_gisele.mp4', aline:'/assets/shinato/m/bowling_victoire_aline.mp4', colica:'/assets/shinato/m/bowling_victoire_colica.mp4'};
+function videoVictoire(src,fin){
+  const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:999;background:#000';
+  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+  const v=vb.querySelector('video'); let fait=false, wd=0, last=-1, fige=0;
+  const fini=()=>{ if(fait) return; fait=true; clearInterval(wd); try{ v.pause(); }catch(e){} vb.remove(); fin(); };
+  v.addEventListener('ended',fini); v.addEventListener('error',fini);
+  vb.addEventListener('pointerdown',()=>{ if(v.paused&&!fait){ const q=v.play(); if(q&&q.catch) q.catch(()=>{}); } });
+  // si l'image reste figée 4 secondes, on passe au tableau des scores (le jeu ne reste jamais bloqué)
+  wd=setInterval(()=>{ if(fait) return; if(v.duration&&v.currentTime>=v.duration-0.15){ fini(); return; }
+    if(v.currentTime!==last){ last=v.currentTime; fige=0; } else if(++fige>=8) fini(); },500);
+  v.src=src; const q=v.play(); if(q&&q.catch) q.catch(()=>{ v.muted=true; const q2=v.play(); if(q2&&q2.catch) q2.catch(fini); });
 }
 
 // ---------- input ----------
