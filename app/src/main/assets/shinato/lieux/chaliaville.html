@@ -104,7 +104,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#050a1e;color:#fff;f
 <div id="jouerR">JOUER</div>
 <div id="grotteE">ENTRER</div>
 <div id="grotteJeu"><div id="grotteQuit" title="Quitter">✕</div></div>
-<div id="rugChoix"><div id="chRugby">CHALIA RUGBY</div><div class="x" id="rugFermer">✕</div></div>
+<div id="rugChoix"><div id="chRugby">CHALIA RUGBY</div><div id="chPerche">SAUT À LA PERCHE</div><div class="x" id="rugFermer">✕</div></div>
 <div id="rugbyJeu"><div id="rugbyQuit" title="Quitter">✕</div></div>
 <div id="soldatP">PARLER</div>
 <div id="orangeP">PARLER</div>
@@ -576,15 +576,17 @@ let rugMusique=false;
 function devantRugby(){ return !menu&&!enScene&&!enRugby&&P.niv==='haut'&&P.x>ZONE_RUG[0]&&P.x<ZONE_RUG[1]; }
 appui(jouerR,()=>{ if(enScene)return; enScene=true; jstop(); clav={}; courir=false; jouerR.style.display='none'; fE.style.display='none'; rugChoix.style.display='flex'; });
 appui(document.getElementById('rugFermer'),()=>{ rugChoix.style.display='none'; enScene=false; jstop(); clav={}; });
-appui(document.getElementById('chRugby'),()=>{ rugChoix.style.display='none';
+appui(document.getElementById('chRugby'),()=>{ lanceJeuTerrain('/assets/shinato/jeux/rugby.html'); });
+appui(document.getElementById('chPerche'),()=>{ lanceJeuTerrain('/assets/shinato/jeux/perche.html'); });   // le saut à la perche, sur le même terrain
+function lanceJeuTerrain(src){ rugChoix.style.display='none';
   try{ const m=window.top.RUDY_AUDIO; if(m){ rugMusique=!m.paused; m.pause(); } }catch(e){}     // le jeu a sa propre musique
-  const f=document.createElement('iframe'); f.setAttribute('allow','autoplay; fullscreen'); f.src='/assets/shinato/jeux/rugby.html';
+  const f=document.createElement('iframe'); f.setAttribute('allow','autoplay; fullscreen'); f.src=src;
   rugbyJeu.appendChild(f); rugbyJeu.style.display='block'; enRugby=true;
   // QUITTER se range juste à gauche des boutons du jeu (⏸ 🔊 ↺ ⛶), sans rien cacher
-  const q=document.getElementById('rugbyQuit'); q.style.right='210px';
+  const q=document.getElementById('rugbyQuit'); q.style.right=/perche/.test(src)?'10px':'210px';
   const placeQ=()=>{ try{ const t=f.contentDocument&&f.contentDocument.getElementById('tools'); if(!t)return; const r=t.getBoundingClientRect(); if(r.width>0) q.style.right=Math.round(innerWidth-r.left+8)+'px'; }catch(_){} };
   f.addEventListener('load',()=>{ placeQ(); setTimeout(placeQ,800); setTimeout(placeQ,2500); });
-  const iv=setInterval(()=>{ if(!enRugby){clearInterval(iv);return;} placeQ(); },1500); setTimeout(()=>{try{f.focus();}catch(e){}},300); });
+  const iv=setInterval(()=>{ if(!enRugby){clearInterval(iv);return;} placeQ(); },1500); setTimeout(()=>{try{f.focus();}catch(e){}},300); }
 // QUITTER : on referme le jeu quand le doigt se relève, la ville et sa musique reprennent
 (function(){ const q=document.getElementById('rugbyQuit'); let arme=false;
   q.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();arme=true;});
