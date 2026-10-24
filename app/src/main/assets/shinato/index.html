@@ -1903,6 +1903,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
  window.appuiSur(btn,function(){
   if(!ici) return; dir=0;
   if(ici.nom==="penalty"){ window.ouvreMenuFoot(); return; }   // terrain FOOT LIFE : menu Tir au but / Shinato Soccer
+  if(ici.nom==="paniers"){ window.ouvreMenuBasket(); return; }   // terrain de basket : menu Paniers / Shinato Basket
   if(window.Chambre&&window.Chambre.jouer){
    parti=true;
    try{ if(window.RUDY_AUDIO) window.RUDY_AUDIO.pause(); }catch(e){}   // le jeu a sa propre musique
@@ -1949,6 +1950,15 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
 #menuFoot .choix{padding:3vmin 4vmin;border-radius:2.4vmin;cursor:pointer;font:900 clamp(15px,3.8vmin,30px)/1 Arial,sans-serif;letter-spacing:2px;color:#ffe27a;background:linear-gradient(rgba(12,12,14,.9),rgba(40,40,46,.9));border:2px solid rgba(255,226,122,.7)}
 #menuFoot .annuler{margin-top:1vmin;color:#bbb;font:700 clamp(12px,3vmin,22px)/1 Arial,sans-serif;letter-spacing:2px;cursor:pointer;padding:2vmin}
 #soccer{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:60;background:#000;display:none}
+#basket{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:60;background:#000;display:none}
+#menuBasket{position:fixed;inset:0;z-index:55;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-family:Arial,Helvetica,sans-serif}
+#menuBasket .carte{min-width:62vmin;padding:5vmin 6vmin;border-radius:3vmin;text-align:center;background:linear-gradient(rgba(14,14,18,.96),rgba(30,30,36,.96));border:2px solid rgba(255,226,122,.6);box-shadow:0 10px 40px rgba(0,0,0,.7)}
+#menuBasket h2{margin:0 0 4vmin;color:#fff;font:900 clamp(16px,4.2vmin,34px)/1.2 Arial,sans-serif;letter-spacing:2px;text-shadow:0 3px 0 #000}
+#menuBasket .ch{display:flex;flex-direction:column;gap:3vmin;align-items:stretch}
+#menuBasket .choix{padding:3vmin 4vmin;border-radius:2.4vmin;cursor:pointer;font:900 clamp(15px,3.8vmin,30px)/1 Arial,sans-serif;letter-spacing:2px;color:#ffe27a;background:linear-gradient(rgba(12,12,14,.9),rgba(40,40,46,.9));border:2px solid rgba(255,226,122,.7)}
+#menuBasket .annuler{margin-top:1vmin;color:#bbb;font:700 clamp(12px,3vmin,22px)/1 Arial,sans-serif;letter-spacing:2px;cursor:pointer;padding:2vmin}
+#basketQuitter{position:fixed;z-index:61;display:none;left:calc(8px + env(safe-area-inset-left,0px));top:calc(8px + env(safe-area-inset-top,0px));
+ padding:7px 12px;border-radius:999px;background:rgba(10,10,14,.75);border:2px solid rgba(255,226,122,.8);color:#ffe27a;font:900 13px/1 Arial,sans-serif;letter-spacing:1px;cursor:pointer}
 #soccerQuitter{position:fixed;z-index:61;display:none;left:calc(8px + env(safe-area-inset-left,0px));top:calc(8px + env(safe-area-inset-top,0px));
  padding:7px 12px;border-radius:999px;background:rgba(10,10,14,.75);border:2px solid rgba(255,226,122,.8);color:#ffe27a;font:900 13px/1 Arial,sans-serif;letter-spacing:1px;cursor:pointer}
 </style>
@@ -1958,6 +1968,12 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
  <div class="annuler" id="choixAnnuler">ANNULER</div>
 </div></div></div>
 <div id="soccerQuitter">&#10005; RUE</div>
+<div id="menuBasket" class="menuJeuRue"><div class="carte"><h2>TERRAIN DE BASKET</h2><div class="ch">
+ <div class="choix" id="choixPaniers">PANIERS</div>
+ <div class="choix" id="choixBasket">SHINATO BASKET</div>
+ <div class="annuler" id="basketAnnuler">ANNULER</div>
+</div></div></div>
+<div id="basketQuitter">&#10005; RUE</div>
 <script>
 /* ---------- terrain FOOT LIFE : JOUER ouvre un menu -> Tir au but (jeu de l'appli) ou Shinato Soccer (jeu HTML) ---------- */
 (function(){
@@ -1977,6 +1993,31 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
   window.minuterieLibre(function(){ try{ f.focus(); }catch(e){} },300);
  });
  window.FERMETURES.soccer=function(f){ try{ f.blur(); }catch(e){} f.style.display="none"; f.src="about:blank"; quit.style.display="none"; };
+/* ---------- terrain de basket : JOUER ouvre un menu -> Paniers (jeu de l'appli) ou Shinato Basket (jeu HTML) ---------- */
+ (function(){
+  var mb=document.getElementById("menuBasket"), qb=document.getElementById("basketQuitter");
+  function fermeB(){ mb.style.display="none"; }
+  window.ouvreMenuBasket=function(){ dir=0; mb.style.display="flex"; };
+  window.appuiSur(document.getElementById("basketAnnuler"),fermeB);
+  window.appuiSur(document.getElementById("choixPaniers"),function(){ fermeB(); window.lanceJeuRue("paniers"); });
+  window.appuiSur(document.getElementById("choixBasket"),function(){
+   fermeB(); dir=0;
+   var f=document.getElementById("basket");
+   if(!f){ f=document.createElement("iframe"); f.id="basket"; f.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(f); }
+   window.fermeAutresCadres("basket");
+   try{ if(window.RUDY_AUDIO) window.RUDY_AUDIO.pause(); }catch(e){}   // le jeu a sa propre musique
+   window.pauseRue();
+   f.src="/assets/shinato/jeux/basket.html"; f.style.display="block"; qb.style.display="block";
+   window.minuterieLibre(function(){ try{ f.focus(); }catch(e){} },300);
+  });
+  window.FERMETURES.basket=function(f){ try{ f.blur(); }catch(e){} f.style.display="none"; f.src="about:blank"; qb.style.display="none"; };
+  // « ✕ RUE » : on quitte Shinato Basket, Rudy est de retour devant le terrain
+  window.appuiSur(qb,function(){
+   var f=document.getElementById("basket"); if(f){ f.style.display="none"; f.src="about:blank"; }
+   qb.style.display="none"; dir=0; window.repriseRue();
+   try{ if(window.RUDY_AUDIO){ var p=window.RUDY_AUDIO.play(); if(p&&p.catch)p.catch(function(){}); } }catch(e){}
+  });
+ })();
  // « ✕ RUE » : on quitte Shinato Soccer, Rudy est de retour devant le terrain
  window.appuiSur(quit,function(){
   var f=document.getElementById("soccer"); if(f){ f.style.display="none"; f.src="about:blank"; }

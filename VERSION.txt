@@ -1,1 +1,1 @@
-maj-232 : Shinato - un lieu ne change plus jamais de page pendant qu'un doigt est posé sur l'écran (il attend que le doigt se lève, 2,5 s au plus). Corrige le « doigt fantôme » : après un changement de map, un seul doigt ne faisait plus avancer Rudy, il en fallait deux sur le joystick.
+maj-233 : Shinato - au terrain de basket, JOUER propose PANIERS (l'ancien jeu) ou SHINATO BASKET (nouveau jeu, ses images dans shinato/m/basket_*). « ✕ RUE » ramène devant le terrain. Statue : « Shinato Basket » ajouté aux mini-jeux.
