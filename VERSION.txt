@@ -1,1 +1,1 @@
-maj-233 : Shinato - au terrain de basket, JOUER propose PANIERS (l'ancien jeu) ou SHINATO BASKET (nouveau jeu, ses images dans shinato/m/basket_*). « ✕ RUE » ramène devant le terrain. Statue : « Shinato Basket » ajouté aux mini-jeux.
+maj-234 (partie 1 sur 2) : vidéos de victoire du bowling de Colica, Aline, Katila, Gisèle et Rose. Installe aussi la partie 2 (le jeu et les autres vidéos).
