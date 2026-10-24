@@ -1,4 +1,1 @@
-maj-231 :
-- Chaliaville : au terrain de rugby, JOUER propose CHALIA RUGBY ou SAUT À LA PERCHE (nouveau jeu, ses images dans shinato/m/perche_*). Le ✕ rouge ramène à Chaliaville.
-- Statue : « Saut à la perche » ajouté aux mini-jeux.
-- Grotte du diamant cuivré : la boss est plus forte (ses coups font plus mal, elle attaque plus souvent, elle pare plus de coups, ses prises font plus mal), sous ses deux formes.
+maj-231 (partie 1 sur 3) : le moteur 3D fourni avec l'appli (shinato/lib/three.min.js) + Pont-l'Ades qui l'utilise. Avant, il venait d'internet : sans connexion, les jeux 3D ne démarraient pas (joystick et touches morts). Installe aussi les parties 2 et 3.
