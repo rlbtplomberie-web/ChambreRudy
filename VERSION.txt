@@ -1,2 +1,2 @@
-ChambreRudy - maj-241
-Rudy Jet : quand la géante d'eau attrape Rudy, on la voit en entier (taille ajustée à l'écran, texte et bouton SE LIBÉRER déplacés en bas)
+ChambreRudy - maj-242
+Plage de Gisèle : plus de lag quand Rudy marche

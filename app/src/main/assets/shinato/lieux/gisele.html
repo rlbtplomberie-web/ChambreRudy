@@ -39,7 +39,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--night);font-fami
  background:repeating-linear-gradient(90deg,rgba(255,255,255,0) 0 40px,rgba(230,240,255,.45) 40px 90px,rgba(255,255,255,0) 90px 160px);
  filter:blur(3px);mix-blend-mode:screen;animation:foam 6s ease-in-out infinite}
 @keyframes foam{0%,100%{transform:translate(0,0);opacity:.2}50%{transform:translate(-30px,-10px);opacity:.75}}
-#jetski{position:absolute;left:0;top:0;width:187px;height:179px;z-index:5;pointer-events:none;display:none;transform-origin:50% 97%}
+#jetski{position:absolute;left:0;top:0;width:187px;height:179px;z-index:5;pointer-events:none;display:none;transform-origin:50% 97%;will-change:transform}
 #jetski img{position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;transition:opacity .55s ease;filter:brightness(.8) saturate(.9)}
 #jetski img.on{opacity:1}
 #jetski .ombreJ{position:absolute;left:8%;top:84%;width:88%;height:18%;border-radius:50%;background:radial-gradient(ellipse,rgba(15,8,45,.5),rgba(15,8,45,0) 70%)}
@@ -225,21 +225,26 @@ function libre(x,y){
  return true;
 }
 function dessine(set,i,x,y,phase){
- const R=RB[set], im=R.fr[i%R.fr.length]; if(!im.complete) return;
+ const R=RB[set], j=i%R.fr.length, im0=R.fr[j]; if(!im0.complete||!im0.naturalWidth) return;
+ // la teinte de nuit est appliquée UNE seule fois par image (le filtre à chaque image faisait ramer la plage quand Rudy marche)
+ R.fc=R.fc||[]; let im=R.fc[j];
+ if(!im){ im=document.createElement('canvas'); im.width=im0.naturalWidth; im.height=im0.naturalHeight;
+  const c=im.getContext('2d'); c.filter='brightness(.8) saturate(.9)'; c.drawImage(im0,0,0); c.filter='none';
+  R.fc[j]=im; }
+ const sxI=im.width/R.w, syI=im.height/R.h;
  const h=taille(y), k=h/R.h;
  rx.save();
  rx.fillStyle='rgba(15,8,45,.42)';rx.beginPath();rx.ellipse(x,y,h*0.17,h*0.035,0,0,7);rx.fill();
- rx.filter='brightness(.8) saturate(.9)';
  const X=x-R.ax*k, Y=y-R.ay*k;
  if((set==='droite'||set==='gauche')&&phase!=null){
   // comme au bar : les jambes de profil se referment puis s'écartent à chaque enjambée
   const ouv=0.30+0.70*Math.abs(Math.cos(phase*Math.PI));
   const bob=-Math.abs(Math.sin(phase*Math.PI))*h*0.018;
   const hanche=Math.round(R.h*0.50), N=14, bas=R.h-hanche;
-  rx.drawImage(im,0,0,R.w,hanche,X,Y+bob,R.w*k,hanche*k);
+  rx.drawImage(im,0,0,R.w*sxI,hanche*syI,X,Y+bob,R.w*k,hanche*k);
   for(let n=0;n<N;n++){
    const s0=hanche+bas*n/N, s1=hanche+bas*(n+1)/N, f=(n+0.5)/N, sx=1-(1-ouv)*f;
-   rx.drawImage(im,0,s0,R.w,s1-s0+0.6,X+R.ax*k-R.ax*k*sx,Y+s0*k+bob*(1-f),R.w*k*sx,(s1-s0)*k+0.6);
+   rx.drawImage(im,0,s0*syI,R.w*sxI,Math.min(im.height-s0*syI,(s1-s0+0.6)*syI),X+R.ax*k-R.ax*k*sx,Y+s0*k+bob*(1-f),R.w*k*sx,(s1-s0)*k+0.6);
   }
  }else rx.drawImage(im,X,Y,R.w*k,R.h*k);
  rx.restore();
@@ -347,7 +352,7 @@ const JET={x:936,y:522,on:false};
   const t=ms/1000, br=Math.sin(t*2*Math.PI/(debout?3.8:2.6));
   box.style.transform='scale('+(1+br*0.004).toFixed(4)+','+(1+br*(debout?0.009:0.006)).toFixed(4)+')';
   // Rudy passe devant ou derrière elle selon la profondeur
-  box.style.zIndex=RUDY.y>JET.y?2:5;
+  const zj=RUDY.y>JET.y?'2':'5'; if(box.style.zIndex!==zj) box.style.zIndex=zj;
  })(0);
 })();
 
