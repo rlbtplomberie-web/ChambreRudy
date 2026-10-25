@@ -1,3 +1,2 @@
-ChambreRudy - maj-239 (à installer APRÈS la maj-238)
-Rudy Jet : si la fille d'eau ou la boss tue Rudy, sa vidéo, puis l'infirmière et Rudy devant l'hôpital de Vaviel
-Vidéos ajoutées au Déverrouillage (dossier La plage), NB_VIDEOS = 623
+ChambreRudy - maj-240 (à installer après la maj-239)
+Les 6 images de Tiphaine et de son jet-ski (plage de Gisèle), oubliées dans la maj-238
