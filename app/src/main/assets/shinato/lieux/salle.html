@@ -36,13 +36,35 @@ html,body{margin:0;height:100%;background:#05070d;overflow:hidden;font-family:sy
  background:linear-gradient(rgba(12,12,14,.9),rgba(30,30,34,.9));border:2px solid rgba(255,226,122,.95);box-shadow:0 5px 16px rgba(0,0,0,.55);user-select:none;-webkit-user-select:none}
 .btnS:active{transform:scale(.94)} .btnS.off{opacity:.32}
 #sortirS{display:none;color:#111;background:linear-gradient(#ffe56b,#e0a800);border-color:#fff3b0;box-shadow:0 0 14px rgba(255,212,0,.7),0 6px 18px rgba(0,0,0,.55)}
+
+#parlerS{display:none;color:#111;background:linear-gradient(#ffffff,#d9d9d9);border-color:#111;box-shadow:0 0 14px rgba(255,255,255,.6),0 6px 18px rgba(0,0,0,.55)}
+#bulleC{position:fixed;z-index:20;display:none;width:min(86vw,360px);box-sizing:border-box;padding:16px 20px 18px;background:#fff;color:#111;border:4px solid #111;border-radius:46px;
+ box-shadow:6px 6px 0 rgba(0,0,0,.55);font:900 italic clamp(16px,3.6vmin,24px)/1.2 'Comic Sans MS','Chalkboard SE','Arial Black',Arial,sans-serif;text-align:center;touch-action:none;user-select:none;-webkit-user-select:none;
+ transform-origin:var(--qx,75%) 100%;animation:popC .22s cubic-bezier(.2,1.6,.4,1)}
+@keyframes popC{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+#bulleC .qC,#bulleC .qC2{position:absolute;left:var(--qx,75%);width:0;height:0;pointer-events:none}
+#bulleC .qC{bottom:-34px;margin-left:-6px;border-left:12px solid transparent;border-right:22px solid transparent;border-top:34px solid #111}
+#bulleC .qC2{bottom:-25px;margin-left:-1px;border-left:7px solid transparent;border-right:15px solid transparent;border-top:26px solid #fff}
+#bulleC .nomC{display:block;font:900 clamp(10px,2vmin,13px)/1 Arial,sans-serif;letter-spacing:3px;color:#c0392b;margin-bottom:6px;font-style:normal}
+#bulleC .choixC{display:flex;gap:12px;justify-content:center;margin-top:12px}
+#bulleC .bC{flex:1;max-width:130px;padding:10px 0;border-radius:22px;border:3px solid #111;font:900 clamp(15px,3.2vmin,22px)/1 Arial,sans-serif;letter-spacing:2px;font-style:normal;box-shadow:3px 3px 0 #111}
+#bulleC .bC:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #111}
+#bulleC .oui{background:#ffd400;color:#111} #bulleC .non{background:#eee;color:#111}
+#vidC{position:fixed;inset:0;z-index:50;background:#000;display:none}
+#vidC video{width:100%;height:100%;object-fit:contain;background:#000}
+#jeuC{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:60;background:#07060c;display:none}
+#quitC{position:fixed;left:calc(2vmin + env(safe-area-inset-left,0px));bottom:calc(2vmin + env(safe-area-inset-bottom,0px));z-index:61;display:none;padding:1.6vmin 2.4vmin;border-radius:3vmin;
+ font:900 clamp(11px,2.4vmin,18px)/1 Arial,sans-serif;letter-spacing:2px;color:#ffe27a;background:rgba(10,10,14,.8);border:2px solid rgba(255,226,122,.9);touch-action:none;user-select:none}
 </style>
 </head>
 <body>
 <div id="blur"></div>
 <div id="titreS">RUDY STYLE<small>SALLE DE MUSCULATION</small></div>
 <div id="joyS"><div id="knobS"></div></div>
-<div id="actionsS"><div class="btnS" id="sortirS">SORTIR</div><div class="btnS" id="fumerS">FUMER</div><div class="btnS off" id="jeterS">JETER</div></div>
+<div id="actionsS"><div class="btnS" id="parlerS">PARLER</div><div class="btnS" id="sortirS">SORTIR</div><div class="btnS" id="fumerS">FUMER</div><div class="btnS off" id="jeterS">JETER</div></div>
+<div id="bulleC"><span class="nomC">LE COACH</span><span id="txtC"></span><div class="choixC" id="choixC"><div class="bC oui" id="ouiC">OUI</div><div class="bC non" id="nonC">NON</div></div><i class="qC"></i><i class="qC2"></i></div>
+<div id="vidC"><video id="videoC" playsinline webkit-playsinline preload="auto"></video></div>
+<iframe id="jeuC" allow="autoplay"></iframe><div id="quitC">✕ SALLE</div>
 <div id="scroller"><div id="sizer"><div id="stage">
   <img id="bgimg" alt="">
   <canvas id="fx" width="2048" height="270"></canvas>
@@ -147,6 +169,7 @@ let plane=null,nextPlane=4,shoot=null,nextShoot=9;
 let last=performance.now()/1000;
 
 function frame(ms){
+  if(window.__salleEnPause){ last=ms/1000; requestAnimationFrame(frame); return; }
   const t=ms/1000,dt=Math.min(.05,t-last);last=t;
 
   /* --- coach : poses + respiration --- */
@@ -277,11 +300,12 @@ function fume(){ if(clope||etat==='fumer'||etat==='jeter') return; etat='fumer';
 function jette(){ if(!clope||etat==='fumer'||etat==='jeter') return; etat='jeter'; f=0; phase=0; dir=dirY=0; majB(); }
 // en téléphone portrait, l'image glisse : on garde Rudy au milieu de l'écran
 function cadre(){ if(!sc.classList.contains('pan')) return; const k=$('stage').getBoundingClientRect().width/2048;
-  const cible=Math.max(0,Math.min(sc.scrollWidth-sc.clientWidth,x*k-sc.clientWidth/2)); sc.scrollLeft+= (cible-sc.scrollLeft)*0.18; }
+  const cx=dialogue?(x+1900)/2:x;
+  const cible=Math.max(0,Math.min(sc.scrollWidth-sc.clientWidth,cx*k-sc.clientWidth/2)); sc.scrollLeft+= (cible-sc.scrollLeft)*0.18; }
 function boucle(t){
   requestAnimationFrame(boucle);
-  if(!tPrec) tPrec=t; const dt=Math.min((t-tPrec)/1000,0.05); tPrec=t; if(fini) return;
-  const h=hR(), libre=(etat==='repos'||etat==='marche');
+  if(!tPrec) tPrec=t; const dt=Math.min((t-tPrec)/1000,0.05); tPrec=t; if(fini||window.__salleEnPause) return;
+  const h=hR(), libre=(etat==='repos'||etat==='marche')&&!dialogue;
   if(libre){
     if(dir!==0||dirY!==0){
       if(dir!==0) sens=dir>0?1:-1;
@@ -304,12 +328,58 @@ function boucle(t){
   const ici=x<=SORTIE;
   fl.style.display=ici?'block':'none'; bS.style.display=ici?'block':'none';
   if(ici){ fl.style.left=(x-10)+'px'; fl.style.top=(y-h*1.12)+'px'; }
+  // devant le coach : PARLER
+  bP.style.display=(x>=PRES_COACH&&!dialogue&&libre)?'block':'none';
+  if(dialogue) placeBulle();
   cadre();
 }
 requestAnimationFrame(boucle); pose(IMG.fumer[0]); majB();
 setTimeout(()=>{ if(sc.classList.contains('pan')) sc.scrollLeft=0; },50);   // on arrive tout à gauche
 function appui(el,fn){ let t0=0; el.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); const n=Date.now(); if(n-t0<350) return; t0=n; fn(); }); }
 appui(bF,fume); appui(bJ,jette);
+// ---------- PARLER au coach ----------
+const PRES_COACH=1560, bP=$('parlerS'), bulle=$('bulleC'), txtC=$('txtC'), choixC=$('choixC'), coachEl=$('coach');
+let dialogue=false, tFerme=null;
+function placeBulle(){
+  const r=coachEl.getBoundingClientRect(), W=innerWidth, bw=bulle.offsetWidth, bh=bulle.offsetHeight;
+  const tx=r.left+r.width*0.42, ty=r.top+r.height*0.04;           // la pointe vise la tête du coach
+  let L=Math.max(8,Math.min(W-bw-8,tx-bw*0.75)), T=Math.max(8,ty-bh-34);
+  bulle.style.left=L+'px'; bulle.style.top=T+'px';
+  bulle.style.setProperty('--qx',Math.max(24,Math.min(bw-40,tx-L))+'px');
+}
+function montreBulle(t,choix){ txtC.textContent=t; choixC.style.display=choix?'flex':'none'; bulle.style.display='block';
+  bulle.style.animation='none'; void bulle.offsetWidth; bulle.style.animation=''; placeBulle(); }
+function fermeBulle(){ bulle.style.display='none'; dialogue=false; if(tFerme){ clearTimeout(tFerme); tFerme=null; } }
+function parler(){ if(dialogue||x<PRES_COACH) return; dialogue=true; dir=dirY=0; sens=1; if(etat==='marche'){ etat='repos'; f=0; phase=0; }
+  montreBulle('Salut ! Tu veux t\'entraîner ?',true); }
+appui(bP,parler);
+appui($('nonC'),()=>{ montreBulle('OK, ça sera pour la prochaine fois !',false); tFerme=setTimeout(fermeBulle,2600); });
+bulle.addEventListener('pointerdown',e=>{ e.stopPropagation(); if(!choixC.offsetParent&&tFerme){ e.preventDefault(); fermeBulle(); } });
+// OUI : la vidéo, puis le jeu Défi Muscu directement après
+const vidC=$('vidC'), video=$('videoC'), jeu=$('jeuC'), quit=$('quitC');
+const cache=on=>['scroller','titreS','joyS','actionsS'].forEach(id=>{ const el=$(id); if(el) el.style.visibility=on?'hidden':''; });
+function pauseSalle(on){ window.__salleEnPause=on; cache(on); if(on){ dir=dirY=0; } }
+let finVid=null;
+function lanceVideo(src,apres){
+  pauseSalle(true); vidC.style.display='block'; let fait=false, figee=0, tPrecV=-1;
+  const fin=()=>{ if(fait) return; fait=true; clearInterval(iv); video.pause(); video.removeAttribute('src'); try{ video.load(); }catch(e){} vidC.style.display='none'; apres(); };
+  finVid=fin;
+  video.onended=fin; video.onerror=fin;
+  const iv=setInterval(()=>{ if(video.paused) return; if(Math.abs(video.currentTime-tPrecV)<0.01){ if(++figee>=8) fin(); } else figee=0; tPrecV=video.currentTime; },500);
+  vidC.onpointerdown=e=>{ e.preventDefault(); if(video.paused){ const p=video.play(); if(p&&p.catch) p.catch(()=>{}); } };
+  video.src=src; video.muted=false;
+  const p=video.play(); if(p&&p.catch) p.catch(()=>{ video.muted=true; const q=video.play(); if(q&&q.catch) q.catch(()=>{}); });
+}
+function lanceJeu(){ jeu.style.display='block'; quit.style.display='block'; jeu.src='/assets/shinato/jeux/defi-muscu.html'; }
+function quitteJeu(){ jeu.src='about:blank'; jeu.style.display='none'; quit.style.display='none'; pauseSalle(false); }
+appui($('ouiC'),()=>{ fermeBulle(); lanceVideo('/assets/shinato/m/salle_coach_entrainement.mp4',lanceJeu); });
+let armeQ=false;
+quit.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); armeQ=true; });
+quit.addEventListener('pointercancel',()=>{ armeQ=false; });
+quit.addEventListener('pointerup',e=>{ e.preventDefault(); if(!armeQ) return; armeQ=false; quitteJeu(); });
+addEventListener('message',e=>{ const d=e.data; if(d&&d.type==='muscu:quitter') quitteJeu(); });
+addEventListener('resize',()=>{ if(dialogue) placeBulle(); });
+
 // SORTIR : on ressort quand le doigt se relève, en face de la salle à Chaliaville
 let arme=false;
 bS.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); arme=true; });
