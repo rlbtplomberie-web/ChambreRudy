@@ -711,7 +711,7 @@ function majPrise(dt){
   const txt=document.getElementById('priseTxt');
   if (P.boss){
     if (P.phase==='saute' || P.phase==='lutte'){ vies=Math.max(0,vies-dt*(P.phase==='lutte'?14:5)); }
-    if (vies<=0 && P.phase!=='rate'){ P.phase='rate'; P.t=0; P.img=5; bip([330,247,196,147],.2,'sawtooth',.07); }
+    if (vies<=0 && P.phase!=='rate'){ TUEUR='boss'; P.phase='rate'; P.t=0; P.img=5; bip([330,247,196,147],.2,'sawtooth',.07); }
     if (P.phase==='saute'){
       const ni=Math.min(3,Math.floor(P.t/.65)); if (ni!==P.img){ P.img=ni; choc(); if (ni===2){ shake=.6; sonPlouf(true); } }
       if (P.t>=2.6){ P.phase='lutte'; P.t=0; P.img=4; }
@@ -842,7 +842,7 @@ function majBoss(dt){
       const latR=-lat;                                      // position de Rudy par rapport à elle
       const pt={x:J.x+fz*B.side*3, z:J.z-fx*B.side*3};
       eclaboussure(pt.x,pt.z,true); shake=Math.max(shake,.6);
-      if (dB<70 && av>0 && B.side*latR > -2.5){ invuln=0; perdreVie('COUP DE TENTACULE !',22); impactGeante(true); }
+      if (dB<70 && av>0 && B.side*latR > -2.5){ invuln=0; TUEUR='boss'; perdreVie('COUP DE TENTACULE !',22); impactGeante(true); }
       else { message('ESQUIVÉ !','#7dffa0'); bip([660,880],.07); }
     }
     if (B.t>=2){ B.etat='pose'; B.t=0; B.cd=1.4+Math.random()*1.2; }
@@ -872,7 +872,7 @@ function lancerOrbe(B){
 function majOrbes(dt){
   for (let i=ORBES.length-1;i>=0;i--){ const o=ORBES[i]; o.t+=dt; const u=Math.min(1.3,o.t/o.dur);
     o.x=o.x0+(o.tx-o.x0)*u; o.z=o.z0+(o.tz-o.z0)*u; o.y=Math.max(1.4, o.y0+(1.6-o.y0)*u + 8*Math.sin(Math.min(1,u)*Math.PI));
-    if (Math.hypot(o.x-J.x,o.z-J.z)<3 && o.y<5){ ORBES.splice(i,1); eclaboussure(o.x,o.z,true); invuln=0; perdreVie('L\'ORBE TE TOUCHE !',20); impactGeante(true); continue; }
+    if (Math.hypot(o.x-J.x,o.z-J.z)<3 && o.y<5){ ORBES.splice(i,1); eclaboussure(o.x,o.z,true); invuln=0; TUEUR='boss'; perdreVie('L\'ORBE TE TOUCHE !',20); impactGeante(true); continue; }
     if (u>=1.3){ ORBES.splice(i,1); eclaboussure(o.x,o.z,true); }
   }
 }
@@ -928,8 +928,8 @@ document.getElementById('quitterJ').onclick=quitterJeu; document.getElementById(
 document.getElementById('retour').onclick=()=>{ cacher(['fin']); montrer(['menu']); };
 document.getElementById('pause').onclick=()=>{ musique(false); cacher(['musique']); enJeu=false; PRISE=null; avert(0); document.getElementById('prise').classList.remove('boss'); FILLES=[]; BULLES_E=[]; cacher(['hud','ctrl','pause','prise']); montrer(['menu']); };
 
-// la sirène ou la géante d'eau tue Rudy : sa vidéo, puis (dans l'appli) l'infirmière et Rudy devant l'hôpital de Vaviel
-const KO_VIDEOS={sirene:'/assets/shinato/m/rudyjet_ko_sirene.mp4', geante:'/assets/shinato/m/rudyjet_ko_geante.mp4'};
+// la fille d'eau, la sirène, la géante d'eau ou la boss tue Rudy : sa vidéo, puis (dans l'appli) l'infirmière et Rudy devant l'hôpital de Vaviel
+const KO_VIDEOS={sirene:'/assets/shinato/m/rudyjet_ko_sirene.mp4', geante:'/assets/shinato/m/rudyjet_ko_geante.mp4', fille:'/assets/shinato/m/rudyjet_ko_fille.mp4', boss:'/assets/shinato/m/rudyjet_ko_boss.mp4'};
 function videoKO(src,fin){
   const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:9999;background:#000';
   vb.innerHTML='<video playsinline webkit-playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
@@ -1149,7 +1149,7 @@ function maj(dt){
       HOULE.passe=true;
       if (HOULE.boss && enJeu && !PRISE){
         if (v>=SEUIL_TRES){ message('TU SURFES LA VAGUE !','#7dffa0'); bip([523,659,784],.08); }
-        else { invuln=0; perdreVie('LA VAGUE TE FRAPPE !',18); impactGeante(false); }
+        else { invuln=0; TUEUR='boss'; perdreVie('LA VAGUE TE FRAPPE !',18); impactGeante(false); }
       }
       if (enJeu && v>6){ shake=Math.max(shake,.12+Math.min(v,30)/30*.25); bruitVague(v);
         for (let k=0;k<14+v;k++) bulles.push({x:(Math.random()-.5)*2.4, y:0, vx:(Math.random()-.5)*4, vy:3+Math.random()*4*v/30, t:0}); }
