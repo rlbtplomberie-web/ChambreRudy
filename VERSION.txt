@@ -1,4 +1,8 @@
-ChambreRudy - maj-237
-Chalia Rugby : quand les filles gagnent, leur vidéo passe avant l'écran de fin
-Shinato Basket (5 contre 5) : quand ton équipe gagne, sa vidéo passe avant l'écran de fin
-Vidéos ajoutées au Déverrouillage, NB_VIDEOS = 617
+ChambreRudy - maj-238
+Plage de Gisèle : quand Astra est battue, Tiphaine répare son jet-ski sur le sable (6 poses animées)
+PARLER à Tiphaine : elle se lève, bulle manga, 3 choix
+ - DISCUTER : sa vidéo
+ - TESTER LE JET-SKI : elle le prête, puis le jeu Jet Ski Libre (shinato/jeux/jet-ski-libre.html)
+ - J'AI BESOIN DU JET-SKI : « Que veux-tu en faire ? » / Rudy : « Je dois aller sur l'île au nord. » puis la vidéo et le jeu Rudy Jet directement, sans menu (shinato/jeux/rudy-jet.html)
+Rudy Jet : si la sirène ou la géante d'eau tue Rudy, sa vidéo, puis l'infirmière et Rudy devant l'hôpital de Vaviel
+Vidéos ajoutées au Déverrouillage (dossier La plage), NB_VIDEOS = 621

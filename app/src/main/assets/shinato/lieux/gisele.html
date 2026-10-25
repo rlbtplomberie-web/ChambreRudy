@@ -39,6 +39,10 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--night);font-fami
  background:repeating-linear-gradient(90deg,rgba(255,255,255,0) 0 40px,rgba(230,240,255,.45) 40px 90px,rgba(255,255,255,0) 90px 160px);
  filter:blur(3px);mix-blend-mode:screen;animation:foam 6s ease-in-out infinite}
 @keyframes foam{0%,100%{transform:translate(0,0);opacity:.2}50%{transform:translate(-30px,-10px);opacity:.75}}
+#jetski{position:absolute;left:0;top:0;width:187px;height:179px;z-index:5;pointer-events:none;display:none;transform-origin:50% 97%}
+#jetski img{position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;transition:opacity .55s ease;filter:brightness(.8) saturate(.9)}
+#jetski img.on{opacity:1}
+#jetski .ombreJ{position:absolute;left:8%;top:84%;width:88%;height:18%;border-radius:50%;background:radial-gradient(ellipse,rgba(15,8,45,.5),rgba(15,8,45,0) 70%)}
 #tint{position:absolute;inset:0;z-index:6;pointer-events:none;background:linear-gradient(180deg,rgba(40,20,120,0) 40%,rgba(40,20,120,.12));mix-blend-mode:multiply}
 #info{position:fixed;right:max(14px,env(safe-area-inset-right,0px));top:calc(14px + env(safe-area-inset-top,0px));display:flex;gap:8px;align-items:center}
 #info button{width:34px;height:34px;border-radius:50%;border:1px solid var(--edge);background:var(--glass);color:var(--ink);font:600 16px/1 inherit;cursor:pointer;backdrop-filter:blur(6px)}
@@ -62,13 +66,21 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--night);font-fami
 .btn:active{transform:scale(.94)}
 .choix{border-color:rgba(255,226,122,.95);box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 16px rgba(255,214,60,.55)}
 #btnDiscuter{border-color:rgba(255,226,122,.95);box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 16px rgba(255,214,60,.55)}
-#btnParler{border-color:rgba(255,226,122,.95);box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 16px rgba(255,214,60,.55)}
+#btnTiph,#btnParler{border-color:rgba(255,226,122,.95);box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 16px rgba(255,214,60,.55)}
 #bulle{position:fixed;left:0;top:0;z-index:18;display:none;max-width:min(74vw,62vmin);padding:2.2vmin 3.2vmin;border-radius:3.4vmin;
  background:#fffdf4;border:.55vmin solid #1b1330;box-shadow:.8vmin .9vmin 0 rgba(10,6,30,.55);pointer-events:none;
  transform:translate(-50%,-100%) scale(.6);opacity:0;transition:transform .22s cubic-bezier(.3,1.5,.5,1),opacity .15s}
 #bulle.on{transform:translate(-50%,-100%) scale(1);opacity:1}
 #bulle p{margin:0;color:#1b1330;text-align:center;font:800 clamp(14px,3.6vmin,26px)/1.25 "Comic Sans MS","Comic Neue","Chalkboard SE","Trebuchet MS",Arial,sans-serif}
 #queue{position:absolute;bottom:-2.6vmin;width:0;height:0;border-left:1.6vmin solid transparent;border-right:1.6vmin solid transparent;border-top:2.8vmin solid #1b1330;margin-left:-1.6vmin}
+#bulleR{position:fixed;left:0;top:0;z-index:18;display:none;max-width:min(74vw,62vmin);padding:2.2vmin 3.2vmin;border-radius:3.4vmin;
+ background:#fffdf4;border:.55vmin solid #1b1330;box-shadow:.8vmin .9vmin 0 rgba(10,6,30,.55);pointer-events:none;
+ transform:translate(-50%,-100%) scale(.6);opacity:0;transition:transform .22s cubic-bezier(.3,1.5,.5,1),opacity .15s}
+#bulleR.on{transform:translate(-50%,-100%) scale(1);opacity:1}
+#bulleR p{margin:0;color:#1b1330;text-align:center;font:800 clamp(14px,3.6vmin,26px)/1.25 "Comic Sans MS","Comic Neue","Chalkboard SE","Trebuchet MS",Arial,sans-serif}
+#queueR{position:absolute;bottom:-2.6vmin;width:0;height:0;border-left:1.6vmin solid transparent;border-right:1.6vmin solid transparent;border-top:2.8vmin solid #1b1330;margin-left:-1.6vmin}
+#queueR::after{content:"";position:absolute;left:-1.05vmin;top:-3.35vmin;border-left:1.05vmin solid transparent;border-right:1.05vmin solid transparent;border-top:2vmin solid #fffdf4}
+#bulleR{border-color:#1d5a2a}
 #queue::after{content:"";position:absolute;left:-1.05vmin;top:-3.35vmin;border-left:1.05vmin solid transparent;border-right:1.05vmin solid transparent;border-top:2vmin solid #fffdf4}
 #jeu{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:100;background:#000;display:none}
 body.dialogue #joy{opacity:.3}
@@ -79,13 +91,14 @@ body.dialogue #joy{opacity:.3}
 <div id="view"><div id="scene"><canvas id="gl" width="1983" height="793" style="position:absolute;inset:0;width:100%;height:100%;display:block"></canvas>
   <div class="shimmer"></div><div id="stars"></div>
   <div id="lamps"></div>
-  <div id="girl"><div id="shadow"></div></div><canvas id="rc" width="3966" height="1586"></canvas>
+  <div id="girl"><div id="shadow"></div></div><canvas id="rc" width="3966" height="1586"></canvas><div id="jetski"><div class="ombreJ"></div></div>
   <div id="tint"></div>
 </div></div>
 <div id="titre">RUDY STYLE<small>LA PLAGE DE GISÈLE</small></div>
 <div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="btnDiscuter" style="display:none">DISCUTER</div><div class="btn" id="btnParler">PARLER</div><div class="btn" id="btnSortir">RETOUR</div>
- <div class="btn choix" id="ch1"></div><div class="btn choix" id="ch2"></div></div>
+<div id="actions"><div class="btn" id="btnDiscuter" style="display:none">DISCUTER</div><div class="btn" id="btnParler">PARLER</div><div class="btn" id="btnTiph">PARLER</div><div class="btn" id="btnSortir">RETOUR</div>
+ <div class="btn choix" id="ch1"></div><div class="btn choix" id="ch2"></div><div class="btn choix" id="ch3" style="display:none"></div></div>
+<div id="bulleR"><p id="bulleRTxt"></p><i id="queueR"></i></div>
 <div id="bulle"><p id="bulleTxt"></p><i id="queue"></i></div>
 <script>
 const A={"bg": "/assets/shinato/m/42162ef09bdd637d.webp", "sit": [{"src": "/assets/shinato/m/e5a6c7dfc9753d52.webp", "w": 373, "h": 216}, {"src": "/assets/shinato/m/5710468cf1e3c9d8.webp", "w": 207, "h": 158}, {"src": "/assets/shinato/m/a25a3acd36120a37.webp", "w": 318, "h": 265}, {"src": "/assets/shinato/m/1516266c074d08b1.webp", "w": 299, "h": 293}, {"src": "/assets/shinato/m/8a919aa1bb8d6e1c.webp", "w": 264, "h": 309}, {"src": "/assets/shinato/m/3bc007eb137f1944.webp", "w": 197, "h": 278}, {"src": "/assets/shinato/m/1971891eea5d0333.webp", "w": 360, "h": 163}, {"src": "/assets/shinato/m/35ff1bc308fbebc0.webp", "w": 223, "h": 204}, {"src": "/assets/shinato/m/3bed9ed3ea586da0.webp", "w": 224, "h": 307}, {"src": "/assets/shinato/m/59c11a66dcaf7a6e.webp", "w": 176, "h": 278}], "std": [{"src": "/assets/shinato/m/cc89a9866a5ed880.webp", "w": 211, "h": 577}, {"src": "/assets/shinato/m/6d2e2a8185137ab7.webp", "w": 198, "h": 556}, {"src": "/assets/shinato/m/4f94a58bd99003a3.webp", "w": 213, "h": 562}, {"src": "/assets/shinato/m/b7cf93fe428eee80.webp", "w": 205, "h": 559}, {"src": "/assets/shinato/m/7dfa0f4810de2cd8.webp", "w": 203, "h": 569}, {"src": "/assets/shinato/m/1927779e3f3a6fed.webp", "w": 213, "h": 567}, {"src": "/assets/shinato/m/fff7594e04c2c8cf.webp", "w": 208, "h": 561}, {"src": "/assets/shinato/m/de3895cf4726cf98.webp", "w": 186, "h": 548}, {"src": "/assets/shinato/m/51125def9ce42621.webp", "w": 221, "h": 564}, {"src": "/assets/shinato/m/5978a33cd165ffc9.webp", "w": 207, "h": 558}]};
@@ -208,6 +221,7 @@ function libre(x,y){
  if(x<330&&y>520) return false;
  if(x>1690&&y>575) return false;
  const dx=(x-GIS.x)/80, dy=(y-GIS.y)/22; if(dx*dx+dy*dy<1) return false;
+ if(typeof JET!=='undefined'&&JET.on){ const jx=(x-JET.x)/100, jy=(y-(JET.y-14))/24; if(jx*jx+jy*jy<1) return false; }
  return true;
 }
 function dessine(set,i,x,y,phase){
@@ -247,23 +261,28 @@ const bP=document.getElementById('btnParler'), bulle=document.getElementById('bu
 function procheGisele(){return Math.abs(RUDY.x-GIS.x)<230&&Math.abs(RUDY.y-GIS.y)<85}
 function placeBulle(){
  if(bulle.style.display!=='block'||CAM.k==null) return;
- const k=CAM.k, hx=CAM.tx+GIS.x*k, hy=CAM.ty+(GIS.y-292)*k;          // au-dessus de sa tête (elle est debout)
+ const C=window.CIBLE||{x:GIS.x,tete:GIS.y-292};
+ const k=CAM.k, hx=CAM.tx+C.x*k, hy=CAM.ty+C.tete*k;          // au-dessus de sa tête (elle est debout)
  const w=bulle.offsetWidth, m=10, vw=innerWidth;
  const bx=Math.max(m+w/2,Math.min(vw-m-w/2,hx));
  bulle.style.left=bx+'px'; bulle.style.top=Math.max(bulle.offsetHeight+60,hy-18)+'px';
  queue.style.left=Math.max(22,Math.min(w-22,hx-bx+w/2))+'px';
 }
 function dit(txt){ bTxt.textContent=txt; bulle.style.display='block'; bulle.classList.remove('on'); void bulle.offsetWidth; placeBulle(); bulle.classList.add('on'); }
-function choix(a,fa,b,fb){
+const c3=document.getElementById('ch3');
+function choix(a,fa,b,fb,c,fc){
  c1.textContent=a; c2.textContent=b; c1.style.display=c2.style.display='block';
  c1.onpick=fa; c2.onpick=fb;
+ if(c){ c3.textContent=c; c3.style.display='block'; c3.onpick=fc; } else { c3.style.display='none'; c3.onpick=null; }
 }
-function sansChoix(){ c1.style.display=c2.style.display='none'; c1.onpick=c2.onpick=null; }
+function sansChoix(){ c1.style.display=c2.style.display=c3.style.display='none'; c1.onpick=c2.onpick=c3.onpick=null; }
 function finDialogue(){ bulle.classList.remove('on'); setTimeout(()=>{bulle.style.display='none'},200); sansChoix();
- DIALOGUE=false; document.body.classList.remove('dialogue'); window.GISELE.reprend(); }
+ bulleRudy(null); DIALOGUE=false; document.body.classList.remove('dialogue');
+ if(window.CIBLE&&window.CIBLE.qui==='tiph'){ window.TIPH&&window.TIPH.reprend(); } else window.GISELE.reprend();
+ window.CIBLE=null; }
 function parler(){
  if(DIALOGUE||!procheGisele()) return;
- DIALOGUE=true; joyX=joyY=0; document.body.classList.add('dialogue');
+ DIALOGUE=true; joyX=joyY=0; document.body.classList.add('dialogue'); window.CIBLE={qui:'gis',x:GIS.x,tete:GIS.y-292};
  const m=RUDY.x<GIS.x;                                   // Rudy est à sa gauche : elle se tourne vers lui
  window.GISELE.regarde(3,m);
  setTimeout(()=>{
@@ -300,6 +319,121 @@ addEventListener('message',e=>{ if(!e.data||e.data.type!=='corde:quitter'||!wind
  window.GISELE.regarde(7,RUDY.x<GIS.x); dit('C’était trop bien ! Reviens quand tu veux.');
  setTimeout(finDialogue,2800);
 });
+
+/* ---------- la mécanicienne qui répare son jet-ski (seulement quand Astra est battue) ---------- */
+const JET={x:936,y:522,on:false};
+(function(){
+ let ok=false; try{ ok=localStorage.getItem('mitsuda_usine_gagnee')==='1'; }catch(e){}
+ if(!ok) return;
+ JET.on=true;
+ const box=document.getElementById('jetski'), W=187, H=179;
+ box.style.left=(JET.x-W/2)+'px'; box.style.top=(JET.y-H*0.987)+'px'; box.style.display='block';
+ const IM=["/assets/shinato/m/jetski_6aae760ec48c.webp", "/assets/shinato/m/jetski_38d81bf38a4d.webp", "/assets/shinato/m/jetski_43ace6297587.webp", "/assets/shinato/m/jetski_89c592d308bb.webp", "/assets/shinato/m/jetski_b1f442bb6f9d.webp", "/assets/shinato/m/jetski_f5fcb9660ba9.webp"].map(src=>{const i=new Image();i.src=src;i.alt='';i.draggable=false;box.appendChild(i);return i;});
+ const REP=[0,1,2,3,4], DEB=5;      // 5 gestes de réparation, puis elle se relève et pose
+ let cur=-1, prochaine=0, finRep=performance.now()+(18+Math.random()*12)*1000, debout=false;
+ window.TIPH={parle:false, debout(){ this.parle=true; montre(DEB); }, reprend(){ this.parle=false; debout=false; montre(tire()); finRep=performance.now()+(18+Math.random()*12)*1000; prochaine=performance.now()+2000; }};
+ function montre(i){ if(i===cur) return; if(cur>=0) IM[cur].classList.remove('on'); IM[i].classList.add('on'); cur=i; }
+ function tire(){ let i; do{ i=REP[Math.floor(Math.random()*REP.length)]; }while(i===cur&&REP.length>1); return i; }
+ montre(0); prochaine=performance.now()+1800;
+ (function anim(ms){ requestAnimationFrame(anim); if(window.PAUSE_JEU) return;
+  const now=performance.now();
+  if(window.TIPH.parle){ prochaine=now+1000; debout=true; }
+  else if(now>=prochaine){
+   if(!debout&&now>=finRep){ debout=true; montre(DEB); prochaine=now+(4+Math.random()*3)*1000; }
+   else if(debout){ debout=false; montre(tire()); finRep=now+(18+Math.random()*12)*1000; prochaine=now+(1.6+Math.random()*1.4)*1000; }
+   else{ montre(tire()); prochaine=now+(1.4+Math.random()*1.6)*1000; }
+  }
+  // respiration et petits efforts pendant qu'elle travaille
+  const t=ms/1000, br=Math.sin(t*2*Math.PI/(debout?3.8:2.6));
+  box.style.transform='scale('+(1+br*0.004).toFixed(4)+','+(1+br*(debout?0.009:0.006)).toFixed(4)+')';
+  // Rudy passe devant ou derrière elle selon la profondeur
+  box.style.zIndex=RUDY.y>JET.y?2:5;
+ })(0);
+})();
+
+/* ---------- PARLER à Tiphaine (la mécanicienne du jet-ski) ---------- */
+const bT=document.getElementById('btnTiph'), bR=document.getElementById('bulleR'), bRT=document.getElementById('bulleRTxt'), qR=document.getElementById('queueR');
+function procheTiph(){ return typeof JET!=='undefined'&&JET.on&&Math.abs(RUDY.x-JET.x)<210&&Math.abs(RUDY.y-JET.y)<95; }
+function bulleRudy(t){ if(!t){ bR.classList.remove('on'); setTimeout(()=>{ if(!bR.classList.contains('on')) bR.style.display='none'; },200); return; }
+ bRT.textContent=t; bR.style.display='block'; bR.classList.remove('on'); void bR.offsetWidth; placeBulleR(); bR.classList.add('on'); }
+function placeBulleR(){
+ if(bR.style.display!=='block'||CAM.k==null) return;
+ const k=CAM.k, hx=CAM.tx+RUDY.x*k, hy=CAM.ty+(RUDY.y-taille(RUDY.y)-8)*k;
+ const w=bR.offsetWidth, m=10, vw=innerWidth, bx=Math.max(m+w/2,Math.min(vw-m-w/2,hx));
+ bR.style.left=bx+'px'; bR.style.top=Math.max(bR.offsetHeight+60,hy-18)+'px';
+ qR.style.left=Math.max(22,Math.min(w-22,hx-bx+w/2))+'px';
+}
+function finTiph(ms){ setTimeout(finDialogue,ms); }
+function parlerTiph(){
+ if(DIALOGUE||!procheTiph()) return;
+ DIALOGUE=true; joyX=joyY=0; document.body.classList.add('dialogue');
+ window.CIBLE={qui:'tiph',x:JET.x+28,tete:JET.y-182};
+ window.TIPH.debout();
+ setTimeout(()=>{
+  dit('Salut ! Je m’appelle Tiphaine.');
+  choix('DISCUTER',tiphDiscuter,'TESTER LE JET-SKI',tiphTester,'J’AI BESOIN DU JET-SKI',tiphBesoin);
+ },600);
+}
+// DISCUTER : la vidéo
+const vbT=document.createElement('div'); vbT.style.cssText='position:fixed;inset:0;z-index:70;background:#000;display:none';
+vbT.innerHTML='<video playsinline webkit-playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+document.body.appendChild(vbT); const vT=vbT.querySelector('video');
+function tiphDiscuter(){ videoTiph('/assets/shinato/m/tiphaine_discuter.mp4',finDialogue); }
+function videoTiph(src,apres){
+ sansChoix(); bulle.classList.remove('on'); bulle.style.display='none';
+ window.VIDEO_GIS=true; window.PAUSE_JEU=true; vbT.style.display='block';
+ try{ window.parent.postMessage({type:'musique:pause'},'*'); }catch(e){}
+ let fait=false, last=-1, fige=0;
+ const fin=()=>{ if(fait) return; fait=true; clearInterval(wd); try{ vT.pause(); vT.removeAttribute('src'); vT.load(); }catch(e){}
+  vbT.style.display='none'; window.VIDEO_GIS=false; window.PAUSE_JEU=false; dernier=performance.now()/1000;
+  try{ window.parent.postMessage({type:'musique:reprise'},'*'); }catch(e){}
+  apres(); };
+ vT.onended=fin; vT.onerror=fin;
+ vbT.onpointerdown=e=>{ e.stopPropagation(); if(vT.paused&&!fait){ const q=vT.play(); if(q&&q.catch) q.catch(()=>{}); } };
+ const wd=setInterval(()=>{ if(fait) return; if(vT.duration&&vT.currentTime>=vT.duration-0.15){ fin(); return; }
+  if(vT.currentTime!==last){ last=vT.currentTime; fige=0; } else if(++fige>=8) fin(); },500);
+ vT.muted=false; vT.src=src;
+ const q=vT.play(); if(q&&q.catch) q.catch(()=>{ vT.muted=true; const q2=vT.play(); if(q2&&q2.catch) q2.catch(()=>{}); });
+}
+// TESTER LE JET-SKI : elle le prête, puis le jeu Jet Ski Libre
+function tiphTester(){
+ sansChoix(); dit('Vas-y, je te le prête ! Tu vas t’amuser.');
+ setTimeout(()=>{ lanceJeuTiph('/assets/shinato/jeux/jet-ski-libre.html'); },2200);
+}
+function lanceJeuTiph(fichier){
+  bulle.classList.remove('on'); bulle.style.display='none'; bulleRudy(null);
+  let f=document.getElementById('jeu');
+  if(!f){f=document.createElement('iframe');f.id='jeu';f.setAttribute('allow','autoplay; fullscreen');document.body.appendChild(f)}
+  try{ f.srcdoc=new TextDecoder('utf-8').decode(LIEU_OCTETS(fichier)); }catch(e){ dit('Oups, le jet-ski ne démarre pas…'); finTiph(2500); return; }
+  f.style.display='block'; window.PAUSE_JEU=true; window.JEU_JETSKI=true;
+  try{ window.parent.postMessage({type:'musique:pause'},'*'); }catch(e){}
+  setTimeout(()=>{try{f.focus()}catch(e){}},300);
+}
+addEventListener('message',e=>{ if(!e.data||(e.data.type!=='jetski:quitter'&&e.data.type!=='rudyjet:quitter')||!window.JEU_JETSKI) return;
+ const f=document.getElementById('jeu'); if(f){ f.style.display='none'; f.srcdoc=''; }
+ window.JEU_JETSKI=false; window.PAUSE_JEU=false; dernier=performance.now()/1000;
+ try{ window.parent.postMessage({type:'musique:reprise'},'*'); }catch(err){}
+ try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(err){}
+ finDialogue();
+});
+// Rudy Jet : la sirène l'a tué (sa vidéo est passée) → l'infirmière, puis Rudy devant l'hôpital de Vaviel
+addEventListener('message',e=>{ if(!e.data||e.data.type!=='rudyjet:ko'||!window.JEU_JETSKI) return;
+ const f=document.getElementById('jeu'); if(f){ f.style.display='none'; f.srcdoc=''; }
+ window.JEU_JETSKI=false; window.PAUSE_JEU=false; dernier=performance.now()/1000;
+ try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(err){}
+ finDialogue();
+ try{ window.parent.postMessage({type:'musique:reprise'},'*'); }catch(err){}
+ try{ window.parent.postMessage({type:'impasse:ko'},'*'); }catch(err){}
+});
+// J'AI BESOIN DU JET-SKI
+function tiphBesoin(){
+ sansChoix(); dit('Que veux-tu en faire ?');
+ setTimeout(()=>{ bulle.classList.remove('on'); setTimeout(()=>{ bulle.style.display='none'; },200); bulleRudy('Je dois aller sur l’île au nord.'); },2000);
+ // juste après : la vidéo, puis le jeu Rudy Jet directement (sans son menu)
+ setTimeout(()=>{ bulleRudy(null); videoTiph('/assets/shinato/m/tiphaine_besoin.mp4',()=>lanceJeuTiph('/assets/shinato/jeux/rudy-jet.html')); },4800);
+}
+(function(){ let t=0; const go=e=>{ if(e.cancelable) e.preventDefault(); e.stopPropagation(); const n=performance.now(); if(n-t<400) return; t=n; parlerTiph(); };
+ bT.addEventListener('pointerdown',go); bT.addEventListener('touchstart',go,{passive:false}); bT.addEventListener('click',go); })();
 const bS=document.getElementById('btnSortir');
 function boucleRudy(){
  requestAnimationFrame(boucleRudy);
@@ -314,15 +448,17 @@ function boucleRudy(){
   RUDY.x=nx;RUDY.y=ny;
   RUDY.dir=Math.abs(joyX)>Math.abs(joyY)?(joyX>0?'droite':'gauche'):(joyY>0?'bas':'haut');
   RUDY.bouge=true;
- }else{ RUDY.bouge=false; if(DIALOGUE) RUDY.dir=RUDY.x<GIS.x?'droite':'gauche'; }
+ }else{ RUDY.bouge=false; if(DIALOGUE){ const cx=window.CIBLE?window.CIBLE.x:GIS.x; RUDY.dir=RUDY.x<cx?'droite':'gauche'; } }
  rx.clearRect(0,0,1983,793);
  const i=RUDY.bouge?Math.floor(RUDY.pas/(300*0.13)):0, ph=RUDY.bouge?RUDY.pas/(300*0.34):null;
  dessine(RUDY.dir,i,RUDY.x,RUDY.y,ph);
  fleche(now);
  rc.style.zIndex=RUDY.y>GIS.y?5:3;                     // devant Gisèle quand il est plus près de nous
- CAM.x=DIALOGUE?(RUDY.x+GIS.x)/2:RUDY.x; CAM.y=RUDY.y; fit(false);
+ CAM.x=DIALOGUE?(RUDY.x+(window.CIBLE?window.CIBLE.x:GIS.x))/2:RUDY.x; CAM.y=RUDY.y; fit(false);
  bS.style.display=(!DIALOGUE&&procheSortie())?'block':'none';
  bP.style.display=(!DIALOGUE&&procheGisele())?'block':'none';
+ bT.style.display=(!DIALOGUE&&!window.VIDEO_GIS&&procheTiph())?'block':'none';
+ placeBulleR();
  const bD=document.getElementById('btnDiscuter'); if(bD) bD.style.display=(!DIALOGUE&&!window.VIDEO_GIS&&procheGisele())?'block':'none';
  placeBulle();
 }
@@ -341,7 +477,7 @@ function relache(el,f){let t=0,down=false;
 relache(bS,()=>{joyX=joyY=0;try{window.parent.postMessage({type:'gisele:sortie'},'*')}catch(err){}});
 (function(){function appuie(el,f){let t=0;const go=e=>{if(e.cancelable)e.preventDefault();e.stopPropagation();const n=performance.now();if(n-t<400)return;t=n;f()};
  el.addEventListener('pointerdown',go);el.addEventListener('touchstart',go,{passive:false});el.addEventListener('click',go)}
- appuie(bP,parler); relache(c1,()=>c1.onpick&&c1.onpick()); relache(c2,()=>c2.onpick&&c2.onpick());})();
+ appuie(bP,parler); relache(c1,()=>c1.onpick&&c1.onpick()); relache(c2,()=>c2.onpick&&c2.onpick()); relache(c3,()=>c3.onpick&&c3.onpick());})();
 // joystick (dans tous les sens), comme au bar
 (function(){const joy=document.getElementById('joy'),st=document.getElementById('stick');let id=null,cx=0,cy=0,R=0;
  function prend(e){const t=e.changedTouches?e.changedTouches[0]:e;const r=joy.getBoundingClientRect();cx=r.left+r.width/2;cy=r.top+r.height/2;R=r.width/2;id=e.changedTouches?t.identifier:'s';bouge(e)}
