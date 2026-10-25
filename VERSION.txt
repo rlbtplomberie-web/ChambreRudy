@@ -1,5 +1,4 @@
-ChambreRudy - maj-236
-Salle de musculation : bouton PARLER devant le coach, bulle style manga
-« Salut ! Tu veux t'entraîner ? » OUI -> vidéo puis jeu Défi Muscu ; NON -> « OK, ça sera pour la prochaine fois ! »
-Nouveau jeu : shinato/jeux/defi-muscu.html (+ images shinato/m/muscu_*)
-Vidéo ajoutée au Déverrouillage (dossier Chaliaville), NB_VIDEOS = 615
+ChambreRudy - maj-237
+Chalia Rugby : quand les filles gagnent, leur vidéo passe avant l'écran de fin
+Shinato Basket (5 contre 5) : quand ton équipe gagne, sa vidéo passe avant l'écran de fin
+Vidéos ajoutées au Déverrouillage, NB_VIDEOS = 617

@@ -801,12 +801,27 @@ function doDive(){
 const WIN=10;
 function endMatch(win){
   lock=1;running=false;whistle(true);
+  // les filles gagnent : leur vidéo, puis l'écran de fin
+  if(!win&&!endMatch.vu){ endMatch.vu=true; videoFin('/assets/shinato/m/rugby_filles_gagnent.mp4',()=>endMatch(false)); return; }
+  endMatch.vu=false;
   if(win){cheer();confetti();setTimeout(cheer,900);fireworks(14,['#ffd54a','#7fe08a','#5aa0ff','#ffffff','#ff9a3c','#ff6fae']);}else{ooh();fireworks(5,['#ff6fae','#d26bff']);}
   const e=document.getElementById('endScr');e.style.display='flex';
   document.getElementById('endT').textContent=win?'VICTOIRE !':'DÉFAITE…';
   document.getElementById('endT').style.color=win?'#ffd54a':'#ff7aa8';
   document.getElementById('endS').textContent='Équipe Rudy '+score+' – '+oppScore+' Les filles';
   document.getElementById('endP').textContent=win?'Bravo ! Ton équipe a marqué 10 essais en premier.':'Les filles ont marqué 10 essais avant vous. Prends ta revanche !';
+}
+function videoFin(src,fin){
+  const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:9999;background:#000';
+  vb.innerHTML='<video playsinline webkit-playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+  const v=vb.querySelector('video'); let fait=false, wd=0, last=-1, fige=0;
+  const fini=()=>{ if(fait) return; fait=true; clearInterval(wd); try{ v.pause(); v.removeAttribute('src'); v.load(); }catch(e){} vb.remove(); fin(); };
+  v.addEventListener('ended',fini); v.addEventListener('error',fini);
+  vb.addEventListener('pointerdown',e=>{ e.stopPropagation(); if(v.paused&&!fait){ const q=v.play(); if(q&&q.catch) q.catch(()=>{}); } });
+  // si l'image reste figée 4 secondes, on passe à l'écran de fin (le jeu ne reste jamais bloqué)
+  wd=setInterval(()=>{ if(fait) return; if(v.duration&&v.currentTime>=v.duration-0.15){ fini(); return; }
+    if(v.currentTime!==last){ last=v.currentTime; fige=0; } else if(++fige>=8) fini(); },500);
+  v.src=src; const q=v.play(); if(q&&q.catch) q.catch(()=>{ v.muted=true; const q2=v.play(); if(q2&&q2.catch) q2.catch(()=>{}); });
 }
 function newMatch(){CONF.length=0;score=0;passes=0;tries=0;oppScore=0;hud();document.getElementById('endScr').style.display='none';running=true;kickoff();msg('Premier à 10 essais !',false,1.8);whistle(true);}
 function scored(p){

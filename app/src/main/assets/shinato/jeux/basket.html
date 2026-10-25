@@ -1594,6 +1594,8 @@ function showEnd(){
   $('endScore').textContent=`${big?'ÉQUIPE RUDY':S.teams[0].map(q=>q.name).join(' & ')} ${S.score[0]} - ${S.score[1]} ${big?'LES FILLES':S.teams[1].map(q=>q.name).join(' & ')}`;
   // 5 contre 5 : si les filles gagnent, leur vidéo passe d'abord, puis l'écran de fin
   if(!w&&OPTS.mode===5){ videoFin('/assets/shinato/m/basket_filles_gagnent.mp4',()=>show('end')); return; }
+  // 5 contre 5 : si ton équipe gagne, sa vidéo passe d'abord, puis l'écran de fin
+  if(w&&OPTS.mode===5){ videoFin('/assets/shinato/m/basket_equipe_gagne.mp4',()=>{ sfx.cheer(1.4); show('end'); }); return; }
   if(w)sfx.cheer(1.4);show('end');
 }
 function videoFin(src,fin){
