@@ -47,6 +47,14 @@ html,body{margin:0;height:100%;overflow:hidden;background:#02060f;font-family:"T
 #avert.g{left:0;background:linear-gradient(90deg,rgba(255,40,80,.45),rgba(255,40,80,0))}
 #avert.d{right:0;background:linear-gradient(270deg,rgba(255,40,80,.45),rgba(255,40,80,0))}
 #prise{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 95px) 0 calc(env(safe-area-inset-bottom) + 30px);background:transparent;touch-action:none;pointer-events:auto;z-index:5}
+/* la géante d'eau : le texte et le bouton passent en bas (et sur les côtés en paysage) pour qu'on la voie en entier */
+#prise.gea{justify-content:flex-end;gap:12px}
+@media (orientation:landscape){
+ #prise.gea{flex-direction:row;justify-content:space-between;align-items:flex-end;padding:0 calc(env(safe-area-inset-right) + 18px) calc(env(safe-area-inset-bottom) + 18px) calc(env(safe-area-inset-left) + 18px)}
+ #prise.gea #priseHaut{width:min(30vw,260px)}
+ #prise.gea #priseTxt{font-size:16px}
+ #prise.gea #priseBar{width:100%}
+}
 #priseHaut{display:flex;flex-direction:column;align-items:center;gap:10px}
 #priseTxt{font-size:20px;font-weight:bold;color:#d9ccff;text-shadow:0 3px 8px #000;text-align:center;padding:0 10px}
 #priseBar{width:min(80vw,420px);height:18px;border-radius:10px;background:#ffffff22;border:2px solid #ffffff70;overflow:hidden}
@@ -695,6 +703,7 @@ function commencerPrise(f){
   document.getElementById('priseTxt').textContent= PRISE.gea ? 'LA GÉANTE D\'EAU GRANDIT !' : PRISE.sir ? 'LA SIRÈNE T\'ATTRAPE !' : 'LA FILLE D\'EAU T\'ATTRAPE !';
   document.getElementById('priseBar').style.visibility='hidden';
   document.getElementById('libere').style.visibility='hidden';
+  document.getElementById('prise').classList.toggle('gea',!!PRISE.gea);
   montrer(['prise']); cacher(['ctrl']);
 }
 function tapPrise(){
@@ -881,7 +890,7 @@ function commencerPriseBoss(){
   PRISE={f:BOSS,boss:true,t:0,prog:0,phase:'saute',img:0,tap:0}; BOSS.etat='prise';
   document.getElementById('msg').style.opacity=0; msgT=0; avert(0); tentaZone=null;
   sonPlouf(true); choc(); shake=.5;
-  document.getElementById('prise').classList.add('boss');
+  document.getElementById('prise').classList.remove('gea'); document.getElementById('prise').classList.add('boss');
   document.getElementById('priseFill').style.width='0%';
   montrer(['prise']); cacher(['ctrl','hud','pause','musique']);
 }
@@ -1637,7 +1646,7 @@ function dessinerRudySirene(){
   cx.drawImage(offP,-s.ax*w,-s.ay*h);
   cx.restore();
 }
-let gouttesG=[], flashG=0, colonneG=0, GEA_HMAX=0;
+let gouttesG=[], flashG=0, colonneG=0, GEA_HMAX=0, GEA_WMAX=0;
 function impactGeante(fort){
   const p=proj(J.x,vague(J.x,J.z,T),J.z); if(!p) return;
   const n=fort?46:18;
@@ -1660,8 +1669,11 @@ function dessinerRudyGeante(){
   const hv=vague(J.x,J.z,T), p=proj(J.x,hv-.15,J.z); if(!p) return;
   // taille : comme Rudy d'habitude, mais réduite si besoin pour que sa tête reste dans l'écran
   if (!GEA_HMAX) GEA_HMAX=Math.max(...[...SPR4.ecrase,...SPR4.coups].map(f=>f.ay*f.h));
-  const kFit=(p.y-58)/GEA_HMAX;
-  const k=Math.min(H*ECHELLE*SPR4.ref.coqueLent/SPR4.ref.jet, kFit)*(1+P.tap*.05);
+  if (!GEA_WMAX) GEA_WMAX=Math.max(...[...SPR4.ecrase,...SPR4.coups].map(f=>f.w));
+  // elle doit tenir en entier dans l'écran : sous le haut de l'écran (l'indicateur de l'île) et dans la largeur
+  let haut=56; try{ const il=document.getElementById('ile'); if(il){ const r=il.getBoundingClientRect(); if(r.bottom>0) haut=r.bottom+8; } }catch(e){}
+  const kFit=(p.y-haut)/GEA_HMAX, kW=(W*0.94)/GEA_WMAX;
+  const k=Math.min(H*ECHELLE*SPR4.ref.coqueLent/SPR4.ref.jet*(1+P.tap*.05), kFit, kW);
   const w=s.w*k, h=s.h*k, sx=(Math.random()-.5)*(P.tap*24+shake*26), sy=(Math.random()-.5)*(P.tap*16+shake*18);
   // apparition : une colonne d'eau monte derrière Rudy et la géante en sort
   let apparait=1;
@@ -1684,7 +1696,7 @@ function dessinerRudyGeante(){
     g=opx.createLinearGradient(0,lim-ph*.12,0,lim+ph*.06); g.addColorStop(0,'rgba(0,0,0,1)'); g.addColorStop(1,'rgba(0,0,0,0)');
     opx.fillStyle=g; opx.fillRect(0,0,pw,lim+ph*.06); }
   opx.globalCompositeOperation='source-over';
-  const x0=p.x+sx-s.ax*w, y0=p.y+sy-s.ay*h;
+  const x0=Math.max(W*0.03,Math.min(W*0.97-w,p.x+sx-s.ax*w)), y0=p.y+sy-s.ay*h;
   cx.save();
   // halo d'eau lumineux derrière elle
   const gx=x0+w*.5, gy=y0+h*.35, gr=Math.max(w,h)*.6;

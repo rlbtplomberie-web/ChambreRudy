@@ -1,2 +1,2 @@
-ChambreRudy - maj-240 (à installer après la maj-239)
-Les 6 images de Tiphaine et de son jet-ski (plage de Gisèle), oubliées dans la maj-238
+ChambreRudy - maj-241
+Rudy Jet : quand la géante d'eau attrape Rudy, on la voit en entier (taille ajustée à l'écran, texte et bouton SE LIBÉRER déplacés en bas)
