@@ -440,6 +440,25 @@ addEventListener('message',e=>{ if(!e.data||e.data.type!=='rudyjet:victoire'||!w
  try{ f.srcdoc=new TextDecoder('utf-8').decode(LIEU_OCTETS('/assets/shinato/jeux/la-plaquette-doree.html')); }catch(err){ return; }
  setTimeout(()=>{try{f.focus()}catch(err){}},300);
 });
+// La Plaquette Dorée : Rudy K.O. (la vidéo est passée) → l'infirmière, Vaviel, puis « Retourner sur l'île ? »
+addEventListener('message',e=>{ if(!e.data||e.data.type!=='plaquette:ko'||!window.JEU_JETSKI) return;
+ const f=document.getElementById('jeu'); if(f){ f.style.display='none'; f.srcdoc=''; }
+ window.JEU_JETSKI=false; window.PAUSE_JEU=false; dernier=performance.now()/1000;
+ try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(err){}
+ finDialogue();
+ try{ localStorage.setItem('ile_retour','1'); }catch(err){}
+ try{ window.parent.postMessage({type:'musique:reprise'},'*'); }catch(err){}
+ try{ window.parent.postMessage({type:'impasse:ko'},'*'); }catch(err){}
+});
+// La Plaquette Dorée gagnée (la vidéo de victoire est passée) → Rudy devant l'hôpital de Vaviel
+addEventListener('message',e=>{ if(!e.data||e.data.type!=='plaquette:victoire'||!window.JEU_JETSKI) return;
+ const f=document.getElementById('jeu'); if(f){ f.style.display='none'; f.srcdoc=''; }
+ window.JEU_JETSKI=false; window.PAUSE_JEU=false; dernier=performance.now()/1000;
+ try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(err){}
+ finDialogue();
+ try{ window.parent.postMessage({type:'musique:reprise'},'*'); }catch(err){}
+ try{ window.parent.postMessage({type:'plaquette:victoire'},'*'); }catch(err){}
+});
 // J'AI BESOIN DU JET-SKI
 function tiphBesoin(){
  sansChoix(); dit('Que veux-tu en faire ?');

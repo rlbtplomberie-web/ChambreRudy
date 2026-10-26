@@ -1359,6 +1359,37 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
   v.src="/assets/shinato/m/usine_hopital.mp4"; var p=v.play(); if(p&&p.catch) p.catch(function(){});
  };
 })();
+/* ---------- devant l'hôpital de Vaviel après un K.O. dans La Plaquette Dorée : « Retourner sur l'île ? » ---------- */
+(function(){
+ var st=document.createElement("style");
+ st.textContent="#ileQ{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-family:Arial,Helvetica,sans-serif}"+
+  "#ileQ .carte{min-width:62vmin;padding:5vmin 6vmin;border-radius:3vmin;text-align:center;background:linear-gradient(rgba(14,14,18,.96),rgba(30,30,36,.96));border:2px solid rgba(255,226,122,.6);box-shadow:0 10px 40px rgba(0,0,0,.7)}"+
+  "#ileQ h2{margin:0 0 4vmin;color:#fff;font:900 clamp(16px,4.2vmin,34px)/1.2 Arial,sans-serif;letter-spacing:2px;text-shadow:0 3px 0 #000}"+
+  "#ileQ .ch{display:flex;flex-direction:column;gap:3vmin;align-items:stretch}"+
+  "#ileQ .choix{padding:3vmin 4vmin;border-radius:2.4vmin;cursor:pointer;font:900 clamp(15px,3.8vmin,30px)/1 Arial,sans-serif;letter-spacing:2px;color:#ffe27a;background:linear-gradient(rgba(12,12,14,.9),rgba(40,40,46,.9));border:2px solid rgba(255,226,122,.7)}"+
+  "#ile{position:fixed;inset:0;width:100%;height:100%;border:0;z-index:60;background:#000;display:none}";
+ document.head.appendChild(st);
+ var q=document.createElement("div"); q.id="ileQ";
+ q.innerHTML='<div class="carte"><h2>RETOURNER SUR L\u2019ÎLE ?</h2><div class="ch"><div class="choix" id="ileOui">RETOURNER SUR L\u2019ÎLE</div><div class="choix" id="ileNon">RESTER ICI</div></div></div>';
+ document.body.appendChild(q);
+ window.proposeIle=function(){ q.style.display="flex"; };
+ window.fermeIle=function(){
+  var f=document.getElementById("ile"); if(f){ try{ f.blur(); }catch(e){} f.style.display="none"; f.src="about:blank"; }
+  var mh=document.getElementById("moto"); if(mh){ mh.style.pointerEvents="auto"; try{ mh.focus(); }catch(e){} }
+  try{ if(window.RUDY_AUDIO){ var p=window.RUDY_AUDIO.play(); if(p&&p.catch)p.catch(function(){}); } }catch(e){}
+ };
+ window.FERMETURES.ile=function(f){ try{ f.blur(); }catch(e){} f.style.display="none"; f.src="about:blank"; };
+ window.appuiSur(document.getElementById("ileNon"),function(){ q.style.display="none"; });   // on reste devant l'hôpital
+ window.appuiSur(document.getElementById("ileOui"),function(){
+  q.style.display="none";
+  var f=document.getElementById("ile");
+  if(!f){ f=document.createElement("iframe"); f.id="ile"; f.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(f); }
+  try{ if(window.RUDY_AUDIO) window.RUDY_AUDIO.pause(); }catch(e){}       // le jeu a sa propre musique
+  var mh=document.getElementById("moto"); if(mh) mh.style.pointerEvents="none";
+  f.src="/assets/shinato/jeux/la-plaquette-doree.html"; f.style.display="block";   // le jeu recommence au début, sans son menu
+  window.minuterieLibre(function(){ try{ f.focus(); }catch(e){} },300);
+ });
+})();
 /* ---------- bulle style manga au-dessus de Rudy (dans la rue de Shinato) ---------- */
 (function(){
  var st=document.createElement("style");
@@ -1454,6 +1485,25 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
    hv=hv.replace("</body>","<script>addEventListener('load',function(){setTimeout(function(){x=largeurMonde*772/2172;sens=1;if(typeof cadre==='function')cadre(true)},60)});<\/script></body>");
    cv.srcdoc=hv;
    window.minuterieLibre(function(){ try{ cv.focus(); }catch(err){} },300);
+   // perdu dans La Plaquette Dorée : devant l'hôpital, on propose de retourner sur l'île
+   var ile=false; try{ ile=localStorage.getItem("ile_retour")==="1"; localStorage.removeItem("ile_retour"); }catch(err){}
+   if(ile) window.minuterieLibre(function(){ window.proposeIle(); },1200);
+   return;
+  }
+  // La Plaquette Dorée gagnée (la vidéo de victoire est passée) : Rudy apparaît devant l'hôpital de Vaviel
+  if(e.data && e.data.type==="plaquette:victoire"){
+   if(document.getElementById("ile") && document.getElementById("ile").style.display==="block") window.fermeIle();
+   try{ localStorage.removeItem("ile_retour"); }catch(err){}
+   var cvv=document.getElementById("moto");
+   if(!cvv){ cvv=document.createElement("iframe"); cvv.id="moto"; cvv.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(cvv); }
+   window.pauseRue(); cvv.style.pointerEvents="auto"; cvv.style.display="block";
+   window.postMessage({type:"hopital:fin"},"*");
+   return;
+  }
+  // La Plaquette Dorée relancée depuis Vaviel : QUITTER → on reste devant l'hôpital ; K.O. → l'infirmière puis Vaviel (et la question revient)
+  if(e.data && (e.data.type==="plaquette:quitter"||e.data.type==="plaquette:ko") && document.getElementById("ile") && document.getElementById("ile").style.display==="block"){
+   window.fermeIle();
+   if(e.data.type==="plaquette:ko"){ try{ localStorage.setItem("ile_retour","1"); }catch(err){} window.pontladesFin(false); }
    return;
   }
   if(e.data && (e.data.type==="delabree:destination"||e.data.type==="vaviel:destination"||e.data.type==="mitsuda:destination"||e.data.type==="rembourg:destination"||e.data.type==="aeroport:destination"||e.data.type==="chaliaville:destination") && (e.data.dest==="chaliaville"||e.data.dest==="aeroport"||e.data.dest==="pontlades"||e.data.dest==="shinato"||e.data.dest==="plage"||e.data.dest==="delabree"||e.data.dest==="vaviel"||e.data.dest==="boulevard"||e.data.dest==="mitsuda"||e.data.dest==="rembourg")){

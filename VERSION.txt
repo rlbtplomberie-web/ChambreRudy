@@ -1,2 +1,5 @@
-ChambreRudy - maj-244 partie 2 sur 2 (installer toutes les parties)
-Rudy Jet : dès que la boss est battue, la vidéo de victoire passe puis La Plaquette Dorée commence directement (sans écran de victoire ni menu ; bouton QUITTER dans la pause, le K.O. et la victoire)
+ChambreRudy - maj-245 (1 sur 4 : installer 245, 246, 247 et 248 dans l'ordre)
+La Plaquette Dorée : quand Rudy est K.O., la vidéo de l'ennemie, puis l'infirmière et Rudy devant l'hôpital de Vaviel ; devant l'hôpital : RETOURNER SUR L'ÎLE (le jeu recommence au début) ou RESTER ICI
+Arrivée dans la salle du temple (map 4) : la vidéo, puis le combat contre la boss
+Victoire contre la boss : la vidéo, puis Rudy devant l'hôpital de Vaviel
+Vidéos : femme chewing-gum + arrivée dans la salle du temple
