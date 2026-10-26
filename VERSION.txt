@@ -1,2 +1,5 @@
-ChambreRudy - maj-242
-Plage de Gisèle : plus de lag quand Rudy marche
+ChambreRudy - maj-243
+Plage de Gisèle : Tiphaine est là dès qu'Astra est battue (DISCUTER, TESTER LE JET-SKI) ; le choix « J'AI BESOIN DU JET-SKI » n'apparaît qu'une fois la plaque cuivrée gagnée dans la grotte de Chaliaville
+Chaliaville : une fois la plaque cuivrée gagnée, la rousse assise sur le banc disparaît avec son banc
+Rudy Jet : quand la boss est battue et que Rudy arrive à l'île, la vidéo de victoire passe (le jeu suivant sera branché ensuite)
+Vidéo ajoutée au Déverrouillage (dossier La plage), NB_VIDEOS = 624

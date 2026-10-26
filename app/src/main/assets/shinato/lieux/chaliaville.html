@@ -490,7 +490,11 @@ appui(carnetP,()=>{ if(enScene)return; enScene=true; jstop(); clav={}; courir=fa
     enScene=false; jstop(); clav={}; };
   robeVid.onended=fin; robeVid.onerror=fin; const q=robeVid.play(); if(q&&q.catch) q.catch(fin); });
 // ---------- la rousse assise sur le banc, en bas : si Rudy passe DEVANT elle (pas derrière), sa vidéo part toute seule -> K.O. -> l'infirmière, puis devant l'hôpital de Vaviel ----------
-const BANC=PNJ.find(o=>o.n==='femme_banc');
+let BANC=PNJ.find(o=>o.n==='femme_banc');
+// quand la plaque cuivrée est gagnée (grotte du diamant cuivré), la rousse et son banc ne sont plus là
+function grotteGagnee(){ try{ return localStorage.getItem('grotte_gagnee')==='1'; }catch(e){ return false; } }
+function retireBanc(){ if(!BANC) return; const i=PNJ.indexOf(BANC); if(i>=0) PNJ.splice(i,1); BANC=null; }
+if(grotteGagnee()) retireBanc();
 let bancPret=true;
 function devantBanc(){ return BANC&&!menu&&!enScene&&P.niv==='bas'&&Math.abs(P.x-BANC.x)<BANC.w*0.55&&P.y>BANC.y-1; }   // dessiné devant elle = plus bas qu'elle à l'écran
 function veilleBanc(){
@@ -572,7 +576,7 @@ addEventListener('message',e=>{
   if(!e.data||!enGrotte) return;
   // Rudy K.O. dans la grotte : la vidéo de l'ennemie est passée, Shinato passe l'infirmière puis l'emmène devant l'hôpital de Vaviel
   if(e.data.type==='grotte:ko'){ fermeGrotte(false); try{ window.parent.postMessage({type:'impasse:ko'},'*'); }catch(_){} }
-  if(e.data.type==='grotte:victoire'){ setTimeout(()=>fermeGrotte(true),2500); }
+  if(e.data.type==='grotte:victoire'){ if(grotteGagnee()) retireBanc(); setTimeout(()=>fermeGrotte(true),2500); }
 });
 // ---------- le terrain de rugby (tout à gauche) : flèche jaune + JOUER -> CHALIA RUGBY -> le jeu ----------
 const RUGBY_X=300, RUGBY_Y=575, ZONE_RUG=[170,440];

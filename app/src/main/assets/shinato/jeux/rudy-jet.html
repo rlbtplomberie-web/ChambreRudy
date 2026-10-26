@@ -961,6 +961,19 @@ function finPartie(coule){
     });
     return;
   }
+  // victoire : la boss est battue et Rudy arrive à l'île → la vidéo de victoire
+  // (ensuite : le jeu suivant sur l'île, à brancher quand il arrive ; en attendant, l'écran d'arrivée)
+  if (!coule && !libre){
+    try{ localStorage.setItem('rudyjet_gagne','1'); }catch(e){}
+    musique(false); cacher(['musique']); enJeu=false; PRISE=null; avert(0); cacher(['hud','ctrl','pause','prise']);
+    try{ if(AC&&AC.suspend) AC.suspend(); }catch(e){}
+    videoKO('/assets/shinato/m/rudyjet_victoire.mp4',()=>{
+      try{ if(window.parent&&window.parent!==window) parent.postMessage({type:'rudyjet:victoire'},'*'); }catch(e){}
+      try{ if(AC) AC.resume(); }catch(e){}
+      finPartieEcran(false);
+    });
+    return;
+  }
   finPartieEcran(coule);
 }
 function finPartieEcran(coule){

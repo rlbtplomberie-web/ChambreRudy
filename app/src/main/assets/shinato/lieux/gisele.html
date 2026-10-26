@@ -328,6 +328,7 @@ addEventListener('message',e=>{ if(!e.data||e.data.type!=='corde:quitter'||!wind
 /* ---------- la mécanicienne qui répare son jet-ski (seulement quand Astra est battue) ---------- */
 const JET={x:936,y:522,on:false};
 (function(){
+ // Tiphaine est là dès qu'Astra est battue (« J'ai besoin du jet-ski » n'arrive qu'avec la plaque cuivrée)
  let ok=false; try{ ok=localStorage.getItem('mitsuda_usine_gagnee')==='1'; }catch(e){}
  if(!ok) return;
  JET.on=true;
@@ -376,7 +377,10 @@ function parlerTiph(){
  window.TIPH.debout();
  setTimeout(()=>{
   dit('Salut ! Je m’appelle Tiphaine.');
-  choix('DISCUTER',tiphDiscuter,'TESTER LE JET-SKI',tiphTester,'J’AI BESOIN DU JET-SKI',tiphBesoin);
+  // « J'ai besoin du jet-ski » seulement quand la plaque cuivrée est gagnée dans la grotte de Chaliaville
+  let plaque=false; try{ plaque=localStorage.getItem('grotte_gagnee')==='1'; }catch(e){}
+  if(plaque) choix('DISCUTER',tiphDiscuter,'TESTER LE JET-SKI',tiphTester,'J’AI BESOIN DU JET-SKI',tiphBesoin);
+  else choix('DISCUTER',tiphDiscuter,'TESTER LE JET-SKI',tiphTester);
  },600);
 }
 // DISCUTER : la vidéo
