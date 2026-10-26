@@ -823,7 +823,9 @@ function majBoss(dt){
   const dB=Math.hypot(J.x-B.x,J.z-B.z);
   if (B.etat!=='coule' && dB<13){ const nx=(J.x-B.x)/(dB||1), nz=(J.z-B.z)/(dB||1); J.x=B.x+nx*13; J.z=B.z+nz*13; }
   if (B.etat==='sort'){ if (B.t>=2.4){ B.etat='pose'; B.t=0; B.cd=1.5; } return; }
-  if (B.etat==='coule'){ if (B.t>=2.6){ MUS.boss=false; BOSS=null; bossMort=true; cacher(['bossHud']); montrer(['ile']); message('Rejoins l\'île !','#ffe9a8',2.5); } return; }
+  if (B.etat==='coule'){ if (B.t>=2.6){ MUS.boss=false; BOSS=null; bossMort=true; cacher(['bossHud']);
+    // la boss est battue : tout de suite la vidéo de victoire, puis La Plaquette Dorée (plus besoin d'aller jusqu'à l'île)
+    if (!libre && enJeu){ finPartie(false); } else { montrer(['ile']); message('Rejoins l\'île !','#ffe9a8',2.5); } } return; }
   if (PRISE) return;
   if (B.etat==='pose'){
     B.cd-=dt;
@@ -968,7 +970,8 @@ function finPartie(coule){
     musique(false); cacher(['musique']); enJeu=false; PRISE=null; avert(0); cacher(['hud','ctrl','pause','prise']);
     try{ if(AC&&AC.suspend) AC.suspend(); }catch(e){}
     videoKO('/assets/shinato/m/rudyjet_victoire.mp4',()=>{
-      try{ if(window.parent&&window.parent!==window) parent.postMessage({type:'rudyjet:victoire'},'*'); }catch(e){}
+      // dans l'appli : la plage lance La Plaquette Dorée directement (aucun écran « gagné » entre les deux)
+      if (window.parent&&window.parent!==window){ try{ parent.postMessage({type:'rudyjet:victoire'},'*'); }catch(e){} return; }
       try{ if(AC) AC.resume(); }catch(e){}
       finPartieEcran(false);
     });

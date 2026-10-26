@@ -418,7 +418,7 @@ function lanceJeuTiph(fichier){
   try{ window.parent.postMessage({type:'musique:pause'},'*'); }catch(e){}
   setTimeout(()=>{try{f.focus()}catch(e){}},300);
 }
-addEventListener('message',e=>{ if(!e.data||(e.data.type!=='jetski:quitter'&&e.data.type!=='rudyjet:quitter')||!window.JEU_JETSKI) return;
+addEventListener('message',e=>{ if(!e.data||(e.data.type!=='jetski:quitter'&&e.data.type!=='rudyjet:quitter'&&e.data.type!=='plaquette:quitter')||!window.JEU_JETSKI) return;
  const f=document.getElementById('jeu'); if(f){ f.style.display='none'; f.srcdoc=''; }
  window.JEU_JETSKI=false; window.PAUSE_JEU=false; dernier=performance.now()/1000;
  try{ window.parent.postMessage({type:'musique:reprise'},'*'); }catch(err){}
@@ -433,6 +433,12 @@ addEventListener('message',e=>{ if(!e.data||e.data.type!=='rudyjet:ko'||!window.
  finDialogue();
  try{ window.parent.postMessage({type:'musique:reprise'},'*'); }catch(err){}
  try{ window.parent.postMessage({type:'impasse:ko'},'*'); }catch(err){}
+});
+// Rudy Jet gagné (la vidéo de victoire est passée) → le jeu La Plaquette Dorée commence directement, sans son menu
+addEventListener('message',e=>{ if(!e.data||e.data.type!=='rudyjet:victoire'||!window.JEU_JETSKI) return;
+ const f=document.getElementById('jeu'); if(!f) return;
+ try{ f.srcdoc=new TextDecoder('utf-8').decode(LIEU_OCTETS('/assets/shinato/jeux/la-plaquette-doree.html')); }catch(err){ return; }
+ setTimeout(()=>{try{f.focus()}catch(err){}},300);
 });
 // J'AI BESOIN DU JET-SKI
 function tiphBesoin(){
