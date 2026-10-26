@@ -125,8 +125,13 @@ class ChambreActivity : ComponentActivity() {
         if (retourBureau) {
             vue.post { vue.cadrerSurLaTele() }
         } else if (etat == null) {
-            // l'ouverture du carton, une seule fois par lancement
-            vue.post { vue.jouerIntro() }
+            // l'intro (l'ouverture du carton) est retiree pour l'instant : on arrive
+            // directement dans la chambre, face a la tele, avec la radio et le telephone
+            vue.post {
+                vue.surEtapeIntro?.invoke("debut")
+                vue.cadrerSurLaTele()
+                boutonTelephone?.visibility = View.VISIBLE
+            }
         }
         // la premiere console est prete avant meme qu'on touche le carton
         vue.postDelayed({ preparerVideo(Decor.CONSOLES[0]) }, 1200)

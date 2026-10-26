@@ -1,2 +1,3 @@
-ChambreRudy - maj-249
-La Plaquette Dorée : le menu ne s'affiche plus du tout quand le jeu démarre (après Rudy Jet ou « Retourner sur l'île ») ; écran noir pendant le chargement, puis la partie directement
+ChambreRudy - maj-250
+Plus d'intro au lancement (l'ouverture du carton est retirée) : on arrive directement dans la chambre, face à la télé, avec la radio et le téléphone
+(fichier Kotlin : l'appli sera recompilée sur GitHub après le dépôt)
