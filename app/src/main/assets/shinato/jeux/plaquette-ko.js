@@ -16,3 +16,16 @@ window.PLAQUETTE_BOSS_INTRO='/assets/shinato/m/plaquette_boss_intro.mp4';
 
 /* la vidéo quand Rudy bat la boss et gagne ; ensuite il apparaît devant l'hôpital de Vaviel */
 window.PLAQUETTE_VICTOIRE='/assets/shinato/m/plaquette_victoire.mp4';
+
+/* Le jeu démarre tout seul (après Rudy Jet, ou « Retourner sur l'île ») : on ne montre jamais le menu.
+   Écran noir pendant le chargement, puis la partie apparaît directement. */
+(function(){
+  var t=document.getElementById('title'); if(t) t.classList.add('hide');
+  var c=document.createElement('div');
+  c.style.cssText='position:fixed;inset:0;z-index:99999;background:#000;pointer-events:none;transition:opacity .35s';
+  (document.body||document.documentElement).appendChild(c);
+  var n=0, iv=setInterval(function(){
+    var pret=false; try{ pret=(typeof state!=='undefined'&&state!=='title'); }catch(e){}
+    if(pret||++n>300){ clearInterval(iv); c.style.opacity='0'; setTimeout(function(){ c.remove(); },400); }
+  },50);
+})();

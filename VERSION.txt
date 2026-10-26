@@ -1,3 +1,2 @@
-ChambreRudy - maj-248 (4 sur 4)
-La Plaquette Dorée : vidéo K.O. de la boss et vidéo de victoire
-Statue : la plaque « Équilibre » dans le 3e rectangle quand La Plaquette Dorée est gagnée ; Déverrouillage NB_VIDEOS = 633
+ChambreRudy - maj-249
+La Plaquette Dorée : le menu ne s'affiche plus du tout quand le jeu démarre (après Rudy Jet ou « Retourner sur l'île ») ; écran noir pendant le chargement, puis la partie directement
