@@ -1,2 +1,2 @@
-ChambreRudy - maj-244 partie 1 sur 2 (installer toutes les parties)
+ChambreRudy - maj-244 partie 2 sur 2 (installer toutes les parties)
 Rudy Jet : dès que la boss est battue, la vidéo de victoire passe puis La Plaquette Dorée commence directement (sans écran de victoire ni menu ; bouton QUITTER dans la pause, le K.O. et la victoire)
