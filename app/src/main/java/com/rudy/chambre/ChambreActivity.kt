@@ -125,13 +125,9 @@ class ChambreActivity : ComponentActivity() {
         if (retourBureau) {
             vue.post { vue.cadrerSurLaTele() }
         } else if (etat == null) {
-            // l'intro (l'ouverture du carton) est retiree pour l'instant : on arrive
-            // directement dans la chambre, face a la tele, avec la radio et le telephone
-            vue.post {
-                vue.surEtapeIntro?.invoke("debut")
-                vue.cadrerSurLaTele()
-                boutonTelephone?.visibility = View.VISIBLE
-            }
+            // au lancement : la nouvelle intro (une page web plein ecran : la video,
+            // bientot le menu), puis la chambre, devant le bureau
+            vue.post { ouvrirAccueil() }
         }
         // la premiere console est prete avant meme qu'on touche le carton
         vue.postDelayed({ preparerVideo(Decor.CONSOLES[0]) }, 1200)
@@ -972,6 +968,87 @@ class ChambreActivity : ComponentActivity() {
             if (ici.isNotEmpty()) ouvrirVisite(ici)          // la chambre a été recréée : elle est toujours là
         }
         calque?.evaluateJavascript("window.enPause&&window.enPause(false)", null)
+    }
+
+    // ================= l'accueil : la video d'intro (puis le menu) au lancement =================
+    private var accueil: android.webkit.WebView? = null
+
+    /** La page web/accueil.html en plein ecran, par-dessus tout ; elle appelle Accueil.fin() quand c'est fini. */
+    private fun ouvrirAccueil() {
+        if (!::racineChambre.isInitialized) { arriverDansLaChambre(); return }
+        val serveur = androidx.webkit.WebViewAssetLoader.Builder()
+            .addPathHandler("/assets/", androidx.webkit.WebViewAssetLoader.AssetsPathHandler(this))
+            .build()
+        val w = android.webkit.WebView(this).apply {
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            settings.mediaPlaybackRequiresUserGesture = false
+            setBackgroundColor(Color.BLACK)
+            overScrollMode = View.OVER_SCROLL_NEVER
+            webViewClient = object : android.webkit.WebViewClient() {
+                override fun shouldInterceptRequest(v: android.webkit.WebView,
+                                                    r: android.webkit.WebResourceRequest): android.webkit.WebResourceResponse? =
+                    serveur.shouldInterceptRequest(r.url)
+                // la page a ete arretee par Android : on passe directement a la chambre
+                override fun onRenderProcessGone(v: android.webkit.WebView, d: android.webkit.RenderProcessGoneDetail): Boolean {
+                    fermerAccueil(); return true
+                }
+            }
+            webChromeClient = android.webkit.WebChromeClient()
+            addJavascriptInterface(PontAccueil(), "Accueil")
+            loadUrl("https://appassets.androidplatform.net/assets/web/accueil.html")
+        }
+        racineChambre.addView(w, FrameLayout.LayoutParams(-1, -1))   // tout en haut : rien de la chambre ne passe devant
+        accueil = w
+        // securite : si la page ne repond pas, on n'attend pas indefiniment devant un ecran noir
+        vue.postDelayed({ if (accueil === w && !accueilMenu) fermerAccueil() }, 30000)
+    }
+
+    private var accueilMenu = false    // le menu est affiche : on laisse le joueur choisir, sans minuterie
+
+    private fun fermerAccueil() {
+        val w = accueil ?: return
+        accueil = null
+        try { racineChambre.removeView(w); w.stopLoading(); w.loadUrl("about:blank"); w.destroy() } catch (_: Throwable) { }
+        arriverDansLaChambre()
+    }
+
+    /** Rudy est dans la chambre, devant le bureau : la radio, la tele cadree, le telephone. */
+    private fun arriverDansLaChambre() {
+        vue.surEtapeIntro?.invoke("debut")
+        vue.cadrerSurLaTele()
+        boutonTelephone?.visibility = View.VISIBLE
+        majArgent()                                   // l'argent de la partie choisie
+    }
+
+    /** Les trois parties du menu : chacune est un fichier dans le telephone (toute la progression du jeu). */
+    private fun fichierPartie(n: String) =
+        java.io.File(java.io.File(filesDir, "parties").apply { mkdirs() }, "partie_" + n.filter { it.isDigit() } + ".json")
+
+    private inner class PontAccueil {
+        @android.webkit.JavascriptInterface
+        fun argent(): Int = Argent.lire(this@ChambreActivity)
+
+        @android.webkit.JavascriptInterface
+        fun ecrireArgent(n: Int) { Argent.ecrire(this@ChambreActivity, n) }
+
+        @android.webkit.JavascriptInterface
+        fun lirePartie(n: String): String =
+            try { val f = fichierPartie(n); if (f.exists()) f.readText() else "" } catch (_: Throwable) { "" }
+
+        @android.webkit.JavascriptInterface
+        fun ecrirePartie(n: String, json: String): Boolean =
+            try { fichierPartie(n).writeText(json); true } catch (_: Throwable) { false }
+
+        @android.webkit.JavascriptInterface
+        fun effacerPartie(n: String): Boolean =
+            try { fichierPartie(n).delete() } catch (_: Throwable) { false }
+
+        @android.webkit.JavascriptInterface
+        fun fin() { runOnUiThread { fermerAccueil() } }
+
+        @android.webkit.JavascriptInterface
+        fun menu(affiche: Boolean) { runOnUiThread { accueilMenu = affiche } }
     }
 
     private fun ouvrirVisite(id: String) {

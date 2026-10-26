@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Accueil</title>
+<style>
+html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
+#v{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+</style>
+</head>
+<body>
+<video id="v" playsinline webkit-playsinline preload="auto" src="/assets/web/accueil/intro.mp4"></video>
+<script>
+/* Au lancement de l'appli : la vidéo d'intro, puis le menu RetroRoom (nouvelle partie / charger). */
+(function(){
+  const v=document.getElementById('v'); let fait=false, last=-1, fige=0;
+  function fin(){ if(fait) return; fait=true; clearInterval(wd); try{ v.pause(); }catch(e){}
+    location.replace('/assets/web/retroroom.html'); }   // juste après la vidéo : le menu
+  v.addEventListener('ended',fin); v.addEventListener('error',fin);
+  // si l'image reste figée 4 secondes, on passe à la suite (on ne reste jamais bloqué)
+  const wd=setInterval(()=>{ if(fait) return; if(v.duration&&v.currentTime>=v.duration-0.15){ fin(); return; }
+    if(v.currentTime!==last){ last=v.currentTime; fige=0; } else if(++fige>=8) fin(); },500);
+  addEventListener('pointerdown',()=>{ if(v.paused&&!fait){ const q=v.play(); if(q&&q.catch) q.catch(()=>{}); } });
+  const q=v.play(); if(q&&q.catch) q.catch(()=>{ v.muted=true; const q2=v.play(); if(q2&&q2.catch) q2.catch(()=>{}); });
+})();
+</script>
+<script src="/assets/web/passer.js"></script>
+</body>
+</html>

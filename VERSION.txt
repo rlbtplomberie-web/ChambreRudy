@@ -1,3 +1,9 @@
-ChambreRudy - maj-250
-Plus d'intro au lancement (l'ouverture du carton est retirée) : on arrive directement dans la chambre, face à la télé, avec la radio et le téléphone
+ChambreRudy - maj-251
+Au lancement : la vidéo d'intro en plein écran, puis le menu RetroRoom avec sa musique (portrait ou paysage, plein écran sans déformation)
+NOUVELLE PARTIE / CHARGER : 3 parties ; chaque partie garde toute la progression du jeu et l'argent ; la progression actuelle est gardée dans la partie 1
+CHARGER : le panneau de pierre montre les diamants et les plaques gagnés dans la partie
+Appui long sur une partie : la supprimer
+Puis Rudy dans la chambre, devant le bureau (la vidéo de nouvelle partie viendra ensuite)
+Statut : 4 carrés ajoutés sous les plaques (losanges, ronds et rectangles un peu réduits)
+Vidéo ajoutée au Déverrouillage (dossier Intro du jeu), NB_VIDEOS = 634
 (fichier Kotlin : l'appli sera recompilée sur GitHub après le dépôt)

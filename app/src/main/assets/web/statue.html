@@ -120,16 +120,16 @@ html,body{margin:0;height:100%;background:var(--fond);overflow:hidden;touch-acti
 <body>
 <div class="ecran" id="statue">
  <div class="cadre">
-  <img class="fond" alt="Statue de Rudy" src="statue/637198e9d0.webp">
-  <img class="gem" id="gemAstra" alt="Diamant bleu" style="left:12.97%;top:28.5%" src="statue/eaf2a7c6c3.webp">
-  <img class="gem" id="gemVampa" alt="Diamant tête de mort" style="left:30.82%;top:28.5%" src="statue/1e1c580db6.webp">
-  <img class="gem" id="gemFarah" alt="Diamant vert" style="left:48.57%;top:28.5%" src="statue/5b610aa6af.webp">
-  <img class="gem rond" id="gemHotel" alt="Diamant rond étoilé" style="left:13.23%;top:40.19%;width:13.6%" src="statue/gem_rond_hotel.webp">
-  <img class="gem rond" id="gemPontlades" alt="Diamant jaune au cœur" style="left:30.82%;top:40.19%;width:13.6%" src="statue/gem_rond_jaune.webp">
-  <img class="gem rond" id="gemChasseur" alt="Diamant rose à la plume" style="left:48.57%;top:40.19%;width:13.6%" src="statue/gem_rond_rose.webp">
-  <img class="plaqueG" id="plaqueGuerriere" alt="Plaque Guerrière" style="left:13.06%;top:48.07%;width:14.6%;height:3.72%" src="statue/plaque_guerriere.webp">
-  <img class="plaqueG" id="plaqueCourage" alt="Plaque Courage" style="left:30.82%;top:48.07%;width:14.6%;height:3.72%" src="statue/plaque_courage.webp">
-  <img class="plaqueG" id="plaqueEquilibre" alt="Plaque Équilibre" style="left:48.57%;top:48.07%;width:14.6%;height:3.72%" src="statue/plaque_equilibre.webp">
+  <img class="fond" alt="Statue de Rudy" src="statue/fond_statue_carres.webp">
+  <img class="gem" id="gemAstra" alt="Diamant bleu" style="left:16.56%;top:27.6%;width:14.88%" src="statue/eaf2a7c6c3.webp">
+  <img class="gem" id="gemVampa" alt="Diamant tête de mort" style="left:30.84%;top:27.6%;width:14.88%" src="statue/1e1c580db6.webp">
+  <img class="gem" id="gemFarah" alt="Diamant vert" style="left:45.04%;top:27.6%;width:14.88%" src="statue/5b610aa6af.webp">
+  <img class="gem rond" id="gemHotel" alt="Diamant rond étoilé" style="left:16.77%;top:37.08%;width:10.88%" src="statue/gem_rond_hotel.webp">
+  <img class="gem rond" id="gemPontlades" alt="Diamant jaune au cœur" style="left:30.84%;top:37.08%;width:10.88%" src="statue/gem_rond_jaune.webp">
+  <img class="gem rond" id="gemChasseur" alt="Diamant rose à la plume" style="left:45.04%;top:37.08%;width:10.88%" src="statue/gem_rond_rose.webp">
+  <img class="plaqueG" id="plaqueGuerriere" alt="Plaque Guerrière" style="left:16.63%;top:43.03%;width:11.68%;height:2.98%" src="statue/plaque_guerriere.webp">
+  <img class="plaqueG" id="plaqueCourage" alt="Plaque Courage" style="left:30.84%;top:43.03%;width:11.68%;height:2.98%" src="statue/plaque_courage.webp">
+  <img class="plaqueG" id="plaqueEquilibre" alt="Plaque Équilibre" style="left:45.04%;top:43.03%;width:11.68%;height:2.98%" src="statue/plaque_equilibre.webp">
   <div class="val" id="vArgent"  style="left:38.9%;top:54.9%;width:17.4%;height:4.2%;font-size:6.2cqw"></div>
   <div class="val" id="vContacts" style="left:39.9%;top:63.3%;width:16.2%;height:4.2%;font-size:6.6cqw"></div>
   <div class="val" id="vVideos"  style="left:39.9%;top:71.7%;width:16.2%;height:4.2%;font-size:5.6cqw"></div>
@@ -191,7 +191,7 @@ html,body{margin:0;height:100%;background:var(--fond);overflow:hidden;touch-acti
 const PAGES=["statue/890d180b34.webp","statue/a3dd3c0457.webp","statue/e030d6cd4d.webp","statue/2a8ce3a127.webp","statue/0c7a0a26c7.webp","statue/bcb4d4aff7.webp","statue/7e7350bfa4.webp","statue/d3c3cbf6f9.webp","statue/0b360bb486.webp","statue/817e5ba814.webp","statue/19e73a0771.webp"];
 const NB_PERSOS=87;          // tous les personnages des pages (sans l'emblème)
 const NB_CONTACTS=11;      // les filles qu'on peut avoir dans le téléphone
-const NB_VIDEOS=633;          // toutes les vidéos du jeu (Déverrouillage)
+const NB_VIDEOS=634;          // toutes les vidéos du jeu (Déverrouillage)
 let APERCU=false;
 const $=id=>document.getElementById(id);
 function lit(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
