@@ -609,6 +609,18 @@ var RRSon=(function(){
   }
 
   /* ---- Lancement : c'est ici que le jeu démarrera ---- */
+  // une vidéo plein écran, puis la chambre (on ne reste jamais bloqué : fin, erreur ou image figée)
+  function videoPuisChambre(src){
+    var vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:9999;background:#000';
+    vb.innerHTML='<video playsinline webkit-playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000"></video>';
+    document.body.appendChild(vb); var v=vb.querySelector('video'), fait=false, last=-1, fige=0, wd=0;
+    function fin(){ if(fait) return; fait=true; clearInterval(wd); try{ v.pause(); }catch(e){} try{ if(window.Accueil) Accueil.fin(); }catch(e){} }
+    v.addEventListener('ended',fin); v.addEventListener('error',fin);
+    vb.addEventListener('pointerdown',function(){ if(v.paused&&!fait){ var q=v.play(); if(q&&q.catch) q.catch(function(){}); } });
+    wd=setInterval(function(){ if(fait) return; if(v.duration&&v.currentTime>=v.duration-0.15){ fin(); return; }
+      if(v.currentTime!==last){ last=v.currentTime; fige=0; } else if(++fige>=8) fin(); },500);
+    v.src=src; var q=v.play(); if(q&&q.catch) q.catch(function(){ v.muted=true; var q2=v.play(); if(q2&&q2.catch) q2.catch(function(){}); });
+  }
   var lance=false;
   function lancerPartie(numero,sauvegarde,nouvelle){
     if(lance) return; lance=true;
@@ -616,6 +628,7 @@ var RRSon=(function(){
     allerSur(numero,nouvelle);
     // le menu s'efface en musique, puis Rudy est dans la chambre (la vidéo de nouvelle partie viendra ici)
     setTimeout(function(){ try{ RRSon.couper&&RRSon.couper(); }catch(e){}
+      if(!nouvelle){ videoPuisChambre('/assets/web/accueil/charger.mp4'); return; }   // partie chargée : sa vidéo d'abord
       try{ if(window.Accueil) Accueil.fin(); }catch(e){} },1400);
     var b=document.getElementById('voileBloc');vider(b);
     var s1=nouveauSvg(b,600,120);s1.style.top='0px';s1.style.height='120px';
