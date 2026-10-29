@@ -462,7 +462,22 @@ function cacherImpasse(id){
   aCacher = id;
   cacheFait = evalImpasse(`anims.forEach(a=>{const v=a.p.id===${JSON.stringify(id)}?'hidden':'';a.el.style.visibility=v;a.om.style.visibility=v;if(a.m)a.m.style.visibility=v;});true`) === true;
 }
-decor.addEventListener('load', () => { setTimeout(() => { if (aCacher !== undefined) cacherImpasse(aCacher); }, 50); });
+decor.addEventListener('load', () => {
+  setTimeout(() => { if (aCacher !== undefined) cacherImpasse(aCacher); }, 50);
+  // l'impasse du fond n'a pas besoin de 60 images/s (ses personnages changent d'image toutes les 80 ms ou plus)
+  try { const w = decor.contentWindow, raf = w.requestAnimationFrame.bind(w); let k = 0;
+    w.requestAnimationFrame = f => raf(t => { if ((k++) & 1){ decorGen++; f(t); } else w.requestAnimationFrame(f); }); } catch(e){}
+});
+// 3) la page de l'impasse qui a lancé le combat est cachée derrière : ses animations sont en pause pendant le combat,
+//    et repartent toutes seules dès que le combat est fermé (installé dans la page de l'impasse elle-même)
+(function(){ try {
+  const P = window.parent; if (!P || P === window || typeof P.lancePlaquette !== 'function') return;
+  P.eval("(function(){ if (window.__pauseCombat) return; window.__pauseCombat = true;"
+   + " var raf = window.requestAnimationFrame, att = [];"
+   + " window.requestAnimationFrame = function(f){ att.push(f); return 0; };"
+   + " var iv = setInterval(function(){ if (!document.getElementById('combatI')) { clearInterval(iv);"
+   + "   window.requestAnimationFrame = raf; window.__pauseCombat = false; att.splice(0).forEach(function(f){ raf.call(window, f); }); } }, 300); })()");
+} catch(e){} })();
 
 const cv = document.getElementById('jeu'), ctx = cv.getContext('2d');
 
@@ -2359,7 +2374,7 @@ function grandTexte(t, y, taille){
 }
 /* =================== CAMÉRA : elle suit les deux combattants et zoome quand ils sont proches =================== */
 const cam = { x: W / 2, y: H / 2, z: 1 };
-let kEcran = 1;
+let kEcran = 1, kJeu = 1;
 function majCamera(dt){
   let cx = W / 2, cy = H / 2, z = 1;
   if (rudy && enn && (phase === 'combat' || phase === 'annonce' || phase === 'ko' || phase === 'perdu')){
@@ -2399,7 +2414,14 @@ function appliquerCameraDecor(c){
    mais au lieu que le téléphone redessine toute cette page à chaque mouvement de la caméra
    (c'était la cause des rectangles noirs), on recopie chaque image de l'impasse dans une
    toile, comme les combattants. Si quoi que ce soit échoue, on revient à l'ancien affichage. */
-const decorCv = document.getElementById('decorCv'), dcx = decorCv.getContext('2d');
+const decorCv = document.getElementById('decorCv'), dcx = decorCv.getContext('2d', { alpha: false });
+// la toile du décor est dessinée une fois pour toute l'impasse (pas pour la caméra) : la caméra la déplace
+// et la zoome en CSS (travail de la carte graphique), et on ne la redessine que quand l'impasse a changé
+let decorGen = 0, decorGenVu = -1, decorT = 0, decorPret = false, decorTr = '';
+const decorBoite = document.createElement('div');
+decorBoite.style.cssText = 'position:absolute;overflow:hidden;pointer-events:none;background:#000';
+decorCv.parentNode.insertBefore(decorBoite, decorCv); decorBoite.appendChild(decorCv);
+Object.assign(decorCv.style, { left: '0', top: '0', transformOrigin: '0 0', willChange: 'transform' });
 let decorToile = true;                       // false = ancien affichage (la page de l'impasse zoomée)
 const imgDecor = {};
 function imageDecor(url){ let i = imgDecor[url]; if (!i){ i = imgDecor[url] = new Image(); i.src = url; } return i; }
@@ -2465,7 +2487,7 @@ function muretPret(el, x, y, w, h, b){
   g2.setTransform(1, 0, 0, 1, 0, 0); g2.drawImage(tmp, 0, 0);
   t.__m = m; texMuret.set(cle, t); return t;
 }
-function dessinerImpasse(c){
+function dessinerImpasse(){
   const d = decor.contentDocument, sc = d && d.getElementById('scene');
   if (!sc) return false;
   const vu = d.defaultView, b = decorCv.width / W;
@@ -2476,7 +2498,7 @@ function dessinerImpasse(c){
     [.2, .5, [[0, 'rgba(170,160,190,.5)'], [.6, 'rgba(170,160,190,0)'], [1, 'rgba(170,160,190,0)']]]]);
   dcx.setTransform(1, 0, 0, 1, 0, 0); dcx.globalAlpha = 1; dcx.globalCompositeOperation = 'source-over';
   dcx.fillStyle = '#000'; dcx.fillRect(0, 0, decorCv.width, decorCv.height);
-  dcx.setTransform(b * c.z, 0, 0, b * c.z, b * c.tx, b * c.ty);
+  dcx.setTransform(b, 0, 0, b, 0, 0);
   // ordre d'affichage de la page : z-index, puis ordre dans la page (calculé une fois)
   if (!listeImpasse || listeImpasse.n !== sc.children.length){
     const els = []; let n = 0, iL = 0;
@@ -2519,15 +2541,24 @@ function dessinerImpasse(c){
   return true;
 }
 function dessiner(){
+  ctx.setTransform(kJeu, 0, 0, kJeu, 0, 0);
   ctx.save();
   const c = transfoCamera();
   if (decorToile){
-    let ok = false;
-    try { ok = dessinerImpasse(c); } catch(e){ decorToile = false; }
-    if (ok && decor.style.visibility !== 'hidden'){ decor.style.visibility = 'hidden'; decorCv.style.visibility = ''; }
-    if (!ok && decor.style.visibility === 'hidden'){ decor.style.visibility = ''; decorCv.style.visibility = 'hidden'; }
+    let ok = decorPret;
+    const mt = performance.now();
+    if (decorGen !== decorGenVu || mt - decorT > 70 || !ok){
+      try { ok = decorPret = dessinerImpasse(); } catch(e){ decorToile = false; ok = false; }
+      decorGenVu = decorGen; decorT = mt;
+    }
+    if (ok){
+      const k = kEcran, tr = `translate(${(c.tx * k).toFixed(1)}px,${(c.ty * k).toFixed(1)}px) scale(${c.z.toFixed(4)})`;
+      if (tr !== decorTr){ decorTr = tr; decorCv.style.transform = tr; }
+    }
+    if (ok && decor.style.visibility !== 'hidden'){ decor.style.visibility = 'hidden'; decorBoite.style.visibility = ''; }
+    if (!ok && decor.style.visibility === 'hidden'){ decor.style.visibility = ''; decorBoite.style.visibility = 'hidden'; }
   }
-  if (!decorToile){ decorCv.style.visibility = 'hidden'; decor.style.visibility = ''; appliquerCameraDecor(c); }
+  if (!decorToile){ decorBoite.style.visibility = 'hidden'; decor.style.visibility = ''; appliquerCameraDecor(c); }
   ctx.translate(c.tx, c.ty); ctx.scale(c.z, c.z);
   if (tremble > 0) ctx.translate((Math.random() - .5) * 18 * tremble, (Math.random() - .5) * 12 * tremble);
   ctx.clearRect(-W, -H, W * 3, H * 3);
@@ -2628,12 +2659,18 @@ function ajuster(){
   cadre.style.transform = TOURNE ? `translate(${vw}px,0) rotate(90deg)` : 'none';
   const k = Math.min(L / W, C / H); kEcran = k;
   cv.style.width = W * k + 'px'; cv.style.height = H * k + 'px';
+  // la toile du jeu à la finesse utile de l'écran (inutile de dessiner plus de points que le téléphone n'en montre)
+  kJeu = Math.min(1, k * Math.min(2, Math.max(1, devicePixelRatio || 1)) * .8);
+  const lj = Math.round(W * kJeu), hj = Math.round(H * kJeu);
+  if (cv.width !== lj || cv.height !== hj){ cv.width = lj; cv.height = hj; }
   cv.style.left = (L - W * k) / 2 + 'px'; cv.style.top = (C - H * k) / 2 + 'px';
   Object.assign(decor.style, { left: cv.style.left, top: cv.style.top, width: W * k + 'px', height: H * k + 'px' });
   // la toile de l'impasse : à la finesse réelle de l'écran
-  const dpr = Math.min(2, window.devicePixelRatio || 1);   // assez fin, sans trop charger le téléphone
-  Object.assign(decorCv.style, { left: cv.style.left, top: cv.style.top, width: W * k + 'px', height: H * k + 'px' });
-  decorCv.width = Math.round(W * k * dpr); decorCv.height = Math.round(H * k * dpr);
+  const Q = 1.25;  // un peu plus fin que l'écran pour rester net quand la caméra zoome
+  Object.assign(decorBoite.style, { left: cv.style.left, top: cv.style.top, width: W * k + 'px', height: H * k + 'px' });
+  Object.assign(decorCv.style, { width: W * k + 'px', height: H * k + 'px' });
+  decorCv.width = Math.round(W * k * Q); decorCv.height = Math.round(H * k * Q);
+  texPerso.clear(); texMuret.clear(); decorPret = false; decorTr = '';
   cadre.style.setProperty('--u', (C / 100) + 'px');
 }
 addEventListener('resize', ajuster); addEventListener('orientationchange', () => setTimeout(ajuster, 200)); ajuster();

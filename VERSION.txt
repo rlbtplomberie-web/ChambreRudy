@@ -1,3 +1,1 @@
-ChambreRudy - maj-252
-Menu : chaque fois qu'on charge une partie, la vidéo de chargement passe, puis Rudy devant le bureau de la chambre
-Vidéo ajoutée au Déverrouillage (dossier Intro du jeu), NB_VIDEOS = 635
+maj-253 : combat de l'impasse beaucoup plus fluide (décor bougé par la carte graphique et redessiné seulement quand il change, toile du jeu à la taille de l'écran, impasse du fond en pause pendant le combat)
