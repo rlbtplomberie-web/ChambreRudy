@@ -629,7 +629,7 @@ var RRSon=(function(){
     // le menu s'efface en musique, puis Rudy est dans la chambre (la vidéo de nouvelle partie viendra ici)
     setTimeout(function(){ try{ RRSon.couper&&RRSon.couper(); }catch(e){}
       if(!nouvelle){ videoPuisChambre('/assets/web/accueil/charger.mp4'); return; }   // partie chargée : sa vidéo d'abord
-      try{ if(window.Accueil) Accueil.fin(); }catch(e){} },1400);
+      videoPuisChambre('/assets/web/accueil/nouvelle_partie.mp4'); },1400);           // nouvelle partie : la toute première vidéo du jeu
     var b=document.getElementById('voileBloc');vider(b);
     var s1=nouveauSvg(b,600,120);s1.style.top='0px';s1.style.height='120px';
     texte(s1,'RUDY',300,86,84,{max:580});
