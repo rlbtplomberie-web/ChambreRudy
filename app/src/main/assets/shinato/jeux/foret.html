@@ -453,7 +453,7 @@ function updateRudy(dt){
   }
   if (r.st==='punch'){ // 1er coup de poing : poses 1-2-3, puis retour en garde
     const sp = 0.055, n = r.t/sp;
-    if (n>=2 && !r.hitDone){ r.hitDone = true; doHit(10, 112, false); }
+    if (n>=2 && !r.hitDone){ r.hitDone = true; doHit(10, 112, false, 'r_punch', 2); }
     r.fr = n < 2 ? n : (n < 3.6 ? 2 : (n < 4.6 ? 1 : 0));
     if (pressed.length && n>=2){ const b = pressed[pressed.length-1];
       if (b==='punch'){ setR('punch2'); r.fr = 3; rudy.hitDone = false; rudy.combo++; SFX.whoosh(); return; }
@@ -463,7 +463,7 @@ function updateRudy(dt){
   }
   if (r.st==='punch2'){ // 2e coup de poing enchaîné : poses 4-5-6
     const sp = 0.06, n = r.t/sp;
-    if (n>=0.4 && !r.hitDone){ r.hitDone = true; doHit(12, 118, r.combo>=3); }
+    if (n>=0.4 && !r.hitDone){ r.hitDone = true; doHit(12, 118, r.combo>=3, 'r_punch', 3); }
     r.fr = 3 + Math.min(2, n < 1.6 ? 0 : (n-1.6)*1.2);
     if (pressed.length && n>=1){ const b = pressed[pressed.length-1];
       if (b==='punch'){ setR('punch3'); r.fr = 1; rudy.hitDone = false; rudy.combo++; SFX.whoosh(); return; }
@@ -482,7 +482,7 @@ function updateRudy(dt){
   if (r.st==='kick'){
     const sp = 0.062;
     const n = r.t/sp;
-    if (n>=3 && !r.hitDone){ r.hitDone = true; doHit(16, 138, r.combo>=2); }
+    if (n>=3 && !r.hitDone){ r.hitDone = true; doHit(16, 138, r.combo>=2, 'r_kick', 3); }
     r.fr = Math.min(5, n);
     if (pressed.length && n>=3.2){ const b = pressed[pressed.length-1]; if (b==='punch'||b==='kick'){ startAttack(b); return; } }
     if (n>=6){ setR('idle'); r.combo = 0; }
@@ -520,14 +520,51 @@ function startAttack(b){
   if (input.x) rudy.face = input.x;
 }
 function targetable(e){ return !e.dead && !['down','intro','grabbedByR','grab','phase','rise','charge','bounce','gone','tpIn'].includes(e.st); }
-function doHit(dmg, range, knock){
+const FEUILLES = SPR, ECH = y => depth(y)/Q;
+// ---------- touche précise : le poing (ou le pied) de Rudy doit vraiment arriver sur le corps ----------
+// largeur réelle du corps de chaque image (mesurée une fois dans l'image, à hauteur du ventre et des hanches)
+const corpsCache = {}, corpsCv = document.createElement('canvas'), corpsCx = corpsCv.getContext('2d', { willReadFrequently: true });
+function corpsImage(k, i){
+  const cle = k + '|' + i; if (corpsCache[cle]) return corpsCache[cle];
+  const s = FEUILLES[k], f = s && s.f[Math.max(0, Math.min(i|0, s.f.length-1))]; if (!f) return null;
+  const [sx, sy, w, h, ax] = f; let res = { g: ax, d: w - ax };
+  try {
+    const im = IMG[k]; if (!im || !im.complete || !im.naturalWidth) return res;
+    const y0 = Math.floor(h*0.38), y1 = Math.floor(h*0.68), n = y1 - y0;
+    corpsCv.width = w; corpsCv.height = n; corpsCx.clearRect(0, 0, w, n);
+    corpsCx.drawImage(im, sx, sy + y0, w, n, 0, 0, w, n);
+    const d = corpsCx.getImageData(0, 0, w, n).data;
+    let gx = -1, dx = -1;
+    for (let x = 0; x < w; x++){ let c = 0; for (let y = 0; y < n; y++) if (d[(y*w + x)*4 + 3] > 100) c++; if (c >= n*0.3){ if (gx < 0) gx = x; dx = x; } }
+    if (gx >= 0) res = { g: ax - gx, d: dx - ax };
+  } catch(err){}
+  return corpsCache[cle] = res;
+}
+// bords gauche et droit du corps de l'ennemi à l'écran (tel qu'il est dessiné)
+function bordsCorps(e){
+  const k = e._sheet; if (!k || !FEUILLES[k]) return null;
+  const s = FEUILLES[k], i = Math.max(0, Math.min(e._n|0, s.f.length-1)), c = corpsImage(k, i); if (!c) return null;
+  let g = c.g, d = c.d;
+  if (e._ax != null){ const dec = e._ax - s.f[i][4]; g += dec; d -= dec; }
+  const sc = ECH(e._y), flip = s.dir !== e._face;
+  return flip ? [e._x - d*sc, e._x + g*sc] : [e._x - g*sc, e._x + d*sc];
+}
+// le bout du poing / du pied de Rudy (image k, pose i) arrive-t-il sur le corps de l'ennemi ?
+function coupTouche(e, k, i){
+  const r = rudy, b = bordsCorps(e); if (!b) return null;            // inconnu : on garde l'ancien test
+  if ((e.x - r.x)*r.face < -20) return false;                         // derrière Rudy
+  const f = FEUILLES[k].f[i], bout = r.x + r.face*(f[2] - f[4])*ECH(r.y);
+  return r.face === 1 ? (bout >= b[0] - 6 && bout <= b[1] + 14) : (bout <= b[1] + 6 && bout >= b[0] - 14);
+}
+function doHit(dmg, range, knock, pk, pi){
   let any = false;
   for (const e of living()){
     if (!targetable(e) && e.st!=='charge') continue;
     if (e.st==='down' || e.st==='grab') continue;
     const dx = (e.x - rudy.x)*rudy.face;
     const reachBonus = e.K.boss===1 ? 40 : 0;
-    if (dx > -20 && dx < range+reachBonus && Math.abs(e.y-rudy.y) < 32){
+    const touche = pk ? coupTouche(e, pk, pi) : null;
+    if ((touche === null ? (dx > -20 && dx < range+reachBonus) : touche) && Math.abs(e.y-rudy.y) < 32){
       hurtEnemy(e, dmg, knock || rudy.combo>=3);
       rudy.en = Math.min(200, rudy.en + 8);
       any = true;
@@ -1168,6 +1205,7 @@ function drawEnemy(e){
   let a = e.dead ? Math.max(0, e.alpha) * (Math.floor(game.t*16)%2 ? 1 : 0.35) : (e.alpha==null ? 1 : e.alpha);
   if (K.boss===1 && e.phased) a = Math.max(0, e.alpha);
   drawFrame(sheet, n, x, y - z, face, a, d);
+  e._sheet = sheet; e._n = n; e._face = face; e._x = x; e._y = y; e._ax = null;
   if (e.flash>0){ ctx.save(); ctx.globalCompositeOperation = 'lighter'; drawFrame(sheet, n, x, y - z, face, e.flash*4, d); ctx.restore(); }
   if (e.st==='beam') drawLaser(e, n, d);
   if (e.st==='fire'){ // boule verte qui se forme dans la main
