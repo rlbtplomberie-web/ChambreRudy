@@ -472,7 +472,7 @@ class ChambreActivity : ComponentActivity() {
                 suivre(url)
             }
         }
-        web.webChromeClient = android.webkit.WebChromeClient()
+        web.webChromeClient = PasDePoster()
         mettre.setOnClickListener {
             val id = videoChoisie
             if (id != null) {
@@ -521,7 +521,7 @@ class ChambreActivity : ComponentActivity() {
             w.settings.javaScriptEnabled = true
             w.settings.domStorageEnabled = true
             w.settings.mediaPlaybackRequiresUserGesture = false   // elle démarre toute seule
-            w.webChromeClient = android.webkit.WebChromeClient()
+            w.webChromeClient = PasDePoster()
             w.isVerticalScrollBarEnabled = false
             w.isHorizontalScrollBarEnabled = false
             racineChambre.addView(w, racineChambre.indexOfChild(ecranTele) + 1, FrameLayout.LayoutParams(1, 1))
@@ -994,7 +994,7 @@ class ChambreActivity : ComponentActivity() {
                     fermerAccueil(); return true
                 }
             }
-            webChromeClient = android.webkit.WebChromeClient()
+            webChromeClient = PasDePoster()
             addJavascriptInterface(PontAccueil(), "Accueil")
             loadUrl("https://appassets.androidplatform.net/assets/web/accueil.html")
         }
@@ -1083,7 +1083,7 @@ class ChambreActivity : ComponentActivity() {
                     return true
                 }
             }
-            webChromeClient = android.webkit.WebChromeClient()
+            webChromeClient = PasDePoster()
             addJavascriptInterface(PontVisite(), "Android")
             loadUrl("https://appassets.androidplatform.net/assets/web/visite.html?fille=" + id.filter { it.isLetter() })
         }
@@ -1250,7 +1250,7 @@ class ShinatoActivity : androidx.activity.ComponentActivity() {
                 return true
             }
         }
-        web.webChromeClient = android.webkit.WebChromeClient()
+        web.webChromeClient = PasDePoster()
         // Les terrains de la rue (flèche jaune + JOUER) lancent les jeux de l'appli.
         // Quand le jeu se termine, on revient ici, dans la rue.
         web.addJavascriptInterface(object {

@@ -862,14 +862,27 @@ const gameEl=renderer.domElement;
 gameEl.addEventListener('pointerdown',e=>{audio();
   if(e.pointerType==='mouse'){if(e.button===2){aim();return}if(e.button===0&&(P.mode==='fps'||e.shiftKey||keys.shift)){fireHeld=true;fire()}
     lookId=e.pointerId;lookLast={x:e.clientX,y:e.clientY};return}
-  if(e.clientX<innerWidth*.45&&joyId===null){joyId=e.pointerId;joyO={x:e.clientX,y:e.clientY};joy.style.display='block';joy.style.left=e.clientX+'px';joy.style.top=e.clientY+'px';knob.style.transform='';}
-  else if(lookId===null){lookId=e.pointerId;lookLast={x:e.clientX,y:e.clientY}}});
+  // un doigt « oublié » (relâché sans que le téléphone l'ait signalé : passage en plein écran, rotation…) ne bloque plus jamais
+  // les touches : un nouveau doigt à gauche reprend toujours le joystick, un nouveau doigt à droite reprend toujours la caméra
+  if(e.clientX<innerWidth*.45){ if(joyId!==null&&joyId!==e.pointerId){input.x=input.y=0}
+    joyId=e.pointerId;joyO={x:e.clientX,y:e.clientY};joy.style.display='block';joy.style.left=e.clientX+'px';joy.style.top=e.clientY+'px';knob.style.transform='';
+    if(lookId===e.pointerId)lookId=null}
+  else{lookId=e.pointerId;lookLast={x:e.clientX,y:e.clientY};if(joyId===e.pointerId){joyId=null;input.x=input.y=0;joy.style.display='none'}}
+  try{gameEl.setPointerCapture(e.pointerId)}catch(_){}});
 addEventListener('pointermove',e=>{
   if(e.pointerId===joyId){let dx=e.clientX-joyO.x,dy=e.clientY-joyO.y;const d=Math.hypot(dx,dy),R=55;if(d>R){dx*=R/d;dy*=R/d}
     knob.style.transform=`translate(${dx}px,${dy}px)`;input.x=dx/R;input.y=-dy/R}
   else if(e.pointerId===lookId){input.lookDX+=e.clientX-lookLast.x;input.lookDY+=e.clientY-lookLast.y;lookLast={x:e.clientX,y:e.clientY}}});
 function endPtr(e){if(e.pointerId===joyId){joyId=null;input.x=input.y=0;joy.style.display='none'}if(e.pointerId===lookId)lookId=null;if(e.pointerType==='mouse')fireHeld=false}
-addEventListener('pointerup',endPtr);addEventListener('pointercancel',endPtr);
+addEventListener('pointerup',endPtr);addEventListener('pointercancel',endPtr);gameEl.addEventListener('lostpointercapture',endPtr);
+// tout relâcher quand le jeu perd la main (plein écran, rotation, appli en arrière-plan) : sinon un doigt restait « appuyé » pour toujours
+function lacherTout(){joyId=null;lookId=null;input.x=input.y=0;fireHeld=false;joy.style.display='none';for(const k in keys)keys[k]=false}
+addEventListener('blur',lacherTout);document.addEventListener('visibilitychange',lacherTout);
+document.addEventListener('fullscreenchange',lacherTout);document.addEventListener('webkitfullscreenchange',lacherTout);
+addEventListener('orientationchange',lacherTout);addEventListener('resize',()=>{if(joyId!==null||lookId!==null)lacherTout()});
+// filet de sécurité : quand plus aucun doigt ne touche l'écran, plus rien ne reste appuyé
+addEventListener('touchend',e=>{if(e.touches.length===0){if(joyId!==null||lookId!==null||fireHeld){joyId=null;lookId=null;input.x=input.y=0;fireHeld=false;joy.style.display='none'}}},{passive:true,capture:true});
+addEventListener('touchcancel',e=>{if(e.touches.length===0)lacherTout()},{passive:true,capture:true});
 gameEl.addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('keydown',e=>{if(GR.on&&!e.repeat){e.preventDefault();grabTap();return}const k=e.key.toLowerCase();if(keys[k])return;keys[k]=true;audio();
   if(k===' '){e.preventDefault();toggleWall()}else if(k==='f')aim();else if(k==='e')action();else if(k==='c')crouch();
@@ -882,6 +895,10 @@ function keyAxes(){let x=0,y=0;if(keys.z||keys.w||keys.arrowup)y+=1;if(keys.s||k
 $('go').addEventListener('click',()=>{audio();$('intro').hidden=true;musicOn()});
 $('retry').addEventListener('click',()=>{audio();resetGame()});
 $('escape').addEventListener('pointerdown',e=>{e.preventDefault();audio();grabTap()});$('again').addEventListener('click',()=>location.reload());
+// filet de sécurité : si la vidéo reste figée (4 s sans avancer), on continue le jeu au lieu de rester bloqué dessus
+{let lastT=-1,fige=0;setInterval(()=>{const v=$('cineV');if($('cine').hidden){lastT=-1;fige=0;return}
+  if(v.duration&&v.currentTime>=v.duration-0.15){endStairs();return}
+  if(v.currentTime!==lastT){lastT=v.currentTime;fige=0}else if(!v.paused&&++fige>=8)endStairs();else if(v.paused&&v.muted&&++fige>=16)endStairs()},500)}
 $('cineV').addEventListener('ended',()=>endStairs());$('cineV').addEventListener('error',()=>{if(!$('cine').hidden)endStairs()});$('skip').addEventListener('click',()=>endStairs());
 
 /* ---------- choix de l'image ---------- */

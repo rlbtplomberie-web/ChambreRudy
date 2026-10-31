@@ -230,6 +230,9 @@ class PageActivity : ComponentActivity() {
              * le bouton ne fait rien du tout.
              */
             webChromeClient = object : WebChromeClient() {
+                // pas d'écran gris « lecture » avant les vidéos : elles démarrent directement
+                override fun getDefaultVideoPoster(): android.graphics.Bitmap = affichageVideoVide()
+
                 override fun onShowFileChooser(
                     v: WebView?,
                     retour: ValueCallback<Array<Uri>>?,

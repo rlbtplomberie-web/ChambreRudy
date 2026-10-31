@@ -1,1 +1,1 @@
-maj-264 : Mitsuda et Rembourg - caméra rapprochée (plus de bande bleue en bas) et barre de zoom + / - comme à Chaliaville
+maj-267 (contient aussi les maj-265 et 266) : le bouton pour passer la vidéo apparaît aussi sur la vidéo de nouvelle partie et celle de chargement ; plus d'écran gris avant les vidéos ; Hôtel Palace - plus de perte du tactile
