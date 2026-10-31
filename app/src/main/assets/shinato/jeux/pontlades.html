@@ -2368,8 +2368,12 @@ const gameEl=renderer.domElement;
 gameEl.addEventListener('pointerdown',e=>{if(e.isPrimary&&e.pointerType!=='mouse')libereTouches();audioOut();if(GR.on){grabTap();return}
   if(e.pointerType==='mouse'){if(e.button===2){aim();return}if(e.button===0&&(P.mode==='fps'||e.shiftKey||keys.shift)){fireHeld=true;fire()}
     lookId=e.pointerId;lookLast={x:e.clientX,y:e.clientY};return}
-  if(e.clientX<innerWidth*.45&&joyId===null){joyId=e.pointerId;joyO={x:e.clientX,y:e.clientY};joy.style.display='block';joy.style.left=e.clientX+'px';joy.style.top=e.clientY+'px';knob.style.transform=''}
-  else if(lookId===null){lookId=e.pointerId;lookLast={x:e.clientX,y:e.clientY}}});
+  // un doigt « oublié » (relâché sans que le téléphone l'ait signalé) ne bloque plus jamais les touches :
+  // un nouveau doigt à gauche reprend toujours le joystick, un nouveau doigt à droite reprend toujours la caméra
+  if(e.clientX<innerWidth*.45){if(joyId!==null&&joyId!==e.pointerId){input.x=input.y=0}
+    joyId=e.pointerId;joyO={x:e.clientX,y:e.clientY};joy.style.display='block';joy.style.left=e.clientX+'px';joy.style.top=e.clientY+'px';knob.style.transform='';if(lookId===e.pointerId)lookId=null}
+  else{lookId=e.pointerId;lookLast={x:e.clientX,y:e.clientY};if(joyId===e.pointerId){joyId=null;input.x=input.y=0;joy.style.display='none'}}
+  try{gameEl.setPointerCapture(e.pointerId)}catch(_){}});
 addEventListener('pointermove',e=>{
   if(e.pointerId===joyId){let dx=e.clientX-joyO.x,dy=e.clientY-joyO.y;const d=Math.hypot(dx,dy),R=55;if(d>R){dx*=R/d;dy*=R/d}
     knob.style.transform=`translate(${dx}px,${dy}px)`;input.x=dx/R;input.y=-dy/R}
@@ -2377,6 +2381,11 @@ addEventListener('pointermove',e=>{
 function libereTouches(){try{joyId=null;lookId=null;input.x=input.y=0;input.lookDX=input.lookDY=0;joy.style.display='none';knob.style.transform='';fireHeld=false}catch(e){}}
 function endPtr(e){if(e.pointerId===joyId){joyId=null;input.x=input.y=0;joy.style.display='none'}if(e.pointerId===lookId)lookId=null;if(e.pointerType==='mouse')fireHeld=false}
 addEventListener('pointerup',endPtr);addEventListener('pointercancel',endPtr);addEventListener('blur',libereTouches);document.addEventListener('visibilitychange',libereTouches);
+gameEl.addEventListener('lostpointercapture',endPtr);
+document.addEventListener('fullscreenchange',libereTouches);document.addEventListener('webkitfullscreenchange',libereTouches);addEventListener('orientationchange',libereTouches);
+// filet de sécurité : quand plus aucun doigt ne touche l'écran, plus rien ne reste appuyé
+addEventListener('touchend',e=>{if(e.touches.length===0&&(joyId!==null||lookId!==null||fireHeld))libereTouches()},{passive:true,capture:true});
+addEventListener('touchcancel',e=>{if(e.touches.length===0)libereTouches()},{passive:true,capture:true});
 gameEl.addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('wheel',e=>{if(P.mode==='binoview'){e.preventDefault();zoom(e.deltaY<0?1:-1)}},{passive:false});
 addEventListener('resize',()=>{if(P.mode==='binoview')drawBinoMask()});
@@ -2393,7 +2402,14 @@ $('go').addEventListener('click',()=>{audioOut();$('intro').hidden=true});
   const finish=()=>{if(done)return;done=true;v.pause();box.hidden=true;const go=()=>{if($('go').disabled){setTimeout(go,200);return}$('go').click()};go()};
   v.muted=false;const p=v.play();if(p&&p.catch)p.catch(()=>{v.muted=true;v.play().catch(finish)}); // sans son si le navigateur l'interdit avant un toucher
   box.addEventListener('pointerdown',()=>{if(v.muted){v.muted=false;v.play().catch(()=>{})}audioOut()}); // un toucher remet le son
-  v.addEventListener('ended',finish);v.addEventListener('error',finish);setTimeout(()=>{if(v.currentTime<.05)finish()},4000)}
+  v.addEventListener('ended',finish);v.addEventListener('error',finish);setTimeout(()=>{if(v.currentTime<.05)finish()},4000)
+  // si la vidéo reste figée 4 s, le jeu démarre quand même (sinon l'écran ne répondait plus aux doigts)
+  let lastT=-1,fige=0;const wd=setInterval(()=>{if(done){clearInterval(wd);return}if(v.duration&&v.currentTime>=v.duration-0.15){finish();return}
+    if(v.currentTime!==lastT){lastT=v.currentTime;fige=0}else if(++fige>=(v.paused?16:8))finish()},500)}
+// pareil pour la vidéo de K.O. : elle ne peut plus rester bloquée à l'écran
+{const v=$('koV');let lastT=-1,fige=0;setInterval(()=>{if($('koVid').hidden){lastT=-1;fige=0;return}
+  if(v.duration&&v.currentTime>=v.duration-0.15){v.dispatchEvent(new Event('ended'));return}
+  if(v.currentTime!==lastT){lastT=v.currentTime;fige=0}else if(++fige>=(v.paused?16:8)){fige=0;v.dispatchEvent(new Event('ended'))}},500)}
 $('escape').addEventListener('pointerdown',e=>{e.preventDefault();grabTap()});$('prDuel').addEventListener('pointerdown',e=>{e.preventDefault();priseTap()});$('retry').addEventListener('click',()=>resetGame());$('koV').addEventListener('ended',endRedKO);$('koV').addEventListener('error',endRedKO);$('koV').addEventListener('error',endRedKO);$('again').addEventListener('click',()=>resetGame());
 
 /* ---------- choix de l'image ---------- */

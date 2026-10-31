@@ -1,1 +1,1 @@
-maj-267 (contient aussi les maj-265 et 266) : le bouton pour passer la vidéo apparaît aussi sur la vidéo de nouvelle partie et celle de chargement ; plus d'écran gris avant les vidéos ; Hôtel Palace - plus de perte du tactile
+maj-268 : Pont-l'Ades - plus de perte du tactile : un doigt « oublié » ne bloque plus le joystick ni la caméra, tout est relâché au passage en plein écran / rotation, et les vidéos d'ouverture et de K.O. ne peuvent plus rester figées à l'écran
