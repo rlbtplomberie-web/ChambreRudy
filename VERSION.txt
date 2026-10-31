@@ -1,1 +1,1 @@
-maj-268 : Pont-l'Ades - plus de perte du tactile : un doigt « oublié » ne bloque plus le joystick ni la caméra, tout est relâché au passage en plein écran / rotation, et les vidéos d'ouverture et de K.O. ne peuvent plus rester figées à l'écran
+maj-269 : NOUVELLE PARTIE - après la vidéo de début, le combat Rudy contre Irisa se lance directement. Perdu : on retente le combat. Gagné : pas d'écran VICTOIRE, Rudy arrive directement au bureau (la vidéo de suite viendra plus tard).
