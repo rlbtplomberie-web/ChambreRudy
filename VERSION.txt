@@ -1,1 +1,1 @@
-maj-271 : bureau - nouveau bouton « Se lever » en haut à droite : Rudy marche dans sa maison (chambre, couloir, salon, cuisine) avec la musique du bureau. Dans la chambre : baie vitrée → « Aller à Shinato », lit → « Dormir » (DreamtoSleep), bureau → « S'asseoir » (retour en face du bureau). Demande de reconstruire l'APK (Kotlin).
+maj-272 : correction de la compilation (PageActivity.kt : la fonction allerShinato était en double)

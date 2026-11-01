@@ -550,14 +550,7 @@ class PageActivity : ComponentActivity() {
                 .show()
         }
 
-        /** La maison de Rudy : la baie vitrée de la chambre mène à Shinato, comme depuis le bureau. */
-        @JavascriptInterface
-        fun allerShinato() {
-            runOnUiThread {
-                startActivity(Intent(this@PageActivity, ShinatoActivity::class.java))
-                finish()
-            }
-        }
+        // (la baie vitrée de la maison utilise allerShinato(), déjà là pour la MAP du téléphone)
 
         /** La maison de Rudy : « S'asseoir » devant le bureau, on revient en face du bureau. */
         @JavascriptInterface
