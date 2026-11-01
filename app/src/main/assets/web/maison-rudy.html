@@ -106,7 +106,9 @@ const PIECES = {
     vmin:u=>u<.52?.875:.80, vmax:.975,
     umin:v=>v<.875?.52:.03, umax:()=>.97,
     taille:v=>lerp(.58,.70,(v-.80)/.175),
-    sorties:[{test:(u,v)=>v>.945, vers:"couloir", label:"Couloir", fleche:true}],
+    sorties:[{test:(u,v)=>v>.945, vers:"couloir", label:"Couloir", fleche:true},
+      // devant le plan de travail : la pizzeria (50 € par pizza réussie)
+      {test:(u,v)=>u<.50&&v<.93, faire:fairePizzas, label:"Faire des pizzas", repere:{u:.30,v:.50}}],
     depart:{couloir:{u:.62,v:.90,dir:"back"}}},
 };
 
@@ -143,6 +145,7 @@ elAction.addEventListener('click',()=>agir(sortieActive));
 // dans l'appli : Shinato et DreamtoSleep s'ouvrent comme depuis le bureau
 function allerShinato(){ try{ if(window.Android&&Android.allerShinato){ Android.allerShinato(); return; } }catch(e){} location.href='/assets/shinato/index.html'; }
 function sAsseoir(){ try{ if(window.Android&&Android.sAsseoir){ Android.sAsseoir(); return; } }catch(e){} history.back(); }
+function fairePizzas(){ try{ if(window.Android&&Android.fairePizzas){ Android.fairePizzas(); return; } }catch(e){} location.href='/assets/web/jeux/pizzeria-rudy.html'; }
 function dormir(){ try{ if(window.Android&&Android.dormir){ Android.dormir(); return; } }catch(e){} location.href='/assets/web/jeux/dreamtosleep.html'; }
 
 function majSortie(force){

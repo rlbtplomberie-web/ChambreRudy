@@ -558,6 +558,16 @@ class PageActivity : ComponentActivity() {
             runOnUiThread { finish() }
         }
 
+        /** La maison de Rudy : le plan de travail de la cuisine ouvre la pizzeria (la musique de la maison continue). */
+        @JavascriptInterface
+        fun fairePizzas() {
+            runOnUiThread {
+                startActivity(Intent(this@PageActivity, PageActivity::class.java)
+                    .putExtra("page", "jeux/pizzeria-rudy.html")
+                    .putExtra("titre", "Pizzeria"))
+            }
+        }
+
         /** La maison de Rudy : le lit lance le jeu DreamtoSleep (la musique de la chambre se tait le temps du jeu). */
         @JavascriptInterface
         fun dormir() {
