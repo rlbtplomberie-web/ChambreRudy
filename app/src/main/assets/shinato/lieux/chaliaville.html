@@ -41,6 +41,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:#050a1e;color:#fff;f
 #grotteE{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:32vmin;width:24vmin;height:12vmin;border-radius:6vmin;z-index:21;display:none;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;
  font:900 clamp(12px,3.2vmin,22px)/1 Arial,sans-serif;letter-spacing:2px;color:#111;background:linear-gradient(#ffe56b,#e0a800);border:2px solid #fff3b0;box-shadow:0 0 14px rgba(255,212,0,.75),0 6px 18px rgba(0,0,0,.55)}
 #grotteE:active{transform:scale(.94)}
+#carreE{position:fixed;right:calc(5vmin + env(safe-area-inset-right,0px));bottom:32vmin;width:24vmin;height:12vmin;border-radius:6vmin;z-index:21;display:none;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;
+ font:900 clamp(12px,3.2vmin,22px)/1 Arial,sans-serif;letter-spacing:2px;color:#111;background:linear-gradient(#ffe56b,#e0a800);border:2px solid #fff3b0;box-shadow:0 0 14px rgba(255,212,0,.75),0 6px 18px rgba(0,0,0,.55)}
+#carreE:active{transform:scale(.94)}
+#carreJeu{position:fixed;inset:0;z-index:95;display:none;background:#000}#carreJeu iframe{width:100%;height:100%;border:0;display:block}
+#carreQuit{position:absolute;top:60px;right:10px;z-index:2;width:40px;height:40px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:10px;font:900 20px/1 Arial,sans-serif;color:#fff;background:rgba(170,20,30,.75);border:1px solid rgba(255,255,255,.45);touch-action:none;user-select:none;-webkit-user-select:none}
 #grotteJeu{position:fixed;inset:0;z-index:95;display:none;background:#000}#grotteJeu iframe{width:100%;height:100%;border:0;display:block}
 #grotteQuit{position:absolute;top:60px;right:10px;z-index:2;width:40px;height:40px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:10px;font:900 20px/1 Arial,sans-serif;color:#fff;background:rgba(170,20,30,.75);border:1px solid rgba(255,255,255,.45);touch-action:none;user-select:none;-webkit-user-select:none}
 #rugChoix{position:fixed;left:0;right:0;bottom:0;z-index:84;display:none;justify-content:center;align-items:center;gap:3vmin;padding:0 4vmin calc(9vmin + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,rgba(0,10,30,.78))}
@@ -104,6 +109,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#050a1e;color:#fff;f
 <div id="hbP">PARLER</div>
 <div id="jouerR">JOUER</div>
 <div id="grotteE">ENTRER</div>
+<div id="carreE">ENTRER</div>
+<div id="carreJeu"><div id="carreQuit" title="Quitter">✕</div></div>
 <div id="grotteJeu"><div id="grotteQuit" title="Quitter">✕</div></div>
 <div id="rugChoix"><div id="chRugby">CHALIA RUGBY</div><div id="chPerche">SAUT À LA PERCHE</div><div class="x" id="rugFermer">✕</div></div>
 <div id="rugbyJeu"><div id="rugbyQuit" title="Quitter">✕</div></div>
@@ -273,7 +280,7 @@ function ventJS(x,t){return 0.35+0.65*Math.pow(0.5+0.5*Math.sin(x*0.0016-t*0.55)
 let tPrec=0;
 function boucle(ms){
   requestAnimationFrame(boucle);
-  if(enBowling||enBaril||enRugby||enFumeurs||enGrotte||enSalle){tPrec=ms;if(cvGl.style.visibility!=='hidden'){cvGl.style.visibility='hidden';cvAv.style.visibility='hidden';}return;}   // la ville est cachée et en pause pendant qu'on est dedans
+  if(enBowling||enBaril||enRugby||enFumeurs||enGrotte||enSalle||enCarre){tPrec=ms;if(cvGl.style.visibility!=='hidden'){cvGl.style.visibility='hidden';cvAv.style.visibility='hidden';}return;}   // la ville est cachée et en pause pendant qu'on est dedans
   if(cvGl.style.visibility){cvGl.style.visibility='';cvAv.style.visibility='';}
   const t=ms/1000, dt=Math.min(.05,(ms-(tPrec||ms))/1000); tPrec=ms;
   // déplacement
@@ -578,6 +585,37 @@ addEventListener('message',e=>{
   if(e.data.type==='grotte:ko'){ fermeGrotte(false); try{ window.parent.postMessage({type:'impasse:ko'},'*'); }catch(_){} }
   if(e.data.type==='grotte:victoire'){ if(grotteGagnee()) retireBanc(); setTimeout(()=>fermeGrotte(true),2500); }
 });
+// ---------- Le Carré Bleu : le chemin du kiosque (à droite du monsieur sur le banc), après Astra, la Reine des vampires et la Forêt maudite ----------
+const CARRE_X=4010, CARRE_Y=505, ZONE_CB=[3955,4065];
+const carreE=document.getElementById('carreE'), carreJeu=document.getElementById('carreJeu');
+var enCarre=false; let carreMusique=false;
+function carreOuvert(){ try{ return ['mitsuda_usine_gagnee','rembourg_chateau_gagne','foret_gagnee'].every(k=>localStorage.getItem(k)==='1'); }catch(e){ return false; } }
+function devantCarre(){ return !menu&&!enScene&&!enCarre&&P.niv==='haut'&&P.x>ZONE_CB[0]&&P.x<ZONE_CB[1]&&carreOuvert(); }
+appui(carreE,()=>{ if(enScene||enCarre)return;
+  enScene=true; jstop(); clav={}; courir=false; carreE.style.display='none'; fE.style.display='none';
+  try{ const m=window.top.RUDY_AUDIO; if(m){ carreMusique=!m.paused; m.pause(); } }catch(e){}     // le jeu a sa propre musique
+  enCarre=true; enScene=false;
+  const f=document.createElement('iframe'); f.setAttribute('allow','autoplay; fullscreen'); f.src='/assets/shinato/jeux/carre-bleu.html';
+  carreJeu.appendChild(f); carreJeu.style.display='block'; setTimeout(()=>{try{f.focus();}catch(e){}},300); });
+function fermeCarre(reprendre){
+  const f=carreJeu.querySelector('iframe'); if(f){ try{f.src='about:blank';}catch(_){} f.remove(); }
+  carreJeu.style.display='none'; enCarre=false; jstop(); clav={}; courir=false;
+  P.niv='haut'; P.x=CARRE_X; P.y=Y1-2; P.face=1; P.mode='idle'; camera(false);
+  if(reprendre){ try{ const m=window.top.RUDY_AUDIO; if(m&&carreMusique){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(_){} }
+  carreMusique=false; try{window.focus();}catch(_){}
+}
+(function(){ const q=document.getElementById('carreQuit'); let a=false;
+  q.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();a=true;});
+  q.addEventListener('pointercancel',()=>{a=false;});
+  q.addEventListener('pointerup',e=>{e.preventDefault();e.stopPropagation();if(!a)return;a=false;fermeCarre(true);});
+})();
+addEventListener('message',e=>{
+  if(!e.data||!enCarre) return;
+  // Rudy K.O. : la vidéo de l'ennemie est passée, Shinato passe l'infirmière puis l'emmène devant l'hôpital de Vaviel
+  if(e.data.type==='carrebleu:ko'){ fermeCarre(false); try{ window.parent.postMessage({type:'impasse:ko'},'*'); }catch(_){} }
+  // victoire : le diamant bleu est gagné (il apparaît dans le statut), retour devant le kiosque
+  if(e.data.type==='carrebleu:victoire'){ try{ localStorage.setItem('carre_bleu_gagne','1'); }catch(_){} setTimeout(()=>fermeCarre(true),600); }
+});
 // ---------- le terrain de rugby (tout à gauche) : flèche jaune + JOUER -> CHALIA RUGBY -> le jeu ----------
 const RUGBY_X=300, RUGBY_Y=575, ZONE_RUG=[170,440];
 const jouerR=document.getElementById('jouerR'), rugChoix=document.getElementById('rugChoix'), rugbyJeu=document.getElementById('rugbyJeu');
@@ -610,6 +648,7 @@ function bowling(){
   robeB.style.display=devantRobe()?'flex':'none';
   const iciRug=devantRugby(); jouerR.style.display=iciRug?'flex':'none';
   const iciG=devantGrotte(); grotteE.style.display=iciG?'flex':'none';
+  const iciCB=devantCarre(); carreE.style.display=iciCB?'flex':'none';
   clochardB.style.display=devantClochard()?'flex':'none';
   soldatP.style.display=devantSoldat()?'flex':'none';
   orangeP.style.display=devantOrange()?'flex':'none';
@@ -619,9 +658,9 @@ function bowling(){
   hbP.style.display=devantHB()?'flex':'none';
   const iciC=devantCloch(); clochB.style.display=iciC?'flex':'none';      // près de la clocharde, c'est son bouton (pas ENTRER)
   const iciR=devantBaril(), iciK=devantKing(), iciS=devantSalle(), ici=!iciC&&!enScene&&(iciR||iciK||iciS||(!menu&&P.niv==='haut'&&P.x>ZONE_B[0]&&P.x<ZONE_B[1]));
-  const px=iciG?GROTTE_X:iciRug?RUGBY_X:iciS?SALLE_X:iciK?KING_X:iciR?BARIL_X:PORTE_X, py=iciG?GROTTE_Y:iciRug?RUGBY_Y:iciS?SALLE_Y:iciK?KING_Y:iciR?BARIL_Y:PORTE_Y;
-  bE.style.display=ici?'flex':'none'; fE.style.display=(ici||iciRug||iciG)?'block':'none';
-  if(ici||iciRug||iciG){const d=DW/innerWidth, k=S/d; Object.assign(fE.style,{left:((px-cam.x)*k)+'px',top:((py-cam.y)*k)+'px',width:(34*k)+'px',height:(46*k)+'px'});}
+  const px=iciCB?CARRE_X:iciG?GROTTE_X:iciRug?RUGBY_X:iciS?SALLE_X:iciK?KING_X:iciR?BARIL_X:PORTE_X, py=iciCB?CARRE_Y:iciG?GROTTE_Y:iciRug?RUGBY_Y:iciS?SALLE_Y:iciK?KING_Y:iciR?BARIL_Y:PORTE_Y;
+  bE.style.display=(ici&&!iciCB)?'flex':'none'; fE.style.display=(ici||iciRug||iciG||iciCB)?'block':'none';
+  if(ici||iciRug||iciG||iciCB){const d=DW/innerWidth, k=S/d; Object.assign(fE.style,{left:((px-cam.x)*k)+'px',top:((py-cam.y)*k)+'px',width:(34*k)+'px',height:(46*k)+'px'});}
 }
 let sortieBowling=0;
 appui(bE,()=>{

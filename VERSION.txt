@@ -1,1 +1,1 @@
-maj-273 : maison de Rudy - dans la cuisine, devant le plan de travail, bouton « Faire des pizzas » : la Pizzeria Rudy, 50 € gagnés à chaque pizza réussie, bouton Quitter pour revenir dans la maison. Demande de reconstruire l'APK (Kotlin).
+maj-274b (2/2) : Le Carré Bleu - les autres vidéos. À déposer avec la maj-274a.
