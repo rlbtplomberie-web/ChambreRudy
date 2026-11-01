@@ -100,7 +100,7 @@ class ChambreActivity : ComponentActivity() {
                 "chambre" -> {
                     son.bruit("pose.mp3")
                     vue.cadrerSurLaTele()
-                    boutonTelephone?.visibility = View.VISIBLE   // le téléphone apparaît avec la chambre
+                    boutonTelephone?.visibility = View.VISIBLE; boutonLever?.visibility = View.VISIBLE   // le téléphone apparaît avec la chambre
                 }
             }
         }
@@ -121,7 +121,7 @@ class ChambreActivity : ComponentActivity() {
         // chambre utile (TV, tiroirs et consoles), jamais a l'introduction.
         val retourBureau = intent.getBooleanExtra("retour_bureau", false)
         if (etat == null && !retourBureau) Visite.partie(this)
-        if (retourBureau || etat != null) boutonTelephone?.visibility = View.VISIBLE
+        if (retourBureau || etat != null) { boutonTelephone?.visibility = View.VISIBLE; boutonLever?.visibility = View.VISIBLE }
         if (retourBureau) {
             vue.post { vue.cadrerSurLaTele() }
         } else if (etat == null) {
@@ -386,6 +386,34 @@ class ChambreActivity : ComponentActivity() {
         boutonTelephone = b
         val lp = FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.START)
         lp.topMargin = dp(6f); lp.leftMargin = dp(8f)
+        racine.addView(b, lp)
+        poseSeLever(racine)
+    }
+
+    // ==================== Se lever : Rudy quitte le bureau et marche dans sa maison ====================
+    private var boutonLever: TextView? = null
+
+    /** En haut à droite (sous le porte-monnaie), à l'inverse du téléphone : « Se lever ». */
+    private fun poseSeLever(racine: FrameLayout) {
+        val dens = resources.displayMetrics.density
+        fun dp(v: Float) = (v * dens).toInt()
+        val b = TextView(this)
+        b.text = "🚶 Se lever"
+        b.setTextColor(0xFFFFEEC2.toInt())
+        b.textSize = 13f
+        b.setTypeface(b.typeface, android.graphics.Typeface.BOLD)
+        b.setPadding(dp(12f), dp(7f), dp(12f), dp(7f))
+        b.background = GradientDrawable().apply {
+            cornerRadius = dp(20f).toFloat()
+            setColor(0xD10C0818.toInt())
+            setStroke(dp(1.5f), 0x80FFE1A0.toInt())
+        }
+        b.visibility = boutonTelephone?.visibility ?: View.GONE
+        // la maison de Rudy : on est toujours chez soi, la musique du bureau continue
+        b.setOnClickListener { page("maison-rudy.html", "Maison", paysage = true, garderMusique = true) }
+        boutonLever = b
+        val lp = FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.END)
+        lp.topMargin = dp(46f); lp.rightMargin = dp(8f)
         racine.addView(b, lp)
     }
 
@@ -1018,6 +1046,7 @@ class ChambreActivity : ComponentActivity() {
         vue.surEtapeIntro?.invoke("debut")
         vue.cadrerSurLaTele()
         boutonTelephone?.visibility = View.VISIBLE
+        boutonLever?.visibility = View.VISIBLE
         majArgent()                                   // l'argent de la partie choisie
     }
 
@@ -1056,6 +1085,7 @@ class ChambreActivity : ComponentActivity() {
         val racine = racineChambre
         Visite.arrivee(this, id)
         boutonTelephone?.visibility = View.VISIBLE
+        boutonLever?.visibility = View.VISIBLE
         val serveur = androidx.webkit.WebViewAssetLoader.Builder()
             .addPathHandler("/assets/", androidx.webkit.WebViewAssetLoader.AssetsPathHandler(this))
             .build()

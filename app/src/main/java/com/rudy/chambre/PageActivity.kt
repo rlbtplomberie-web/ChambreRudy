@@ -306,8 +306,12 @@ class PageActivity : ComponentActivity() {
     private var chargement: android.widget.TextView? = null
     private var vueMorte = false
 
+    /** Vrai quand cette page a coupé la radio pour un jeu (le lit de la maison) : on la rend au retour. */
+    private var radioARendre = false
+
     override fun onResume() {
         super.onResume()
+        if (radioARendre) { radioARendre = false; try { SonPartage.radio?.enPause(false) } catch (_: Throwable) { } }
         // Les minuteries des pages web sont communes à toute l'appli : si un autre écran
         // les a mises en pause, la page resterait figée (écran noir). On les relance toujours.
         if (!vueMorte) try { vue.onResume(); vue.resumeTimers() } catch (_: Throwable) { }
@@ -544,6 +548,34 @@ class PageActivity : ComponentActivity() {
                 .setMessage(cause + moteur)
                 .setPositiveButton("Fermer", null)
                 .show()
+        }
+
+        /** La maison de Rudy : la baie vitrée de la chambre mène à Shinato, comme depuis le bureau. */
+        @JavascriptInterface
+        fun allerShinato() {
+            runOnUiThread {
+                startActivity(Intent(this@PageActivity, ShinatoActivity::class.java))
+                finish()
+            }
+        }
+
+        /** La maison de Rudy : « S'asseoir » devant le bureau, on revient en face du bureau. */
+        @JavascriptInterface
+        fun sAsseoir() {
+            runOnUiThread { finish() }
+        }
+
+        /** La maison de Rudy : le lit lance le jeu DreamtoSleep (la musique de la chambre se tait le temps du jeu). */
+        @JavascriptInterface
+        fun dormir() {
+            runOnUiThread {
+                try { SonPartage.radio?.enPause(true) } catch (_: Throwable) { }
+                radioARendre = true
+                startActivity(Intent(this@PageActivity, PageActivity::class.java)
+                    .putExtra("page", "jeux/dreamtosleep.html")
+                    .putExtra("titre", "DreamtoSleep")
+                    .putExtra("paysage", true))
+            }
         }
 
         /** Ajoute un seul livre, choisi a la main. */
