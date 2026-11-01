@@ -631,10 +631,13 @@ var RRSon=(function(){
     fr.src='/assets/web/accueil/irisa.html'; document.body.appendChild(fr);
     setTimeout(function(){ try{ vb.remove(); }catch(e){} },600);
     var fini=false;
-    // (la vidéo qui suivra la victoire sera ajoutée ici quand elle arrivera : pour l'instant, Rudy arrive directement au bureau)
-    addEventListener('message',function(e){ if(fini||!e.data||e.data.type!=='irisa:victoire') return; fini=true;
+    // le combat se termine toujours par le K.O. de Rudy (Irisa se relève et l'attrape) :
+    // (la vidéo qui suivra sera ajoutée ici quand elle arrivera : pour l'instant, Rudy arrive directement au bureau)
+    addEventListener('message',function(e){ if(fini||!e.data||e.data.type!=='irisa:fin') return; fini=true;
       try{ localStorage.setItem('intro_irisa_gagne','1'); }catch(err){}
-      try{ if(window.Accueil) Accueil.fin(); }catch(err){} });
+      // la vidéo d'après le combat (Irisa tient Rudy K.O.), puis Rudy apparaît en face du bureau
+      videoPuisChambre('/assets/web/accueil/irisa_ko.mp4');
+      setTimeout(function(){ try{ fr.remove(); }catch(err){} },700); });
   }
   var lance=false;
   function lancerPartie(numero,sauvegarde,nouvelle){

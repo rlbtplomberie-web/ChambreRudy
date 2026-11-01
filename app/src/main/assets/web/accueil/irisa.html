@@ -157,7 +157,7 @@ window.addEventListener('keydown', e => {
   if (e.code === 'KeyK') press('k');
   if (e.code === 'KeyI' || e.code === 'KeyU') press('g');
   if (e.code === 'KeyL' || e.code.startsWith('Shift')) { press('guardTap'); }
-  if (e.code === 'Enter' && GAME.over && !(DANS_INTRO && GAME.result === 'win')) restart();
+  if (e.code === 'Enter' && GAME.over && !DANS_INTRO) restart();
 });
 window.addEventListener('keyup', e => { keys[e.code] = false; });
 function readKeys() {
@@ -198,7 +198,7 @@ function setupTouch() {
     const up = e => { b.classList.remove('on'); if (k === 'guard') guardBtn = false; };
     b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
   });
-  cv.addEventListener('pointerdown', () => { audioInit(); tryLandscape(); if (GAME.over && GAME.endT > 1.2 && !(DANS_INTRO && GAME.result === 'win')) restart(); });
+  cv.addEventListener('pointerdown', () => { audioInit(); tryLandscape(); if (GAME.over && GAME.endT > 1.2 && !DANS_INTRO) restart(); });
   document.addEventListener('contextmenu', e => e.preventDefault());
 }
 let triedLock = false;
@@ -538,6 +538,7 @@ function startTeleport(toward) {
 function startMountJump() { bSet('mountJump'); b.face = r.x > b.x ? 1 : -1; setAnim(b, 'B_run', [3, 4], 0.12, true); b.jx0 = b.x; }
 
 function hitBoss(dmg, heavy, hx) {
+  if (b.final) return;
   if (['tpOut', 'tpGone', 'tpIn', 'wind', 'judoed', 'ko', 'down', 'mount', 'throat', 'bjudo', 'mountJump'].includes(b.st)) return;
   const armor = (b.st === 'laser' || b.st === 'wave') && b.t > 0.5;
   b.hp = Math.max(0, b.hp - dmg); b.flash = 0.1; HITSTOP = 0.05;
@@ -551,6 +552,7 @@ function hitBoss(dmg, heavy, hx) {
   b.lastHits++;
 }
 function bossKO() {
+  if (DANS_INTRO) { finalIntro(); return; }
   bSet('ko'); setAnim(b, 'B_hurt', [2, 3, 4, 5], [0.2, 0.25, 0.3, 1]); b.vx = r.face * 300;
   SLOWMO = 1.2; SFX.ko(); endGame('win');
 }
@@ -674,13 +676,23 @@ function updBoss(dt) {
         const side = b.side;
         r.face = side; rIdle(); r.inv = 0.3;
         b.x = clamp(b.cx + side * 150, 90, VW - 90);
-        if (b.hp <= 0) { bSet('ko'); setAnim(b, 'B_hurt', [5], 1); SLOWMO = 1; SFX.ko(); endGame('win'); }
+        if (b.hp <= 0) { if (DANS_INTRO) { finalIntro(); } else { bSet('ko'); setAnim(b, 'B_hurt', [5], 1); SLOWMO = 1; SFX.ko(); endGame('win'); } }
         else { bSet('down'); setAnim(b, 'B_hurt', [5], 1); }
       }
       break;
     case 'down':
+      if (b.final) { if (b.t > 1.3) { b.hp = b.dhp = Math.round(BOSS_HP * 0.35); bSet('frun'); setAnim(b, 'B_run', [0, 1, 2, 3, 4, 5], 0.07, true); SFX.tpIn && SFX.tpIn(); } break; }
       if (b.t > 0.7) { b.face = r.x > b.x ? 1 : -1; startTeleport(); }
       break;
+    case 'frun': { // l'intro : elle fonce sur Rudy et l'attrape d'une main, il ne peut plus rien faire
+      b.face = r.x > b.x ? 1 : -1;
+      const dd = Math.abs(r.x - b.x);
+      if (dd > 150) b.x += b.face * 620 * dt;
+      b.z += clamp(r.z - b.z, -260 * dt, 260 * dt);
+      if (b.t > 0.25 && Math.random() < 0.06) dust(b.x, 2, -b.face, b.z);
+      if (dd <= 215 && Math.abs(r.z - b.z) < 40 && !['down', 'fall', 'getup', 'grabbed'].includes(r.st)) { r.z = b.z; startThroat(); }
+      break;
+    }
     case 'hurt':
       b.x += b.vx * dt; b.vx *= Math.pow(0.03, dt);
       if (b.t >= animTotal(b)) {
@@ -729,20 +741,22 @@ function startThroat() {
   b.cx = clamp(b.x, 260, VW - 260); b.side = side; b.punches = 0; b.nextPunch = 0.75;
   bSet('throat'); rSet('grabbed'); r.mash = 0; r.chain = 0;
   setAnim(b, 'B_throat', [0, 1, 2], [0.22, 0.25, 1]); SFX.grab();
-  showMsg('TAPE VITE !', 0.8);
+  if (!b.final) showMsg('TAPE VITE !', 0.8);
 }
 function updThroat(dt) {
+  if (b.tient) return;   // l'intro : Rudy K.O., elle le garde dans sa main (la vidéo commence comme ça)
   r.mash = Math.max(0, r.mash - dt * 0.3);
   if (IN.any && b.t > 0.1) { r.mash += 0.075; SFX.mash(); }
+  if (b.final) r.mash = Math.min(r.mash, 0.35);   // l'intro : Rudy ne peut pas se libérer
   if (r.mash >= 1) { escapeGrab(); return; }
   if (b.t >= b.nextPunch) {
     const seq = [3, 4, 5]; const fi = seq[b.punches % 3];
     setAnim(b, 'B_throat', [fi, 2], [0.2, 1]);
     b.punches++; b.nextPunch = b.t + 0.6;
-    r.hp = Math.max(0, r.hp - 42); r.flash = 0.1; SHAKE = 8; SFX.hit();
+    r.hp = Math.max(0, r.hp - (b.final ? Math.max(42, RUDY_HP * 0.22) : 42)); r.flash = 0.1; SHAKE = 8; SFX.hit();
     spark(b.cx - b.side * 120, FLOOR - b.z - 330, '#fff3a8', 10);
-    if (r.hp <= 0) { releaseGrab(true); endGame('lose'); return; }
-    if (b.punches >= 6) { releaseGrab(true); }
+    if (r.hp <= 0) { if (b.final) { b.tient = true; endGame('lose'); return; } releaseGrab(true); endGame('lose'); return; }
+    if (b.punches >= 6 && !b.final) { releaseGrab(true); }
   }
 }
 /* --- Prise 2 : elle le plaque et s'assoit à califourchon --- */
@@ -949,12 +963,19 @@ function drawCharge() {
 // dans l'appli (après la vidéo de nouvelle partie) : ce combat fait partie de l'intro.
 // Gagné → on continue l'intro ; perdu ou égalité → on rejoue le combat jusqu'à le gagner.
 const DANS_INTRO = (() => { try { return window.parent && window.parent !== window; } catch (e) { return false; } })();
+// l'intro : même battue, Irisa se relève, court sur Rudy et l'attrape d'une main → Rudy perd toujours
+function finalIntro() {
+  if (b.final) return;
+  b.final = true; b.windNext = null; PROJ = [];
+  bSet('down'); setAnim(b, 'B_hurt', [2, 3, 4, 5], [0.2, 0.25, 0.3, 1]); b.vx = r.face * 300;
+  SLOWMO = 0.8; SFX.ko(); SHAKE = 10;
+}
 function endGame(res) {
   if (GAME.over) return;
   GAME.over = true; GAME.result = res; GAME.endT = 0; GAME.phase = 'end';
   showMsg('K.O.', 1.6);
   // dans l'intro : pas d'écran « VICTOIRE », on passe directement à la suite juste après le K.O.
-  if (DANS_INTRO && res === 'win') setTimeout(() => { try { window.parent.postMessage({ type: 'irisa:victoire' }, '*'); } catch (e) {} }, 1800);
+  if (DANS_INTRO) setTimeout(() => { try { window.parent.postMessage({ type: 'irisa:fin' }, '*'); } catch (e) {} }, 2200);
 }
 
 /* ---------- Dessin ---------- */
@@ -1056,7 +1077,7 @@ function drawHUD() {
   txt(String(Math.ceil(GAME.timer)).padStart(2, '0'), VW / 2, y + 23, 52, '#fff', 'center', 7);
   if (r.chain >= 2 && r.chainT > 0) txt(r.chain + ' COUPS', 60, 150, 40, '#ffd34d', 'left', 7);
   // jauge d'échappatoire
-  if (r.st === 'grabbed') {
+  if (r.st === 'grabbed' && !b.final) {
     const w = 460, x = VW / 2 - w / 2, yy = 150;
     const pulse = 1 + Math.sin(GAME.t * 20) * 0.06;
     txt('TAPE VITE SUR LES BOUTONS !', VW / 2, yy - 30, 40 * pulse, '#ffef6a', 'center', 8);
@@ -1068,7 +1089,7 @@ function drawHUD() {
     const big = GAME.msg === 'K.O.' ? 170 : GAME.msg.length > 10 ? 70 : 120;
     txt(GAME.msg, VW / 2, VH * 0.42, big, GAME.msg === 'K.O.' ? '#ff4040' : '#ffe36a', 'center', big * 0.12);
   }
-  if (GAME.over && GAME.endT > 1.7 && !(DANS_INTRO && GAME.result === 'win')) {
+  if (GAME.over && GAME.endT > 1.7 && !DANS_INTRO) {
     const m = GAME.result === 'win' ? 'VICTOIRE !' : GAME.result === 'lose' ? 'PERDU...' : 'ÉGALITÉ';
     txt(m, VW / 2, VH * 0.36, 130, GAME.result === 'win' ? '#ffe36a' : '#ff6a6a', 'center', 14);
     if (!(DANS_INTRO && GAME.result === 'win') && Math.floor(GAME.t * 2) % 2 === 0) txt(DANS_INTRO ? 'Touche l\'écran pour retenter le combat' : 'Touche l\'écran pour rejouer', VW / 2, VH * 0.52, 44, '#fff', 'center', 7);
@@ -1099,7 +1120,8 @@ function update(dt) {
   }
   if (GAME.phase === 'fight') {
     GAME.timer -= dt;
-    if (GAME.timer <= 0) {
+    if (GAME.timer <= 0 && DANS_INTRO) { GAME.timer = 0; if (!b.final && !['throat', 'mount', 'bjudo'].includes(b.st)) finalIntro(); }
+    else if (GAME.timer <= 0) {
       GAME.timer = 0;
       const res = r.hp / RUDY_HP > b.hp / BOSS_HP ? 'win' : r.hp / RUDY_HP < b.hp / BOSS_HP ? 'lose' : 'draw';
       endGame(res); showMsg('TEMPS ÉCOULÉ', 1.6);
