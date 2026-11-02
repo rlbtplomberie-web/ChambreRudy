@@ -594,9 +594,14 @@ function devantCarre(){ return !menu&&!enScene&&!enCarre&&P.niv==='haut'&&P.x>ZO
 appui(carreE,()=>{ if(enScene||enCarre)return;
   enScene=true; jstop(); clav={}; courir=false; carreE.style.display='none'; fE.style.display='none';
   try{ const m=window.top.RUDY_AUDIO; if(m){ carreMusique=!m.paused; m.pause(); } }catch(e){}     // le jeu a sa propre musique
-  enCarre=true; enScene=false;
-  const f=document.createElement('iframe'); f.setAttribute('allow','autoplay; fullscreen'); f.src='/assets/shinato/jeux/carre-bleu.html';
-  carreJeu.appendChild(f); carreJeu.style.display='block'; setTimeout(()=>{try{f.focus();}catch(e){}},300); });
+  // d'abord la vidéo d'entrée, puis le jeu démarre tout de suite
+  robeVid.src='/assets/shinato/m/cb_entree.mp4'; robeV.style.display='block'; robeVid.currentTime=0;
+  let fait=false;
+  const lance=()=>{ if(fait)return; fait=true; robeVid.onended=null; robeVid.onerror=null; robeVid.pause();
+    enCarre=true; enScene=false;
+    const f=document.createElement('iframe'); f.setAttribute('allow','autoplay; fullscreen'); f.src='/assets/shinato/jeux/carre-bleu.html';
+    carreJeu.appendChild(f); carreJeu.style.display='block'; setTimeout(()=>{ robeV.style.display='none'; },150); setTimeout(()=>{try{f.focus();}catch(e){}},300); };
+  robeVid.onended=lance; robeVid.onerror=lance; const q=robeVid.play(); if(q&&q.catch) q.catch(lance); });
 function fermeCarre(reprendre){
   const f=carreJeu.querySelector('iframe'); if(f){ try{f.src='about:blank';}catch(_){} f.remove(); }
   carreJeu.style.display='none'; enCarre=false; jstop(); clav={}; courir=false;
