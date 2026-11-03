@@ -743,6 +743,7 @@ else carte.addEventListener("load",demarre);
  <div class="choix" id="versPontLades" style="display:none">PONT-L'ADES</div>
  <div class="choix" id="versAeroport">L'AÉROPORT</div>
  <div class="choix" id="versChaliaville">CHALIAVILLE</div>
+ <div class="choix" id="versGarrett">GARRETT PARC</div>
 </div></div>
 <script>/* PONT-L'ADES : le choix n'apparaît qu'après « INFORMATION SUR MIDA » (le costaud du Barding) */
 setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) return; var ok=false; try{ ok=localStorage.getItem('pontlades_debloque')==='1'; }catch(e){} b.style.display=ok?'':'none'; },400);</script>
@@ -792,6 +793,10 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
  // CHALIAVILLE : on reprend la moto
  window.appuiSur(document.getElementById("versChaliaville"),function(){
   cache(); try{ window.parent.postMessage({type:"plage:destination",dest:"chaliaville"},"*"); }catch(e){}
+ });
+ // GARRETT PARC : on reprend la moto
+ window.appuiSur(document.getElementById("versGarrett"),function(){
+  cache(); try{ window.parent.postMessage({type:"plage:destination",dest:"garrett"},"*"); }catch(e){}
  });
 })();
 </script>

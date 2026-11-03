@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Garrett Parc</title>
+<style>
+:root{--ink:#f3eaff;--glass:rgba(20,10,40,.55);--edge:rgba(200,160,255,.35);--neon:#ff4fd8;--neon2:#4fc8ff}
+html,body{margin:0;height:100%;background:#0b0618;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink)}
+#c{position:fixed;inset:0;width:100vw;height:100vh;display:block}
+.chip{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:20;padding:7px 14px;border-radius:999px;background:var(--glass);border:1px solid var(--edge);backdrop-filter:blur(6px);font-weight:700;letter-spacing:.04em;font-size:14px;text-shadow:0 0 8px var(--neon);pointer-events:none}
+#charge{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:#0b0618;font-weight:700;letter-spacing:.08em;text-shadow:0 0 10px var(--neon)}
+#joy{position:fixed;left:4.5vmin;bottom:5vmin;width:30vmin;height:30vmin;border-radius:50%;z-index:40;touch-action:none;
+ background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.10),rgba(0,0,0,.34));border:2px solid rgba(255,226,122,.45);box-shadow:0 6px 18px rgba(0,0,0,.5)}
+#stick{position:absolute;left:50%;top:50%;width:13vmin;height:13vmin;margin:-6.5vmin 0 0 -6.5vmin;border-radius:50%;
+ background:radial-gradient(circle at 42% 36%,#fbf0c6,#c9a33c 60%,#7d6118);box-shadow:0 4px 12px rgba(0,0,0,.6)}
+#zoneJoy{position:fixed;left:0;bottom:0;width:44vw;height:62vh;z-index:39;touch-action:none}
+#actions{position:fixed;right:4.5vmin;bottom:6vmin;display:flex;flex-direction:column;gap:2.6vmin;z-index:40}
+.btn{min-width:26vmin;padding:2.4vmin 3vmin;border-radius:3vmin;text-align:center;font:900 clamp(13px,3.1vmin,26px)/1 Arial,sans-serif;letter-spacing:2px;color:#ffe27a;
+ background:linear-gradient(rgba(12,12,14,.9),rgba(30,30,34,.9));border:2px solid rgba(255,226,122,.95);box-shadow:0 5px 16px rgba(0,0,0,.55);user-select:none;-webkit-user-select:none}
+.btn:active{transform:scale(.94)} .btn.off{opacity:.32}
+#depart{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-family:Arial,Helvetica,sans-serif}
+#depart .carte{position:relative;min-width:62vmin;max-height:92vh;overflow:auto;padding:5vmin 6vmin 5.5vmin;border-radius:3vmin;text-align:center;
+ background:linear-gradient(rgba(14,14,18,.96),rgba(30,30,36,.96));border:2px solid rgba(255,226,122,.6);box-shadow:0 10px 40px rgba(0,0,0,.7)}
+#depart h2{margin:0 0 4vmin;color:#fff;font:900 clamp(16px,4.2vmin,34px)/1.2 Arial,sans-serif;letter-spacing:2px;text-shadow:0 3px 0 #000}
+#depart .choix{display:block;width:100%;margin-top:2.4vmin;padding:3vmin 4vmin;border-radius:2.4vmin;cursor:pointer;
+ font:900 clamp(15px,3.8vmin,30px)/1 Arial,sans-serif;letter-spacing:2px;color:#ffe27a;
+ background:linear-gradient(rgba(12,12,14,.9),rgba(40,40,46,.9));border:2px solid rgba(255,226,122,.7)}
+#depart .choix:active{transform:scale(.95)}
+#depart .fermer{position:absolute;top:1.6vmin;right:2.2vmin;color:#ffe27a;font:900 clamp(16px,4vmin,30px)/1 Arial;cursor:pointer;opacity:.7}
+#zoom{position:fixed;right:calc(4vmin + env(safe-area-inset-right,0px));top:14vh;height:36vh;width:7vmin;z-index:45;touch-action:none;display:flex;flex-direction:column;align-items:center;user-select:none;-webkit-user-select:none}
+#zoom b{position:relative;display:block;width:100%;height:5vmin;cursor:pointer}
+#zoom b::before,#zoom b.zp::after{content:'';position:absolute;left:50%;top:50%;width:3vmin;height:.6vmin;margin:-.3vmin 0 0 -1.5vmin;background:#f3dfa0;border-radius:1vmin;box-shadow:0 0 3px #000}
+#zoom b.zp::after{width:.6vmin;height:3vmin;margin:-1.5vmin 0 0 -.3vmin}
+#zoomRail{position:relative;flex:1;width:.7vmin;border-radius:1vmin;background:rgba(243,223,160,.45);box-shadow:0 0 3px rgba(0,0,0,.8);margin:2.5vmin 0}
+#zoomBout{position:absolute;left:50%;width:4vmin;height:4vmin;margin:-2vmin 0 0 -2vmin;border-radius:50%;background:radial-gradient(circle at 45% 38%,#f6e3a1,#a07a24);border:1px solid #3b2a08;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="chip">Garrett Parc</div>
+<div id="zoom"><b class="zp" data-z="1"></b><div id="zoomRail"><div id="zoomBout"></div></div><b class="zm" data-z="-1"></b></div>
+<div id="zoneJoy"></div><div id="joy"><div id="stick"></div></div>
+<div id="actions"><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
+<div id="depart"><div class="carte">
+ <div class="fermer" id="departFermer">&#10005;</div>
+ <h2>OÙ VOULEZ-VOUS ALLER&nbsp;?</h2>
+ <div class="choix" data-d="shinato">SHINATO</div>
+ <div class="choix" data-d="plage">À LA PLAGE</div>
+ <div class="choix" data-d="vaviel">VAVIEL</div>
+ <div class="choix" data-d="delabree">VILLE DÉLABRÉE</div>
+ <div class="choix" data-d="boulevard">BOULEVARD</div>
+ <div class="choix" data-d="mitsuda">MITSUDA</div>
+ <div class="choix" data-d="rembourg">REMBOURG</div>
+ <div class="choix" id="versPontLades" data-d="pontlades" style="display:none">PONT-L'ADES</div>
+ <div class="choix" data-d="aeroport">L'AÉROPORT</div>
+ <div class="choix" data-d="chaliaville">CHALIAVILLE</div>
+</div></div>
+<div id="charge">Chargement…</div>
+<script>/* PONT-L'ADES : le choix n'apparaît qu'après « INFORMATION SUR MIDA » (le costaud du Barding) */
+setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) return; var ok=false; try{ ok=localStorage.getItem('pontlades_debloque')==='1'; }catch(e){} b.style.display=ok?'':'none'; },400);</script>
+<script>
+const M='/assets/shinato/m/';
+const VEG=[{"i":0,"x":0,"y":0,"w":180,"h":335,"pv":400,"amp":4,"mode":"up"},{"i":1,"x":40,"y":90,"w":332,"h":295,"pv":430,"amp":5,"mode":"up"},{"i":2,"x":310,"y":120,"w":370,"h":285,"pv":120,"amp":3,"mode":"hang"},{"i":3,"x":85,"y":380,"w":217,"h":78,"pv":458,"amp":2,"mode":"up"},{"i":4,"x":308,"y":398,"w":70,"h":54,"pv":452,"amp":2,"mode":"up"},{"i":5,"x":578,"y":392,"w":64,"h":50,"pv":442,"amp":2,"mode":"up"},{"i":6,"x":768,"y":392,"w":64,"h":50,"pv":442,"amp":2,"mode":"up"},{"i":7,"x":730,"y":40,"w":362,"h":385,"pv":470,"amp":6,"mode":"up"},{"i":8,"x":1030,"y":370,"w":80,"h":65,"pv":435,"amp":2,"mode":"up"},{"i":9,"x":1110,"y":235,"w":178,"h":200,"pv":470,"amp":4,"mode":"up"},{"i":10,"x":1188,"y":405,"w":158,"h":73,"pv":478,"amp":2.5,"mode":"up"},{"i":11,"x":1905,"y":415,"w":92,"h":57,"pv":472,"amp":2,"mode":"up"},{"i":12,"x":1915,"y":50,"w":225,"h":285,"pv":420,"amp":5,"mode":"up"},{"i":13,"x":2112,"y":45,"w":402,"h":295,"pv":420,"amp":6,"mode":"up"},{"i":14,"x":2647,"y":190,"w":267,"h":165,"pv":420,"amp":4,"mode":"up"},{"i":15,"x":3007,"y":105,"w":215,"h":230,"pv":420,"amp":4,"mode":"up"},{"i":16,"x":3084,"y":405,"w":130,"h":67,"pv":472,"amp":2,"mode":"up"},{"i":17,"x":3212,"y":30,"w":1072,"h":280,"pv":360,"amp":4,"mode":"up"},{"i":18,"x":3402,"y":320,"w":882,"h":205,"pv":525,"amp":2.5,"mode":"up"}];
+const WW=4284, WH=724;
+const cv=document.getElementById('c'), ctx=cv.getContext('2d');
+let dpr=1, cw=0, ch=0, s=1, oy=0, camX=0;
+
+// zoom de la caméra (1 = toute la hauteur de l'écran, plus = plus près) : réglé avec la barre de zoom, comme à Chaliaville
+const ZMIN=1, ZMAX=1.9; let ZOOM=1.3;
+try{ const v=parseFloat(localStorage.getItem('garrett_zoom')); if(v>=ZMIN&&v<=ZMAX) ZOOM=v; }catch(e){}
+
+function load(src){return new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src;});}
+
+/* ---------- PNJ : position des pieds (x, y) dans le décor, échelle, animation ---------- */
+const PNJ=[
+ {id:'nettoyeuse', x:1462, y:500, sc:0.25,  fondu:120, mvt:'frotte',
+  seq:[[1,360],[2,360],[3,360],[2,320],[1,360],[0,420],[4,420],[0,420],[1,360],[3,380],[1,360],[0,600]]},
+ {id:'buveur',     x:2405, y:530, sc:0.5,   fondu:160, mvt:'ivre',
+  seq:[[0,1600],[1,450],[2,450],[3,1400],[2,300],[4,1100],[0,900]]},
+ {id:'fumeur',     x:2932, y:514, sc:0.5,   fondu:160, mvt:'souffle', fumee:4,
+  seq:[[0,1200],[1,600],[2,600],[3,1400],[4,1800],[1,700],[0,900]]},
+ {id:'ouvrier',    x:178, y:468, sc:0.5, cache:[84,454,316,522],   fondu:60,  mvt:'pioche', hit:3, fixe:true,
+  seq:[[0,650],[1,260],[2,420],[3,130],[3,420],[4,520]]},
+ {id:'mamie',      x:700, y:504, sc:0.205, fondu:180, mvt:'mamie',
+  seq:[[0,1900],[1,1000],[2,1300],[3,1600],[2,500],[4,1500],[1,900]]},
+ {id:'policier',   x:3558, y:552, sc:0.29,  fondu:180, mvt:'costaud',
+  seq:[[0,2200],[1,1600],[0,700],[2,900],[3,1500],[2,450],[4,1900]]},
+];
+const LAMPES=[[281,212],[1120,212],[2527,222],[3004,256]];
+
+let base, veg=[], spr={};
+const feuilles=[], poussiere=[], fumees=[];
+
+function resize(){
+  dpr=Math.min(window.devicePixelRatio||1,2);
+  cw=innerWidth; ch=innerHeight;
+  cv.width=Math.round(cw*dpr); cv.height=Math.round(ch*dpr);
+  s=ch*ZOOM/WH;
+  if(cw/s>WW) s=cw/WW;
+  oy=ch-WH*s;                       // le bas du décor (la route) reste collé au bas de l'écran
+}
+function viewW(){return cw/s;}
+
+/* ---------- vent ---------- */
+function rafale(t){return 0.55+0.3*Math.sin(t*0.31)+0.15*Math.sin(t*0.83+1.3);}
+
+function dessineVeg(L,t,g){
+  const vx=viewW();
+  if(L.x+L.w<camX-10||L.x>camX+vx+10) return;
+  const st=2, ph=L.i*1.37;
+  for(let y=0;y<L.h;y+=st){
+    const wy=L.y+y;
+    let f;
+    if(L.mode==='hang') f=Math.min(1,Math.max(0,(wy-L.pv)/(L.y+L.h-L.pv)))**1.2;
+    else f=Math.min(1,Math.max(0,(L.pv-wy)/(L.pv-L.y)))**1.4;
+    const dx=L.amp*g*f*(0.62*Math.sin(t*1.7+ph+wy*0.018)+0.38*Math.sin(t*3.2+ph*2+wy*0.05)+0.35);
+    const hh=Math.min(st,L.h-y);
+    ctx.drawImage(L.img,0,y,L.w,hh,L.x+dx,wy,L.w,hh+0.7/s);
+  }
+}
+
+function etape(p,i,now){
+  p.i=i; p.debut=now;
+  const k=p.fixe?1:(0.85+Math.random()*0.35);
+  p.dur=p.seq[i][1]*k;
+  p.prec=p.cur; p.cur=p.seq[i][0];
+  if(p.hit===i) for(let j=0;j<12;j++) poussiere.push({x:p.x-31+Math.random()*10,y:p.y-3,sol:p.y,vx:(Math.random()-0.65)*80,vy:-50-Math.random()*70,v:0.6+Math.random()*0.5});
+  if(p.fumee!==undefined && p.cur===p.fumee) for(let j=0;j<7;j++) fumees.push({x:p.x-6-j*3,y:p.y-139+Math.random()*3,r:3+j*0.8,v:2.4+Math.random()*0.8,vx:-10-Math.random()*8,vy:-6-Math.random()*4,d:j*0.06});
+}
+
+function dessinePNJ(p,now,t){
+  const im=spr[p.id]; if(!im) return;
+  if(p.i===undefined){etape(p,Math.floor(Math.random()*p.seq.length),now);p.prec=p.cur;}
+  while(now-p.debut>=p.dur) etape(p,(p.i+1)%p.seq.length,p.debut+p.dur);
+  const fw=im.width/5, fh=im.height;
+  const w=fw*p.sc, h=fh*p.sc;
+  if(p.x+w<camX||p.x-w>camX+viewW()) return;
+  const ph=p.x*0.01;
+  // mouvements vivants
+  let rot=0, sx=1, sy=1, dx=0;
+  const respir=Math.sin(t*2.1+ph);
+  if(p.mvt==='frotte'){ sy=1+0.004*respir; dx=1.2*Math.sin(t*8.5); rot=0.006*Math.sin(t*8.5+0.6); }
+  if(p.mvt==='ivre'){ rot=0.022*Math.sin(t*0.9+ph)+0.008*Math.sin(t*2.3); sy=1+0.006*respir; dx=1.5*Math.sin(t*0.9+ph); }
+  if(p.mvt==='mamie'){ sy=1+0.005*respir; dx=0.35*Math.sin(t*9+ph); rot=0.004*Math.sin(t*1.3+ph); }
+  if(p.mvt==='souffle'){ sy=1+0.006*respir; sx=1+0.003*respir; }
+  if(p.mvt==='pioche'){ const e=(now-p.debut)/p.dur; if(p.i===p.hit){ sy=1-0.02*(1-e); sx=1+0.015*(1-e);} else sy=1+0.004*respir; }
+  if(p.mvt==='costaud'){ sy=1+0.009*respir; sx=1+0.006*respir; if(p.cur===3){ const e=Math.min(1,(now-p.debut)/300); const pul=1+0.012*Math.sin(t*14)*e; sx*=pul; } }
+  // ombre
+  ctx.fillStyle='rgba(5,0,15,.38)';
+  ctx.beginPath();ctx.ellipse(p.x,p.y-1,w*0.28*(1+0.03*Math.abs(rot)*20),4.5,0,0,Math.PI*2);ctx.fill();
+  ctx.save();
+  ctx.translate(p.x+dx,p.y); ctx.rotate(rot); ctx.scale(sx,sy);
+  const e=Math.min(1,(now-p.debut)/p.fondu);
+  if(e<1 && p.prec!==p.cur){
+    ctx.globalAlpha=1; ctx.drawImage(im,p.prec*fw,0,fw,fh,-w/2,-h,w,h);
+    ctx.globalAlpha=e;
+  }
+  ctx.drawImage(im,p.cur*fw,0,fw,fh,-w/2,-h,w,h);
+  ctx.restore();
+}
+
+function initFeuilles(){
+  for(let i=0;i<16;i++) feuilles.push(nouvelleFeuille(true));
+}
+function nouvelleFeuille(partout){
+  return {x:partout?camX+Math.random()*viewW():camX-40-Math.random()*200, y:60+Math.random()*380, r:2+Math.random()*2.5, a:Math.random()*6, va:(Math.random()-0.5)*4,
+          vy:8+Math.random()*14, c:['#5f8f3a','#8fb84a','#c9c24a','#3f7d5a','#7a4fa8'][Math.floor(Math.random()*5)]};
+}
+
+/* ================= Rudy à Garrett Parc : la planche du fumeur (marcher, fumer, jeter), sur le trottoir ================= */
+const IMG=(function(){ for(const w of [window.parent,window.top]){ try{ if(w&&w.RUDY_IMAGES) return w.RUDY_IMAGES; }catch(e){} } return null; })()||{marche:[],marchecig:[],fumer:[],jeter:[]};
+const RIMG={};
+Object.keys(IMG).forEach(k=>IMG[k].forEach(src=>{ const i=new Image(); i.src=src; RIMG[src]=i; }));
+const YMIN=522, YMAX=552;          // le trottoir, entre les bancs et le bord de la route
+const HMIN=150, HMAX=162;          // à peu près la taille des passants du parc
+const btnF=document.getElementById('btnFumer'), btnJ=document.getElementById('btnJeter');
+let etat='repos', clope=false, sens=1, x=110, y=540, f=0, phase=0, dir=0, dirY=0, parcours=0, menu=false, arme=false, imgRudy=null;
+const DUREE={fumer:300,jeter:190,repos:520,reposcig:600}, VITESSE=1.25, PAS_M=0.17;
+const hRudy=()=>HMIN+(HMAX-HMIN)*(y-YMIN)/(YMAX-YMIN);
+function planche(){ if(etat==='fumer'||etat==='jeter') return etat; if(etat==='marche') return clope?'marchecig':'marche'; return 'repos'; }
+function images(){ const p=planche(); if(p==='repos') return clope?IMG.fumer.slice(4):[IMG.fumer[0]]; return IMG[p]; }
+function duree(){ const p=planche(); if(p==='repos') return clope?DUREE.reposcig:DUREE.repos; return DUREE[p]; }
+function pose(src){ if(src) imgRudy=RIMG[src]||null; }
+function majBoutons(){
+  btnF.classList.toggle('off',clope||etat==='fumer'||etat==='jeter');
+  btnJ.classList.toggle('off',!clope||etat==='fumer'||etat==='jeter');
+}
+function rudyFume(){ if(menu||clope||etat==='fumer'||etat==='jeter') return; etat='fumer'; f=0; phase=0; dir=dirY=0; majBoutons(); }
+function rudyJette(){ if(menu||!clope||etat==='fumer'||etat==='jeter') return; etat='jeter'; f=0; phase=0; dir=dirY=0; majBoutons(); }
+function bougeRudy(dt){
+  const h=hRudy(), libre=(etat==='repos'||etat==='marche')&&!menu;
+  if(libre){
+    if(dir!==0||dirY!==0){
+      if(dir!==0) sens=dir>0?1:-1;
+      if(etat!=='marche'){ etat='marche'; parcours=0; }
+      const ax=x, ay=y;
+      x=Math.max(45,Math.min(WW-45,x+dir*VITESSE*h*dt));
+      y=Math.max(YMIN,Math.min(YMAX,y+dirY*VITESSE*0.45*h*dt));        // il reste sur le trottoir
+      parcours+=Math.hypot(x-ax,(y-ay)*1.6);
+    } else if(etat==='marche'){ etat='repos'; phase=0; f=0; }
+  } else if(etat==='jeter'){ x=Math.max(45,Math.min(WW-45,x+sens*VITESSE*0.55*h*dt)); }
+  let jeu=images();
+  if(!jeu||!jeu.length) return;
+  if(etat==='marche'){ pose(jeu[Math.floor(parcours/(PAS_M*h))%jeu.length]); }
+  else{
+    phase+=dt*1000/duree();
+    if(phase>=1){ phase-=1; f++;
+      if(f>=jeu.length){ if(etat==='fumer'){ clope=true; etat='repos'; f=0; majBoutons(); } else if(etat==='jeter'){ clope=false; etat='repos'; f=0; majBoutons(); } else f=0; jeu=images(); } }
+    pose(jeu[Math.min(f,jeu.length-1)]);
+  }
+  // à chaque bout de Garrett Parc : « Où voulez-vous aller ? » (seulement après être reparti un peu vers le milieu)
+  if(x>230&&x<WW-230) arme=true;
+  if(arme&&!menu&&(x<=50||x>=WW-50)) montreMenu();
+}
+function dessineRudy(){
+  const im=imgRudy; if(!im||!im.complete||!im.naturalWidth) return;
+  const h=hRudy(), hi=h*800/660, bas=y+h*30/660, wi=hi*im.naturalWidth/im.naturalHeight;
+  ctx.fillStyle='rgba(5,0,15,.42)';
+  ctx.beginPath(); ctx.ellipse(x,y,h*0.26,h*0.05,0,0,Math.PI*2); ctx.fill();
+  ctx.save(); ctx.translate(x,bas); ctx.scale(sens,1);
+  ctx.drawImage(im,-wi/2,-hi,wi,hi);
+  ctx.restore();
+}
+function cadrer(direct){
+  const vx=viewW(), cible=Math.max(0,Math.min(WW-vx,x-vx/2));
+  camX=direct?cible:camX+(cible-camX)*0.16;
+  camX=Math.max(0,Math.min(WW-vx,camX));
+}
+
+let t0=performance.now(), last=t0;
+function boucle(now){
+  requestAnimationFrame(boucle);
+  const dt=Math.min(0.05,(now-last)/1000); last=now;
+  const t=(now-t0)/1000, g=rafale(t);
+  bougeRudy(dt);
+  cadrer(false);
+
+  ctx.setTransform(dpr*s,0,0,dpr*s,-camX*dpr*s,oy*dpr);
+  const vx=viewW();
+  const sx0=Math.max(0,Math.floor(camX)), sw=Math.min(WW-sx0,Math.ceil(vx)+2);
+  ctx.drawImage(base,sx0,0,sw,WH,sx0,0,sw,WH);
+  for(const L of veg) dessineVeg(L,t,g);
+
+  // halos des lampadaires
+  ctx.save(); ctx.globalCompositeOperation='lighter';
+  LAMPES.forEach(([lx,ly],i)=>{
+    if(lx<camX-200||lx>camX+vx+200) return;
+    const fl=0.16+0.03*Math.sin(t*7+i*2)+0.02*Math.sin(t*13+i);
+    const gr=ctx.createRadialGradient(lx,ly,0,lx,ly,80);
+    gr.addColorStop(0,`rgba(255,200,110,${fl})`);gr.addColorStop(1,'rgba(255,200,110,0)');
+    ctx.fillStyle=gr; ctx.fillRect(lx-80,ly-80,160,160);
+  });
+  ctx.restore();
+
+  // PNJ et Rudy triés par profondeur
+  const liste=PNJ.map(p=>({y:p.y,p}));
+  liste.push({y:y,rudy:true});
+  liste.sort((a,b)=>a.y-b.y).forEach(o=>{
+    if(o.rudy){ dessineRudy(); return; }
+    const p=o.p; dessinePNJ(p,now,t);
+    if(p.cache){const [a,b,c,d]=p.cache; ctx.drawImage(base,a,b,c-a,d-b,a,b,c-a,d-b);}
+  });
+  // fumée de cigarette
+  for(let i=fumees.length-1;i>=0;i--){
+    const fm=fumees[i]; if(fm.d>0){fm.d-=dt;continue;} fm.v-=dt; if(fm.v<=0){fumees.splice(i,1);continue;}
+    fm.x+=(fm.vx+25*g)*dt; fm.y+=fm.vy*dt; fm.r+=6*dt; fm.vx*=0.98;
+    const al=Math.min(0.32,fm.v*0.14);
+    const gr=ctx.createRadialGradient(fm.x,fm.y,0,fm.x,fm.y,fm.r);
+    gr.addColorStop(0,`rgba(225,220,235,${al})`);gr.addColorStop(1,'rgba(225,220,235,0)');
+    ctx.fillStyle=gr; ctx.fillRect(fm.x-fm.r,fm.y-fm.r,fm.r*2,fm.r*2);
+  }
+
+  // éclats de pioche
+  for(let i=poussiere.length-1;i>=0;i--){
+    const d=poussiere[i]; d.v-=dt; if(d.v<=0){poussiere.splice(i,1);continue;}
+    d.vy+=220*dt; d.x+=d.vx*dt; d.y+=d.vy*dt; if(d.y>d.sol){d.y=d.sol;d.vy*=-0.3;d.vx*=0.6;}
+    ctx.fillStyle=`rgba(110,80,60,${Math.min(1,d.v*1.5)})`;
+    ctx.fillRect(d.x,d.y,2.2,2.2);
+  }
+
+  // feuilles emportées par le vent
+  for(let i=0;i<feuilles.length;i++){
+    const fe=feuilles[i];
+    fe.x+=(40+70*g)*dt; fe.y+=(fe.vy+Math.sin(t*2+i)*10)*dt; fe.a+=fe.va*dt;
+    if(fe.y>560||fe.x>camX+vx+60||fe.x<camX-400) feuilles[i]=nouvelleFeuille(false);
+    ctx.save(); ctx.translate(fe.x,fe.y); ctx.rotate(fe.a); ctx.scale(1,0.45+0.4*Math.abs(Math.sin(fe.a*1.3)));
+    ctx.fillStyle=fe.c; ctx.beginPath(); ctx.ellipse(0,0,fe.r*1.6,fe.r,0,0,Math.PI*2); ctx.fill(); ctx.restore();
+  }
+}
+
+/* joystick : toutes les directions */
+(function(){
+  const z=document.getElementById('zoneJoy'), joy=document.getElementById('joy'), stick=document.getElementById('stick');
+  let actif=null, ox=0, oy=0, R=0;
+  const touche=e=>[].slice.call(e.changedTouches).filter(t=>t.identifier===actif)[0];
+  function bouge(cx,cy){ const dx=cx-ox, dy=cy-oy, d=Math.min(Math.hypot(dx,dy),R*0.62), a=Math.atan2(dy,dx);
+    stick.style.transform='translate('+Math.cos(a)*d+'px,'+Math.sin(a)*d+'px)';
+    const m=Math.hypot(dx,dy); if(m<R*0.18){ dir=dirY=0; return; } dir=dx/m; dirY=dy/m;
+    if(Math.abs(dir)<0.2) dir=0; if(Math.abs(dirY)<0.2) dirY=0; }
+  function lache(){ actif=null; dir=dirY=0; stick.style.transform='translate(0,0)'; }
+  [z,joy].forEach(el=>{
+    el.addEventListener('touchstart',e=>{ const t=e.changedTouches[0]; actif=t.identifier; const r=joy.getBoundingClientRect(); R=r.width/2;
+      if(el===joy){ ox=r.left+R; oy=r.top+R; } else { ox=t.clientX; oy=t.clientY; } bouge(t.clientX,t.clientY); e.preventDefault(); },{passive:false});
+    el.addEventListener('touchmove',e=>{ const t=touche(e); if(t){ bouge(t.clientX,t.clientY); e.preventDefault(); } },{passive:false});
+    el.addEventListener('touchend',e=>{ if(touche(e)) lache(); }); el.addEventListener('touchcancel',lache);
+    el.addEventListener('mousedown',e=>{ const r=joy.getBoundingClientRect(); R=r.width/2; ox=r.left+R; oy=r.top+R; actif='souris'; bouge(e.clientX,e.clientY);
+      const m=ev=>bouge(ev.clientX,ev.clientY), u=()=>{ lache(); removeEventListener('mousemove',m); removeEventListener('mouseup',u); };
+      addEventListener('mousemove',m); addEventListener('mouseup',u); });
+  });
+  const K={}; const majK=()=>{ dir=(K.ArrowRight?1:0)-(K.ArrowLeft?1:0); dirY=(K.ArrowDown?1:0)-(K.ArrowUp?1:0); };
+  addEventListener('keydown',e=>{ if(e.key.startsWith('Arrow')){ K[e.key]=true; majK(); } else if(e.key==='f'||e.key==='F') rudyFume(); else if(e.key==='j'||e.key==='J') rudyJette(); });
+  addEventListener('keyup',e=>{ if(e.key.startsWith('Arrow')){ K[e.key]=false; majK(); } });
+  addEventListener('blur',lache); document.addEventListener('visibilitychange',lache);
+  addEventListener('touchend',e=>{ if(e.touches&&e.touches.length===0) lache(); });
+})();
+function appui(el,fn){ let t=0; const go=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t<350) return; t=n; fn(); };
+  el.addEventListener('touchstart',go,{passive:false}); el.addEventListener('click',go); }
+appui(btnF,rudyFume); appui(btnJ,rudyJette);
+
+/* ---------- la musique : la même que Shinato (celle de la ville), elle joue dès l'arrivée dans le parc ---------- */
+function musiqueShinato(){ for(const w of [window.parent,window.top]){ try{ if(w&&w.RUDY_AUDIO) return w.RUDY_AUDIO; }catch(e){} } return null; }
+function joueMusique(){ try{ const m=musiqueShinato(); if(m&&m.paused){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} }
+joueMusique(); setTimeout(joueMusique,600);
+['touchstart','pointerdown','keydown'].forEach(ev=>addEventListener(ev,joueMusique,{passive:true}));
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) joueMusique(); });
+
+/* « Où voulez-vous aller ? » (à chaque bout du parc) : on reprend la moto */
+const boiteD=document.getElementById('depart');
+function montreMenu(){ menu=true; arme=false; dir=dirY=0; boiteD.style.display='flex'; }
+function cacheMenu(){ menu=false; boiteD.style.display='none'; x=Math.max(90,Math.min(WW-90,x)); }
+appui(document.getElementById('departFermer'),cacheMenu);
+boiteD.querySelectorAll('.choix').forEach(b=>appui(b,()=>{ boiteD.style.display='none'; menu=false;
+  try{ parent.postMessage({type:'garrett:destination',dest:b.getAttribute('data-d')},'*'); }catch(e){} }));
+
+// ---------- barre de zoom (haut = zoomer, bas = dézoomer) ----------
+(function(){
+  const zr=document.getElementById('zoomRail'), zb=document.getElementById('zoomBout'), zz=document.getElementById('zoom');
+  function placeZoom(){ zb.style.top=((ZMAX-ZOOM)/(ZMAX-ZMIN)*100)+'%'; }
+  function regleZoom(v){ ZOOM=Math.max(ZMIN,Math.min(ZMAX,v)); resize(); cadrer(true); placeZoom(); try{ localStorage.setItem('garrett_zoom',ZOOM.toFixed(3)); }catch(e){} }
+  let zid=null;
+  function zmove(e){ const r=zr.getBoundingClientRect(); regleZoom(ZMAX-Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))*(ZMAX-ZMIN)); }
+  zz.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); if(e.target.tagName==='B'){ regleZoom(ZOOM+0.1*parseFloat(e.target.dataset.z)); return; } zid=e.pointerId; try{ zz.setPointerCapture(zid); }catch(_){} zmove(e); });
+  zz.addEventListener('pointermove',e=>{ if(e.pointerId===zid) zmove(e); });
+  ['pointerup','pointercancel'].forEach(n=>zz.addEventListener(n,e=>{ if(e.pointerId===zid) zid=null; }));
+  addEventListener('wheel',e=>{ regleZoom(ZOOM*(e.deltaY>0?1/1.06:1.06)); },{passive:true});
+  addEventListener('resize',placeZoom);
+  placeZoom();
+})();
+addEventListener('resize',()=>{ resize(); cadrer(true); });
+
+(async()=>{
+  const [b,vg,sp]=await Promise.all([
+    load(M+'garrett_fond.jpg'),
+    Promise.all(VEG.map(async L=>({...L,img:await load(M+'garrett_veg_'+L.i+'.webp')}))),
+    Promise.all(PNJ.map(p=>load(M+'garrett_pnj_'+p.id+'.webp')))
+  ]);
+  base=b; veg=vg.filter(L=>L.img); PNJ.forEach((p,i)=>{ spr[p.id]=sp[i]; });
+  resize();
+  majBoutons(); pose(IMG.fumer[0]); cadrer(true);
+  initFeuilles();
+  document.getElementById('charge').remove();
+  last=performance.now();
+  requestAnimationFrame(boucle);
+})();
+</script>
+<style>/* « Où voulez-vous aller ? » sur 2 colonnes : toutes les destinations se voient */
+#depart .carte{display:grid!important;grid-template-columns:1fr 1fr;column-gap:2.4vmin;row-gap:2vmin;align-content:start;width:min(92vw,760px)!important;min-width:0!important;box-sizing:border-box;padding:4vmin 4.5vmin 4.5vmin!important}
+#depart .carte h2{grid-column:1/-1;margin:0 0 1vmin!important}
+#depart .carte .choix{display:block;margin:0!important;width:auto!important;box-sizing:border-box;padding:2.6vmin 2vmin!important;font-size:clamp(12px,3.1vmin,24px)!important;line-height:1.1!important}
+#depart .carte .choix[style*="display:none"],#depart .carte .choix[style*="display: none"]{display:none!important}
+</style>
+</body>
+</html>
