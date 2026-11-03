@@ -340,7 +340,10 @@ const KO_CO={ wasp:'/assets/shinato/m/co_ko_guepe.mp4',        // la guêpe
                mantis:'/assets/shinato/m/co_ko_mante.mp4',      // la mante
                spider:'/assets/shinato/m/co_ko_araignee.mp4',   // la femme araignée
                bee:'/assets/shinato/m/co_ko_abeille.mp4',       // la femme abeille
-               lady:'/assets/shinato/m/co_ko_coccinelle.mp4' };  // la femme coccinelle
+               lady:'/assets/shinato/m/co_ko_coccinelle.mp4',   // la femme coccinelle
+               mb:'/assets/shinato/m/co_ko_papillonne.mp4',     // la femme papillon géante (mini-boss)
+               roach:'/assets/shinato/m/co_ko_cafarde.mp4',     // la femme cafard
+               fly:'/assets/shinato/m/co_ko_mouche.mp4' };       // la femme mouche
 const btnE=document.getElementById('btnEntrer'), coJeu=document.getElementById('coJeu');
 function coOuvert(){ try{ return ['mitsuda_usine_gagnee','rembourg_chateau_gagne','foret_gagnee','carre_bleu_gagne'].every(k=>localStorage.getItem(k)==='1'); }catch(e){ return false; } }
 function devantCO(){ return !enJeu&&!menu&&Math.abs(x-CO_X)<CO_ZONE&&coOuvert(); }

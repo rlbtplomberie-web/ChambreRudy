@@ -341,7 +341,7 @@ function hurtRudy(d,knock,dir){if(R.inv>0||R.state==='down'||R.state==='dead'||R
  if(R.hp<=0){R.hp=0;rudyDie();return;}
  if(knock){R.state='down';R.t=0;R.vx=dir*220;setTimeout(()=>{snd('fall');dustPuff(R.x,R.y,depthK(R.y));},380);}else{R.state='hurt';R.t=0;R.vx=dir*120;}
  R.face=-dir;}
-function rudyDie(){R.state='dead';R.t=0;snd('ko');voice('ko',{force:true});G.over=true;setTimeout(()=>{G.state='over';if(DANS_APPLI){try{[BGM,BGM2,BGM3].forEach(a=>a&&a.pause())}catch(e){}try{window.parent.postMessage({type:'carreorange:ko',qui:G.lastAtt||null},'*')}catch(e){}return}document.getElementById('over').style.display='flex';},2200);}
+function rudyDie(){if(G.map&&G.map.kind==='miniboss')G.lastAtt='mb';else if(G.map&&G.map.kind==='boss')G.lastAtt='fb';R.state='dead';R.t=0;snd('ko');voice('ko',{force:true});G.over=true;setTimeout(()=>{G.state='over';if(DANS_APPLI){try{[BGM,BGM2,BGM3].forEach(a=>a&&a.pause())}catch(e){}try{window.parent.postMessage({type:'carreorange:ko',qui:G.lastAtt||null},'*')}catch(e){}return}document.getElementById('over').style.display='flex';},2200);}
 const PUNCH=[[1],[2,3],[6,7]],KICK=[[0,1],[2,3],[4,5]];
 function rudyAttack(type){if(R.state==='punch'||R.state==='kick'){if(R.t>0.12&&R.combo<2&&R.atkType===type){R.queued=type;}else if(R.atkType!==type)R.queued=type;return;}
  R.combo=(R.comboT>0&&R.lastAtk===type)?(R.combo+1)%3:0;R.state=type;R.atkType=type;R.t=0;R.hitDone=false;snd('whoosh');if(R.combo===2)voice('kiai2',{vol:0.8});else if(Math.random()<0.3)voice('kiai',{vol:0.6});}
