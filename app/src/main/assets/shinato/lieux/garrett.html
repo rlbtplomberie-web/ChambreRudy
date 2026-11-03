@@ -34,6 +34,9 @@ html,body{margin:0;height:100%;background:#0b0618;overflow:hidden;touch-action:n
 #zoom b.zp::after{width:.6vmin;height:3vmin;margin:-1.5vmin 0 0 -.3vmin}
 #zoomRail{position:relative;flex:1;width:.7vmin;border-radius:1vmin;background:rgba(243,223,160,.45);box-shadow:0 0 3px rgba(0,0,0,.8);margin:2.5vmin 0}
 #zoomBout{position:absolute;left:50%;width:4vmin;height:4vmin;margin:-2vmin 0 0 -2vmin;border-radius:50%;background:radial-gradient(circle at 45% 38%,#f6e3a1,#a07a24);border:1px solid #3b2a08;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+#btnEntrer{display:none;box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 16px rgba(255,214,60,.55)}
+#coJeu{position:fixed;inset:0;z-index:95;display:none;background:#000}#coJeu iframe{width:100%;height:100%;border:0;display:block}
+#coQuit{position:absolute;top:60px;right:10px;z-index:2;width:40px;height:40px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:10px;font:900 20px/1 Arial,sans-serif;color:#fff;background:rgba(170,20,30,.75);border:1px solid rgba(255,255,255,.45);touch-action:none;user-select:none;-webkit-user-select:none}
 </style>
 </head>
 <body>
@@ -41,7 +44,7 @@ html,body{margin:0;height:100%;background:#0b0618;overflow:hidden;touch-action:n
 <div class="chip">Garrett Parc</div>
 <div id="zoom"><b class="zp" data-z="1"></b><div id="zoomRail"><div id="zoomBout"></div></div><b class="zm" data-z="-1"></b></div>
 <div id="zoneJoy"></div><div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
+<div id="actions"><div class="btn" id="btnEntrer">ENTRER</div><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
 <div id="depart"><div class="carte">
  <div class="fermer" id="departFermer">&#10005;</div>
  <h2>OÙ VOULEZ-VOUS ALLER&nbsp;?</h2>
@@ -56,6 +59,7 @@ html,body{margin:0;height:100%;background:#0b0618;overflow:hidden;touch-action:n
  <div class="choix" data-d="aeroport">L'AÉROPORT</div>
  <div class="choix" data-d="chaliaville">CHALIAVILLE</div>
 </div></div>
+<div id="coJeu"><div id="coQuit" title="Quitter">✕</div></div>
 <div id="charge">Chargement…</div>
 <script>/* PONT-L'ADES : le choix n'apparaît qu'après « INFORMATION SUR MIDA » (le costaud du Barding) */
 setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) return; var ok=false; try{ ok=localStorage.getItem('pontlades_debloque')==='1'; }catch(e){} b.style.display=ok?'':'none'; },400);</script>
@@ -175,7 +179,7 @@ Object.keys(IMG).forEach(k=>IMG[k].forEach(src=>{ const i=new Image(); i.src=src
 const YMIN=522, YMAX=552;          // le trottoir, entre les bancs et le bord de la route
 const HMIN=150, HMAX=162;          // à peu près la taille des passants du parc
 const btnF=document.getElementById('btnFumer'), btnJ=document.getElementById('btnJeter');
-let etat='repos', clope=false, sens=1, x=110, y=540, f=0, phase=0, dir=0, dirY=0, parcours=0, menu=false, arme=false, imgRudy=null;
+let enJeu=false, etat='repos', clope=false, sens=1, x=110, y=540, f=0, phase=0, dir=0, dirY=0, parcours=0, menu=false, arme=false, imgRudy=null;
 const DUREE={fumer:300,jeter:190,repos:520,reposcig:600}, VITESSE=1.25, PAS_M=0.17;
 const hRudy=()=>HMIN+(HMAX-HMIN)*(y-YMIN)/(YMAX-YMIN);
 function planche(){ if(etat==='fumer'||etat==='jeter') return etat; if(etat==='marche') return clope?'marchecig':'marche'; return 'repos'; }
@@ -231,6 +235,7 @@ function cadrer(direct){
 let t0=performance.now(), last=t0;
 function boucle(now){
   requestAnimationFrame(boucle);
+  if(enJeu){ last=now; return; }                     // le parc est en pause pendant le Carré Orange
   const dt=Math.min(0.05,(now-last)/1000); last=now;
   const t=(now-t0)/1000, g=rafale(t);
   bougeRudy(dt);
@@ -256,8 +261,10 @@ function boucle(now){
   // PNJ et Rudy triés par profondeur
   const liste=PNJ.map(p=>({y:p.y,p}));
   liste.push({y:y,rudy:true});
+  if(devantCO()) liste.push({y:y+0.01,fleche:true});
   liste.sort((a,b)=>a.y-b.y).forEach(o=>{
     if(o.rudy){ dessineRudy(); return; }
+    if(o.fleche){ dessineFleche(t); return; }
     const p=o.p; dessinePNJ(p,now,t);
     if(p.cache){const [a,b,c,d]=p.cache; ctx.drawImage(base,a,b,c-a,d-b,a,b,c-a,d-b);}
   });
@@ -320,10 +327,55 @@ appui(btnF,rudyFume); appui(btnJ,rudyJette);
 
 /* ---------- la musique : la même que Shinato (celle de la ville), elle joue dès l'arrivée dans le parc ---------- */
 function musiqueShinato(){ for(const w of [window.parent,window.top]){ try{ if(w&&w.RUDY_AUDIO) return w.RUDY_AUDIO; }catch(e){} } return null; }
-function joueMusique(){ try{ const m=musiqueShinato(); if(m&&m.paused){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} }
+function joueMusique(){ if(enJeu) return; try{ const m=musiqueShinato(); if(m&&m.paused){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} }
 joueMusique(); setTimeout(joueMusique,600);
 ['touchstart','pointerdown','keydown'].forEach(ev=>addEventListener(ev,joueMusique,{passive:true}));
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden) joueMusique(); });
+
+/* ---------- le Carré Orange : à l'entrée du chemin de la forêt, flèche jaune + ENTRER → le jeu ----------
+   ouvert seulement après Astra (Mitsuda), la Reine des vampires (Rembourg), la Forêt maudite et le Carré Bleu */
+const CO_X=3940, CO_ZONE=70;
+const btnE=document.getElementById('btnEntrer'), coJeu=document.getElementById('coJeu');
+function coOuvert(){ try{ return ['mitsuda_usine_gagnee','rembourg_chateau_gagne','foret_gagnee','carre_bleu_gagne'].every(k=>localStorage.getItem(k)==='1'); }catch(e){ return false; } }
+function devantCO(){ return !enJeu&&!menu&&Math.abs(x-CO_X)<CO_ZONE&&coOuvert(); }
+function dessineFleche(t){
+  const h=hRudy(), w=h*0.34, hh=w*1.2, cx=CO_X, top=y-h*1.42+Math.sin(t*5)*h*0.03;
+  ctx.save(); ctx.globalAlpha=0.78+0.22*Math.sin(t*9);
+  ctx.shadowColor='rgba(255,215,0,1)'; ctx.shadowBlur=18;
+  ctx.beginPath(); ctx.moveTo(cx,top); ctx.lineTo(cx+w*.44,top+hh*.4); ctx.lineTo(cx+w*.16,top+hh*.4); ctx.lineTo(cx+w*.16,top+hh*.97);
+  ctx.lineTo(cx-w*.16,top+hh*.97); ctx.lineTo(cx-w*.16,top+hh*.4); ctx.lineTo(cx-w*.44,top+hh*.4); ctx.closePath();
+  ctx.fillStyle='#ffe400'; ctx.fill(); ctx.shadowBlur=0; ctx.lineWidth=h*0.012; ctx.strokeStyle='#fff7b0'; ctx.lineJoin='round'; ctx.stroke();
+  ctx.restore();
+}
+setInterval(()=>{ btnE.style.display=devantCO()?'block':'none'; },120);
+let coMusique=false;
+appui(btnE,()=>{
+  if(!devantCO()) return;
+  enJeu=true; dir=dirY=0; btnE.style.display='none';
+  try{ const m=musiqueShinato(); if(m){ coMusique=!m.paused; m.pause(); } }catch(e){}     // le jeu a sa propre musique
+  const f=document.createElement('iframe'); f.setAttribute('allow','autoplay; fullscreen'); f.src='/assets/shinato/jeux/carre-orange.html';
+  coJeu.appendChild(f); coJeu.style.display='block'; setTimeout(()=>{ try{ f.focus(); }catch(e){} },300);
+});
+function fermeCO(reprendre){
+  const f=coJeu.querySelector('iframe'); if(f){ try{ f.src='about:blank'; }catch(_){} f.remove(); }
+  coJeu.style.display='none'; enJeu=false; dir=dirY=0;
+  x=CO_X; y=Math.max(YMIN,Math.min(YMAX,546)); sens=1; etat='repos'; f0reset(); cadrer(true);
+  if(reprendre) joueMusique();
+  coMusique=false; try{ window.focus(); }catch(_){}
+}
+function f0reset(){ f=0; phase=0; }
+(function(){ const q=document.getElementById('coQuit'); let a=false;
+  q.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();a=true;});
+  q.addEventListener('pointercancel',()=>{a=false;});
+  q.addEventListener('pointerup',e=>{e.preventDefault();e.stopPropagation();if(!a)return;a=false;fermeCO(true);});
+})();
+addEventListener('message',e=>{
+  if(!e.data||!enJeu) return;
+  // Rudy K.O. : l'infirmière puis devant l'hôpital de Vaviel (géré par Shinato)
+  if(e.data.type==='carreorange:ko'){ fermeCO(false); try{ window.parent.postMessage({type:'impasse:ko'},'*'); }catch(_){} }
+  // victoire : retour à l'entrée du chemin, la musique de Shinato revient
+  if(e.data.type==='carreorange:victoire'){ try{ localStorage.setItem('carre_orange_gagne','1'); }catch(_){} setTimeout(()=>fermeCO(true),600); }
+});
 
 /* « Où voulez-vous aller ? » (à chaque bout du parc) : on reprend la moto */
 const boiteD=document.getElementById('depart');
