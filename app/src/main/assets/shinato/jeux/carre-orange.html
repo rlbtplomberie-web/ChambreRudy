@@ -222,7 +222,7 @@ function grabFocus(){const k=depthK(R.y);
  if(R.state==='bossthrow'&&R.grabber){const e=R.grabber;return R.bthK==='mb_fly'?{x:e.x+e.face*60*k,y:e.y-60*k,nozoom:true}:{x:e.x+e.face*90*k,y:R.y-200*k};}
  if(R.state==='throwing'&&R.throwE){return {x:(R.x+R.throwE.x)/2,y:R.y-90*k};}
  return null;}
-function startMap(i,keepStats){G.mapI=i;G.map=MAPS[i];G.ents=[];G.projs=[];G.fx=[];G.items=[];G.parts=[];G.killed=0;G.spawnT=1.2;G.goShown=false;G.exitReady=false;
+function startMap(i,keepStats){G.lastAtt=null;G.mapI=i;G.map=MAPS[i];G.ents=[];G.projs=[];G.fx=[];G.items=[];G.parts=[];G.killed=0;G.spawnT=1.2;G.goShown=false;G.exitReady=false;
  G.queue=G.map.kind==='enemies'?shuffle(ETYPES.slice()):[];resetRudy(!keepStats);
  if(G.map.kind==='miniboss'||G.map.kind==='boss'){R.hp=R.maxhp;R.en=R.maxen;}R.ammo=5;R.reload=0;
  G.drips=G.map.drips.map(d=>({x:d[0],y0:d[1],y1:d[2],t:rnd(0,2.5),dur:rnd(1.6,3.2),y:d[1],v:0,s:0}));
@@ -276,7 +276,7 @@ function updEnemy(e,dt){if(e.fb){updFB(e,dt);return;}if(e.boss){updBoss(e,dt);re
    break;}
  case 'attack':{const n=6,fps=10;e.fi=Math.min(n-1,Math.floor(e.t*fps));
    if(c.active.includes(e.fi)&&!e.hitDone[e.fi]){e.hitDone[e.fi]=true;snd('whoosh',0.6);
-     if(adx<150*k&&Math.abs(dy)<38&&Math.sign(dx)===e.face&&rVuln){R.lowHit=e.fi>=3;hurtRudy(9,e.fi===c.active[c.active.length-1]&&Math.random()<0.35,e.face);R.lowHit=false;}}
+     if(adx<150*k&&Math.abs(dy)<38&&Math.sign(dx)===e.face&&rVuln){R.lowHit=e.fi>=3;G.lastAtt=e.type;hurtRudy(9,e.fi===c.active[c.active.length-1]&&Math.random()<0.35,e.face);R.lowHit=false;}}
    if(e.t>=n/fps+0.1){e.state='walk';e.t=0;}break;}
  case 'shoot':{const fr=IMG[e.type+'_att'];const n=fr.length,fps=8;e.fi=Math.min(n-1,Math.floor(e.t*fps));
    if(!e.shot&&e.fi>=n-2){e.shot=true;fireProj(e);}
@@ -322,7 +322,7 @@ function updGrab(dt,I){const cfg=R.grabCfg,e=R.grabber;R.t+=dt;const need=cfg.bo
  if((I.punch||I.kick||I.grab||I.energyTap||I.enter||I.gun)&&!(cfg.mashAfterIntro&&!holding)){R.mash+=1;G.shake=0.06;snd('whoosh',0.4);}
  R.mash=Math.max(0,R.mash-dt*1.6);
  if(R.mash>=need){voice('free',{force:true});releaseGrab(true);return;}
- if(R.hp<=0){R.hp=0;e.state='walk';e.t=0;R.grabber=null;rudyDie();}
+ if(R.hp<=0){R.hp=0;G.lastAtt=e.type;e.state='walk';e.t=0;R.grabber=null;rudyDie();}
 }
 function startThrow(e){if(e.fb){e.alpha=1;}R.state='throwing';R.t=0;R.throwE=e;e.state='thrown';e.t=0;R.throwLeft=e.x<R.x;snd('grab',0.6);}
 function updThrow(dt){R.t+=dt;const e=R.throwE;const fr=IMG[e.type+'_thr'];const fps=e.fb?6.5:8;const i=Math.floor(R.t*fps);R.throwFrame=Math.min(fr.length-1,i);
@@ -341,7 +341,7 @@ function hurtRudy(d,knock,dir){if(R.inv>0||R.state==='down'||R.state==='dead'||R
  if(R.hp<=0){R.hp=0;rudyDie();return;}
  if(knock){R.state='down';R.t=0;R.vx=dir*220;setTimeout(()=>{snd('fall');dustPuff(R.x,R.y,depthK(R.y));},380);}else{R.state='hurt';R.t=0;R.vx=dir*120;}
  R.face=-dir;}
-function rudyDie(){R.state='dead';R.t=0;snd('ko');voice('ko',{force:true});G.over=true;setTimeout(()=>{G.state='over';if(DANS_APPLI){try{[BGM,BGM2,BGM3].forEach(a=>a&&a.pause())}catch(e){}prevenir('carreorange:ko');return}document.getElementById('over').style.display='flex';},2200);}
+function rudyDie(){R.state='dead';R.t=0;snd('ko');voice('ko',{force:true});G.over=true;setTimeout(()=>{G.state='over';if(DANS_APPLI){try{[BGM,BGM2,BGM3].forEach(a=>a&&a.pause())}catch(e){}try{window.parent.postMessage({type:'carreorange:ko',qui:G.lastAtt||null},'*')}catch(e){}return}document.getElementById('over').style.display='flex';},2200);}
 const PUNCH=[[1],[2,3],[6,7]],KICK=[[0,1],[2,3],[4,5]];
 function rudyAttack(type){if(R.state==='punch'||R.state==='kick'){if(R.t>0.12&&R.combo<2&&R.atkType===type){R.queued=type;}else if(R.atkType!==type)R.queued=type;return;}
  R.combo=(R.comboT>0&&R.lastAtk===type)?(R.combo+1)%3:0;R.state=type;R.atkType=type;R.t=0;R.hitDone=false;snd('whoosh');if(R.combo===2)voice('kiai2',{vol:0.8});else if(Math.random()<0.3)voice('kiai',{vol:0.6});}
@@ -618,7 +618,7 @@ function updProjs(dt){
    if(rv&&Math.abs(R.x-p.x)<(p.hx||45)&&Math.abs(R.y-p.y)<(p.hy||36)){p.life=0;
     if(p.eff==='liane'||p.eff==='heart'){const b=p.owner;if(b&&b.alive&&!G.ents.some(o=>o.state==='grabbing')){fbCatch(b,p.eff);}}
     else if(p.eff==='web'){const sp=p.owner;if(sp&&sp.alive&&!G.ents.some(o=>o.state==='grabbing')){sp.x=R.x+70;sp.y=R.y;startGrab(sp,WEBGRAB);}}
-    else{hurtRudy(p.dmg,p.eff==='burn'&&Math.random()<0.5,Math.sign(p.vx));if(p.eff==='honey'){R.slow=2.0;snd('splat');}addBurst(p.x,p.y,p.h,p.kind==='leaf'?'#8c4':p.eff==='honey'?'#fa0':'#c84');}}}
+    else{G.lastAtt=p.owner&&p.owner.type;hurtRudy(p.dmg,p.eff==='burn'&&Math.random()<0.5,Math.sign(p.vx));if(p.eff==='honey'){R.slow=2.0;snd('splat');}addBurst(p.x,p.y,p.h,p.kind==='leaf'?'#8c4':p.eff==='honey'?'#fa0':'#c84');}}}
  }
  G.projs=G.projs.filter(p=>p.life>0&&p.x>-200&&p.x<MAPW+200);
  for(const f of G.fx){f.t+=dt;if(f.kind==='kame'){const len=Math.min(1,f.t/0.25)*1500;f.len=len;

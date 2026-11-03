@@ -335,6 +335,10 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden) joueMusi
 /* ---------- le Carré Orange : à l'entrée du chemin de la forêt, flèche jaune + ENTRER → le jeu ----------
    ouvert seulement après Astra (Mitsuda), la Reine des vampires (Rembourg), la Forêt maudite et le Carré Bleu */
 const CO_X=3940, CO_ZONE=70;
+// les vidéos quand une ennemie du Carré Orange met Rudy K.O. (avant l'infirmière)
+const KO_CO={ wasp:'/assets/shinato/m/co_ko_guepe.mp4',        // la guêpe
+               mantis:'/assets/shinato/m/co_ko_mante.mp4',      // la mante
+               spider:'/assets/shinato/m/co_ko_araignee.mp4' };  // la femme araignée
 const btnE=document.getElementById('btnEntrer'), coJeu=document.getElementById('coJeu');
 function coOuvert(){ try{ return ['mitsuda_usine_gagnee','rembourg_chateau_gagne','foret_gagnee','carre_bleu_gagne'].every(k=>localStorage.getItem(k)==='1'); }catch(e){ return false; } }
 function devantCO(){ return !enJeu&&!menu&&Math.abs(x-CO_X)<CO_ZONE&&coOuvert(); }
@@ -372,7 +376,18 @@ function f0reset(){ f=0; phase=0; }
 addEventListener('message',e=>{
   if(!e.data||!enJeu) return;
   // Rudy K.O. : l'infirmière puis devant l'hôpital de Vaviel (géré par Shinato)
-  if(e.data.type==='carreorange:ko'){ fermeCO(false); try{ window.parent.postMessage({type:'impasse:ko'},'*'); }catch(_){} }
+  if(e.data.type==='carreorange:ko'){
+    const src=KO_CO[e.data.qui];
+    const hopital=()=>{ try{ window.parent.postMessage({type:'impasse:ko'},'*'); }catch(_){} };
+    if(!src){ fermeCO(false); hopital(); return; }
+    // d'abord la vidéo de l'ennemie qui a eu Rudy, puis l'infirmière et l'hôpital de Vaviel
+    const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:99;background:#000';
+    vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+    fermeCO(false); enJeu=true;
+    const v=vb.querySelector('video'); let fini=false;
+    const fin=()=>{ if(fini) return; fini=true; hopital(); setTimeout(()=>vb.remove(),400); };
+    v.addEventListener('ended',fin); v.addEventListener('error',fin); v.src=src; const q=v.play(); if(q&&q.catch) q.catch(()=>{});
+  }
   // victoire : retour à l'entrée du chemin, la musique de Shinato revient
   if(e.data.type==='carreorange:victoire'){ try{ localStorage.setItem('carre_orange_gagne','1'); }catch(_){} setTimeout(()=>fermeCO(true),600); }
 });
