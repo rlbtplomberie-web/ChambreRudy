@@ -44,7 +44,7 @@ html,body{margin:0;height:100%;background:#0b0618;overflow:hidden;touch-action:n
 <div class="chip">Garrett Parc</div>
 <div id="zoom"><b class="zp" data-z="1"></b><div id="zoomRail"><div id="zoomBout"></div></div><b class="zm" data-z="-1"></b></div>
 <div id="zoneJoy"></div><div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="btnEntrer">ENTRER</div><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
+<div id="actions"><div class="btn" id="btnParler" style="display:none">PARLER</div><div class="btn" id="btnEntrer">ENTRER</div><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
 <div id="depart"><div class="carte">
  <div class="fermer" id="departFermer">&#10005;</div>
  <h2>OÙ VOULEZ-VOUS ALLER&nbsp;?</h2>
@@ -396,6 +396,19 @@ setInterval(()=>{
   flicArme=false;
   videoFlic('/assets/shinato/m/garrett_flic.mp4',(reprendre,vb)=>{ cadrer(true); if(reprendre) joueMusique(); setTimeout(()=>vb.remove(),150); });   // Rudy reste devant lui
 },100);
+/* ---------- PARLER aux gens du parc : devant eux, le bouton PARLER → leur vidéo ---------- */
+const PARLER=[
+  {x:150,  video:'/assets/shinato/m/garrett_ouvrier.mp4'},   // l'ouvrier à la pioche (à gauche, derrière le muret)
+  {x:2875, video:'/assets/shinato/m/garrett_fumeur.mp4'},    // le fumeur à la veste marron, contre le pilier
+  {x:1430, video:'/assets/shinato/m/garrett_nettoyeuse.mp4', hopital:true}   // la femme qui lave la vitre de la salle d'arcade : après sa vidéo, l'infirmière puis l'hôpital de Vaviel
+];
+const btnP=document.getElementById('btnParler');
+function devantQui(){ if(enJeu||menu||flicVideo) return null; return PARLER.find(q=>Math.abs(x-q.x)<75)||null; }
+setInterval(()=>{ btnP.style.display=devantQui()?'block':'none'; },120);
+appui(btnP,()=>{ const q=devantQui(); if(!q) return; btnP.style.display='none';
+  videoFlic(q.video,(reprendre,vb)=>{
+    if(q.hopital){ flicVideo=true; try{ parent.postMessage({type:'impasse:ko'},'*'); }catch(e){} return; }   // Shinato passe l'infirmière puis emmène Rudy devant l'hôpital de Vaviel
+    if(reprendre) joueMusique(); setTimeout(()=>vb.remove(),150); }); });
 let coMusique=false;
 appui(btnE,()=>{
   if(!devantCO()) return;
