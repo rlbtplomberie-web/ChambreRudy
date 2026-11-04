@@ -396,7 +396,14 @@ addEventListener('message',e=>{
     v.addEventListener('ended',fin); v.addEventListener('error',fin); v.src=src; const q=v.play(); if(q&&q.catch) q.catch(()=>{});
   }
   // victoire : retour à l'entrée du chemin, la musique de Shinato revient
-  if(e.data.type==='carreorange:victoire'){ try{ localStorage.setItem('carre_orange_gagne','1'); }catch(_){} setTimeout(()=>fermeCO(true),600); }
+  // victoire : la vidéo de la victoire, puis retour à l'entrée du chemin (la musique de Shinato revient)
+  if(e.data.type==='carreorange:victoire'){ try{ localStorage.setItem('carre_orange_gagne','1'); }catch(_){}
+    const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:99;background:#000';
+    vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+    const v=vb.querySelector('video'); let fini=false;
+    const fin=()=>{ if(fini) return; fini=true; fermeCO(true); setTimeout(()=>vb.remove(),150); };
+    v.addEventListener('ended',fin); v.addEventListener('error',fin); v.src='/assets/shinato/m/co_victoire.mp4'; const q=v.play(); if(q&&q.catch) q.catch(()=>{});
+  }
 });
 
 /* « Où voulez-vous aller ? » (à chaque bout du parc) : on reprend la moto */

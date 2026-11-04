@@ -231,7 +231,13 @@ function startMap(i,keepStats){G.lastAtt=null;G.mapI=i;G.map=MAPS[i];G.ents=[];G
  if(G.map.kind==='miniboss'){showMsg('Attention… quelque chose approche !',3);G.spawnT=2.0;}
  if(G.map.kind==='boss'){showMsg('La salle du trône…',2.5);G.spawnT=2.2;}
  if(G.map.kind==='enemies')showMsg('Bats les 8 ennemies !',2.5);G.card=null;titleCard(G.map.name,'MAP '+(i+1)+' / 4');
- updEnterBtn();musicFor(i);}
+ updEnterBtn();musicFor(i);if(G.map.kind==='miniboss')videoMiniBoss('/assets/shinato/m/co_intro_papillonne.mp4');else if(G.map.kind==='boss')videoMiniBoss('/assets/shinato/m/co_intro_deesse.mp4');}
+function videoMiniBoss(src){G.paused=true;G.vidMB=true;try{[BGM,BGM2,BGM3].forEach(a=>a&&a.pause())}catch(e){}
+ const vb=document.createElement('div');vb.style.cssText='position:fixed;inset:0;z-index:2147480000;background:#000';
+ vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';document.body.appendChild(vb);
+ const v=vb.querySelector('video');let fini=false;
+ const fin=()=>{if(fini)return;fini=true;vb.remove();G.vidMB=false;G.paused=false;R.hp=R.maxhp;R.en=R.maxen;musicFor(G.mapI);};
+ v.addEventListener('ended',fin);v.addEventListener('error',fin);v.src=src;const q=v.play();if(q&&q.catch)q.catch(()=>{});}
 function showMsg(s,t){G.msg=s;G.msgT=t;}
 // ====================== ENEMIES ======================
 function spawnEnemy(type){const c=EN_CFG[type];const fromLeft=Math.random()<0.5&&G.camX>60||G.camX+VW>MAPW-60;
@@ -983,7 +989,7 @@ function frame(now){let dt=Math.min(0.05,(now-last)/1000);last=now;G.t+=dt;if(G.
   ctx.fillStyle='rgba(10,0,30,0.45)';ctx.fillRect(0,0,cv.width,cv.height);}
  for(const k in pressed)pressed[k]=false;
  requestAnimationFrame(frame);}
-function togglePause(){G.paused=!G.paused;try{if(G.paused){[BGM,BGM2,BGM3].forEach(a=>a&&!a.paused&&(a.pause(),a._p=1));}else{[BGM,BGM2,BGM3].forEach(a=>{if(a&&a._p){a._p=0;playA(a);}});}}catch(e){}}
+function togglePause(){if(G.vidMB)return;G.paused=!G.paused;try{if(G.paused){[BGM,BGM2,BGM3].forEach(a=>a&&!a.paused&&(a.pause(),a._p=1));}else{[BGM,BGM2,BGM3].forEach(a=>{if(a&&a._p){a._p=0;playA(a);}});}}catch(e){}}
 function startGame(){audioInit();document.getElementById('title').style.display='none';document.getElementById('over').style.display='none';document.getElementById('hud').style.display='block';G.over=false;startMap(0,false);}
 function retry(){audioInit();document.getElementById('over').style.display='none';G.over=false;startMap(G.mapI,false);}
 const firstGesture=()=>{audioInit();if(AC&&AC.state==='suspended')AC.resume();if(G.state==='play'&&!G.paused&&!G.fbDead)musicFor(G.mapI);windSound(!G.map.indoor);};['pointerdown','keydown','touchstart'].forEach(ev=>addEventListener(ev,firstGesture,{once:false,passive:true}));
