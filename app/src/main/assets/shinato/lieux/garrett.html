@@ -327,7 +327,7 @@ appui(btnF,rudyFume); appui(btnJ,rudyJette);
 
 /* ---------- la musique : la même que Shinato (celle de la ville), elle joue dès l'arrivée dans le parc ---------- */
 function musiqueShinato(){ for(const w of [window.parent,window.top]){ try{ if(w&&w.RUDY_AUDIO) return w.RUDY_AUDIO; }catch(e){} } return null; }
-function joueMusique(){ if(enJeu) return; try{ const m=musiqueShinato(); if(m&&m.paused){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} }
+function joueMusique(){ if(enJeu||flicVideo) return; try{ const m=musiqueShinato(); if(m&&m.paused){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} }
 joueMusique(); setTimeout(joueMusique,600);
 ['touchstart','pointerdown','keydown'].forEach(ev=>addEventListener(ev,joueMusique,{passive:true}));
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden) joueMusique(); });
@@ -359,6 +359,43 @@ function dessineFleche(t){
   ctx.restore();
 }
 setInterval(()=>{ btnE.style.display=devantCO()?'block':'none'; },120);
+/* ---------- le flic costaud : tant que le Carré Orange n'est pas ouvert (les 4 diamants) ----------
+   1) quand Rudy arrive à sa hauteur (en haut ou en bas du trottoir) : sa vidéo passe, Rudy reste devant lui
+   2) si Rudy passe quand même derrière lui (il continue à droite) : la vidéo de l'arrestation, puis Rudy en prison (ville délabrée)
+   avec les 4 diamants : ces deux vidéos ne passent plus, c'est une autre vidéo, et Rudy peut passer derrière lui */
+const FLIC_X=3448, FLIC_DERRIERE=3600; var flicArme=true, flicVideo=false;   // var : connus dès le début de la page (la musique les lit)
+function videoFlic(src,apres){
+  flicVideo=true; dir=dirY=0;
+  let reprendre=false; try{ const m=musiqueShinato(); if(m){ reprendre=!m.paused; m.pause(); } }catch(e){}
+  const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:99;background:#000';
+  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+  const v=vb.querySelector('video'); let fini=false;
+  const fin=()=>{ if(fini) return; fini=true; etat='repos'; f=0; phase=0; dir=dirY=0;
+    flicVideo=false; apres(reprendre,vb); };
+  v.addEventListener('ended',fin); v.addEventListener('error',fin); v.src=src; const q=v.play(); if(q&&q.catch) q.catch(()=>{});
+}
+setInterval(()=>{
+  if(enJeu||menu||flicVideo) return;
+  if(x<FLIC_X-150) flicArme=true;
+  // avec les 4 diamants (le Carré Orange est ouvert) : une autre vidéo, puis Rudy passe tranquillement (plus de prison)
+  if(coOuvert()){
+    if(!flicArme||x<FLIC_X) return;
+    flicArme=false;
+    videoFlic('/assets/shinato/m/garrett_flic_ok.mp4',(reprendre,vb)=>{ cadrer(true); if(reprendre) joueMusique(); setTimeout(()=>vb.remove(),150); });
+    return;
+  }
+  // il passe derrière le flic : arrêté, direction la prison
+  if(x>=FLIC_DERRIERE){
+    videoFlic('/assets/shinato/m/garrett_flic_prison.mp4',(reprendre,vb)=>{
+      flicVideo=true;                                   // la musique reste coupée jusqu'au départ
+      try{ parent.postMessage({type:'garrett:prison'},'*'); }catch(e){}
+    });
+    return;
+  }
+  if(!flicArme||x<FLIC_X) return;
+  flicArme=false;
+  videoFlic('/assets/shinato/m/garrett_flic.mp4',(reprendre,vb)=>{ cadrer(true); if(reprendre) joueMusique(); setTimeout(()=>vb.remove(),150); });   // Rudy reste devant lui
+},100);
 let coMusique=false;
 appui(btnE,()=>{
   if(!devantCO()) return;

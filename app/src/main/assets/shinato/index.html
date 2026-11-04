@@ -1548,6 +1548,15 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
    window.minuterieLibre(function(){ try{ cc.focus(); }catch(err){} },300);
    return;
   }
+  if(e.data && e.data.type==="garrett:prison"){
+   // Garrett Parc : Rudy est passé derrière le flic sans les 4 diamants → la cellule de la prison (ville délabrée)
+   var cpr=document.getElementById("moto"); if(!cpr) return;
+   var hpr=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/delabree.html"));
+   hpr=hpr.replace("</body>","<script>setTimeout(function(){try{scene=SCENES.prison;P.x=820;P.y=800;P.dir4='b';P.face=1;P.speed=0;snap=true;PEINE=30;prisonUI.classList.add('show');SON.porte();}catch(e){}},80);<\/script></body>");   // tout de suite : la ville délabrée ne finit jamais son « load »
+   cpr.srcdoc=hpr;                                        // Garrett Parc est déchargé
+   window.minuterieLibre(function(){ try{ cpr.focus(); }catch(err){} },300);
+   return;
+  }
   if(e.data && e.data.type==="impasse:ko"){
    // l'impasse : la patronne a eu Rudy → la vidéo de l'infirmière, puis devant l'hôpital de Vaviel
    window.pontladesFin(false);
