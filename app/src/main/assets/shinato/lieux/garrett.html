@@ -364,8 +364,14 @@ appui(btnE,()=>{
   if(!devantCO()) return;
   enJeu=true; dir=dirY=0; btnE.style.display='none';
   try{ const m=musiqueShinato(); if(m){ coMusique=!m.paused; m.pause(); } }catch(e){}     // le jeu a sa propre musique
-  const f=document.createElement('iframe'); f.setAttribute('allow','autoplay; fullscreen'); f.src='/assets/shinato/jeux/carre-orange.html';
-  coJeu.appendChild(f); coJeu.style.display='block'; setTimeout(()=>{ try{ f.focus(); }catch(e){} },300);
+  // d'abord la vidéo d'entrée, puis le jeu démarre tout de suite
+  const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:99;background:#000';
+  vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+  const v=vb.querySelector('video'); let fait=false;
+  const lance=()=>{ if(fait) return; fait=true; try{ v.pause(); }catch(_){}
+    const f=document.createElement('iframe'); f.setAttribute('allow','autoplay; fullscreen'); f.src='/assets/shinato/jeux/carre-orange.html';
+    coJeu.appendChild(f); coJeu.style.display='block'; setTimeout(()=>vb.remove(),150); setTimeout(()=>{ try{ f.focus(); }catch(e){} },300); };
+  v.addEventListener('ended',lance); v.addEventListener('error',lance); v.src='/assets/shinato/m/co_entree.mp4'; const q=v.play(); if(q&&q.catch) q.catch(lance);
 });
 function fermeCO(reprendre){
   const f=coJeu.querySelector('iframe'); if(f){ try{ f.src='about:blank'; }catch(_){} f.remove(); }
