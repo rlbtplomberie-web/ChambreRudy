@@ -477,7 +477,20 @@ const DONJONS=[
  {nom:"La grotte du diamant cuivré (plaque Courage)", img:'statue/plaque_courage.webp', fin:'grotte_gagnee', etapes:[
   ['mitsuda_usine_gagnee',"Bats d'abord Astra à l'usine."],
   ['chalia_clochard_vu',"À Chaliaville, en bas, va voir le clochard et donne-lui 10 € (il te parle)."],
-  ['grotte_gagnee',"À Chaliaville, en bas, entre dans le tunnel de droite (la grotte du diamant cuivré), traverse les 2 cartes, bats la Gardienne puis sa forme déchaînée, et choisis RÉSISTER."]]}
+  ['grotte_gagnee',"À Chaliaville, en bas, entre dans le tunnel de droite (la grotte du diamant cuivré), traverse les 2 cartes, bats la Gardienne puis sa forme déchaînée, et choisis RÉSISTER."]]},
+ {nom:"La Plaquette Dorée (plaque Équilibre)", img:'statue/plaque_equilibre.webp', fin:'plaquette_gagnee', etapes:[
+  ['grotte_gagnee',"Gagne d'abord la grotte du diamant cuivré (plaque Courage)."],
+  ['plaquette_gagnee',"Va à la plage : entre les deux petits garçons, ENTRER sur la plage de Gisèle."],
+  ['plaquette_gagnee',"Parle à Tiphaine, la mécanicienne du jet-ski, et choisis « J'AI BESOIN DU JET-SKI »."],
+  ['plaquette_gagnee',"Rejoins l'île en jet-ski, traverse la plage, la crique et le temple, puis bats la boss dans la salle du temple."]]},
+ {nom:"Le Carré Bleu", img:'statue/gem_carre_bleu.webp', fin:'carre_bleu_gagne', etapes:[
+  [TROIS,"Bats d'abord Astra, la Reine des vampires et Farah."],
+  ['carre_bleu_gagne',"À Chaliaville, en haut, va au kiosque juste à droite de l'homme assis sur le banc : flèche jaune + ENTRER."],
+  ['carre_bleu_gagne',"Traverse les 3 maps de la forêt de nuit, puis bats la boss."]]},
+ {nom:"Le Carré Orange", img:'statue/gem_carre_orange.webp', fin:'carre_orange_gagne', etapes:[
+  ['carre_bleu_gagne',"Gagne d'abord le Carré Bleu."],
+  ['carre_orange_gagne',"Va à Garrett Parc (avec la MAP du téléphone ou en moto) et marche tout à droite, jusqu'à l'entrée du chemin de la forêt, juste après le panneau tête de mort : flèche jaune + ENTRER."],
+  ['carre_orange_gagne',"Bats 8 ennemies sur la map 1 et 8 sur la map 2, puis la femme papillon géante (map 3) et la Déesse Arc-en-ciel dans la salle du trône (map 4)."]]}
 ];
 function faite(c){ return typeof c==='function' ? c() : lit(c)==='1'; }
 function listeAstuces(){
