@@ -23,6 +23,23 @@ jobs:
     timeout-minutes: 180
 
     steps:
+      # La machine de GitHub n'a qu'environ 14 Go de libre, et l'appli (vidéos,
+      # jeux, émulateurs) en demande de plus en plus pendant la compilation
+      # (« No space left on device »). On enlève d'abord des outils installés
+      # d'office sur la machine et dont l'appli ne se sert pas : environ 20 Go
+      # en plus. Le SDK Android, Java et Gradle ne sont pas touchés.
+      - name: Faire de la place sur la machine
+        run: |
+          echo "Place libre avant :"; df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+            /usr/local/share/boost /opt/hostedtoolcache/CodeQL \
+            /usr/share/swift /usr/local/share/powershell \
+            /usr/local/share/chromium /opt/microsoft /opt/google \
+            /opt/az /usr/local/julia* /usr/share/miniconda || true
+          sudo docker image prune --all --force >/dev/null 2>&1 || true
+          sudo apt-get clean >/dev/null 2>&1 || true
+          echo "Place libre apres :"; df -h / | tail -1
+
       - name: Recuperer le code
         uses: actions/checkout@v4
 
