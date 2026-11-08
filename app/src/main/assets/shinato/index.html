@@ -1559,6 +1559,15 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
    window.minuterieLibre(function(){ try{ cmi.focus(); }catch(err){} },300);
    return;
   }
+  // Miria City : la porte du GlaBar Givré (ENTRER) ; SORTIR tout à gauche du bar → retour devant la porte
+  if(e.data && (e.data.type==="palais:glabar"||e.data.type==="glabar:sortie")){
+   var cgb=document.getElementById("moto"); if(!cgb) return;
+   if(e.data.type==="palais:glabar"){ try{ if(window.RUDY_AUDIO) window.RUDY_AUDIO.pause(); }catch(err){} }   // le bar a sa propre musique
+   else { try{ localStorage.setItem("palais_retour_glabar","1"); }catch(err){} }
+   cgb.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS(e.data.type==="palais:glabar"?"lieux/glabar.html":"lieux/palais.html"));
+   window.minuterieLibre(function(){ try{ cgb.focus(); }catch(err){} },300);
+   return;
+  }
   if(e.data && e.data.type==="garrett:prison"){
    // Garrett Parc : Rudy est passé derrière le flic sans les 4 diamants → la cellule de la prison (ville délabrée)
    var cpr=document.getElementById("moto"); if(!cpr) return;

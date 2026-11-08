@@ -41,7 +41,7 @@
 <div class="chip">Miria City</div>
 <div id="zoom"><b class="zp" data-z="1"></b><div id="zoomRail"><div id="zoomBout"></div></div><b class="zm" data-z="-1"></b></div>
 <div id="zoneJoy"></div><div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
+<div id="actions"><div class="btn" id="btnEntrer" style="display:none">ENTRER</div><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
 <div id="depart"><div class="carte">
  <div class="fermer" id="departFermer">&#10005;</div>
  <h2>OÙ VOULEZ-VOUS ALLER&nbsp;?</h2>
@@ -304,6 +304,7 @@ function frame(now){
   }
   ctx.globalAlpha=1;
 
+  dessineGarde();
   dessineRudy();
 
   /* neige */
@@ -367,6 +368,20 @@ function majRudy(dt){
   // tout à gauche de Miria City : « Où voulez-vous aller ? » (seulement le boulevard)
   if(rx>230) arme=true;
   if(arme&&!menu&&rx<=XMIN+10) montreMenu();
+  btnE.style.display=devantGlabar()?'block':'none';
+}
+/* devant la porte du GlaBar Givré (à droite de Miria City) : flèche jaune + ENTRER */
+const GLABAR_X=2015, btnE=document.getElementById('btnEntrer');
+function devantGlabar(){ return !menu&&(etat==='repos'||etat==='marche')&&Math.abs(rx-GLABAR_X)<62; }
+function flecheGlabar(){
+  if(!devantGlabar()) return;
+  const t=performance.now()/1000, h=hRudy(), s=h*0.0042;
+  const x=rx, y=ry-h*1.2-14-Math.abs(Math.sin(t*4.2))*h*0.09;   // pointe vers le haut, au-dessus de sa tête
+  ctx.save(); ctx.translate(offX,offY); ctx.scale(scale,scale); ctx.translate(x,y); ctx.scale(s,s);
+  ctx.shadowColor='rgba(255,220,40,1)'; ctx.shadowBlur=26+10*Math.sin(t*6);
+  ctx.fillStyle='#ffe400'; ctx.strokeStyle='#fff6a8'; ctx.lineWidth=4; ctx.lineJoin='round';
+  ctx.beginPath(); ctx.moveTo(0,-50); ctx.lineTo(46,0); ctx.lineTo(22,0); ctx.lineTo(22,40); ctx.lineTo(-22,40); ctx.lineTo(-22,0); ctx.lineTo(-46,0); ctx.closePath();
+  ctx.fill(); ctx.stroke(); ctx.restore();
 }
 function dessineRudy(){
   const im=imgRudy; if(!im||!im.complete||!im.naturalWidth) return;
@@ -378,8 +393,11 @@ function dessineRudy(){
   ctx.filter='brightness(.92) saturate(.9) hue-rotate(8deg)';
   ctx.drawImage(im,-wi/2,-hi,wi,hi);
   ctx.restore(); ctx.filter='none';
+  flecheGlabar();
 }
 pose(RIMGS.fumer[0]); majBoutons();
+// on ressort du GlaBar Givré : Rudy réapparaît devant la porte
+try{ if(localStorage.getItem('palais_retour_glabar')==='1'){ localStorage.removeItem('palais_retour_glabar'); rx=GLABAR_X; ry=590; sens=-1; arme=true; } }catch(e){}
 
 /* joystick : toutes les directions */
 (function(){
@@ -409,6 +427,8 @@ pose(RIMGS.fumer[0]); majBoutons();
 function appui(el,fn){ let t=0; const go=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t<350) return; t=n; fn(); };
   el.addEventListener('touchstart',go,{passive:false}); el.addEventListener('click',go); }
 appui(btnF,rudyFume); appui(btnJ,rudyJette);
+appui(btnE,()=>{ if(!devantGlabar()) return; dir=dirY=0; btnE.style.display='none'; menu=true;
+  try{ parent.postMessage({type:'palais:glabar'},'*'); }catch(e){} });
 
 /* « Où voulez-vous aller ? » tout à gauche : seulement le boulevard (on rend la voiture à Fred, le voiturier) */
 const boiteD=document.getElementById('depart');
@@ -436,7 +456,36 @@ function musiqueShinato(){ for(const w of [window.parent,window.top]){ try{ if(w
 function joueMusique(){ try{ const m=musiqueShinato(); if(m&&m.paused){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} }
 joueMusique(); setTimeout(joueMusique,600);
 ['touchstart','pointerdown','keydown'].forEach(ev=>addEventListener(ev,joueMusique,{passive:true}));
-window.RUDY_PX=()=>({x:rx,y:ry,menu,dir});
+window.RUDY_PX=()=>({x:rx,y:ry,menu,dir}); window.RUDY_PSET=(x,y)=>{ rx=x; ry=y; camPan=null; arme=true; };
+
+/* ---------- la gardienne de glace, en haut des escaliers devant la porte du palais (plus loin que Rudy, donc plus petite) ---------- */
+const GARDE={x:965, y:479, h:104, img:new Image(), n:8, fw:151, fh:330};
+GARDE.img.src='/assets/shinato/m/palais_garde.webp';
+// les poses s'enchaînent doucement : [image, durée en ms]
+const GARDE_SEQ=[[0,2600],[1,900],[0,1400],[3,1800],[4,1100],[2,2200],[0,1200],[7,1500],[5,2000],[6,1400],[0,1800]];
+let gI=0, gDebut=performance.now(), gPrec=0;
+function dessineGarde(){
+  const im=GARDE.img; if(!im.complete||!im.naturalWidth) return;
+  const now=performance.now();
+  while(now-gDebut>GARDE_SEQ[gI][1]){ gDebut+=GARDE_SEQ[gI][1]; gPrec=GARDE_SEQ[gI][0]; gI=(gI+1)%GARDE_SEQ.length; }
+  const cur=GARDE_SEQ[gI][0], fondu=Math.min(1,(now-gDebut)/380), t=now/1000;
+  const h=GARDE.h, w=h*GARDE.fw/GARDE.fh;
+  const resp=Math.sin(t*1.9), sy=1+0.008*resp, sx=1+0.004*resp;          // elle respire
+  const balance=Math.sin(t*0.7)*0.006;                                      // léger balancement
+  ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over';
+  ctx.save(); ctx.translate(offX,offY); ctx.scale(scale,scale);
+  // ombre et lueur bleue de la glace à ses pieds
+  ctx.fillStyle='rgba(20,40,90,.35)'; ctx.beginPath(); ctx.ellipse(GARDE.x,GARDE.y,w*0.32,3.2,0,0,Math.PI*2); ctx.fill();
+  const lu=0.18+0.08*Math.sin(t*2.3);
+  const g=ctx.createRadialGradient(GARDE.x,GARDE.y-h*0.5,0,GARDE.x,GARDE.y-h*0.5,h*0.75);
+  g.addColorStop(0,'rgba(140,210,255,'+lu+')'); g.addColorStop(1,'rgba(140,210,255,0)');
+  ctx.globalCompositeOperation='lighter'; ctx.fillStyle=g; ctx.fillRect(GARDE.x-h,GARDE.y-h*1.3,h*2,h*1.4); ctx.globalCompositeOperation='source-over';
+  ctx.translate(GARDE.x,GARDE.y); ctx.rotate(balance); ctx.scale(sx,sy);
+  ctx.filter='brightness(.95) saturate(1.05)';
+  if(fondu<1&&gPrec!==cur){ ctx.drawImage(im,gPrec*GARDE.fw,0,GARDE.fw,GARDE.fh,-w/2,-h,w,h); ctx.globalAlpha=fondu; }
+  ctx.drawImage(im,cur*GARDE.fw,0,GARDE.fw,GARDE.fh,-w/2,-h,w,h);
+  ctx.restore(); ctx.filter='none'; ctx.globalAlpha=1;
+}
 
 })();
 </script>
