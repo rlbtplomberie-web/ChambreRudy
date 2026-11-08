@@ -34,7 +34,7 @@ html,body{margin:0;height:100%;background:#0b0618;overflow:hidden;touch-action:n
 #zoom b.zp::after{width:.6vmin;height:3vmin;margin:-1.5vmin 0 0 -.3vmin}
 #zoomRail{position:relative;flex:1;width:.7vmin;border-radius:1vmin;background:rgba(243,223,160,.45);box-shadow:0 0 3px rgba(0,0,0,.8);margin:2.5vmin 0}
 #zoomBout{position:absolute;left:50%;width:4vmin;height:4vmin;margin:-2vmin 0 0 -2vmin;border-radius:50%;background:radial-gradient(circle at 45% 38%,#f6e3a1,#a07a24);border:1px solid #3b2a08;box-shadow:0 1px 4px rgba(0,0,0,.6)}
-#btnEntrer{display:none;box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 16px rgba(255,214,60,.55)}
+#btnEntrer,#btnArcade{display:none;box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 16px rgba(255,214,60,.55)}
 #coJeu{position:fixed;inset:0;z-index:95;display:none;background:#000}#coJeu iframe{width:100%;height:100%;border:0;display:block}
 #coQuit{position:absolute;top:60px;right:10px;z-index:2;width:40px;height:40px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:10px;font:900 20px/1 Arial,sans-serif;color:#fff;background:rgba(170,20,30,.75);border:1px solid rgba(255,255,255,.45);touch-action:none;user-select:none;-webkit-user-select:none}
 /* bulles de dialogue façon manga */
@@ -55,7 +55,7 @@ html,body{margin:0;height:100%;background:#0b0618;overflow:hidden;touch-action:n
 <div class="chip">Garrett Parc</div>
 <div id="zoom"><b class="zp" data-z="1"></b><div id="zoomRail"><div id="zoomBout"></div></div><b class="zm" data-z="-1"></b></div>
 <div id="zoneJoy"></div><div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="btnParler" style="display:none">PARLER</div><div class="btn" id="btnEntrer">ENTRER</div><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
+<div id="actions"><div class="btn" id="btnParler" style="display:none">PARLER</div><div class="btn" id="btnEntrer">ENTRER</div><div class="btn" id="btnArcade">ENTRER</div><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
 <div id="depart"><div class="carte">
  <div class="fermer" id="departFermer">&#10005;</div>
  <h2>OÙ VOULEZ-VOUS ALLER&nbsp;?</h2>
@@ -274,9 +274,10 @@ function boucle(now){
   const liste=PNJ.map(p=>({y:p.y,p}));
   liste.push({y:y,rudy:true});
   if(devantCO()) liste.push({y:y+0.01,fleche:true});
+  if(devantArcade()) liste.push({y:y+0.01,fleche:true,cx:ARC_X});
   liste.sort((a,b)=>a.y-b.y).forEach(o=>{
     if(o.rudy){ dessineRudy(); return; }
-    if(o.fleche){ dessineFleche(t); return; }
+    if(o.fleche){ dessineFleche(t,o.cx); return; }
     const p=o.p; dessinePNJ(p,now,t);
     if(p.cache){const [a,b,c,d]=p.cache; ctx.drawImage(base,a,b,c-a,d-b,a,b,c-a,d-b);}
   });
@@ -361,8 +362,8 @@ const KO_CO={ wasp:'/assets/shinato/m/co_ko_guepe.mp4',        // la guêpe
 const btnE=document.getElementById('btnEntrer'), coJeu=document.getElementById('coJeu');
 function coOuvert(){ try{ return ['mitsuda_usine_gagnee','rembourg_chateau_gagne','foret_gagnee','carre_bleu_gagne'].every(k=>localStorage.getItem(k)==='1'); }catch(e){ return false; } }
 function devantCO(){ return !enJeu&&!menu&&Math.abs(x-CO_X)<CO_ZONE&&coOuvert(); }
-function dessineFleche(t){
-  const h=hRudy(), w=h*0.34, hh=w*1.2, cx=CO_X, top=y-h*1.42+Math.sin(t*5)*h*0.03;
+function dessineFleche(t,cx0){
+  const h=hRudy(), w=h*0.34, hh=w*1.2, cx=cx0||CO_X, top=y-h*1.42+Math.sin(t*5)*h*0.03;
   ctx.save(); ctx.globalAlpha=0.78+0.22*Math.sin(t*9);
   ctx.shadowColor='rgba(255,215,0,1)'; ctx.shadowBlur=18;
   ctx.beginPath(); ctx.moveTo(cx,top); ctx.lineTo(cx+w*.44,top+hh*.4); ctx.lineTo(cx+w*.16,top+hh*.4); ctx.lineTo(cx+w*.16,top+hh*.97);
@@ -371,6 +372,14 @@ function dessineFleche(t){
   ctx.restore();
 }
 setInterval(()=>{ btnE.style.display=devantCO()?'block':'none'; },120);
+/* ---------- la porte de la salle d'arcade : juste en face, flèche jaune + ENTRER → l'intérieur de la salle ---------- */
+const ARC_X=1666, ARC_ZONE=60, btnA=document.getElementById('btnArcade');
+function devantArcade(){ return !enJeu&&!menu&&!flicVideo&&!enDialogue&&Math.abs(x-ARC_X)<ARC_ZONE; }
+setInterval(()=>{ btnA.style.display=devantArcade()?'block':'none'; },120);
+appui(btnA,()=>{ if(!devantArcade()) return; enJeu=true; dir=dirY=0; btnA.style.display='none';
+  try{ parent.postMessage({type:'garrett:arcade'},'*'); }catch(e){} });
+// on ressort de la salle d'arcade : Rudy réapparaît devant la porte
+try{ if(localStorage.getItem('garrett_retour_arcade')==='1'){ localStorage.removeItem('garrett_retour_arcade'); x=ARC_X; y=YMIN+4; sens=1; arme=true; setTimeout(()=>cadrer(true),0); setTimeout(()=>cadrer(true),300); } }catch(e){}
 /* ---------- le flic costaud : tant que le Carré Orange n'est pas ouvert (les 4 diamants) ----------
    1) quand Rudy arrive à sa hauteur (en haut ou en bas du trottoir) : sa vidéo passe, Rudy reste devant lui
    2) si Rudy passe quand même derrière lui (il continue à droite) : la vidéo de l'arrestation, puis Rudy en prison (ville délabrée)
