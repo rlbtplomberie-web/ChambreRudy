@@ -37,7 +37,18 @@ html,body{margin:0;height:100%;background:#0b0618;overflow:hidden;touch-action:n
 #btnEntrer{display:none;box-shadow:0 5px 16px rgba(0,0,0,.55),0 0 16px rgba(255,214,60,.55)}
 #coJeu{position:fixed;inset:0;z-index:95;display:none;background:#000}#coJeu iframe{width:100%;height:100%;border:0;display:block}
 #coQuit{position:absolute;top:60px;right:10px;z-index:2;width:40px;height:40px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:10px;font:900 20px/1 Arial,sans-serif;color:#fff;background:rgba(170,20,30,.75);border:1px solid rgba(255,255,255,.45);touch-action:none;user-select:none;-webkit-user-select:none}
+/* bulles de dialogue façon manga */
+#bulle{position:fixed;z-index:60;display:none;max-width:min(62vw,420px);min-width:120px;padding:14px 20px 18px;box-sizing:border-box;
+ background:#fff;color:#111;border:3px solid #111;border-radius:50%/42%;box-shadow:4px 5px 0 rgba(0,0,0,.55);
+ font:800 clamp(14px,3.6vmin,24px)/1.25 "Comic Neue","Comic Sans MS","Chalkboard SE","Trebuchet MS",sans-serif;text-align:center;letter-spacing:.2px;
+ transform:translate(-50%,-100%);pointer-events:auto;user-select:none;-webkit-user-select:none;animation:bullePop .18s ease-out}
+#bulle::after{content:'';position:absolute;bottom:-22px;left:var(--queue,50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:24px solid #111;transform:translateX(-50%) skewX(var(--penche,-18deg))}
+#bulle::before{content:'';position:absolute;bottom:-16px;left:var(--queue,50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:18px solid #fff;transform:translateX(-50%) skewX(var(--penche,-18deg));z-index:1}
+#bulleSuite{position:absolute;right:16px;bottom:4px;font-size:12px;opacity:.6;animation:bulleClig .8s infinite}
+@keyframes bullePop{from{transform:translate(-50%,-100%) scale(.6);opacity:0}to{transform:translate(-50%,-100%) scale(1);opacity:1}}
+@keyframes bulleClig{50%{opacity:.1}}
 </style>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
 </head>
 <body>
 <canvas id="c"></canvas>
@@ -60,6 +71,7 @@ html,body{margin:0;height:100%;background:#0b0618;overflow:hidden;touch-action:n
  <div class="choix" data-d="chaliaville">CHALIAVILLE</div>
 </div></div>
 <div id="coJeu"><div id="coQuit" title="Quitter">✕</div></div>
+<div id="bulle"><div id="bulleTxt"></div><div id="bulleSuite">▼</div></div>
 <div id="charge">Chargement…</div>
 <script>/* PONT-L'ADES : le choix n'apparaît qu'après « INFORMATION SUR MIDA » (le costaud du Barding) */
 setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) return; var ok=false; try{ ok=localStorage.getItem('pontlades_debloque')==='1'; }catch(e){} b.style.display=ok?'':'none'; },400);</script>
@@ -179,7 +191,7 @@ Object.keys(IMG).forEach(k=>IMG[k].forEach(src=>{ const i=new Image(); i.src=src
 const YMIN=522, YMAX=552;          // le trottoir, entre les bancs et le bord de la route
 const HMIN=150, HMAX=162;          // à peu près la taille des passants du parc
 const btnF=document.getElementById('btnFumer'), btnJ=document.getElementById('btnJeter');
-let enJeu=false, etat='repos', clope=false, sens=1, x=110, y=540, f=0, phase=0, dir=0, dirY=0, parcours=0, menu=false, arme=false, imgRudy=null;
+let enDialogue=false, enJeu=false, etat='repos', clope=false, sens=1, x=110, y=540, f=0, phase=0, dir=0, dirY=0, parcours=0, menu=false, arme=false, imgRudy=null;
 const DUREE={fumer:300,jeter:190,repos:520,reposcig:600}, VITESSE=1.25, PAS_M=0.17;
 const hRudy=()=>HMIN+(HMAX-HMIN)*(y-YMIN)/(YMAX-YMIN);
 function planche(){ if(etat==='fumer'||etat==='jeter') return etat; if(etat==='marche') return clope?'marchecig':'marche'; return 'repos'; }
@@ -193,7 +205,7 @@ function majBoutons(){
 function rudyFume(){ if(menu||clope||etat==='fumer'||etat==='jeter') return; etat='fumer'; f=0; phase=0; dir=dirY=0; majBoutons(); }
 function rudyJette(){ if(menu||!clope||etat==='fumer'||etat==='jeter') return; etat='jeter'; f=0; phase=0; dir=dirY=0; majBoutons(); }
 function bougeRudy(dt){
-  const h=hRudy(), libre=(etat==='repos'||etat==='marche')&&!menu;
+  const h=hRudy(), libre=(etat==='repos'||etat==='marche')&&!menu&&!enDialogue;
   if(libre){
     if(dir!==0||dirY!==0){
       if(dir!==0) sens=dir>0?1:-1;
@@ -397,13 +409,66 @@ setInterval(()=>{
   videoFlic('/assets/shinato/m/garrett_flic.mp4',(reprendre,vb)=>{ cadrer(true); if(reprendre) joueMusique(); setTimeout(()=>vb.remove(),150); });   // Rudy reste devant lui
 },100);
 /* ---------- PARLER aux gens du parc : devant eux, le bouton PARLER → leur vidéo ---------- */
+/* ---------- l'homme qui boit (sur le banc, devant la maison) : dès que Rudy arrive à côté de lui, la conversation en bulles ----------
+   toucher l'écran fait passer à la bulle suivante (sinon elle passe toute seule) ; elle revient à chaque fois que Rudy revient */
+const BUVEUR_X=2405, DIALOGUE_BUVEUR=[
+  ['b',"Tu vois la forêt, là-bas ?"],
+  ['r',"Oui."],
+  ['b',"C'est bien, ça prouve que t'as une bonne vue."],
+  ['r',"Quoi ? C'est tout ce que t'as à me dire ?"],
+  ['b',"Comme t'as une bonne vue, j'imagine que tu ne vas pas y aller."],
+  ['r',"Si, je vais y aller."],
+  ['b',"T'as peut-être une bonne vue… mais t'es suicidaire."]
+];
+let dlgArme=true, dlgI=0, dlgT=null;
+const bulle=document.getElementById('bulle'), bulleTxt=document.getElementById('bulleTxt');
+function placeBulle(){
+  if(!enDialogue) return;
+  const qui=DIALOGUE_BUVEUR[dlgI][0], bv=PNJ.find(p=>p.id==='buveur'), im=spr.buveur;
+  let wx, wy;
+  if(qui==='r'){ wx=x; wy=y-hRudy()*1.06; }
+  else{ wx=BUVEUR_X; wy=bv.y-(im?im.height*bv.sc:160)*0.98; }
+  let sx=(wx-camX)*s, sy=wy*s+oy-14;
+  const w=bulle.offsetWidth||200, mx=Math.max(w/2+8,Math.min(cw-w/2-8,sx));
+  bulle.style.left=mx+'px'; bulle.style.top=Math.max(bulle.offsetHeight+8,sy)+'px';
+  const q=Math.max(18,Math.min(w-18,w/2+(sx-mx)));                 // la pointe de la bulle vise celui qui parle
+  bulle.style.setProperty('--queue',q+'px'); bulle.style.setProperty('--penche',qui==='r'?'18deg':'-18deg');
+}
+function montreBulle(){
+  clearTimeout(dlgT);
+  if(dlgI>=DIALOGUE_BUVEUR.length){ finDialogue(); return; }
+  const t=DIALOGUE_BUVEUR[dlgI][1];
+  bulleTxt.textContent=t; bulle.style.display='block';
+  bulle.style.animation='none'; void bulle.offsetWidth; bulle.style.animation='';
+  placeBulle();
+  dlgT=setTimeout(suiteBulle,1800+t.length*55);                    // passe toute seule si on ne touche pas
+}
+function suiteBulle(){ if(!enDialogue) return; dlgI++; montreBulle(); }
+function finDialogue(){ clearTimeout(dlgT); enDialogue=false; bulle.style.display='none'; }
+setInterval(()=>{
+  if(enJeu||menu||flicVideo){ if(enDialogue) finDialogue(); return; }
+  if(Math.abs(x-BUVEUR_X)>230) dlgArme=true;
+  if(!enDialogue&&dlgArme&&Math.abs(x-BUVEUR_X)<95){
+    dlgArme=false; enDialogue=true; dlgI=0; dir=dirY=0;
+    if(etat==='marche'){ etat='repos'; f=0; phase=0; }
+    sens=x<BUVEUR_X?1:-1;                                            // Rudy se tourne vers lui
+    montreBulle();
+  }
+  placeBulle();
+},60);
+document.addEventListener('pointerdown',e=>{
+  if(!enDialogue) return;
+  if(e.target.closest&&e.target.closest('#zoom')) return;
+  e.preventDefault(); suiteBulle();
+},true);
+
 const PARLER=[
   {x:150,  video:'/assets/shinato/m/garrett_ouvrier.mp4'},   // l'ouvrier à la pioche (à gauche, derrière le muret)
   {x:2875, video:'/assets/shinato/m/garrett_fumeur.mp4'},    // le fumeur à la veste marron, contre le pilier
   {x:1430, video:'/assets/shinato/m/garrett_nettoyeuse.mp4', hopital:true}   // la femme qui lave la vitre de la salle d'arcade : après sa vidéo, l'infirmière puis l'hôpital de Vaviel
 ];
 const btnP=document.getElementById('btnParler');
-function devantQui(){ if(enJeu||menu||flicVideo) return null; return PARLER.find(q=>Math.abs(x-q.x)<75)||null; }
+function devantQui(){ if(enJeu||menu||flicVideo||enDialogue) return null; return PARLER.find(q=>Math.abs(x-q.x)<75)||null; }
 setInterval(()=>{ btnP.style.display=devantQui()?'block':'none'; },120);
 appui(btnP,()=>{ const q=devantQui(); if(!q) return; btnP.style.display='none';
   videoFlic(q.video,(reprendre,vb)=>{
