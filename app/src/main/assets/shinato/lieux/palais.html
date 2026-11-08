@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Miria City · Palais de Givre</title>
+<style>
+  html,body{margin:0;height:100%;background:#050b1f;overflow:hidden;touch-action:none}
+  canvas{position:fixed;left:0;top:0;width:100%;height:100%;display:block}
+  #fx{pointer-events:none}
+.chip{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:20;padding:7px 14px;border-radius:999px;background:rgba(10,20,50,.55);border:1px solid rgba(160,210,255,.4);backdrop-filter:blur(6px);font:700 14px system-ui,sans-serif;letter-spacing:.04em;color:#eaf6ff;text-shadow:0 0 8px #6cc4ff;pointer-events:none}
+#joy{position:fixed;left:4.5vmin;bottom:5vmin;width:30vmin;height:30vmin;border-radius:50%;z-index:40;touch-action:none;
+ background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.10),rgba(0,0,0,.34));border:2px solid rgba(255,226,122,.45);box-shadow:0 6px 18px rgba(0,0,0,.5)}
+#stick{position:absolute;left:50%;top:50%;width:13vmin;height:13vmin;margin:-6.5vmin 0 0 -6.5vmin;border-radius:50%;
+ background:radial-gradient(circle at 42% 36%,#fbf0c6,#c9a33c 60%,#7d6118);box-shadow:0 4px 12px rgba(0,0,0,.6)}
+#zoneJoy{position:fixed;left:0;bottom:0;width:44vw;height:62vh;z-index:39;touch-action:none}
+#actions{position:fixed;right:4.5vmin;bottom:6vmin;display:flex;flex-direction:column;gap:2.6vmin;z-index:40}
+.btn{min-width:26vmin;padding:2.4vmin 3vmin;border-radius:3vmin;text-align:center;font:900 clamp(13px,3.1vmin,26px)/1 Arial,sans-serif;letter-spacing:2px;color:#ffe27a;
+ background:linear-gradient(rgba(12,12,14,.9),rgba(30,30,34,.9));border:2px solid rgba(255,226,122,.95);box-shadow:0 5px 16px rgba(0,0,0,.55);user-select:none;-webkit-user-select:none}
+.btn:active{transform:scale(.94)} .btn.off{opacity:.32}
+#depart{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-family:Arial,Helvetica,sans-serif}
+#depart .carte{position:relative;min-width:62vmin;max-height:92vh;overflow:auto;padding:5vmin 6vmin 5.5vmin;border-radius:3vmin;text-align:center;
+ background:linear-gradient(rgba(14,14,18,.96),rgba(30,30,36,.96));border:2px solid rgba(255,226,122,.6);box-shadow:0 10px 40px rgba(0,0,0,.7)}
+#depart h2{margin:0 0 4vmin;color:#fff;font:900 clamp(16px,4.2vmin,34px)/1.2 Arial,sans-serif;letter-spacing:2px;text-shadow:0 3px 0 #000}
+#depart .choix{display:block;width:100%;margin-top:2.4vmin;padding:3vmin 4vmin;border-radius:2.4vmin;cursor:pointer;
+ font:900 clamp(15px,3.8vmin,30px)/1 Arial,sans-serif;letter-spacing:2px;color:#ffe27a;
+ background:linear-gradient(rgba(12,12,14,.9),rgba(40,40,46,.9));border:2px solid rgba(255,226,122,.7)}
+#depart .choix:active{transform:scale(.95)}
+#depart .fermer{position:absolute;top:1.6vmin;right:2.2vmin;color:#ffe27a;font:900 clamp(16px,4vmin,30px)/1 Arial;cursor:pointer;opacity:.7}
+#zoom{position:fixed;right:calc(4vmin + env(safe-area-inset-right,0px));top:14vh;height:36vh;width:7vmin;z-index:45;touch-action:none;display:flex;flex-direction:column;align-items:center;user-select:none;-webkit-user-select:none}
+#zoom b{position:relative;display:block;width:100%;height:5vmin;cursor:pointer}
+#zoom b::before,#zoom b.zp::after{content:'';position:absolute;left:50%;top:50%;width:3vmin;height:.6vmin;margin:-.3vmin 0 0 -1.5vmin;background:#f3dfa0;border-radius:1vmin;box-shadow:0 0 3px #000}
+#zoom b.zp::after{width:.6vmin;height:3vmin;margin:-1.5vmin 0 0 -.3vmin}
+#zoomRail{position:relative;flex:1;width:.7vmin;border-radius:1vmin;background:rgba(243,223,160,.45);box-shadow:0 0 3px rgba(0,0,0,.8);margin:2.5vmin 0}
+#zoomBout{position:absolute;left:50%;width:4vmin;height:4vmin;margin:-2vmin 0 0 -2vmin;border-radius:50%;background:radial-gradient(circle at 45% 38%,#f6e3a1,#a07a24);border:1px solid #3b2a08;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<canvas id="fx"></canvas>
+<div class="chip">Miria City</div>
+<div id="zoom"><b class="zp" data-z="1"></b><div id="zoomRail"><div id="zoomBout"></div></div><b class="zm" data-z="-1"></b></div>
+<div id="zoneJoy"></div><div id="joy"><div id="stick"></div></div>
+<div id="actions"><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
+<div id="depart"><div class="carte">
+ <div class="fermer" id="departFermer">&#10005;</div>
+ <h2>OÙ VOULEZ-VOUS ALLER&nbsp;?</h2>
+ <div class="choix" data-d="boulevard">BOULEVARD</div>
+</div></div>
+<script>
+(function(){
+const IMG_SRC = "/assets/shinato/m/palais_fond.jpg";
+const FILL_SRC = "/assets/shinato/m/palais_remplir.jpg";
+const MASK_SRC = "/assets/shinato/m/palais_masque.png";
+const STARS = [[1155,5,255],[1033,7,255],[1438,10,255],[1705,10,255],[981,11,255],[1361,11,255],[1567,11,255],[1155,16,255],[689,17,255],[1985,18,255],[1003,20,255],[1882,20,255],[1126,24,255],[1401,26,255],[751,27,255],[984,28,255],[2029,28,255],[1636,29,255],[1291,30,255],[931,31,255],[1004,32,255],[1062,36,255],[1240,37,255],[933,41,255],[1924,42,255],[1006,44,255],[799,45,255],[852,45,255],[663,46,255],[1458,46,255],[710,47,255],[600,52,255],[1567,52,255],[815,53,255],[1256,55,255],[1882,55,255],[742,56,255],[1217,58,255],[1338,59,255],[631,62,255],[1999,63,255],[1015,65,255],[600,66,255],[887,67,255],[1046,67,255],[1226,68,255],[1397,69,255],[1340,73,255],[1366,75,255],[816,78,255],[1579,78,255],[1049,81,255],[1112,82,255],[1190,82,255],[676,84,255],[826,85,255],[851,85,255],[1285,88,255],[1081,93,255],[763,98,255],[828,101,255],[1895,103,255],[638,104,255],[1539,110,255],[1660,124,255],[1756,133,255],[634,135,255],[862,136,255],[1371,136,255],[1073,140,255],[1393,142,255],[1380,155,255],[1131,156,255],[1197,158,255],[1541,159,255],[1176,161,255],[785,166,255],[644,170,255],[1197,172,255],[1408,176,255],[1502,179,255],[1162,180,255],[780,181,255],[1144,181,255],[1212,181,255],[1787,192,255],[1919,206,255],[1813,212,255],[1686,214,255],[1777,214,255],[1411,219,255],[1886,222,255],[1768,232,255],[1587,233,255],[1477,21,254],[897,35,254],[766,42,254],[1097,45,254],[1385,50,254],[840,69,254],[738,70,254],[1865,101,254],[736,114,254],[1621,137,254],[1891,149,254],[1442,164,254],[741,178,254],[1965,230,254],[1309,10,254],[2006,10,254],[727,11,254],[1908,30,254],[1610,103,254],[1228,108,254],[1072,129,254],[1242,167,254],[1444,182,254],[1271,202,254],[1183,13,254],[628,24,254],[1290,54,254],[1939,69,254],[1253,106,254],[1565,129,254],[694,165,254],[1864,174,254],[1812,189,254],[862,8,253],[625,11,253],[1300,135,253],[1381,169,253],[1659,13,253],[876,37,253],[1143,53,253],[1531,120,253],[1199,127,253],[1932,221,253],[1731,229,253],[1834,11,253],[1357,29,253],[1068,75,253],[637,81,253],[1112,93,253],[722,30,252],[1896,69,252],[741,159,252],[797,10,252],[1273,17,252],[1562,166,252],[722,181,252],[1218,23,252],[664,199,251],[1976,9,251],[1998,44,251],[1273,77,251],[1457,146,251],[1490,212,250],[1638,44,249],[1253,138,248],[2026,104,248],[1335,35,248],[1218,38,248],[1727,137,248],[1097,139,247],[1033,34,247],[1266,161,247],[670,162,247],[1993,122,246],[651,30,245],[1596,158,245],[1147,160,245],[1760,205,245],[906,94,245],[792,122,245],[914,10,245],[1269,27,245],[1415,165,245],[813,25,244],[578,23,244],[702,134,244],[599,35,242],[1512,36,242],[1416,79,241],[1935,19,241],[1531,230,241],[573,95,240],[1092,81,240],[1290,173,240],[1500,227,239],[1442,121,239],[1389,189,239],[1607,3,238],[729,123,238],[770,165,238],[561,39,237],[725,139,237],[1036,21,237],[591,75,236],[1309,86,236],[1425,3,235],[751,161,235],[1885,36,235],[1221,116,235],[1407,116,235],[582,101,232],[659,137,232],[1852,87,232],[1832,208,232],[839,19,231],[1283,133,231],[833,57,229],[1413,28,229],[1580,109,228],[1151,118,226],[1421,191,226],[782,143,225],[1558,31,223],[1874,65,223],[1918,175,223],[1630,218,223],[1961,45,222],[1295,8,222],[685,74,221],[1169,14,219],[867,100,219],[783,71,219],[721,85,219],[1438,146,218],[1613,44,218],[1385,98,216],[1806,233,216],[1413,61,216],[796,77,216],[1473,151,216],[2006,150,215],[780,27,215],[1169,44,215],[1561,148,214],[620,86,213],[1153,103,213],[1601,143,213],[1469,187,213],[1544,19,212],[1379,22,212],[1985,166,212],[1712,195,210],[809,113,210],[1796,213,210],[1957,22,209],[1080,36,209],[1664,212,208],[1179,54,207],[1743,196,207],[1656,143,206],[1513,148,205],[853,2,205],[1982,216,204],[1488,37,203],[1639,209,202],[564,7,201],[1765,158,201],[1579,214,201],[2024,93,200],[1741,164,200],[660,117,199],[651,191,199],[846,130,198],[1647,233,197],[1911,161,197],[629,39,194],[706,59,194],[739,97,194],[1508,114,194],[1786,153,194],[1849,208,194],[1310,103,193],[1262,177,193],[1842,140,192],[1177,142,192],[1525,6,191],[1203,88,189],[1232,93,189],[769,130,189],[1986,141,188],[863,68,186],[1822,153,186],[1353,43,185],[911,36,185],[1707,140,184],[2026,134,184],[1254,96,183],[842,108,182],[1545,176,182],[1519,210,182],[1096,63,182],[1955,181,182],[1873,141,181],[1834,122,180],[1851,123,180],[1083,20,179],[1494,55,179],[1264,82,178],[1714,174,178],[1322,31,177],[673,177,177],[1582,38,176],[709,123,175],[1869,228,175],[1585,163,174],[1860,145,173],[1387,126,172],[660,174,171],[1085,138,171],[1355,98,171],[1737,2,170],[751,130,170],[1269,147,170],[1414,130,169],[1579,145,169],[1480,188,169],[1834,233,169],[622,47,167],[1944,185,167],[1858,5,166],[1255,7,165]];
+const IW = 2172, IH = 724;
+
+/* ---------- Arbres qui bougent au vent ----------
+   cône : [type 0, xSommet, ySommet, yBase, demi-largeur, amplitude px]
+   zone : [type 1, x0, y0, x1, y1, xPivot, yPivot, amplitude px] */
+const TREES = [
+  [0,115,160,480,115,20],[0,22,235,495,70,16],[0,270,185,470,85,18],[0,215,235,480,70,15],
+  [0,355,155,420,60,14],[0,160,165,420,45,12],[0,365,378,530,32,11],[0,535,352,548,62,15],
+  [0,1300,342,548,58,15],[0,1592,300,492,68,16],[0,1677,228,470,50,13],[0,1787,190,470,85,19],
+  [0,1932,205,300,50,12],[0,2120,85,300,75,17],[0,1510,250,450,40,10],[0,1555,245,450,35,10],
+  [1,-200,-200,548,262,20,520,26],
+  [1,2030,-200,2500,140,2200,420,20],
+];
+TREES.forEach((t,i)=>{ t.ph = Math.random()*6.28; t.f = 1.1 + Math.random()*0.7 + (t[0]===0 ? 70/(t[3]-t[2]) : 0.2); });
+
+const glc = document.getElementById('gl'), fx = document.getElementById('fx');
+const ctx = fx.getContext('2d');
+let W=0,H=0,DPR=1,scale=1,offX=0,offY=0,panX=0.5;
+
+function layout(){
+  DPR = Math.min(window.devicePixelRatio||1, 2);
+  W = innerWidth; H = innerHeight;
+  for(const c of [glc,fx]){ c.width = Math.round(W*DPR); c.height = Math.round(H*DPR); }
+  scale = Math.max(W/IW, H/IH)*ZOOM;
+  clampPan();
+}
+function clampPan(){
+  const dw = IW*scale - W, dh = IH*scale - H;
+  panX = Math.min(1,Math.max(0,panX));
+  offX = -dw*panX; offY = Math.min(0, Math.max(-dh, H - 690*scale));   // le sol enneigé reste en bas de l'écran
+}
+addEventListener('resize', layout);
+
+/* la caméra suit Rudy (zoom réglable avec la barre, comme à Garrett Parc) */
+const ZMIN=1, ZMAX=1.9; let ZOOM=1.6;
+try{ const v=parseFloat(localStorage.getItem('palais_zoom')); if(v>=ZMIN&&v<=ZMAX) ZOOM=v; }catch(e){}
+
+/* ---------- WebGL : déformation des arbres ---------- */
+const N = TREES.length;
+const VS = `attribute vec2 a;varying vec2 uv;void main(){uv=vec2(a.x*.5+.5,.5-a.y*.5);gl_Position=vec4(a,0.,1.);}`;
+const FS = `precision highp float;
+varying vec2 uv;uniform sampler2D tex,fil,msk;uniform vec2 isz;
+uniform vec4 G[${N}];uniform vec4 P[${N}];uniform float D[${N}];
+void main(){
+  vec2 p=uv*isz;float sw=0.,sd=0.;
+  for(int i=0;i<${N};i++){
+    vec4 g=G[i];vec4 q=P[i];float d=D[i];
+    if(q.x<.5){
+      float t=clamp((p.y-g.y)/(g.z-g.y),0.,1.);
+      float hw=g.w*(.12+.88*t)+10.;
+      float wx=1.-smoothstep(hw*.8,hw*1.3+6.,abs(p.x-g.x));
+      float wy=smoothstep(g.y-34.,g.y-6.,p.y)*(1.-smoothstep(g.z-4.,g.z+4.,p.y));
+      float h=clamp((g.z-p.y)/(g.z-g.y),0.,1.15);
+      float w=wx*wy;sw+=w;sd+=w*d*pow(h,1.6);
+    }else{
+      float wx=smoothstep(g.x,g.x+30.,p.x)*(1.-smoothstep(g.z-30.,g.z,p.x));
+      float wy=smoothstep(g.y,g.y+30.,p.y)*(1.-smoothstep(g.w-30.,g.w,p.y));
+      vec2 pv=q.yz;
+      float R=max(max(distance(pv,g.xy),distance(pv,g.zy)),1.);
+      float r=clamp(distance(p,pv)/R,0.,1.2);
+      float w=wx*wy;sw+=w;sd+=w*d*pow(r,1.7);
+    }
+  }
+  float d=sd/max(sw,1.);
+  d*=texture2D(msk,uv).g;
+  d*=mix(.3,1.,smoothstep(0.,70.,p.x))*mix(.3,1.,smoothstep(0.,70.,isz.x-p.x));
+  vec2 s=p-vec2(d,abs(d)*.12);
+  s.x=abs(s.x); s.x=isz.x-abs(isz.x-s.x); s.y=abs(s.y);
+  vec2 su=clamp(s,vec2(.5),isz-.5)/isz;
+  float m=texture2D(msk,su).r;
+  vec3 tree=texture2D(tex,su).rgb;
+  vec3 back=texture2D(fil,uv).rgb;
+  gl_FragColor=vec4(mix(back,tree,m),1.);
+}`;
+let gl=null, prog, uD;
+try{ gl = glc.getContext('webgl',{premultipliedAlpha:false,antialias:false}); }catch(e){}
+function sh(t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw gl.getShaderInfoLog(o);return o;}
+
+const img = new Image(), fimg = new Image(), mimg = new Image();
+let toLoad = 3;
+let skyCol = [];
+function onAllLoaded(){
+  // couleur du ciel à côté de chaque étoile (pour la faire « s'éteindre »)
+  const oc=document.createElement('canvas');oc.width=IW;oc.height=IH;const ox=oc.getContext('2d');ox.drawImage(img,0,0);
+  const px=ox.getImageData(0,0,IW,IH).data;
+  STARS.forEach(s=>{
+    let r=0,g=0,b=0,n=0;
+    for(const [dx,dy] of [[-7,0],[7,0],[0,-7],[0,7],[-5,-5],[5,5],[5,-5],[-5,5]]){
+      const x=Math.min(IW-1,Math.max(0,s[0]+dx)),y=Math.min(IH-1,Math.max(0,s[1]+dy)),k=(y*IW+x)*4;
+      r+=px[k];g+=px[k+1];b+=px[k+2];n++;
+    }
+    s.sky=`rgb(${r/n|0},${g/n|0},${b/n|0})`;
+  });
+  if(gl){
+    try{
+      prog=gl.createProgram();gl.attachShader(prog,sh(gl.VERTEX_SHADER,VS));gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(prog);
+      if(!gl.getProgramParameter(prog,gl.LINK_STATUS)) throw 'link';
+      gl.useProgram(prog);
+      const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+      const la=gl.getAttribLocation(prog,'a');gl.enableVertexAttribArray(la);gl.vertexAttribPointer(la,2,gl.FLOAT,false,0,0);
+      [[img,'tex'],[fimg,'fil'],[mimg,'msk']].forEach(([im,name],u)=>{
+        const tx=gl.createTexture();gl.activeTexture(gl.TEXTURE0+u);gl.bindTexture(gl.TEXTURE_2D,tx);
+        gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,im);
+        gl.uniform1i(gl.getUniformLocation(prog,name),u);
+      });
+      gl.uniform2f(gl.getUniformLocation(prog,'isz'),IW,IH);
+      const G=new Float32Array(N*4),P=new Float32Array(N*4);
+      TREES.forEach((t,i)=>{
+        if(t[0]===0){G.set([t[1],t[2],t[3],t[4]],i*4);P.set([0,0,0,0],i*4);}
+        else{G.set([t[1],t[2],t[3],t[4]],i*4);P.set([1,t[5],t[6],0],i*4);}
+      });
+      gl.uniform4fv(gl.getUniformLocation(prog,'G'),G);
+      gl.uniform4fv(gl.getUniformLocation(prog,'P'),P);
+      uD=gl.getUniformLocation(prog,'D');
+    }catch(e){ console.warn(e); gl=null; }
+  }
+  if(!gl){ glc.style.display='none'; }
+  layout(); requestAnimationFrame(frame);
+}
+for(const [im,src] of [[img,IMG_SRC],[fimg,FILL_SRC],[mimg,MASK_SRC]]){ im.onload=()=>{ if(--toLoad===0) onAllLoaded(); }; im.src=src; }
+
+/* ---------- Sprites ---------- */
+function glowSprite(size, inner, outer){
+  const c=document.createElement('canvas');c.width=c.height=size;const x=c.getContext('2d');
+  const g=x.createRadialGradient(size/2,size/2,0,size/2,size/2,size/2);
+  g.addColorStop(0,inner);g.addColorStop(.25,outer);g.addColorStop(1,'rgba(120,170,255,0)');
+  x.fillStyle=g;x.fillRect(0,0,size,size);return c;
+}
+const STAR_GLOW = glowSprite(64,'rgba(255,255,255,1)','rgba(170,210,255,.45)');
+const FLAKE = glowSprite(32,'rgba(255,255,255,1)','rgba(235,245,255,.85)');
+const FLAKE_SOFT = glowSprite(32,'rgba(255,255,255,.75)','rgba(225,238,255,.35)');
+
+/* Étoiles : quelques-unes scintillent fort, les autres doucement */
+STARS.forEach(s=>{
+  s.big = Math.random()<0.14 || (s[2]>245 && Math.random()<0.5);
+  s.f = s.big ? 0.6+Math.random()*1.6 : 1.5+Math.random()*3;
+  s.ph = Math.random()*6.28;
+  s.size = 0.6 + Math.random()*0.8 + (s[2]-165)/120;
+});
+
+/* Neige */
+let flakes=[];
+function makeFlake(randomY){
+  const z = Math.random();               // 0 = loin, 1 = près
+  return { x: Math.random()*(W+200)-100, y: randomY ? Math.random()*H : -20 - Math.random()*60,
+    z, ph: Math.random()*6.28, w: 0.6+Math.random()*1.4 };
+}
+function snowCount(){ return Math.min(900, Math.round(W*H/1100)); }
+
+/* Poussière de neige soulevée au sol */
+let dust=[], nextPuff=1.5;
+function groundY(){ return Math.random()<0.6 ? 548 + Math.random()*55 : 620 + Math.random()*90; }   // sol enneigé + rochers (coordonnées image)
+function addDust(ix, iy, n, power){
+  for(let i=0;i<n;i++){
+    dust.push({ ix: ix + (Math.random()-.5)*60*power, iy: iy - Math.random()*8,
+      vx: (70 + Math.random()*150)*power, vy: -(20 + Math.random()*70)*power,
+      life: 0, max: 1.6 + Math.random()*2.4, r: 5 + Math.random()*12*power, ph: Math.random()*6.28, spark: Math.random()<0.35 });
+  }
+}
+/* Vent : rafales qui montent et descendent */
+function windAt(t){
+  let g = 0.55 + 0.25*Math.sin(t*0.29) + 0.18*Math.sin(t*0.71+1.3) + 0.12*Math.sin(t*1.63+2.1);
+  return Math.max(0.15, Math.min(1.25, g));
+}
+
+const D = new Float32Array(N);
+let last = performance.now()/1000;
+function frame(now){
+  const t = now/1000, dt = Math.min(0.05, t-last); last=t;
+  const wind = windAt(t);
+  majRudy(dt);
+
+  /* arbres */
+  if(gl){
+    TREES.forEach((tr,i)=>{
+      const amp = tr[0]===0 ? tr[5] : tr[7];
+      const sway = Math.sin(t*tr.f + tr.ph);
+      const flutter = Math.sin(t*tr.f*2.9 + tr.ph*1.7)*0.22 + Math.sin(t*tr.f*5.3 + tr.ph)*0.08;
+      D[i] = amp * (wind*0.75 + sway*(0.45+wind*0.6) + flutter*(0.4+wind));
+    });
+    gl.viewport(Math.round(offX*DPR), Math.round(glc.height - (offY+IH*scale)*DPR), Math.round(IW*scale*DPR), Math.round(IH*scale*DPR));
+    gl.uniform1fv(uD, D);
+    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  }
+
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.clearRect(0,0,W,H);
+  if(!gl){ ctx.drawImage(img, offX, offY, IW*scale, IH*scale); }
+
+  /* étoiles */
+  for(const s of STARS){
+    const x = offX + s[0]*scale, y = offY + s[1]*scale;
+    if(x<-30||x>W+30) continue;
+    const v = Math.sin(t*s.f + s.ph);
+    const k = Math.max(scale, 0.35);
+    if(s.big){
+      // l'étoile s'éteint presque puis brille fort avec une croix de lumière
+      if(v < -0.55 && s.sky){
+        ctx.globalCompositeOperation='source-over';
+        ctx.globalAlpha = Math.min(1,(-v-0.55)*2.2)*0.85;
+        ctx.fillStyle = s.sky; ctx.beginPath(); ctx.arc(x,y,3.2*k,0,6.283); ctx.fill();
+      }
+      const a = Math.pow(Math.max(0,v),3);
+      if(a>0.01){
+        ctx.globalCompositeOperation='lighter';
+        const r = (7+9*s.size)*k*(0.6+a*0.6);
+        ctx.globalAlpha = a; ctx.drawImage(STAR_GLOW, x-r, y-r, r*2, r*2);
+        ctx.strokeStyle='rgba(230,242,255,1)'; ctx.lineWidth=Math.max(0.6,1.1*k);
+        const L = r*1.5;
+        ctx.globalAlpha = a*0.9;
+        ctx.beginPath(); ctx.moveTo(x-L,y); ctx.lineTo(x+L,y); ctx.moveTo(x,y-L); ctx.lineTo(x,y+L); ctx.stroke();
+        ctx.globalAlpha = a*0.4; const l2=L*0.45;
+        ctx.beginPath(); ctx.moveTo(x-l2,y-l2); ctx.lineTo(x+l2,y+l2); ctx.moveTo(x-l2,y+l2); ctx.lineTo(x+l2,y-l2); ctx.stroke();
+      }
+    } else {
+      ctx.globalCompositeOperation='lighter';
+      const a = 0.18 + 0.32*(v*0.5+0.5);
+      const r = (5+5*s.size)*k;
+      ctx.globalAlpha = a; ctx.drawImage(STAR_GLOW, x-r, y-r, r*2, r*2);
+    }
+  }
+  ctx.globalCompositeOperation='source-over';
+
+  /* poussière de neige au sol (coordonnées image, suit le panorama) */
+  nextPuff -= dt;
+  if(nextPuff<=0){
+    const power = 0.7 + wind*0.6;
+    addDust(Math.random()*IW, groundY(), 45 + Math.round(wind*50), power);
+    if(wind>0.8) addDust(Math.random()*IW, groundY(), 30, power);
+    nextPuff = 0.6 + Math.random()*2.2 - wind*0.5;
+  }
+  if(wind>0.75 && Math.random()<(wind-0.7)*0.8) addDust(Math.random()*IW, groundY(), 3, 0.8+wind*0.4);  // nappe rasante
+  for(let i=dust.length-1;i>=0;i--){
+    const p=dust[i]; p.life+=dt;
+    if(p.life>p.max){ dust.splice(i,1); continue; }
+    p.vx += (wind*90 - p.vx*0.25)*dt; p.vy += (6 - p.vy*0.5)*dt;
+    p.ix += p.vx*dt + Math.sin(t*3+p.ph)*10*dt; p.iy += p.vy*dt;
+    p.r += 9*dt;
+    const x = offX + p.ix*scale, y = offY + p.iy*scale;
+    if(x<-80||x>W+80) continue;
+    const k = p.life/p.max, a = Math.sin(Math.PI*k) * 0.5;
+    const rr = p.r*scale*1.4, stretch = 1 + Math.min(1.5, p.vx/120);
+    ctx.globalAlpha = a;
+    ctx.drawImage(FLAKE_SOFT, x-rr*stretch, y-rr, rr*2*stretch, rr*2);
+    if(p.spark){ const sr = Math.max(1.2, 2.2*scale); ctx.globalAlpha = Math.min(1, a*2.2);
+      ctx.drawImage(FLAKE, x-sr+Math.sin(t*7+p.ph)*rr*0.5, y-sr, sr*2, sr*2); }
+  }
+  ctx.globalAlpha=1;
+
+  dessineRudy();
+
+  /* neige */
+  const want = snowCount();
+  while(flakes.length<want) flakes.push(makeFlake(true));
+  if(flakes.length>want) flakes.length=want;
+  const kk = Math.max(0.8, H/600);
+  for(const f of flakes){
+    const sp = 0.35 + f.z*0.9;
+    f.y += (28 + 55*f.z) * kk * dt * (0.8+0.2*f.w);
+    f.x += (wind*110*sp + Math.sin(t*f.w + f.ph)*18*sp - 20) * kk * dt;
+    if(f.y > H+20 || f.x > W+120 || f.x < -140){ Object.assign(f, makeFlake(false)); if(Math.random()<0.5){ f.x=-30-Math.random()*80; f.y=Math.random()*H; } }
+    const r = (0.9 + f.z*f.z*3.6) * kk;
+    ctx.globalAlpha = 0.55 + f.z*0.45;
+    ctx.drawImage(f.z>0.8 ? FLAKE_SOFT : FLAKE, f.x-r*2, f.y-r*2, r*4, r*4);
+  }
+  ctx.globalAlpha=1;
+  requestAnimationFrame(frame);
+}
+/* ================= Rudy à Miria City : la planche du fumeur (marcher, fumer, jeter), sur le chemin enneigé ================= */
+const RIMGS=(function(){ for(const w of [window.parent,window.top]){ try{ if(w&&w.RUDY_IMAGES) return w.RUDY_IMAGES; }catch(e){} } return null; })()||{marche:[],marchecig:[],fumer:[],jeter:[]};
+const RIMG={};
+Object.keys(RIMGS).forEach(k=>RIMGS[k].forEach(src=>{ const i=new Image(); i.src=src; RIMG[src]=i; }));
+const YMIN=572, YMAX=606, HMIN=120, HMAX=134, XMIN=40, XMAX=IW-40;
+const btnF=document.getElementById('btnFumer'), btnJ=document.getElementById('btnJeter');
+let etat='repos', clope=false, sens=1, rx=200, ry=590, f=0, phase=0, dir=0, dirY=0, parcours=0, menu=false, arme=false, imgRudy=null, camPan=null;
+const DUREE={fumer:300,jeter:190,repos:520,reposcig:600}, VITESSE=1.25, PAS_M=0.17;
+const hRudy=()=>HMIN+(HMAX-HMIN)*(ry-YMIN)/(YMAX-YMIN);
+function planche(){ if(etat==='fumer'||etat==='jeter') return etat; if(etat==='marche') return clope?'marchecig':'marche'; return 'repos'; }
+function images(){ const p=planche(); if(p==='repos') return clope?RIMGS.fumer.slice(4):[RIMGS.fumer[0]]; return RIMGS[p]; }
+function duree(){ const p=planche(); if(p==='repos') return clope?DUREE.reposcig:DUREE.repos; return DUREE[p]; }
+function pose(src){ if(src) imgRudy=RIMG[src]||null; }
+function majBoutons(){ btnF.classList.toggle('off',clope||etat==='fumer'||etat==='jeter'); btnJ.classList.toggle('off',!clope||etat==='fumer'||etat==='jeter'); }
+function rudyFume(){ if(menu||clope||etat==='fumer'||etat==='jeter') return; etat='fumer'; f=0; phase=0; dir=dirY=0; majBoutons(); }
+function rudyJette(){ if(menu||!clope||etat==='fumer'||etat==='jeter') return; etat='jeter'; f=0; phase=0; dir=dirY=0; majBoutons(); }
+function majRudy(dt){
+  const h=hRudy(), libre=(etat==='repos'||etat==='marche')&&!menu;
+  if(libre){
+    if(dir!==0||dirY!==0){
+      if(dir!==0) sens=dir>0?1:-1;
+      if(etat!=='marche'){ etat='marche'; parcours=0; }
+      const ax=rx, ay=ry;
+      rx=Math.max(XMIN,Math.min(XMAX,rx+dir*VITESSE*h*dt));
+      ry=Math.max(YMIN,Math.min(YMAX,ry+dirY*VITESSE*0.45*h*dt));
+      parcours+=Math.hypot(rx-ax,(ry-ay)*1.6);
+    } else if(etat==='marche'){ etat='repos'; phase=0; f=0; }
+  } else if(etat==='jeter'){ rx=Math.max(XMIN,Math.min(XMAX,rx+sens*VITESSE*0.55*h*dt)); }
+  let jeu=images();
+  if(jeu&&jeu.length){
+    if(etat==='marche'){ pose(jeu[Math.floor(parcours/(PAS_M*h))%jeu.length]); }
+    else{
+      phase+=dt*1000/duree();
+      if(phase>=1){ phase-=1; f++;
+        if(f>=jeu.length){ if(etat==='fumer'){ clope=true; etat='repos'; f=0; majBoutons(); } else if(etat==='jeter'){ clope=false; etat='repos'; f=0; majBoutons(); } else f=0; jeu=images(); } }
+      pose(jeu[Math.min(f,jeu.length-1)]);
+    }
+  }
+  // la caméra suit Rudy
+  const dw=IW*scale-W;
+  if(dw>1){ const cible=Math.max(0,Math.min(1,(rx*scale-W/2)/dw)); camPan=camPan===null?cible:camPan+(cible-camPan)*Math.min(1,dt*9.6); panX=camPan; clampPan(); }
+  // tout à gauche de Miria City : « Où voulez-vous aller ? » (seulement le boulevard)
+  if(rx>230) arme=true;
+  if(arme&&!menu&&rx<=XMIN+10) montreMenu();
+}
+function dessineRudy(){
+  const im=imgRudy; if(!im||!im.complete||!im.naturalWidth) return;
+  const h=hRudy(), hi=h*800/660, bas=ry+h*30/660, wi=hi*im.naturalWidth/im.naturalHeight;
+  ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over';
+  ctx.save(); ctx.translate(offX,offY); ctx.scale(scale,scale);
+  ctx.fillStyle='rgba(10,20,50,.35)'; ctx.beginPath(); ctx.ellipse(rx,ry,h*0.26,h*0.05,0,0,Math.PI*2); ctx.fill();
+  ctx.translate(rx,bas); ctx.scale(sens,1);
+  ctx.filter='brightness(.92) saturate(.9) hue-rotate(8deg)';
+  ctx.drawImage(im,-wi/2,-hi,wi,hi);
+  ctx.restore(); ctx.filter='none';
+}
+pose(RIMGS.fumer[0]); majBoutons();
+
+/* joystick : toutes les directions */
+(function(){
+  const z=document.getElementById('zoneJoy'), joy=document.getElementById('joy'), stick=document.getElementById('stick');
+  let actif=null, ox=0, oy=0, R=0;
+  const touche=e=>[].slice.call(e.changedTouches).filter(t=>t.identifier===actif)[0];
+  function bouge(cx,cy){ const dx=cx-ox, dy=cy-oy, d=Math.min(Math.hypot(dx,dy),R*0.62), a=Math.atan2(dy,dx);
+    stick.style.transform='translate('+Math.cos(a)*d+'px,'+Math.sin(a)*d+'px)';
+    const m=Math.hypot(dx,dy); if(m<R*0.18){ dir=dirY=0; return; } dir=dx/m; dirY=dy/m;
+    if(Math.abs(dir)<0.2) dir=0; if(Math.abs(dirY)<0.2) dirY=0; }
+  function lache(){ actif=null; dir=dirY=0; stick.style.transform='translate(0,0)'; }
+  [z,joy].forEach(el=>{
+    el.addEventListener('touchstart',e=>{ const t=e.changedTouches[0]; actif=t.identifier; const r=joy.getBoundingClientRect(); R=r.width/2;
+      if(el===joy){ ox=r.left+R; oy=r.top+R; } else { ox=t.clientX; oy=t.clientY; } bouge(t.clientX,t.clientY); e.preventDefault(); },{passive:false});
+    el.addEventListener('touchmove',e=>{ const t=touche(e); if(t){ bouge(t.clientX,t.clientY); e.preventDefault(); } },{passive:false});
+    el.addEventListener('touchend',e=>{ if(touche(e)) lache(); }); el.addEventListener('touchcancel',lache);
+    el.addEventListener('mousedown',e=>{ const r=joy.getBoundingClientRect(); R=r.width/2; ox=r.left+R; oy=r.top+R; actif='souris'; bouge(e.clientX,e.clientY);
+      const m=ev=>bouge(ev.clientX,ev.clientY), u=()=>{ lache(); removeEventListener('mousemove',m); removeEventListener('mouseup',u); };
+      addEventListener('mousemove',m); addEventListener('mouseup',u); });
+  });
+  const K={}; const majK=()=>{ dir=(K.ArrowRight?1:0)-(K.ArrowLeft?1:0); dirY=(K.ArrowDown?1:0)-(K.ArrowUp?1:0); };
+  addEventListener('keydown',e=>{ if(e.key.startsWith('Arrow')){ K[e.key]=true; majK(); } else if(e.key==='f'||e.key==='F') rudyFume(); else if(e.key==='j'||e.key==='J') rudyJette(); });
+  addEventListener('keyup',e=>{ if(e.key.startsWith('Arrow')){ K[e.key]=false; majK(); } });
+  addEventListener('blur',lache); document.addEventListener('visibilitychange',lache);
+  addEventListener('touchend',e=>{ if(e.touches&&e.touches.length===0) lache(); });
+})();
+function appui(el,fn){ let t=0; const go=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t<350) return; t=n; fn(); };
+  el.addEventListener('touchstart',go,{passive:false}); el.addEventListener('click',go); }
+appui(btnF,rudyFume); appui(btnJ,rudyJette);
+
+/* « Où voulez-vous aller ? » tout à gauche : seulement le boulevard (on rend la voiture à Fred, le voiturier) */
+const boiteD=document.getElementById('depart');
+function montreMenu(){ menu=true; arme=false; dir=dirY=0; boiteD.style.display='flex'; }
+function cacheMenu(){ menu=false; boiteD.style.display='none'; rx=Math.max(90,rx); }
+appui(document.getElementById('departFermer'),cacheMenu);
+boiteD.querySelectorAll('.choix').forEach(b=>appui(b,()=>{ boiteD.style.display='none';
+  try{ parent.postMessage({type:'palais:boulevard'},'*'); }catch(e){} }));
+
+/* barre de zoom (haut = zoomer, bas = dézoomer) */
+(function(){
+  const zr=document.getElementById('zoomRail'), zb=document.getElementById('zoomBout'), zz=document.getElementById('zoom');
+  function placeZoom(){ zb.style.top=((ZMAX-ZOOM)/(ZMAX-ZMIN)*100)+'%'; }
+  function regleZoom(v){ ZOOM=Math.max(ZMIN,Math.min(ZMAX,v)); layout(); camPan=null; placeZoom(); try{ localStorage.setItem('palais_zoom',ZOOM.toFixed(3)); }catch(e){} }
+  let zid=null;
+  function zmove(e){ const r=zr.getBoundingClientRect(); regleZoom(ZMAX-Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))*(ZMAX-ZMIN)); }
+  zz.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); if(e.target.tagName==='B'){ regleZoom(ZOOM+0.1*parseFloat(e.target.dataset.z)); return; } zid=e.pointerId; try{ zz.setPointerCapture(zid); }catch(_){} zmove(e); });
+  zz.addEventListener('pointermove',e=>{ if(e.pointerId===zid) zmove(e); });
+  ['pointerup','pointercancel'].forEach(n=>zz.addEventListener(n,e=>{ if(e.pointerId===zid) zid=null; }));
+  addEventListener('resize',placeZoom); placeZoom();
+})();
+
+/* la musique : la même que Shinato */
+function musiqueShinato(){ for(const w of [window.parent,window.top]){ try{ if(w&&w.RUDY_AUDIO) return w.RUDY_AUDIO; }catch(e){} } return null; }
+function joueMusique(){ try{ const m=musiqueShinato(); if(m&&m.paused){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} }
+joueMusique(); setTimeout(joueMusique,600);
+['touchstart','pointerdown','keydown'].forEach(ev=>addEventListener(ev,joueMusique,{passive:true}));
+window.RUDY_PX=()=>({x:rx,y:ry,menu,dir});
+
+})();
+</script>
+</body>
+</html>

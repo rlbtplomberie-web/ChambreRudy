@@ -1548,6 +1548,17 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
    window.minuterieLibre(function(){ try{ cc.focus(); }catch(err){} },300);
    return;
   }
+  // Miria City : Fred le voiturier prête une voiture → Route de nuit → Miria City (le Palais de Givre) ; retour : on rend la voiture à Fred
+  if(e.data && (e.data.type==="boulevard:miria"||e.data.type==="routenuit:arrivee"||e.data.type==="palais:boulevard")){
+   var cmi=document.getElementById("moto"); if(!cmi) return;
+   var fic=e.data.type==="boulevard:miria"?"jeux/route-de-nuit.html":(e.data.type==="routenuit:arrivee"?"lieux/palais.html":"lieux/boulevard.html");
+   if(e.data.type==="palais:boulevard"){ try{ localStorage.setItem("blvd_retour_fred","1"); }catch(err){} window.DESTINATION_MOTO="boulevard"; }
+   if(e.data.type==="routenuit:arrivee") window.DESTINATION_MOTO="palais";
+   if(e.data.type==="boulevard:miria"){ try{ if(window.RUDY_AUDIO) window.RUDY_AUDIO.pause(); }catch(err){} }   // la voiture a ses propres sons
+   cmi.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS(fic));
+   window.minuterieLibre(function(){ try{ cmi.focus(); }catch(err){} },300);
+   return;
+  }
   if(e.data && e.data.type==="garrett:prison"){
    // Garrett Parc : Rudy est passé derrière le flic sans les 4 diamants → la cellule de la prison (ville délabrée)
    var cpr=document.getElementById("moto"); if(!cpr) return;
@@ -2358,7 +2369,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
  /* MAP du téléphone : Rudy est téléporté là où il a choisi d'aller (la musique de la ville continue) */
  window.teleporteVers=function(lieu){
   telAncien=true;                                    // après le voyage, le téléphone se recharge à neuf
-  var dest={plage:"plage",vaviel:"vaviel",ville:"delabree",delabree:"delabree",boulevard:"boulevard",mitsuda:"mitsuda",rembourg:"rembourg",aeroport:"aeroport",chaliaville:"chaliaville",garrett:"garrett"}[lieu];
+  var dest={plage:"plage",vaviel:"vaviel",ville:"delabree",delabree:"delabree",boulevard:"boulevard",mitsuda:"mitsuda",rembourg:"rembourg",aeroport:"aeroport",chaliaville:"chaliaville",garrett:"garrett",palais:"palais"}[lieu];
   if(lieu==="home"){ try{ if(window.Chambre&&window.Chambre.rentrer) window.Chambre.rentrer(); }catch(e){} return; }
   try{ if(window.RUDY_AUDIO&&window.RUDY_AUDIO.paused){ var pr=window.RUDY_AUDIO.play(); if(pr&&pr.catch) pr.catch(function(){}); } }catch(e){}
   var cm=document.getElementById("moto");
@@ -2373,7 +2384,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
   window.DESTINATION_MOTO=dest; dir=0; window.pauseRue();
   if(!cm){ cm=document.createElement("iframe"); cm.id="moto"; cm.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(cm); }
   // un écran de voyage le temps que le lieu se dessine : la rue ne se montre plus entre les deux
-  if(couv){ document.getElementById("voyageTxt").textContent="En route vers "+({plage:"la plage",vaviel:"Vaviel",ville:"la ville délabrée",delabree:"la ville délabrée",boulevard:"le boulevard",mitsuda:"Mitsuda",rembourg:"Rembourg",aeroport:"l'aéroport",chaliaville:"Chaliaville",garrett:"Garrett Parc"}[lieu]||"là-bas")+"…"; couv.style.display="flex"; }
+  if(couv){ document.getElementById("voyageTxt").textContent="En route vers "+({plage:"la plage",vaviel:"Vaviel",ville:"la ville délabrée",delabree:"la ville délabrée",boulevard:"le boulevard",mitsuda:"Mitsuda",rembourg:"Rembourg",aeroport:"l'aéroport",chaliaville:"Chaliaville",garrett:"Garrett Parc",palais:"Miria City"}[lieu]||"là-bas")+"…"; couv.style.display="flex"; }
   var fini=false, cache=function(){ if(fini) return; fini=true; window.minuterieLibre(function(){ if(couv) couv.style.display="none"; },250); };
   cm.onload=cache; window.minuterieLibre(cache,8000);
   cm.style.pointerEvents="auto"; cm.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/"+dest+".html")); cm.style.display="block";
