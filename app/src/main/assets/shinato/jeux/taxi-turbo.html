@@ -1,0 +1,1372 @@
+<title>Taxi Turbo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@700;800;900&display=swap">
+<style>
+/* Arcade ensoleillée : jaune taxi, damier noir et blanc, ciel bleu */
+:root{
+  --ink:#fffaf0; --dark:#14161c; --panel:#1d2130; --taxi:#ffcf1a; --red:#ff3b30; --green:#2fd27a; --sky:#3fb6ff; --pink:#ff6fb5; --dim:#c3c8d8;
+  --f-comic:"Bangers","Impact",system-ui,sans-serif; --f-ui:"Nunito","Segoe UI",system-ui,sans-serif; color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;background:#14161c;color:var(--ink);font-family:var(--f-ui);overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block}
+button{font-family:var(--f-ui);color:var(--ink);cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid var(--taxi);outline-offset:3px}
+.screen{position:fixed;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;background:linear-gradient(180deg,rgba(20,22,28,.25),rgba(20,22,28,.8))}
+.wrap{min-height:100%;box-sizing:border-box;max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:14px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:calc(14px + env(safe-area-inset-top,0px)) calc(18px + env(safe-area-inset-bottom,0px))}
+.center{justify-content:center;align-items:center;text-align:center}
+.logo{font-family:var(--f-comic);font-size:clamp(64px,13vw,150px);line-height:.85;margin:0;color:var(--taxi);transform:rotate(-4deg);
+  -webkit-text-stroke:4px var(--dark);text-shadow:6px 6px 0 var(--red),11px 11px 0 var(--dark)}
+.logo span{display:block;font-size:.55em;color:#fff;text-shadow:5px 5px 0 var(--sky),9px 9px 0 var(--dark)}
+.checker{height:14px;background:repeating-linear-gradient(90deg,#111 0 14px,#fff 14px 28px);border:3px solid var(--dark);border-radius:4px;max-width:420px;width:100%}
+.btn{border:4px solid var(--dark);border-radius:14px;padding:12px 28px;font-family:var(--f-comic);font-size:28px;letter-spacing:.06em;color:var(--dark);background:var(--taxi);box-shadow:5px 5px 0 var(--dark);transform:rotate(-1deg)}
+.btn:active{transform:translate(3px,3px) rotate(-1deg);box-shadow:2px 2px 0 var(--dark)}
+.btn.ghost{background:#fff;font-size:20px;padding:9px 18px}
+.h1{font-family:var(--f-comic);font-size:clamp(30px,5.5vw,46px);margin:0;letter-spacing:.04em;color:#fff;text-shadow:3px 3px 0 var(--dark)}
+.eyebrow{font-size:12px;font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:var(--taxi)}
+.hint{color:var(--dim);font-size:14px;line-height:1.5;margin:0;font-weight:700}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.card{background:rgba(29,33,48,.92);border:4px solid var(--dark);border-radius:16px;padding:14px;box-shadow:5px 5px 0 var(--dark);display:flex;flex-direction:column;gap:10px}
+.drivers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.drv{border:4px solid var(--dark);border-radius:14px;padding:12px;background:linear-gradient(160deg,var(--c),#1d2130 85%);box-shadow:4px 4px 0 var(--dark);text-align:left;display:flex;flex-direction:column;gap:4px}
+.drv b{font-family:var(--f-comic);font-size:26px;letter-spacing:.04em;text-shadow:2px 2px 0 var(--dark)}
+.drv small{font-weight:900;color:var(--dark);background:rgba(255,255,255,.85);border-radius:6px;padding:1px 6px;align-self:flex-start;font-size:11px}
+.drv span{font-size:12.5px;font-weight:700;color:var(--dim)}
+.drv[aria-pressed="true"]{outline:4px solid #fff;transform:translateY(-3px) rotate(-1deg)}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{border:3px solid var(--dark);background:#fff;color:var(--dark);border-radius:10px;padding:8px 12px;font-weight:900;font-size:14px;box-shadow:3px 3px 0 var(--dark)}
+.seg button[aria-pressed="true"]{background:var(--taxi)}
+.opt{display:flex;flex-direction:column;gap:6px}
+.opt>span{font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.moves{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px 12px;font-size:13.5px;font-weight:700;text-align:left}
+.moves b{color:var(--taxi);font-family:var(--f-comic);font-size:17px;letter-spacing:.04em}
+/* HUD */
+#hud{position:fixed;inset:0;pointer-events:none}
+.tl{position:absolute;top:calc(8px + env(safe-area-inset-top,0px));left:max(10px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:2px}
+#time{font-family:var(--f-comic);font-size:54px;line-height:.9;color:var(--taxi);-webkit-text-stroke:2px var(--dark);text-shadow:3px 3px 0 var(--dark)}
+#time.low{color:#ff5a4a;animation:blink .5s infinite}
+@keyframes blink{50%{opacity:.4}}
+#money{font-family:var(--f-comic);font-size:30px;color:#7dff9a;text-shadow:2px 2px 0 var(--dark)}
+#fares{font-size:12px;font-weight:900;letter-spacing:.08em;text-shadow:1px 1px 0 var(--dark)}
+.tc{position:absolute;top:calc(6px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;min-width:240px}
+#arrow{width:0;height:0;border-left:26px solid transparent;border-right:26px solid transparent;border-bottom:54px solid var(--green);filter:drop-shadow(3px 3px 0 var(--dark));transition:transform .05s linear}
+#dest{font-family:var(--f-comic);font-size:22px;letter-spacing:.04em;text-shadow:2px 2px 0 var(--dark);white-space:nowrap}
+#fare{font-family:var(--f-comic);font-size:30px;color:#fff;text-shadow:2px 2px 0 var(--dark);line-height:1}
+#fare.low{color:#ff5a4a}
+.comfort{display:flex;align-items:center;gap:6px;font-weight:900;font-size:12px;text-shadow:1px 1px 0 var(--dark)}
+.comfort i{display:block;width:110px;height:10px;border:2px solid var(--dark);border-radius:6px;background:#2a1b1b;overflow:hidden}
+.comfort i b{display:block;height:100%;background:var(--green)}
+#face{font-size:24px;filter:drop-shadow(1px 1px 0 var(--dark))}
+#bubble{position:absolute;top:calc(166px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);max-width:min(60vw,420px);background:#fff;color:var(--dark);border:4px solid var(--dark);border-radius:20px;padding:8px 14px;font-weight:900;font-size:16px;box-shadow:4px 4px 0 var(--dark);opacity:0;transition:opacity .2s}
+#bubble.on{opacity:1}
+#bubble::after{content:"";position:absolute;left:24px;bottom:-16px;border-left:12px solid transparent;border-right:12px solid transparent;border-top:16px solid var(--dark)}
+#announce{position:absolute;left:0;right:0;top:36%;text-align:center;font-family:var(--f-comic);font-size:clamp(34px,7vw,78px);color:var(--taxi);-webkit-text-stroke:3px var(--dark);text-shadow:5px 5px 0 var(--dark);opacity:0}
+#announce small{display:block;font-size:.45em;color:#fff;-webkit-text-stroke:1.5px var(--dark)}
+#announce.on{animation:ann 1.8s ease-out forwards}
+@keyframes ann{0%{opacity:0;transform:scale(1.7) rotate(-4deg)}12%{opacity:1;transform:scale(1) rotate(-3deg)}80%{opacity:1}100%{opacity:0;transform:scale(1.1) rotate(-3deg)}}
+#near{position:absolute;left:50%;top:58%;transform:translateX(-50%);font-family:var(--f-comic);font-size:30px;color:#7dff9a;text-shadow:3px 3px 0 var(--dark);opacity:0;transition:opacity .2s}
+#map{position:absolute;top:calc(8px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));width:132px;height:132px;border-radius:50%;border:4px solid var(--dark);box-shadow:3px 3px 0 var(--dark);background:#2b3a2a}
+#speed{position:absolute;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);font-family:var(--f-comic);font-size:34px;text-shadow:3px 3px 0 var(--dark);text-align:center;line-height:.9}
+#speed small{display:block;font-size:14px;letter-spacing:.1em}
+#turboBar{width:90px;height:8px;border:2px solid var(--dark);border-radius:5px;margin:4px auto 0;background:#222;overflow:hidden}
+#turboBar b{display:block;height:100%;background:linear-gradient(90deg,#ff8a00,#ffd23f)}
+/* commandes */
+.pad{position:fixed;inset:0;pointer-events:none}
+.pb{position:absolute;border:4px solid var(--dark);font-family:var(--f-comic);font-size:20px;letter-spacing:.04em;display:grid;place-items:center;pointer-events:auto;touch-action:none;box-shadow:3px 3px 0 var(--dark);opacity:.92;line-height:1;color:var(--dark);padding:0}
+.pb.on{transform:scale(.92);filter:brightness(1.25)}
+#bL,#bR{bottom:calc(16px + env(safe-area-inset-bottom,0px));width:96px;height:96px;border-radius:24px;background:#fff;font-size:44px}
+#bL{left:max(14px,env(safe-area-inset-left,0px))}
+#bR{left:calc(max(14px,env(safe-area-inset-left,0px)) + 108px)}
+#bGas{right:max(14px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:104px;height:120px;border-radius:22px;background:linear-gradient(180deg,#9dffb8,var(--green));font-size:24px}
+#bBrake{right:calc(max(14px,env(safe-area-inset-right,0px)) + 116px);bottom:calc(16px + env(safe-area-inset-bottom,0px));width:88px;height:88px;border-radius:20px;background:linear-gradient(180deg,#ffb0a8,var(--red));color:#fff;font-size:19px}
+#bBoost{right:calc(max(14px,env(safe-area-inset-right,0px)) + 20px);bottom:calc(150px + env(safe-area-inset-bottom,0px));width:76px;height:76px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a0,#ff8a00);font-size:18px}
+#bHorn{right:calc(max(14px,env(safe-area-inset-right,0px)) + 124px);bottom:calc(118px + env(safe-area-inset-bottom,0px));width:62px;height:62px;border-radius:50%;background:#fff;font-size:26px}
+.topbar{position:absolute;top:calc(148px + env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));display:flex;gap:8px;pointer-events:auto}
+.topbar button{border:3px solid var(--dark);background:#fff;color:var(--dark);border-radius:10px;width:42px;height:38px;font-weight:900;font-size:15px;box-shadow:2px 2px 0 var(--dark)}
+.panel{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(10,12,18,.78);padding:16px;overflow:auto}
+.panel .card{max-width:560px;width:100%;text-align:center;align-items:stretch;max-height:100%;overflow:auto}
+.tbl{width:100%;border-collapse:collapse;font-weight:800;font-variant-numeric:tabular-nums}
+.tbl td{padding:7px 6px;border-bottom:2px solid rgba(255,255,255,.08);text-align:right}
+.tbl td:first-child{text-align:left;color:var(--dim)}
+.grade{font-family:var(--f-comic);font-size:110px;line-height:1;color:var(--taxi);-webkit-text-stroke:4px var(--dark);text-shadow:6px 6px 0 var(--red)}
+#rotate{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;text-align:center;padding:24px;background:radial-gradient(circle at 50% 40%,#3a3f55,#14161c 70%)}
+#rotate .phone{width:70px;height:120px;border:6px solid var(--taxi);border-radius:14px;margin:0 auto 22px;animation:rot 1.8s ease-in-out infinite}
+@keyframes rot{0%,25%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+@media (orientation:portrait){#rotate{display:flex}}
+#nogl{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;background:#14161c}
+@media (prefers-reduced-motion:reduce){#time.low{animation:none}}
+</style>
+
+<canvas id="gl"></canvas>
+<div id="hud" hidden>
+  <div class="tl"><div id="time">60</div><div id="money">0 €</div><div id="fares">0 COURSE</div></div>
+  <div class="tc" id="tc" hidden>
+    <div id="arrow"></div>
+    <div id="dest"></div>
+    <div id="fare"></div>
+    <div class="comfort"><span id="face">😊</span><i><b id="cbar"></b></i><span>CONFORT</span></div>
+  </div>
+  <div id="bubble"></div>
+  <div id="announce"></div>
+  <div id="near"></div>
+  <canvas id="map" width="264" height="264"></canvas>
+  <div id="speed">0<small>KM/H</small><div id="turboBar"><b></b></div></div>
+</div>
+<div class="pad" id="pad" hidden>
+  <button class="pb" id="bL" aria-label="Gauche">◀</button>
+  <button class="pb" id="bR" aria-label="Droite">▶</button>
+  <button class="pb" id="bBrake" aria-label="Frein et marche arrière">FREIN</button>
+  <button class="pb" id="bGas" aria-label="Accélérer">GAZ</button>
+  <button class="pb" id="bBoost" aria-label="Turbo">TURBO</button>
+  <button class="pb" id="bHorn" aria-label="Klaxon">📯</button>
+  <div class="topbar"><button id="mute" aria-label="Son">♪</button><button id="pause" aria-label="Pause">II</button></div>
+</div>
+<div class="panel" id="panel" hidden><div class="card" id="panelBody"></div></div>
+<div class="screen" id="screen"></div>
+<div id="rotate"><div><div class="phone"></div><span class="h1">Tourne ton téléphone</span><p class="hint">Taxi Turbo se joue à l'horizontale.</p></div></div>
+<div id="nogl" hidden><div class="card" style="max-width:420px"><span class="h1">Oups !</span><p class="hint">Ton navigateur n'arrive pas à afficher la 3D (WebGL 2). Essaie avec Chrome à jour.</p></div></div>
+<script>
+/* =====================================================================
+   MOTEUR 3D (WebGL2) — rendu instancié de formes simples
+   Tout est dessiné avec des cubes, sphères, cylindres, cônes et disques,
+   empilés via une pile de matrices (comme un vieux OpenGL).
+   ===================================================================== */
+'use strict';
+const V3 = {
+  add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]],
+  sub: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]],
+  mul: (a, s) => [a[0] * s, a[1] * s, a[2] * s],
+  dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2],
+  len: a => Math.hypot(a[0], a[1], a[2]),
+  norm: a => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; },
+  cross: (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]],
+  lerp: (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k],
+  dist: (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]),
+  hdist: (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2])
+};
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, k) => a + (b - a) * k;
+const rnd = (a, b) => a + Math.random() * (b - a);
+function hex(h, k) { const n = parseInt(h.slice(1), 16); const c = [(n >> 16) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]; return k == null ? c : c.map(v => Math.min(1, v * k)); }
+function mixC(a, b, k) { return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k]; }
+
+/* ---------- matrices 4x4 (colonne majeure) ---------- */
+const M4 = {
+  ident() { const m = new Float32Array(16); m[0] = m[5] = m[10] = m[15] = 1; return m; },
+  mul(o, a, b) {
+    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) {
+      o[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
+    }
+    return o;
+  },
+  persp(fov, asp, n, f) { const m = new Float32Array(16), t = 1 / Math.tan(fov / 2); m[0] = t / asp; m[5] = t; m[10] = (f + n) / (n - f); m[11] = -1; m[14] = 2 * f * n / (n - f); return m; },
+  lookAt(e, c, up) {
+    const z = V3.norm(V3.sub(e, c)), x = V3.norm(V3.cross(up, z)), y = V3.cross(z, x), m = new Float32Array(16);
+    m[0] = x[0]; m[4] = x[1]; m[8] = x[2]; m[1] = y[0]; m[5] = y[1]; m[9] = y[2]; m[2] = z[0]; m[6] = z[1]; m[10] = z[2];
+    m[12] = -V3.dot(x, e); m[13] = -V3.dot(y, e); m[14] = -V3.dot(z, e); m[15] = 1; return m;
+  }
+};
+
+/* ---------- pile de transformations ---------- */
+const XF = {
+  m: M4.ident(), stack: [], depth: 0, tmp: new Float32Array(16), tmp2: new Float32Array(16),
+  reset() { this.identity(); this.depth = 0; },
+  identity() { const m = this.m; m.fill(0); m[0] = m[5] = m[10] = m[15] = 1; },
+  push() { if (!this.stack[this.depth]) this.stack[this.depth] = new Float32Array(16); this.stack[this.depth].set(this.m); this.depth++; },
+  pop() { this.depth--; this.m.set(this.stack[this.depth]); },
+  apply(b) { M4.mul(this.tmp2, this.m, b); this.m.set(this.tmp2); },
+  t(x, y, z) { const m = this.m; m[12] += m[0] * x + m[4] * y + m[8] * z; m[13] += m[1] * x + m[5] * y + m[9] * z; m[14] += m[2] * x + m[6] * y + m[10] * z; },
+  s(x, y, z) { const m = this.m; for (let i = 0; i < 3; i++) { m[i] *= x; m[4 + i] *= y; m[8 + i] *= z; } },
+  rx(a) { if (!a) return; const c = Math.cos(a), s = Math.sin(a), m = this.m; for (let i = 0; i < 4; i++) { const y = m[4 + i], z = m[8 + i]; m[4 + i] = y * c + z * s; m[8 + i] = z * c - y * s; } },
+  ry(a) { if (!a) return; const c = Math.cos(a), s = Math.sin(a), m = this.m; for (let i = 0; i < 4; i++) { const x = m[i], z = m[8 + i]; m[i] = x * c - z * s; m[8 + i] = x * s + z * c; } },
+  rz(a) { if (!a) return; const c = Math.cos(a), s = Math.sin(a), m = this.m; for (let i = 0; i < 4; i++) { const x = m[i], y = m[4 + i]; m[i] = x * c + y * s; m[4 + i] = y * c - x * s; } },
+  pos() { return [this.m[12], this.m[13], this.m[14]]; },
+  // oriente l'axe Y local le long d'un vecteur (pour les rayons, cylindres…)
+  alignY(d) {
+    const l = V3.len(d) || 1, y = [d[0] / l, d[1] / l, d[2] / l];
+    let x = Math.abs(y[1]) < 0.95 ? V3.norm(V3.cross(y, [0, 1, 0])) : V3.norm(V3.cross(y, [1, 0, 0]));
+    const z = V3.cross(x, y), b = this.tmp;
+    b[0] = x[0]; b[1] = x[1]; b[2] = x[2]; b[3] = 0; b[4] = y[0]; b[5] = y[1]; b[6] = y[2]; b[7] = 0; b[8] = z[0]; b[9] = z[1]; b[10] = z[2]; b[11] = 0; b[12] = 0; b[13] = 0; b[14] = 0; b[15] = 1;
+    M4.mul(this.tmp2, this.m, b); this.m.set(this.tmp2);
+  }
+};
+
+/* ---------- géométries ---------- */
+function geoCube() {
+  const P = [], N = [], I = [];
+  const faces = [[[1, 0, 0], [0, 1, 0], [0, 0, 1]], [[-1, 0, 0], [0, 1, 0], [0, 0, -1]], [[0, 1, 0], [0, 0, 1], [1, 0, 0]], [[0, -1, 0], [0, 0, -1], [1, 0, 0]], [[0, 0, 1], [0, 1, 0], [-1, 0, 0]], [[0, 0, -1], [0, 1, 0], [1, 0, 0]]];
+  for (const [n, u, v] of faces) {
+    const b = P.length / 3;
+    for (const [a, c] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      P.push(n[0] * 0.5 + u[0] * a * 0.5 + v[0] * c * 0.5, n[1] * 0.5 + u[1] * a * 0.5 + v[1] * c * 0.5, n[2] * 0.5 + u[2] * a * 0.5 + v[2] * c * 0.5); N.push(...n);
+    }
+    // ordre des sommets tel que la face regarde vers n
+    const p0 = [P[b * 3], P[b * 3 + 1], P[b * 3 + 2]], p1 = [P[b * 3 + 3], P[b * 3 + 4], P[b * 3 + 5]], p2 = [P[b * 3 + 6], P[b * 3 + 7], P[b * 3 + 8]];
+    const cr = V3.cross(V3.sub(p1, p0), V3.sub(p2, p0));
+    if (V3.dot(cr, n) > 0) I.push(b, b + 1, b + 2, b, b + 2, b + 3); else I.push(b, b + 2, b + 1, b, b + 3, b + 2);
+  }
+  return { P, N, I };
+}
+function geoSphere(seg, ring) {
+  const P = [], N = [], I = [];
+  for (let r = 0; r <= ring; r++) {
+    const v = r / ring, th = v * Math.PI;
+    for (let s = 0; s <= seg; s++) { const ph = s / seg * Math.PI * 2; const x = Math.sin(th) * Math.cos(ph), y = Math.cos(th), z = Math.sin(th) * Math.sin(ph); P.push(x * 0.5, y * 0.5, z * 0.5); N.push(x, y, z); }
+  }
+  for (let r = 0; r < ring; r++) for (let s = 0; s < seg; s++) { const a = r * (seg + 1) + s, b = a + seg + 1; I.push(a, a + 1, b, b, a + 1, b + 1); }
+  return { P, N, I };
+}
+function geoCyl(seg, top) { // top = rayon du haut (0 = cône)
+  const P = [], N = [], I = [];
+  const slope = (0.5 - top * 0.5);
+  for (let s = 0; s <= seg; s++) {
+    const a = s / seg * Math.PI * 2, c = Math.cos(a), si = Math.sin(a);
+    const n = V3.norm([c, slope, si]);
+    P.push(c * 0.5, -0.5, si * 0.5); N.push(...n);
+    P.push(c * 0.5 * top, 0.5, si * 0.5 * top); N.push(...n);
+  }
+  for (let s = 0; s < seg; s++) { const a = s * 2; I.push(a, a + 1, a + 3, a, a + 3, a + 2); }
+  // fonds
+  for (const [y, ny, rr] of [[-0.5, -1, 0.5], [0.5, 1, 0.5 * top]]) {
+    if (rr <= 0) continue;
+    const c0 = P.length / 3; P.push(0, y, 0); N.push(0, ny, 0);
+    for (let s = 0; s <= seg; s++) { const a = s / seg * Math.PI * 2; P.push(Math.cos(a) * rr, y, Math.sin(a) * rr); N.push(0, ny, 0); }
+    for (let s = 0; s < seg; s++) { if (ny < 0) I.push(c0, c0 + 1 + s, c0 + 2 + s); else I.push(c0, c0 + 2 + s, c0 + 1 + s); }
+  }
+  return { P, N, I };
+}
+function geoDisc() { return { P: [-0.5, 0, -0.5, 0.5, 0, -0.5, 0.5, 0, 0.5, -0.5, 0, 0.5], N: [0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0], I: [0, 2, 1, 0, 3, 2] }; }
+
+/* ---------- shaders ---------- */
+const VS = `#version 300 es
+precision highp float;
+layout(location=0) in vec3 aPos; layout(location=1) in vec3 aNor;
+layout(location=2) in vec4 m0; layout(location=3) in vec4 m1; layout(location=4) in vec4 m2; layout(location=5) in vec4 m3;
+layout(location=6) in vec4 aCol; layout(location=7) in vec4 aExt;
+uniform mat4 uVP; uniform float uTime; uniform float uCheer;
+out vec3 vN; out vec3 vW; out vec3 vL; out vec4 vCol; out vec4 vExt; out vec3 vS;
+void main(){
+  mat4 M = mat4(m0,m1,m2,m3);
+  vec4 w = M*vec4(aPos,1.0);
+  if (aExt.y > 1.5 && aExt.y < 2.5) w.y += abs(sin(uTime*(3.0+uCheer*6.0)+aExt.z))*(0.08+uCheer*0.4);
+  vW = w.xyz; vN = mat3(M)*aNor; vL = aPos; vCol = aCol; vExt = aExt;
+  vS = vec3(length(m0.xyz), length(m1.xyz), length(m2.xyz));
+  gl_Position = uVP*w;
+}`;
+const FS = `#version 300 es
+precision highp float;
+in vec3 vN; in vec3 vW; in vec3 vL; in vec4 vCol; in vec4 vExt; in vec3 vS;
+uniform vec3 uSun; uniform vec3 uSunCol; uniform vec3 uSky; uniform vec3 uGnd; uniform vec3 uFog; uniform vec3 uCam;
+uniform float uTime; uniform vec3 uZen; uniform vec3 uHor; uniform float uFogN; uniform float uFogF; uniform float uNight; uniform float uFlash; uniform float uAdd;
+out vec4 o;
+float h21(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)))*43758.5453); }
+float vnoise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(h21(i),h21(i+vec2(1,0)),f.x), mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),f.x), f.y); }
+void main(){
+  vec3 col = vCol.rgb; float a = vCol.a; float mode = vExt.y; float emis = vExt.x;
+  vec3 n = normalize(vN);
+  vec3 V = normalize(uCam - vW);
+  if (mode > 6.5 && mode < 7.5) { // ciel
+    float h = normalize(vL).y;
+    vec3 c = mix(uHor, uZen, smoothstep(-0.05, 0.6, h));
+    c = mix(c, uFog, smoothstep(0.08, -0.15, h));
+    o = vec4(c, 1.0); return;
+  }
+  if (mode > 0.5 && mode < 1.5) { // immeuble : fenêtres
+    if (abs(n.y) < 0.5) {
+      // grille de fenêtres calée sur l'immeuble (coin = vExt.zw) : les morceaux d'une façade trouée restent alignés
+      float u = abs(n.x) > 0.5 ? vW.z - vExt.w : vW.x - vExt.z;
+      float v = vW.y;
+      vec2 g = vec2(u/3.2, v/3.6); vec2 c = floor(g); vec2 f = fract(g);
+      float win = step(0.22,f.x)*step(f.x,0.78)*step(0.25,f.y)*step(f.y,0.82)*step(1.0, c.y);
+      float r = h21(floor(c) + vec2(floor(mod(vExt.z, 97.0)) + floor(n.x + 0.5)*7.0, floor(mod(vExt.w, 89.0)) + floor(n.z + 0.5)*3.0));
+      if (win > 0.5) {
+        if (uNight > 0.5 && r > 0.42) { col = mix(vec3(1.0,0.82,0.45), vec3(0.75,0.9,1.0), step(0.85,r)); emis = 1.0; }
+        else col = mix(vec3(0.38,0.5,0.62), vec3(0.75,0.85,0.95), uNight < 0.5 ? r*0.6 : 0.05) * (uNight > 0.5 ? 0.35 : 1.0);
+      }
+    } else col *= 0.8;
+  }
+  if (mode > 3.5 && mode < 4.5) { // sol procédural
+    float k = vExt.z; vec2 p = vW.xz;
+    if (k < 0.5) { float nn = vnoise(p*0.15)*0.6 + vnoise(p*0.9)*0.4; col *= 0.82 + nn*0.3; }               // herbe
+    else if (k < 1.5) { float nn = vnoise(p*0.6); col *= 0.9 + nn*0.15; }                                  // béton / route
+    else if (k < 2.5) { vec2 t = fract(p/4.0); float l = step(0.04,t.x)*step(0.04,t.y); col *= mix(0.72, 1.0, l)*(0.92+h21(floor(p/4.0))*0.12); } // dalles
+    else if (k < 3.5) { float nn = vnoise(p*0.3); col *= 0.85 + nn*0.25; }                                  // terre / sable
+    else { float w = sin(p.x*0.21 + uTime*1.3)*sin(p.y*0.17 + uTime*1.1) + vnoise(p*0.08 + uTime*0.05); col *= 0.82 + w*0.12; emis = max(emis, 0.08); } // mer
+  }
+  if (mode > 4.5 && mode < 5.5) { // décalque rond (cratère, ombre, sang, brûlure)
+    float d = length(vL.xz)*2.0;
+    if (d > 1.0) discard;
+    float kind = vExt.z;
+    if (kind < 0.5) a *= smoothstep(1.0, 0.2, d);                       // ombre douce
+    else if (kind < 1.5) { a *= smoothstep(1.0, 0.75, d); col *= mix(0.45, 1.25, smoothstep(0.55, 0.95, d)); } // cratère avec rebord
+    else { float nn = vnoise(vL.xz*9.0 + vExt.w); a *= smoothstep(1.0, 0.5, d + nn*0.35); }  // tache
+  }
+  vec3 outc;
+  if (uAdd > 0.5 || emis >= 0.99) outc = col;
+  else {
+    float diff = max(dot(n, uSun), 0.0);
+    if (mode > 5.5 && mode < 6.5) { diff = smoothstep(0.05, 0.25, diff)*0.85 + 0.15*diff; } // ombrage manga
+    vec3 hemi = mix(uGnd, uSky, n.y*0.5+0.5);
+    outc = col*(hemi + uSunCol*diff) + col*emis;
+    if (mode > 5.5 && mode < 6.5) outc += pow(1.0 - max(dot(n, V), 0.0), 3.0)*0.35*(uSky+uSunCol*0.3);
+    outc += uFlash*col*0.8;
+  }
+  float d = distance(vW, uCam);
+  float fg = clamp((d - uFogN)/(uFogF - uFogN), 0.0, 1.0);
+  if (uAdd > 0.5) { if (mode < 7.5) outc *= (1.0 - fg); o = vec4(outc*a, a); return; }
+  outc = mix(outc, uFog, fg);
+  o = vec4(outc, a);
+}`;
+
+const R = {
+  gl: null, prog: null, geo: {}, u: {}, pass: { opaque: {}, alpha: {}, add: {} }, statics: [],
+  init(cv) {
+    const gl = cv.getContext('webgl2', { antialias: true, alpha: false, powerPreference: 'high-performance' });
+    if (!gl) return false;
+    this.gl = gl;
+    const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; };
+    const p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+    this.prog = p; gl.useProgram(p);
+    for (const n of ['uVP', 'uTime', 'uCheer', 'uSun', 'uSunCol', 'uSky', 'uGnd', 'uFog', 'uCam', 'uZen', 'uHor', 'uFogN', 'uFogF', 'uNight', 'uFlash', 'uAdd']) this.u[n] = gl.getUniformLocation(p, n);
+    const defs = { cube: geoCube(), sphere: geoSphere(14, 10), ball: geoSphere(8, 6), cyl: geoCyl(12, 1), cone: geoCyl(10, 0), disc: geoDisc() };
+    for (const k in defs) {
+      const d = defs[k], g = { n: d.I.length };
+      g.vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, g.vb);
+      const inter = new Float32Array(d.P.length * 2); for (let i = 0; i < d.P.length / 3; i++) { inter.set(d.P.slice(i * 3, i * 3 + 3), i * 6); inter.set(d.N.slice(i * 3, i * 3 + 3), i * 6 + 3); }
+      gl.bufferData(gl.ARRAY_BUFFER, inter, gl.STATIC_DRAW);
+      g.ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g.ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(d.I), gl.STATIC_DRAW);
+      this.geo[k] = g;
+    }
+    gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE);
+    return true;
+  },
+  makeVAO(g, ib) {
+    const gl = this.gl, vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, g.vb);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 24, 0);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 24, 12);
+    gl.bindBuffer(gl.ARRAY_BUFFER, ib);
+    for (let i = 0; i < 6; i++) { gl.enableVertexAttribArray(2 + i); gl.vertexAttribPointer(2 + i, 4, gl.FLOAT, false, 96, i * 16); gl.vertexAttribDivisor(2 + i, 1); }
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g.ib);
+    gl.bindVertexArray(null);
+    return vao;
+  },
+  batch(pass, geo) {
+    let b = this.pass[pass][geo];
+    if (!b) { const ib = this.gl.createBuffer(); b = this.pass[pass][geo] = { data: new Float32Array(24 * 256), n: 0, ib, vao: this.makeVAO(this.geo[geo], ib) }; }
+    return b;
+  },
+  // ajoute une instance avec la matrice courante de la pile (et une échelle locale)
+  draw(geo, sx, sy, sz, col, a, emis, mode, p1, p2, pass) {
+    if (this.ovr) { col = this.ovr.col; a = this.ovr.a; emis = 1; mode = 0; pass = 'add'; }
+    const b = this.batch(pass || (a < 1 ? 'alpha' : 'opaque'), geo);
+    if ((b.n + 1) * 24 > b.data.length) { const nd = new Float32Array(b.data.length * 2); nd.set(b.data); b.data = nd; }
+    const d = b.data, o = b.n * 24, m = XF.m;
+    d[o] = m[0] * sx; d[o + 1] = m[1] * sx; d[o + 2] = m[2] * sx; d[o + 3] = 0;
+    d[o + 4] = m[4] * sy; d[o + 5] = m[5] * sy; d[o + 6] = m[6] * sy; d[o + 7] = 0;
+    d[o + 8] = m[8] * sz; d[o + 9] = m[9] * sz; d[o + 10] = m[10] * sz; d[o + 11] = 0;
+    d[o + 12] = m[12]; d[o + 13] = m[13]; d[o + 14] = m[14]; d[o + 15] = 1;
+    d[o + 16] = col[0]; d[o + 17] = col[1]; d[o + 18] = col[2]; d[o + 19] = a == null ? 1 : a;
+    d[o + 20] = emis || 0; d[o + 21] = mode || 0; d[o + 22] = p1 || 0; d[o + 23] = p2 || 0;
+    b.n++;
+  },
+  // raccourci : objet posé à (x,y,z) avec rotation Y
+  box(geo, x, y, z, sx, sy, sz, col, opt) {
+    opt = opt || {};
+    XF.push(); XF.t(x, y, z); if (opt.ry) XF.ry(opt.ry); if (opt.rx) XF.rx(opt.rx); if (opt.rz) XF.rz(opt.rz);
+    this.draw(geo, sx, sy, sz, col, opt.a == null ? 1 : opt.a, opt.e, opt.mode, opt.p1, opt.p2, opt.pass);
+    XF.pop();
+  },
+  // lot statique (construit une fois) : on enregistre ce qui a été ajouté puis on le fige
+  beginStatic() { this._saved = this.pass; this.pass = { opaque: {}, alpha: {}, add: {}, skyadd: {} }; },
+  endStatic() {
+    const gl = this.gl, list = [];
+    for (const pass in this.pass) for (const geo in this.pass[pass]) {
+      const b = this.pass[pass][geo]; if (!b.n) continue;
+      gl.bindBuffer(gl.ARRAY_BUFFER, b.ib); gl.bufferData(gl.ARRAY_BUFFER, b.data.subarray(0, b.n * 24), gl.STATIC_DRAW);
+      list.push({ pass, geo, n: b.n, vao: b.vao, ib: b.ib });
+    }
+    this.pass = this._saved;
+    return list;
+  },
+  freeStatic(list) { if (!list) return; for (const s of list) { this.gl.deleteBuffer(s.ib); this.gl.deleteVertexArray(s.vao); } },
+  flushPass(pass, statics) {
+    const gl = this.gl;
+    for (const s of statics || []) if (s.pass === pass) { gl.bindVertexArray(s.vao); gl.drawElementsInstanced(gl.TRIANGLES, this.geo[s.geo].n, gl.UNSIGNED_SHORT, 0, s.n); }
+    for (const geo in this.pass[pass]) {
+      const b = this.pass[pass][geo]; if (!b.n) continue;
+      gl.bindBuffer(gl.ARRAY_BUFFER, b.ib); gl.bufferData(gl.ARRAY_BUFFER, b.data.subarray(0, b.n * 24), gl.DYNAMIC_DRAW);
+      gl.bindVertexArray(b.vao); gl.drawElementsInstanced(gl.TRIANGLES, this.geo[geo].n, gl.UNSIGNED_SHORT, 0, b.n);
+      b.n = 0;
+    }
+  },
+  // rendu complet de l'image
+  render(cam, env, statics, w, h, time) {
+    const gl = this.gl, u = this.u;
+    gl.viewport(0, 0, w, h);
+    gl.clearColor(env.fog[0], env.fog[1], env.fog[2], 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    const P = M4.persp(cam.fov, w / h, 0.3, 2400), Vw = M4.lookAt(cam.pos, cam.target, [0, 1, 0]), VP = M4.mul(new Float32Array(16), P, Vw);
+    this.VP = VP;
+    gl.uniformMatrix4fv(u.uVP, false, VP); gl.uniform1f(u.uTime, time); gl.uniform1f(u.uCheer, env.cheer || 0);
+    gl.uniform3fv(u.uSun, V3.norm(env.sun)); gl.uniform3fv(u.uSunCol, env.sunCol); gl.uniform3fv(u.uSky, env.sky); gl.uniform3fv(u.uGnd, env.gnd);
+    gl.uniform3fv(u.uFog, env.fog); gl.uniform3fv(u.uCam, cam.pos); gl.uniform3fv(u.uZen, env.zen); gl.uniform3fv(u.uHor, env.hor);
+    gl.uniform1f(u.uFogN, env.fogN); gl.uniform1f(u.uFogF, env.fogF); gl.uniform1f(u.uNight, env.night ? 1 : 0); gl.uniform1f(u.uFlash, env.flash || 0);
+    // ciel
+    gl.uniform1f(u.uAdd, 0);
+    gl.depthMask(false); gl.disable(gl.CULL_FACE);
+    XF.push(); XF.identity(); XF.t(cam.pos[0], cam.pos[1], cam.pos[2]); this.draw('sphere', 2000, 2000, 2000, [1, 1, 1], 1, 0, 7, 0, 0, 'sky'); XF.pop();
+    this.flushSky();
+    gl.uniform1f(u.uAdd, 1); gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE); this.flushPass('skyadd', null); gl.disable(gl.BLEND); gl.uniform1f(u.uAdd, 0);
+    gl.depthMask(true); gl.enable(gl.CULL_FACE);
+    // opaque
+    this.flushPass('opaque', statics);
+    // transparent
+    gl.enable(gl.BLEND); gl.depthMask(false);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-2, -2);
+    this.flushPass('alpha', statics);
+    gl.disable(gl.POLYGON_OFFSET_FILL);
+    // additif (énergie, explosions)
+    gl.uniform1f(u.uAdd, 1); gl.blendFunc(gl.ONE, gl.ONE); gl.disable(gl.CULL_FACE);
+    this.flushPass('add', statics);
+    gl.uniform1f(u.uAdd, 0); gl.enable(gl.CULL_FACE);
+    gl.depthMask(true); gl.disable(gl.BLEND);
+  },
+  flushSky() {
+    const gl = this.gl, b = this.pass.sky && this.pass.sky.sphere; if (!b || !b.n) return;
+    gl.bindBuffer(gl.ARRAY_BUFFER, b.ib); gl.bufferData(gl.ARRAY_BUFFER, b.data.subarray(0, b.n * 24), gl.DYNAMIC_DRAW);
+    gl.bindVertexArray(b.vao); gl.drawElementsInstanced(gl.TRIANGLES, this.geo.sphere.n, gl.UNSIGNED_SHORT, 0, b.n); b.n = 0;
+  },
+  // projection d'un point du monde vers l'écran (pixels CSS)
+  project(p, w, h) {
+    const m = this.VP; if (!m) return null;
+    const x = m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], y = m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], ww = m[3] * p[0] + m[7] * p[1] + m[11] * p[2] + m[15];
+    return { x: (x / ww * 0.5 + 0.5) * w, y: (1 - (y / ww * 0.5 + 0.5)) * h, behind: ww <= 0 };
+  }
+};
+R.pass.sky = {}; R.pass.skyadd = {};
+/* =====================================================================
+   LA VILLE : routes, immeubles, lieux à desservir, plage, parcs
+   ===================================================================== */
+const NB = 8, BL = 76, HALF = NB * BL / 2, ROADW = 16;
+const roadC = i => -HALF + i * BL;            // centre d'une route (i = 0..NB)
+const blockC = i => -HALF + (i + 0.5) * BL;   // centre d'un pâté (i = 0..NB-1)
+const ENV = {
+  day: { zen: hex('#2f6fd6'), hor: hex('#cfe7ff'), fog: hex('#d6e8f6'), sun: [0.45, 0.85, 0.3], sunCol: [0.95, 0.9, 0.8], sky: [0.5, 0.58, 0.72], gnd: [0.32, 0.28, 0.24], fogN: 160, fogF: 640, night: false },
+  night: { zen: hex('#03050f'), hor: hex('#1a2550'), fog: hex('#0f1630'), sun: [-0.35, 0.75, 0.35], sunCol: [0.3, 0.36, 0.55], sky: [0.17, 0.2, 0.33], gnd: [0.07, 0.07, 0.11], fogN: 130, fogF: 520, night: true }
+};
+// lieux où les clients veulent aller
+const PLACES = [
+  { id: 'gare', name: 'la Gare', bx: 1, bz: 1, col: '#c9a27a', icon: 'clock' },
+  { id: 'hopital', name: 'l\'Hôpital', bx: 6, bz: 1, col: '#f2f2f2', icon: 'cross' },
+  { id: 'stade', name: 'le Stade', bx: 3, bz: 0, col: '#9aa7b8', icon: 'stadium' },
+  { id: 'plage', name: 'la Plage', bx: 4, bz: 8, col: '#e8d28a', icon: 'umbrella', beach: true },
+  { id: 'centre', name: 'le Centre commercial', bx: 5, bz: 4, col: '#7fb3d8', icon: 'bag' },
+  { id: 'pizza', name: 'la Pizzeria', bx: 2, bz: 5, col: '#d8473a', icon: 'pizza' },
+  { id: 'cinema', name: 'le Cinéma', bx: 6, bz: 6, col: '#7a3fa0', icon: 'star' },
+  { id: 'police', name: 'le Commissariat', bx: 0, bz: 3, col: '#2b4f9e', icon: 'siren' },
+  { id: 'hotel', name: 'l\'Hôtel Palace', bx: 4, bz: 2, col: '#d4b04a', icon: 'crown' },
+  { id: 'eglise', name: 'la Cathédrale', bx: 1, bz: 6, col: '#b8b0a2', icon: 'spire' },
+  { id: 'fac', name: 'l\'Université', bx: 7, bz: 3, col: '#cdb892', icon: 'columns' },
+  { id: 'bowling', name: 'le Bowling', bx: 7, bz: 6, col: '#2a9d8f', icon: 'pin' }
+];
+const PARKS = [[3, 3], [5, 6], [0, 5]];
+const BCOL = ['#9aa3ad', '#c8b89a', '#7d8fa3', '#b5a08a', '#a7b7c4', '#8c7f73', '#c9c3b8', '#6f7f8f', '#b88a6a', '#d4cfc4', '#a35d4a', '#5f7a8c'];
+function seeded(s) { return () => (s = (s * 16807) % 2147483647) / 2147483647; }
+
+function buildCity(night) {
+  const C = { night, env: Object.assign({}, night ? ENV.night : ENV.day, { flash: 0 }), boxes: [], trees: [], statics: [], places: [], stars: [] };
+  const rng = seeded(7);
+  if (night) for (let i = 0; i < 380; i++) { const a = rng() * 6.283, e = 0.08 + rng() * 1.3; C.stars.push([Math.cos(a) * Math.cos(e), Math.sin(e), Math.sin(a) * Math.cos(e), 0.5 + rng() * 1.5]); }
+  XF.reset(); R.beginStatic();
+  // sol, routes, lignes
+  R.box('cube', 0, -0.5, 0, 2400, 1, 2400, hex(night ? '#2c3a2a' : '#5d8a45'), { mode: 4, p1: 0 });
+  R.box('cube', 0, 0.02, 0, NB * BL + ROADW, 0.04, NB * BL + ROADW, hex(night ? '#24262c' : '#45484f'), { mode: 4, p1: 1 });
+  for (let i = 0; i <= NB; i++) {
+    const c = roadC(i);
+    for (let s = -HALF; s < HALF; s += 9) {
+      R.box('cube', c, 0.06, s + 2, 0.3, 0.03, 4, [0.95, 0.85, 0.3]);
+      R.box('cube', s + 2, 0.065, c, 4, 0.03, 0.3, [0.95, 0.85, 0.3]);
+    }
+  }
+  const park = (i, j) => PARKS.some(p => p[0] === i && p[1] === j);
+  const place = (i, j) => PLACES.find(p => p.bx === i && p.bz === j && !p.beach);
+  for (let i = 0; i < NB; i++) for (let j = 0; j < NB; j++) {
+    const cx = blockC(i), cz = blockC(j), inner = BL - ROADW;
+    const isPark = park(i, j);
+    // trottoir
+    R.box('cube', cx, 0.12, cz, inner, 0.24, inner, hex(isPark ? (night ? '#2f4a2c' : '#6aa84f') : (night ? '#5b5850' : '#a9a49a')), { mode: 4, p1: isPark ? 0 : 1 });
+    if (!isPark) {
+      // lampadaires aux coins
+      for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+        const x = cx + dx * (inner / 2 - 1.2), z = cz + dz * (inner / 2 - 1.2);
+        R.box('cyl', x, 3.5, z, 0.25, 7, 0.25, hex('#3a3d44'));
+        R.box('sphere', x, 7.1, z, 0.8, 0.5, 0.8, night ? [1, 0.9, 0.6] : hex('#d8d8d0'), { e: night ? 1 : 0 });
+        if (night) R.box('ball', x, 7, z, 4, 4, 4, [0.3, 0.24, 0.1], { pass: 'add', e: 1, a: 0.6 });
+      }
+    }
+    if (isPark) {
+      R.box('cyl', cx, 0.3, cz, 12, 0.3, 12, hex('#4aa3d8'), { e: 0.2 });
+      for (let k = 0; k < 14; k++) {
+        const x = cx + (rng() - 0.5) * (inner - 8), z = cz + (rng() - 0.5) * (inner - 8);
+        if (Math.hypot(x - cx, z - cz) < 9) continue;
+        const h = 6 + rng() * 5, pink = rng() < 0.3;
+        R.box('cyl', x, h * 0.3, z, 0.7, h * 0.6, 0.7, hex('#6b4a2e'));
+        R.box('sphere', x, h * 0.75, z, h * 0.6, h * 0.5, h * 0.6, hex(pink ? '#ff9ec7' : '#4f9a3f', night ? 0.6 : 1), { mode: 6 });
+        C.trees.push({ x, z, r: 0.9 });
+      }
+      continue;
+    }
+    const pl = place(i, j);
+    if (pl) { buildPlace(C, pl, cx, cz, inner, night); continue; }
+    // immeubles ordinaires
+    const split = rng();
+    const lots = split < 0.25 ? [[0, 0, 50, 50]] : split < 0.6 ? [[-13, 0, 24, 50], [13, 0, 24, 50]] : [[-13, -13, 24, 24], [13, -13, 24, 24], [-13, 13, 24, 24], [13, 13, 24, 24]];
+    for (const [ox, oz, w0, d0] of lots) {
+      const w = w0 - rng() * 4, d = d0 - rng() * 4, far = Math.max(Math.abs(cx), Math.abs(cz));
+      let h = 12 + rng() * 38; if (far > 180 && rng() < 0.4) h = 60 + rng() * 60;
+      addBuilding(C, cx + ox, cz + oz, w, d, h, hex(BCOL[Math.floor(rng() * BCOL.length)]), rng());
+    }
+  }
+  // plage et mer au sud
+  const zb = HALF + ROADW / 2;
+  R.box('cube', 0, 0.05, zb + 30, NB * BL + 400, 0.1, 60, hex('#e8d28a'), { mode: 4, p1: 3 });
+  R.box('cube', 0, -0.2, zb + 360, 3000, 0.2, 600, hex(night ? '#0e2a4a' : '#2f86c9'), { mode: 4, p1: 4 });
+  const plage = PLACES.find(p => p.beach);
+  for (let k = 0; k < 9; k++) {
+    const x = (k - 4) * 34 + 10, z = zb + 34;
+    R.box('cyl', x, 1.6, z, 0.2, 3.2, 0.2, hex('#eeeeee'));
+    R.box('cone', x, 3.3, z, 5, 1.2, 5, hex(['#e63946', '#2b6cb0', '#f1c40f'][k % 3]));
+    R.box('cube', x + 2, 0.25, z + 1, 1.6, 0.15, 2.8, hex('#ffffff'));
+  }
+  for (let k = 0; k < 12; k++) { const x = -HALF + k * 52 + 10; R.box('cyl', x, 4, zb + 12, 0.5, 8, 0.5, hex('#8a6a45')); R.box('cone', x, 8.3, zb + 12, 6, 1.4, 6, hex('#3f8f3a')); }
+  C.places.push(Object.assign({}, plage, { drop: [blockC(plage.bx), 0, HALF], doorDir: [0, 0, 1] }));
+  // décor lointain : collines et tours tout autour (sauf la mer)
+  for (let k = 0; k < 40; k++) {
+    const side = k % 3, t = rng() * 2 - 1;
+    let x, z; if (side === 0) { x = -HALF - 70 - rng() * 120; z = t * HALF * 1.3; } else if (side === 1) { x = HALF + 70 + rng() * 120; z = t * HALF * 1.3; } else { z = -HALF - 70 - rng() * 120; x = t * HALF * 1.3; }
+    const h = 40 + rng() * 120;
+    R.box('cube', x, h / 2, z, 30 + rng() * 30, h, 30 + rng() * 30, hex(BCOL[k % BCOL.length], night ? 0.35 : 0.8));
+  }
+  for (let k = 0; k < 18; k++) { const a = k / 18 * Math.PI - Math.PI, r = 900 + rng() * 200; R.box('cone', Math.cos(a) * r, 80, Math.sin(a) * r, 400, 220, 400, hex(night ? '#1f2b36' : '#6f8a7a')); }
+  // murs invisibles du bord : bornes rouges et blanches
+  for (let s = -HALF; s <= HALF; s += 8) for (const [x, z] of [[-HALF - ROADW / 2 - 1, s], [HALF + ROADW / 2 + 1, s], [s, -HALF - ROADW / 2 - 1]]) R.box('cube', x, 0.6, z, 1, 1.2, 1, (Math.round(s / 8) % 2) ? [0.9, 0.15, 0.15] : [0.95, 0.95, 0.95]);
+  C.statics = R.endStatic();
+  return C;
+}
+function addBuilding(C, x, z, w, d, h, col, r) {
+  C.boxes.push({ x, z, w, d, h });
+  R.box('cube', x, h / 2, z, w, h, d, col, { mode: 1, p1: x - w / 2, p2: z - d / 2 });
+  R.box('cube', x, h + 0.4, z, w + 0.4, 0.8, d + 0.4, mixC(col, [0.2, 0.2, 0.2], 0.35));
+  if (r < 0.5) R.box('cube', x + w * 0.2, h + 1.8, z - d * 0.15, 3, 2.2, 3, [0.6, 0.62, 0.64]);
+  if (h > 70) { R.box('cyl', x, h + 7, z, 0.35, 13, 0.35, [0.7, 0.7, 0.72]); R.box('ball', x, h + 13.8, z, 0.9, 0.9, 0.9, [1, 0.1, 0.1], { e: 1 }); }
+}
+// un lieu remarquable : bâtiment typique + point de dépose sur la route
+function buildPlace(C, pl, cx, cz, inner, night) {
+  const col = hex(pl.col), H = inner / 2;
+  // la façade regarde la route la plus proche du centre de la ville
+  const dir = Math.abs(cx) > Math.abs(cz) ? [-Math.sign(cx), 0, 0] : [0, 0, -Math.sign(cz) || 1];
+  const drop = [cx + dir[0] * (H + ROADW / 2 - 3), 0, cz + dir[2] * (H + ROADW / 2 - 3)];
+  C.places.push(Object.assign({}, pl, { drop, doorDir: dir }));
+  const b = (x, z, w, d, h, c, m) => { C.boxes.push({ x, z, w, d, h }); R.box('cube', x, h / 2, z, w, h, d, c || col, { mode: m == null ? 1 : m, p1: x - w / 2, p2: z - d / 2 }); };
+  const ic = [cx - dir[0] * 4, 0, cz - dir[2] * 4];
+  switch (pl.icon) {
+    case 'clock': b(cx, cz, 44, 30, 16); b(cx, cz, 9, 9, 40, mixC(col, [0.4, 0.3, 0.2], 0.2)); R.box('cyl', cx + dir[0] * 4.6, 33, cz + dir[2] * 4.6, 6, 0.4, 6, [1, 1, 0.92], { rx: dir[2] ? Math.PI / 2 : 0, rz: dir[0] ? Math.PI / 2 : 0, e: night ? 1 : 0.3 }); break;
+    case 'cross': b(cx, cz, 46, 36, 26); R.box('cube', cx, 30, cz, 10, 3, 3, [0.9, 0.1, 0.1], { e: 0.6 }); R.box('cube', cx, 30, cz, 3, 10, 3, [0.9, 0.1, 0.1], { e: 0.6 }); break;
+    case 'stadium': C.boxes.push({ x: cx, z: cz, w: 48, d: 48, h: 18 }); R.box('cyl', cx, 9, cz, 52, 18, 52, col); R.box('cyl', cx, 18.2, cz, 40, 0.4, 40, hex('#4f9a3f')); for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + 0.78; R.box('cyl', cx + Math.cos(a) * 26, 18, cz + Math.sin(a) * 26, 1, 36, 1, [0.5, 0.5, 0.55]); R.box('cube', cx + Math.cos(a) * 26, 36, cz + Math.sin(a) * 26, 5, 3, 1, [1, 1, 0.9], { e: night ? 1 : 0.2, ry: -a }); } break;
+    case 'bag': b(cx, cz, 50, 44, 14); R.box('cube', cx + dir[0] * 22.2, 8, cz + dir[2] * 22.2, dir[0] ? 0.3 : 40, 10, dir[2] ? 0.3 : 40, hex('#9fd8ff'), { e: 0.3 }); break;
+    case 'pizza': b(cx, cz, 26, 24, 8); R.box('cyl', ic[0], 15, ic[2], 9, 1, 9, hex('#f2b84b'), { rx: dir[2] ? Math.PI / 2 : 0, rz: dir[0] ? Math.PI / 2 : 0, e: 0.3 }); R.box('cyl', ic[0], 15, ic[2], 7.5, 1.2, 7.5, hex('#d8473a'), { rx: dir[2] ? Math.PI / 2 : 0, rz: dir[0] ? Math.PI / 2 : 0, e: 0.3 }); break;
+    case 'star': b(cx, cz, 40, 34, 18); R.box('cube', cx + dir[0] * 18, 13, cz + dir[2] * 18, dir[0] ? 4 : 26, 4, dir[2] ? 4 : 26, hex('#ffd23f'), { e: 1 }); break;
+    case 'siren': b(cx, cz, 38, 30, 15); R.box('cube', cx, 17, cz, 4, 3, 2, [0.1, 0.3, 1], { e: 1 }); R.box('cube', cx + 4, 17, cz, 4, 3, 2, [1, 0.1, 0.1], { e: 1 }); break;
+    case 'crown': b(cx, cz, 30, 30, 90); R.box('cone', cx, 96, cz, 14, 12, 14, hex('#ffd23f'), { e: 0.4 }); break;
+    case 'spire': b(cx, cz, 22, 40, 22); for (const s of [-1, 1]) { b(cx + s * 9, cz - 14, 7, 7, 34); R.box('cone', cx + s * 9, 42, cz - 14, 8, 16, 8, mixC(col, [0.3, 0.3, 0.35], 0.4)); } break;
+    case 'columns': b(cx, cz, 46, 30, 16); for (let k = -3; k <= 3; k++) R.box('cyl', cx + (dir[2] ? k * 6 : dir[0] * 17), 7, cz + (dir[0] ? k * 6 : dir[2] * 17), 1.8, 14, 1.8, [0.95, 0.93, 0.88]); break;
+    case 'pin': b(cx, cz, 40, 32, 12); R.box('sphere', ic[0], 22, ic[2], 5, 14, 5, [0.97, 0.97, 0.97], { e: 0.2 }); R.box('cyl', ic[0], 24, ic[2], 3, 1, 3, [0.9, 0.1, 0.1], { e: 0.3 }); break;
+  }
+}
+// collision : cercle (x, z, r) contre les immeubles → poussée et normale
+function collideCity(C, p, r) {
+  let hit = null;
+  for (const b of C.boxes) {
+    const hx = b.w / 2, hz = b.d / 2, dx = p[0] - b.x, dz = p[2] - b.z;
+    if (Math.abs(dx) > hx + r || Math.abs(dz) > hz + r) continue;
+    const qx = clamp(dx, -hx, hx), qz = clamp(dz, -hz, hz), ex = dx - qx, ez = dz - qz, d = Math.hypot(ex, ez);
+    if (d < r) {
+      let n;
+      if (d > 1e-4) n = [ex / d, 0, ez / d];
+      else n = (hx - Math.abs(dx) < hz - Math.abs(dz)) ? [Math.sign(dx) || 1, 0, 0] : [0, 0, Math.sign(dz) || 1];
+      const push = d > 1e-4 ? r - d : (n[0] ? hx - Math.abs(dx) : hz - Math.abs(dz)) + r;
+      p[0] += n[0] * push; p[2] += n[2] * push;
+      hit = n;
+    }
+  }
+  for (const t of C.trees) {
+    const dx = p[0] - t.x, dz = p[2] - t.z, d = Math.hypot(dx, dz);
+    if (d < r + t.r && d > 1e-4) { const n = [dx / d, 0, dz / d]; p[0] = t.x + n[0] * (r + t.r); p[2] = t.z + n[2] * (r + t.r); hit = n; }
+  }
+  // bords de la ville
+  const L = HALF + ROADW / 2 - 0.5;
+  if (p[0] < -L + r) { p[0] = -L + r; hit = [1, 0, 0]; }
+  if (p[0] > L - r) { p[0] = L - r; hit = [-1, 0, 0]; }
+  if (p[2] < -L + r) { p[2] = -L + r; hit = [0, 0, 1]; }
+  if (p[2] > HALF + 40) { p[2] = HALF + 40; hit = [0, 0, -1]; }
+  return hit;
+}
+// la caméra ne doit pas passer à travers les murs
+function camRay(C, a, b) {
+  let best = 1;
+  for (const bx of C.boxes) {
+    let t0 = 0, t1 = 1;
+    const mn = [bx.x - bx.w / 2 - 0.4, 0, bx.z - bx.d / 2 - 0.4], mx = [bx.x + bx.w / 2 + 0.4, bx.h + 0.5, bx.z + bx.d / 2 + 0.4];
+    let ok = true;
+    for (let i = 0; i < 3 && ok; i++) {
+      const d = b[i] - a[i];
+      if (Math.abs(d) < 1e-6) { if (a[i] < mn[i] || a[i] > mx[i]) ok = false; continue; }
+      let ta = (mn[i] - a[i]) / d, tb = (mx[i] - a[i]) / d; if (ta > tb) { const s = ta; ta = tb; tb = s; }
+      t0 = Math.max(t0, ta); t1 = Math.min(t1, tb); if (t0 > t1) ok = false;
+    }
+    if (ok && t0 < best) best = t0;
+  }
+  return best;
+}
+function onRoad(x, z) {
+  for (let i = 0; i <= NB; i++) { const c = roadC(i); if (Math.abs(x - c) < ROADW / 2 || Math.abs(z - c) < ROADW / 2) return true; }
+  return false;
+}
+function drawSky(C, cam, t) {
+  const sun = V3.norm(C.env.sun), sp = V3.add(cam.pos, V3.mul(sun, 1500));
+  XF.push(); XF.t(sp[0], sp[1], sp[2]);
+  if (C.night) { R.draw('sphere', 60, 60, 60, [0.9, 0.92, 1], 1, 1, 8, 0, 0, 'skyadd'); R.draw('sphere', 160, 160, 160, [0.12, 0.14, 0.22], 1, 1, 8, 0, 0, 'skyadd'); }
+  else { R.draw('sphere', 90, 90, 90, [1, 0.95, 0.8], 1, 1, 8, 0, 0, 'skyadd'); R.draw('sphere', 260, 260, 260, [0.35, 0.3, 0.2], 1, 1, 8, 0, 0, 'skyadd'); }
+  XF.pop();
+  for (const s of C.stars) { XF.push(); XF.t(cam.pos[0] + s[0] * 1500, cam.pos[1] + s[1] * 1500, cam.pos[2] + s[2] * 1500); R.draw('ball', s[3] * 3, s[3] * 3, s[3] * 3, [0.9, 0.92, 1], 0.6 + 0.4 * Math.sin(t * 2 + s[3] * 9), 1, 8, 0, 0, 'skyadd'); XF.pop(); }
+}
+/* =====================================================================
+   TAXI TURBO : conduite, circulation, piétons, clients, courses
+   ===================================================================== */
+const TAXIS = [
+  { id: 'tony', name: 'Tony', car: 'Le Jaune classique', desc: 'Équilibré : bonne vitesse, bonne tenue de route.', col: '#ffcf1a', max: 40, acc: 21, grip: 9, steer: 2.3, tough: 1, size: 1 },
+  { id: 'mia', name: 'Mia', car: 'La Rose nerveuse', desc: 'Petite et très maniable, elle tourne sur place. Un peu moins rapide.', col: '#ff6fb5', max: 37, acc: 24, grip: 11, steer: 2.8, tough: 0.85, size: 0.92 },
+  { id: 'joe', name: 'Big Joe', car: 'Le Gros Van', desc: 'Lent à démarrer mais très rapide en ligne droite. Les clients sont moins secoués.', col: '#3fb6ff', max: 44, acc: 16, grip: 7, steer: 1.9, tough: 1.5, size: 1.15 }
+];
+const CLIENT_LINES = {
+  pickup: ['{A}, et vite !', 'Emmenez-moi {a} !', 'Direction {p}, je suis pressé !', 'Vite, {a} s\'il vous plaît !', '{P}, et plus vite que ça !'],
+  hurt: ['Aïe ! Doucement !', 'Mon café !!', 'Hé ! On n\'est pas aux autos tamponneuses !', 'Vous voulez me tuer ?!', 'Mon dos !!', 'Faites attention !'],
+  fast: ['Waouh, quel chauffeur !', 'Ça décoiffe !', 'Génial, continuez comme ça !', 'Plus vite, plus vite !'],
+  slow: ['Plus vite, je suis en retard !', 'Mais accélérez !', 'Ma grand-mère roule plus vite !'],
+  angry: ['C\'en est trop, je descends !', 'Arrêtez-vous, je sors !'],
+  late: ['Trop tard ! Je descends ici.', 'Laissez tomber, je vais marcher !'],
+  happy: ['Merci, super course !', 'Parfait, gardez la monnaie !', 'Quel pilote !'],
+  ok: ['Merci.', 'Bon, merci quand même.', 'Enfin arrivé…']
+};
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const T = { C: null, taxi: null, cars: [], peds: [], clients: [], t: 0, time: 60, money: 0, fares: 0, best: 0, mode: 'arcade', over: false, events: [], cam: { pos: [0, 10, -20], target: [0, 1, 0], fov: 1.1 }, nearT: 0, combo: 0, smoke: [], spawnT: 0, intro: 0 };
+function tev(type, d) { T.events.push(Object.assign({ type }, d)); }
+
+function startGame(o) {
+  if (T.C) R.freeStatic(T.C.statics);
+  T.C = buildCity(o.night);
+  T.mode = o.mode; T.time = o.mode === 'arcade' ? 60 : o.mode === 't3' ? 180 : 300;
+  T.money = 0; T.fares = 0; T.best = 0; T.over = false; T.t = 0; T.events = []; T.combo = 0; T.smoke = []; T.intro = o.demo ? 0 : 2.2; T.demo = !!o.demo;
+  const ty = TAXIS[o.taxi || 0];
+  T.taxi = { ty, p: [roadC(4) - 4, 0, roadC(5) + 10], yaw: Math.PI, v: [0, 0, 0], steerA: 0, roll: 0, pitch: 0, bounce: 0, wheel: 0, boost: 0, boostCd: 0, inp: { steer: 0, gas: 0, brake: 0, boost: false, horn: false },
+    pass: null, drift: 0, hitCd: 0, speed: 0 };
+  // circulation
+  T.cars = [];
+  const CC = ['#e63946', '#f1c40f', '#2b6cb0', '#ffffff', '#222831', '#2a9d8f', '#ff7a1a', '#8e44ad', '#9aa3ad', '#3a5a40'];
+  for (let i = 0; i < 46; i++) {
+    const axis = i % 2 ? 'x' : 'z', line = roadC(Math.floor(Math.random() * (NB + 1))), dir = Math.random() < 0.5 ? 1 : -1;
+    T.cars.push({ axis, line, dir, s: -HALF + Math.random() * NB * BL, speed: 0, max: 11 + Math.random() * 6, col: hex(CC[i % CC.length]), state: 'lane', p: [0, 0, 0], v: [0, 0, 0], yaw: 0, spin: 0, t: 0, van: Math.random() < 0.18 });
+  }
+  for (const c of T.cars) placeCar(c);
+  // piétons
+  T.peds = [];
+  for (let i = 0; i < 70; i++) T.peds.push(newPed());
+  T.clients = [];
+  for (let i = 0; i < 22; i++) spawnClient(true);
+}
+function laneOf(c) { return c.axis === 'z' ? -c.dir * 4 : c.dir * 4; }
+function placeCar(c) {
+  const lo = laneOf(c);
+  if (c.axis === 'z') { c.p = [c.line + lo, 0, c.s]; c.yaw = c.dir > 0 ? 0 : Math.PI; }
+  else { c.p = [c.s, 0, c.line + lo]; c.yaw = c.dir > 0 ? Math.PI / 2 : -Math.PI / 2; }
+}
+const SKIN = ['#f1c27d', '#e0ac69', '#c68642', '#8d5524', '#ffdbac'];
+const CLOTH = ['#e63946', '#f1c40f', '#2b6cb0', '#ffffff', '#2a9d8f', '#ff7a1a', '#8e44ad', '#264653', '#e9c46a', '#ff4d8d', '#3a86ff', '#333333'];
+function newPed() {
+  const axis = Math.random() < 0.5 ? 'x' : 'z', line = roadC(Math.floor(Math.random() * (NB + 1))), side = Math.random() < 0.5 ? -1 : 1;
+  return { axis, line, off: side * (ROADW / 2 + 2 + Math.random() * 1.5), dir: Math.random() < 0.5 ? 1 : -1, s: -HALF + Math.random() * NB * BL, sp: 1.2 + Math.random() * 0.6,
+    skin: hex(SKIN[Math.floor(Math.random() * SKIN.length)]), top: hex(CLOTH[Math.floor(Math.random() * CLOTH.length)]), legs: hex(CLOTH[Math.floor(Math.random() * CLOTH.length)]), ph: Math.random() * 6, jump: 0, jv: [0, 0, 0], jo: [0, 0, 0], p: [0, 0, 0], yaw: 0, hair: hex(['#1b1b1b', '#5a3b22', '#d9b25f', '#8a2a1a'][Math.floor(Math.random() * 4)]) };
+}
+function pedPos(p) { return p.axis === 'z' ? [p.line + p.off, 0.24, p.s] : [p.s, 0.24, p.line + p.off]; }
+function spawnClient(init) {
+  const tx = T.taxi;
+  for (let tries = 0; tries < 30; tries++) {
+    const ped = newPed(); ped.client = true;
+    const pos = pedPos(ped);
+    if (Math.abs(pos[0]) > HALF - 4 || Math.abs(pos[2]) > HALF - 4) continue;
+    if (!init && tx && V3.hdist(pos, tx.p) < 60) continue;
+    if (T.clients.some(c => V3.hdist(c.p, pos) < 25)) continue;
+    // destination assez loin
+    const opts = T.C.places.filter(pl => V3.hdist(pl.drop, pos) > 110);
+    const dest = opts[Math.floor(Math.random() * opts.length)];
+    const d = V3.hdist(dest.drop, pos);
+    ped.p = pos; ped.dest = dest; ped.dist = d;
+    ped.ring = d < 260 ? [0.2, 1, 0.35] : d < 480 ? [1, 0.85, 0.1] : [1, 0.25, 0.2];
+    ped.yaw = ped.axis === 'z' ? (ped.off > 0 ? -Math.PI / 2 : Math.PI / 2) : (ped.off > 0 ? Math.PI : 0);
+    T.clients.push(ped);
+    return;
+  }
+}
+
+/* ---------------- boucle ---------------- */
+function tstep(dt) {
+  if (!T.C) return;
+  T.t += dt;
+  if (T.intro > 0) T.intro -= dt;
+  const tx = T.taxi;
+  if (!T.over && !T.demo && T.intro <= 0) { T.time -= dt; if (T.time <= 0) { T.time = 0; endGame(); } }
+  T.C.env.flash = Math.max(0, T.C.env.flash - dt * 2);
+  driveTaxi(tx, dt);
+  updateCars(dt);
+  updatePeds(dt);
+  updateFare(dt);
+  T.spawnT -= dt; if (T.spawnT <= 0) { T.spawnT = 1.5; if (T.clients.length < 22) spawnClient(false); }
+  for (let i = T.smoke.length - 1; i >= 0; i--) { const s = T.smoke[i]; s.life -= dt; s.p = V3.add(s.p, V3.mul(s.v, dt)); s.s += dt * s.g; if (s.life <= 0) T.smoke.splice(i, 1); }
+}
+function puff(p, v, s, life, col, g, add) { if (T.smoke.length > 300) T.smoke.shift(); T.smoke.push({ p: p.slice(), v, s, life, max: life, col, g: g || 1.5, add }); }
+
+/* ---------------- le taxi ---------------- */
+function driveTaxi(tx, dt) {
+  const ty = tx.ty, inp = tx.inp;
+  const f = [Math.sin(tx.yaw), 0, Math.cos(tx.yaw)], r = [-f[2], 0, f[0]];
+  let vl = V3.dot(tx.v, f), vs = V3.dot(tx.v, r);
+  const frozen = T.over || T.intro > 0 || (tx.pass && tx.pass.boardT > 0);
+  const gas = frozen ? 0 : inp.gas, brake = frozen ? 0 : inp.brake, steer = frozen ? 0 : inp.steer;
+  if (frozen) { vl *= Math.exp(-6 * dt); vs *= Math.exp(-6 * dt); }
+  // turbo
+  tx.boostCd -= dt;
+  if (!frozen && inp.boost && tx.boostCd <= 0 && vl > 3) { tx.boost = 1.6; tx.boostCd = 5; tev('boost', {}); }
+  tx.boost -= dt;
+  const maxV = ty.max * (tx.boost > 0 ? 1.35 : 1);
+  if (gas > 0) { const a = (tx.boost > 0 ? ty.acc * 1.9 : ty.acc) * (1 - Math.max(0, vl) / maxV * 0.75); vl += a * gas * dt; }
+  if (brake > 0) { if (vl > 0.5) vl -= 34 * brake * dt; else vl = Math.max(-13, vl - 12 * brake * dt); }
+  if (!gas && !brake) vl *= Math.exp(-0.35 * dt);
+  vl *= Math.exp(-0.06 * dt);
+  if (vl > maxV) vl += (maxV - vl) * Math.min(1, dt * 2);
+  // direction
+  const spdK = clamp(Math.abs(vl) / 7, 0, 1);
+  tx.steerA += (steer - tx.steerA) * Math.min(1, dt * 10);
+  const rate = ty.steer * (1 - Math.min(0.45, Math.abs(vl) / 90));
+  tx.yaw -= tx.steerA * rate * spdK * Math.sign(vl || 1) * dt;
+  // adhérence : on dérape en freinant fort dans un virage
+  const drifting = brake > 0.5 && Math.abs(steer) > 0.4 && vl > 14;
+  const grip = drifting ? 2.2 : ty.grip;
+  vs *= Math.exp(-grip * dt);
+  tx.drift = Math.abs(vs);
+  const f2 = [Math.sin(tx.yaw), 0, Math.cos(tx.yaw)], r2 = [-f2[2], 0, f2[0]];
+  tx.v = V3.add(V3.mul(f2, vl), V3.mul(r2, vs));
+  tx.p = V3.add(tx.p, V3.mul(tx.v, dt));
+  tx.speed = V3.len(tx.v);
+  tx.wheel += vl * dt / 0.38;
+  // fumée des pneus
+  if (tx.drift > 4 || (brake > 0.5 && vl > 16)) { for (const sd of [-1, 1]) puff(V3.add(tx.p, V3.add(V3.mul(f2, -1.6), V3.mul(r2, sd * 0.9))), [0, 1, 0], 0.6, 0.8, [0.85, 0.85, 0.85], 2); if (Math.random() < 0.2) tev('skid', {}); }
+  if (tx.boost > 0) puff(V3.add(tx.p, V3.add(V3.mul(f2, -2.4), [0, 0.5, 0])), V3.mul(f2, -4), 0.5, 0.3, [1, 0.6, 0.2], 1, true);
+  // inclinaison de la caisse
+  tx.roll += ((-tx.steerA * spdK * Math.min(1, Math.abs(vl) / 25) * 0.09) - tx.roll) * Math.min(1, dt * 6);
+  tx.pitch += (((brake > 0 && vl > 2 ? -0.06 : gas > 0 ? 0.04 : 0)) - tx.pitch) * Math.min(1, dt * 5);
+  tx.bounce *= Math.exp(-6 * dt);
+  tx.hitCd -= dt;
+  // murs et immeubles
+  const R0 = 2.1 * ty.size;
+  for (const off of [1.5, -1.5]) {
+    const c = V3.add(tx.p, V3.mul(f2, off * ty.size));
+    const before = c.slice();
+    const n = collideCity(T.C, c, R0 * 0.62);
+    if (n) {
+      const push = V3.sub(c, before); tx.p = V3.add(tx.p, push);
+      const vn = V3.dot(tx.v, n);
+      if (vn < 0) {
+        tx.v = V3.sub(tx.v, V3.mul(n, vn * 1.35));
+        tx.v = V3.mul(tx.v, 0.8);
+        if (-vn > 4) crash(tx, -vn, V3.add(c, V3.mul(n, -R0 * 0.6)), 'mur');
+      }
+    }
+  }
+  // voitures
+  for (const c of T.cars) {
+    const d = V3.hdist(c.p, tx.p), rr = 2.2 * ty.size + (c.van ? 2.4 : 2.1);
+    if (d < rr && d > 0.01) {
+      const n = V3.norm([tx.p[0] - c.p[0], 0, tx.p[2] - c.p[2]]);
+      tx.p = V3.add(tx.p, V3.mul(n, (rr - d) * 0.6));
+      const rel = V3.sub(tx.v, c.v), imp = -V3.dot(rel, n);
+      if (imp > 0) {
+        tx.v = V3.add(tx.v, V3.mul(n, imp * 0.7));
+        bumpCar(c, V3.mul(n, -imp * 0.9));
+        if (imp > 3) crash(tx, imp, V3.lerp(tx.p, c.p, 0.5), 'voiture');
+      }
+    } else if (tx.pass && d < rr + 1.4 && tx.speed > 16 && c.state === 'lane' && !c.near) { c.near = true; nearMiss(tx); }
+    if (d > rr + 4) c.near = false;
+  }
+}
+function crash(tx, imp, p, what) {
+  for (let i = 0; i < 10; i++) puff(V3.add(p, [0, 0.8, 0]), [rnd(-6, 6), rnd(1, 6), rnd(-6, 6)], 0.18, 0.4, [1, 0.85, 0.4], 0.2, true);
+  tx.bounce = Math.min(1, imp / 20);
+  if (tx.hitCd > 0) return;
+  tx.hitCd = 0.35;
+  T.C.env.flash = Math.min(0.4, imp * 0.02);
+  T.shake = Math.min(1.2, imp * 0.05);
+  tev('crash', { imp, what });
+  if (tx.pass) {
+    const loss = Math.min(45, imp * 2.4) / tx.ty.tough;
+    tx.pass.comfort = Math.max(0, tx.pass.comfort - loss);
+    tx.pass.hits++;
+    if (tx.pass.comfort <= 0) { clientLeaves(tx, 'angry'); return; }
+    if (Math.random() < 0.8) say(pick(CLIENT_LINES.hurt), tx.pass);
+  }
+}
+function nearMiss(tx) {
+  T.combo++; tx.pass.tips += 1;
+  tev('near', { n: T.combo });
+}
+function bumpCar(c, dv) {
+  if (c.state === 'lane') { c.state = 'bumped'; c.t = 0; c.v = [0, 0, 0]; }
+  c.v = V3.add(c.v, dv); c.spin = rnd(-3, 3); c.t = 0;
+}
+
+/* ---------------- circulation ---------------- */
+function updateCars(dt) {
+  const tx = T.taxi;
+  for (const c of T.cars) {
+    if (c.state === 'lane') {
+      // freine s'il y a quelqu'un devant (une voiture ou le taxi)
+      const f = [Math.sin(c.yaw), 0, Math.cos(c.yaw)];
+      let block = false;
+      const ahead = (q) => { const d = V3.sub(q, c.p), along = V3.dot(d, f), side = Math.abs(V3.dot(d, [-f[2], 0, f[0]])); return along > 0 && along < 11 && side < 2.6; };
+      if (ahead(tx.p)) { block = true; if (Math.random() < 0.01) tev('honk', { p: c.p }); }
+      if (!block) for (const o of T.cars) if (o !== c && o.state === 'lane' && o.axis === c.axis && o.line === c.line && o.dir === c.dir && ahead(o.p)) { block = true; break; }
+      const want = block ? 0 : c.max;
+      c.speed += clamp(want - c.speed, -18 * dt, 6 * dt);
+      c.s += c.speed * c.dir * dt;
+      if (c.s > HALF + 10) c.s = -HALF - 10; if (c.s < -HALF - 10) c.s = HALF + 10;
+      placeCar(c); c.v = V3.mul(f, c.speed);
+    } else { // bousculée : elle glisse puis repart ailleurs
+      c.t += dt;
+      c.p = V3.add(c.p, V3.mul(c.v, dt)); c.v = V3.mul(c.v, Math.exp(-2.2 * dt)); c.yaw += c.spin * dt; c.spin *= Math.exp(-2 * dt);
+      collideCity(T.C, c.p, 2);
+      if (c.t > 4 && V3.hdist(c.p, tx.p) > 70) { c.state = 'lane'; c.axis = Math.random() < 0.5 ? 'x' : 'z'; c.line = roadC(Math.floor(Math.random() * (NB + 1))); c.s = Math.random() < 0.5 ? -HALF - 8 : HALF + 8; c.speed = 0; c.v = [0, 0, 0]; placeCar(c); }
+    }
+  }
+}
+/* ---------------- piétons ---------------- */
+function updatePeds(dt) {
+  const tx = T.taxi, f = [Math.sin(tx.yaw), 0, Math.cos(tx.yaw)];
+  const all = T.peds.concat(T.clients);
+  for (const p of all) {
+    if (p.boarded) continue;
+    if (p.free) { const d = V3.sub(p.target, p.p), l = Math.hypot(d[0], d[2]); if (l > 0.5) { p.p = V3.add(p.p, V3.mul([d[0] / l, 0, d[2] / l], 1.8 * dt)); p.yaw = Math.atan2(d[0], d[2]); } p.ph += dt * 7; p.pos = p.p; continue; }
+    const base = p.client ? p.p : pedPos(p);
+    if (!p.client) { p.s += p.sp * p.dir * dt; if (p.s > HALF) p.s = -HALF; if (p.s < -HALF) p.s = HALF; p.ph += dt * p.sp * 4; p.yaw = p.axis === 'z' ? (p.dir > 0 ? 0 : Math.PI) : (p.dir > 0 ? Math.PI / 2 : -Math.PI / 2); }
+    else p.ph += dt * 2;
+    // le taxi fonce sur lui : il plonge sur le côté
+    const pos = V3.add(base, p.jo);
+    const rel = V3.sub(pos, tx.p), d = Math.hypot(rel[0], rel[2]);
+    if (p.jump <= 0 && d < 9 && tx.speed > 6 && V3.dot(rel, f) > -1) {
+      const side = [-f[2], 0, f[0]], s = V3.dot(rel, side) >= 0 ? 1 : -1;
+      p.jump = 0.6; p.jv = V3.add(V3.mul(side, s * 9), V3.mul(f, 2)); p.jv[1] = 6;
+      if (!p.client || !tx.pass) tev('scream', {});
+    }
+    if (p.jump > 0) {
+      p.jump -= dt; p.jo = V3.add(p.jo, V3.mul(p.jv, dt)); p.jv[1] -= 20 * dt;
+      if (p.jo[1] < 0) { p.jo[1] = 0; p.jv = [0, 0, 0]; }
+    } else { p.jo[1] = 0; p.jo[0] *= Math.exp(-0.6 * dt); p.jo[2] *= Math.exp(-0.6 * dt); }
+    p.pos = V3.add(base, p.jo);
+  }
+}
+
+/* ---------------- les courses ---------------- */
+function updateFare(dt) {
+  const tx = T.taxi;
+  if (T.demo) return;
+  if (!tx.pass) {
+    // un client au bord de la route et le taxi presque arrêté : il monte
+    for (const c of T.clients) {
+      if (c.jump > 0) continue;
+      const d = V3.hdist(c.pos || c.p, tx.p);
+      c.near = d < 26;
+      if (d < 11 && tx.speed < 4 && T.intro <= 0 && !T.over) { pickUp(tx, c); break; }
+    }
+    return;
+  }
+  const P = tx.pass;
+  if (P.boardT > 0) { P.boardT -= dt; return; }
+  P.left -= dt;
+  P.talkT -= dt;
+  if (P.talkT <= 0) { P.talkT = rnd(5, 9); if (tx.speed > 30 && P.comfort > 60) say(pick(CLIENT_LINES.fast), P); else if (tx.speed < 8) say(pick(CLIENT_LINES.slow), P); }
+  if (P.left <= 0) { clientLeaves(tx, 'late'); return; }
+  const d = V3.hdist(tx.p, P.dest.drop);
+  P.dist = d;
+  if (d < 11 && tx.speed < 5) dropOff(tx);
+}
+function pickUp(tx, c) {
+  T.clients.splice(T.clients.indexOf(c), 1);
+  const limit = Math.round(c.dist / 15 + 9);
+  tx.pass = { ped: c, dest: c.dest, comfort: 100, hits: 0, tips: 0, left: limit, limit, boardT: 0.7, talkT: 4, dist: c.dist, start: c.dist };
+  T.combo = 0;
+  const nm = c.dest.name, a = nm.startsWith('le ') ? 'au ' + nm.slice(3) : 'à ' + nm, cap = x => x[0].toUpperCase() + x.slice(1);
+  say(pick(CLIENT_LINES.pickup).replace('{A}', cap(a)).replace('{a}', a).replace('{P}', cap(nm)).replace('{p}', nm), tx.pass);
+  tev('pickup', { c });
+}
+function dropOff(tx) {
+  const P = tx.pass;
+  const k = P.left / P.limit;
+  const rating = k > 0.5 ? 'ULTRA RAPIDE !' : k > 0.28 ? 'RAPIDE !' : 'NORMAL';
+  const bonusT = k > 0.5 ? 5 : k > 0.28 ? 3 : 1;
+  const base = Math.round(5 + P.start * 0.025);
+  const speedBonus = Math.round(P.left * 0.35);
+  const comfortTip = Math.round(base * 0.6 * P.comfort / 100);
+  const total = base + speedBonus + comfortTip + P.tips;
+  T.money += total; T.fares++; T.best = Math.max(T.best, total);
+  if (T.mode === 'arcade') T.time += bonusT;
+  say(pick(P.comfort > 70 ? CLIENT_LINES.happy : CLIENT_LINES.ok), P);
+  tev('drop', { total, base, speedBonus, comfortTip, tips: P.tips, rating, bonusT: T.mode === 'arcade' ? bonusT : 0, comfort: P.comfort });
+  // le client descend et part vers le bâtiment
+  const ped = P.ped, side = [-Math.cos(tx.yaw), 0, Math.sin(tx.yaw)];
+  ped.client = false; ped.free = true; ped.jump = 0; ped.jo = [0, 0, 0];
+  ped.p = V3.add(tx.p, V3.mul(side, -2.6)); ped.p[1] = 0.1;
+  ped.target = V3.add(P.dest.drop, V3.mul(P.dest.doorDir, -14)); ped.leaving = 4;
+  T.peds.push(ped);
+  tx.pass = null;
+}
+function clientLeaves(tx, why) {
+  const P = tx.pass;
+  say(pick(why === 'angry' ? CLIENT_LINES.angry : CLIENT_LINES.late), P);
+  tev('lost', { why });
+  tx.pass = null;
+}
+function say(txt, P) { tev('say', { txt }); }
+function endGame() {
+  if (T.over) return;
+  T.over = true; tev('over', {});
+}
+
+/* ---------------- caméra ---------------- */
+function tcamera(dt) {
+  const tx = T.taxi, C = T.cam; if (!tx) return;
+  const f = [Math.sin(tx.yaw), 0, Math.cos(tx.yaw)];
+  let pos, look;
+  if (T.demo) {
+    C.ang = (C.ang || 0) + dt * 0.1;
+    pos = [Math.sin(C.ang) * 140, 70, Math.cos(C.ang) * 140]; look = [0, 10, 0];
+  } else {
+    const sp = Math.min(1, tx.speed / 40);
+    const back = 9 + sp * 3, up = 4.2 + sp * 0.8;
+    // la caméra suit le mouvement (pas seulement l'avant de la voiture)
+    const vd = tx.speed > 3 ? V3.norm(V3.lerp(f, V3.norm(tx.v), 0.4)) : f;
+    pos = V3.add(tx.p, [-vd[0] * back, up, -vd[2] * back]);
+    look = V3.add(tx.p, [vd[0] * 8, 1.4, vd[2] * 8]);
+    // pas à travers les murs
+    const from = V3.add(tx.p, [0, 2, 0]), k = camRay(T.C, from, pos);
+    if (k < 1) { pos = V3.lerp(from, pos, Math.max(0.4, k - 0.05)); pos[1] += (1 - k) * 7; }
+    C.fov = 1.05 + sp * 0.22 + (tx.boost > 0 ? 0.12 : 0);
+  }
+  const kk = 1 - Math.exp(-dt * (T.demo ? 2 : 8));
+  C.pos = V3.lerp(C.pos, pos, kk); C.target = V3.lerp(C.target, look, 1 - Math.exp(-dt * 10));
+  const sh = T.shake || 0; T.shake = Math.max(0, sh - dt * 2);
+  C.view = { pos: V3.add(C.pos, [rnd(-1, 1) * sh * 0.4, rnd(-1, 1) * sh * 0.4, rnd(-1, 1) * sh * 0.4]), target: C.target, fov: C.fov || 1.1 };
+}
+
+/* ---------------- dessin ---------------- */
+function drawCarModel(p, yaw, col, opt) {
+  opt = opt || {};
+  const night = T.C.night, sz = opt.size || 1, van = opt.van;
+  XF.push(); XF.t(p[0], p[1] + (opt.lift || 0), p[2]); XF.ry(yaw); XF.rz(opt.roll || 0); XF.rx(opt.pitch || 0); XF.s(sz, sz, sz);
+  const len = van ? 5.2 : 4.4;
+  XF.push(); XF.t(0, 0.78, 0); R.draw('cube', 2.0, 0.78, len, col, 1, 0, 6); XF.pop();
+  if (van) { XF.push(); XF.t(0, 1.75, -0.3); R.draw('cube', 1.95, 1.3, len - 1.2, col, 1, 0, 6); XF.pop(); XF.push(); XF.t(0, 1.75, 1.75); R.draw('cube', 1.8, 0.9, 0.08, [0.2, 0.28, 0.36], 1, 0.1); XF.pop(); }
+  else { XF.push(); XF.t(0, 1.5, -0.25); R.draw('cube', 1.78, 0.72, 2.3, opt.glass || [0.22, 0.3, 0.38], 1, 0.05, 6); XF.pop(); XF.push(); XF.t(0, 1.88, -0.25); R.draw('cube', 1.72, 0.06, 2.1, col, 1, 0, 6); XF.pop(); }
+  const wz = len / 2 - 0.95;
+  for (const [x, z, front] of [[-0.98, wz, 1], [0.98, wz, 1], [-0.98, -wz, 0], [0.98, -wz, 0]]) {
+    XF.push(); XF.t(x, 0.4, z); if (front && opt.steer) XF.ry(opt.steer); XF.rx(opt.wheel || 0); XF.rz(Math.PI / 2); R.draw('cyl', 0.8, 0.32, 0.8, [0.07, 0.07, 0.07]); R.draw('cyl', 0.45, 0.34, 0.45, [0.7, 0.7, 0.72]); XF.pop();
+  }
+  for (const x of [-0.65, 0.65]) {
+    XF.push(); XF.t(x, 0.88, len / 2 + 0.01); R.draw('cube', 0.42, 0.2, 0.05, [1, 0.97, 0.8], 1, night ? 1 : 0.4); XF.pop();
+    XF.push(); XF.t(x, 0.88, -len / 2 - 0.01); R.draw('cube', 0.42, 0.2, 0.05, [1, 0.1, 0.1], 1, opt.braking ? 1 : night ? 0.8 : 0.3); XF.pop();
+  }
+  if (night && opt.lights !== false) { XF.push(); XF.t(0, 0.4, len / 2 + 6); R.draw('ball', 4.5, 0.6, 10, [0.28, 0.25, 0.14], 1, 1, 0, 0, 0, 'add'); XF.pop(); }
+  if (opt.taxi) {
+    // enseigne TAXI, damier, chauffeur et passager
+    XF.push(); XF.t(0, 2.08, -0.2); R.draw('cube', 0.9, 0.34, 0.5, [1, 0.95, 0.6], 1, night ? 1 : 0.5); XF.pop();
+    for (let k = 0; k < 8; k++) for (const sd of [-1, 1]) { XF.push(); XF.t(sd * 1.005, 0.95, -1.75 + k * 0.5); R.draw('cube', 0.02, 0.22, 0.25, k % 2 ? [0.08, 0.08, 0.08] : [0.97, 0.97, 0.97]); XF.pop(); }
+    XF.push(); XF.t(0.45, 1.55, 0.25); R.draw('sphere', 0.42, 0.48, 0.42, hex(opt.driverSkin || '#e0ac69')); XF.pop();
+    XF.push(); XF.t(0.45, 1.78, 0.25); R.draw('sphere', 0.44, 0.22, 0.44, hex(opt.driverHair || '#2b1d12')); XF.pop();
+    if (opt.pass) { XF.push(); XF.t(-0.45, 1.55, -0.85); R.draw('sphere', 0.42, 0.48, 0.42, opt.pass.skin); XF.pop(); XF.push(); XF.t(-0.45, 1.78, -0.85); R.draw('sphere', 0.44, 0.22, 0.44, opt.pass.hair); XF.pop(); }
+  }
+  XF.pop();
+}
+function drawPed(p) {
+  const pos = p.pos || p.p, walking = (!p.client && p.jump <= 0) || p.free, sw = walking ? Math.sin(p.ph) * 0.6 : 0;
+  XF.push(); XF.t(pos[0], pos[1], pos[2]); XF.ry(p.yaw);
+  if (p.jump > 0) XF.rx(-1.1 * Math.min(1, (0.6 - p.jump) * 4));
+  for (const sd of [-1, 1]) { XF.push(); XF.t(sd * 0.13, 0.85, 0); XF.rx(sd * sw); XF.t(0, -0.42, 0); R.draw('cyl', 0.2, 0.85, 0.2, p.legs, 1, 0, 6); XF.pop(); }
+  XF.push(); XF.t(0, 1.25, 0); R.draw('cube', 0.48, 0.66, 0.3, p.top, 1, 0, 6); XF.pop();
+  const wave = p.client && p.near ? Math.sin(T.t * 10) * 0.5 : 0;
+  for (const sd of [-1, 1]) { XF.push(); XF.t(sd * 0.32, 1.5, 0); XF.rx(-sd * sw * 0.8); if (p.client && sd > 0) XF.rz(2.6 + wave); XF.t(0, -0.3, 0); R.draw('cyl', 0.14, 0.6, 0.14, p.top, 1, 0, 6); XF.pop(); }
+  XF.push(); XF.t(0, 1.8, 0); R.draw('sphere', 0.36, 0.42, 0.36, p.skin, 1, 0, 6); XF.pop();
+  XF.push(); XF.t(0, 1.95, -0.02); R.draw('sphere', 0.38, 0.2, 0.38, p.hair, 1, 0, 6); XF.pop();
+  XF.pop();
+  if (p.client && !p.boarded) {
+    // cercle de couleur au sol + flèche au-dessus
+    XF.push(); XF.t(p.p[0], 0.3, p.p[2]); R.draw('disc', 7, 1, 7, p.ring, 0.55, 1, 5, 0, 0, 'alpha'); R.draw('cyl', 7.4, 0.12, 7.4, p.ring, 0.5 + 0.3 * Math.sin(T.t * 5), 1, 0, 0, 0, 'add'); XF.pop();
+    XF.push(); XF.t(p.p[0], 3.2 + Math.sin(T.t * 4) * 0.25, p.p[2]); XF.ry(T.t * 2); XF.rx(Math.PI); R.draw('cone', 0.8, 1.1, 0.8, p.ring, 1, 1); XF.pop();
+  }
+}
+function drawTaxiScene() {
+  const C = T.C, tx = T.taxi, cam = T.cam.view;
+  XF.reset();
+  const fogF = C.env.fogF + 40;
+  for (const c of T.cars) { if (V3.hdist(c.p, cam.pos) > fogF) continue; drawCarModel(c.p, c.yaw, c.col, { van: c.van, wheel: c.s * 2, braking: c.state === 'lane' && c.speed < c.max - 2 }); }
+  for (const p of T.peds) { if (V3.hdist(p.pos || pedPos(p), cam.pos) > 220) continue; drawPed(p); }
+  for (const p of T.clients) drawPed(p);
+  // le taxi
+  drawCarModel(tx.p, tx.yaw, hex(tx.ty.col), { taxi: true, size: tx.ty.size, van: tx.ty.id === 'joe', roll: tx.roll, pitch: tx.pitch, lift: Math.abs(Math.sin(T.t * 30)) * tx.bounce * 0.3, steer: tx.steerA * 0.45, wheel: tx.wheel, braking: tx.inp.brake > 0, pass: tx.pass && tx.pass.boardT <= 0 ? tx.pass.ped : null });
+  XF.push(); XF.t(tx.p[0], 0.06, tx.p[2]); XF.ry(tx.yaw); R.draw('disc', 2.6 * tx.ty.size, 1, 5.2 * tx.ty.size, [0, 0, 0], 0.45, 0, 5, 0, 0, 'alpha'); XF.pop();
+  // destination : colonne de lumière
+  if (tx.pass) {
+    const d = tx.pass.dest.drop;
+    XF.push(); XF.t(d[0], 40, d[2]); R.draw('cyl', 9, 80, 9, [0.2, 1, 0.4], 0.35, 1, 0, 0, 0, 'add'); R.draw('cyl', 4, 80, 4, [0.6, 1, 0.7], 0.4, 1, 0, 0, 0, 'add'); XF.pop();
+    XF.push(); XF.t(d[0], 0.32, d[2]); R.draw('disc', 22, 1, 22, [0.2, 1, 0.4], 0.45, 1, 5, 0, 0, 'alpha'); R.draw('cyl', 22, 0.15, 22, [0.2, 1, 0.4], 0.6, 1, 0, 0, 0, 'add'); XF.pop();
+  }
+  // le client qui descend marche vers le bâtiment puis disparaît
+  for (let i = T.peds.length - 1; i >= 0; i--) { const p = T.peds[i]; if (p.leaving) { p.leaving -= 1 / 60; if (p.leaving <= 0) { T.peds.splice(i, 1); T.peds.push(newPed()); } } }
+  for (const s of T.smoke) { const k = s.life / s.max; XF.push(); XF.t(s.p[0], s.p[1], s.p[2]); R.draw('ball', s.s, s.s, s.s, s.col, s.add ? k : k * 0.45, s.add ? 1 : 0.2, 0, 0, 0, s.add ? 'add' : 'alpha'); XF.pop(); }
+  drawSky(C, cam, T.t);
+}
+/* =====================================================================
+   SON : moteur, klaxon, crissements, caisse enregistreuse, voix, musique
+   ===================================================================== */
+const AU = (() => {
+  let ac = null, master = null, sfx = null, musicG = null, noise = null, unlockEl = null, musicT = null, mStep = 0, mNext = 0;
+  let muted = false; try { muted = localStorage.getItem('tt-mute') === '1'; } catch (_) {}
+  let eng = null, skid = null, voice = null;
+  function silentWav() { const n = 4000, b = new Uint8Array(44 + n), v = new DataView(b.buffer); const w = (o, s) => { for (let i = 0; i < s.length; i++) b[o + i] = s.charCodeAt(i); }; w(0, 'RIFF'); v.setUint32(4, 36 + n, true); w(8, 'WAVE'); w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true); w(36, 'data'); v.setUint32(40, n, true); b.fill(128, 44); let s = ''; for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return 'data:audio/wav;base64,' + btoa(s); }
+  function init() {
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (_) {}
+    try { if (!unlockEl) { unlockEl = new Audio(silentWav()); unlockEl.loop = true; } unlockEl.play().catch(() => {}); } catch (_) {}
+    if (ac) { if (ac.state !== 'running') ac.resume(); return; }
+    try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) { return; }
+    master = ac.createGain(); master.gain.value = muted ? 0 : 0.9;
+    const comp = ac.createDynamicsCompressor(); comp.threshold.value = -14; master.connect(comp); comp.connect(ac.destination);
+    sfx = ac.createGain(); sfx.connect(master); musicG = ac.createGain(); musicG.gain.value = 0.2; musicG.connect(master);
+    noise = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate); const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    // voix française si le téléphone en a une
+    try { const pickV = () => { const vs = speechSynthesis.getVoices().filter(v => /^fr/i.test(v.lang)); voice = vs[0] || null; }; pickV(); speechSynthesis.onvoiceschanged = pickV; } catch (_) {}
+  }
+  document.addEventListener('pointerdown', () => { if (ac && ac.state !== 'running') ac.resume(); }, true);
+  function envG(t, a, peak, dur, dest) { const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); g.connect(dest || sfx); return g; }
+  function tone(type, f0, f1, dur, vol, dest, t) { if (!ac) return; t = t || ac.currentTime; const o = ac.createOscillator(); o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur); o.connect(envG(t, 0.005, vol, dur, dest)); o.start(t); o.stop(t + dur + 0.05); }
+  function nz(type, f0, f1, dur, vol, q, dest, t, att) { if (!ac) return; t = t || ac.currentTime; const s = ac.createBufferSource(); s.buffer = noise; const f = ac.createBiquadFilter(); f.type = type; f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(Math.max(30, f1), t + dur); if (q) f.Q.value = q; s.connect(f); f.connect(envG(t, att || 0.004, vol, dur, dest)); s.start(t, Math.random()); s.stop(t + dur + 0.05); }
+  function startEngine() {
+    if (eng || !ac) return;
+    const g = ac.createGain(); g.gain.value = 0.0001; g.gain.setTargetAtTime(0.11, ac.currentTime, 0.2); g.connect(sfx);
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 600; lp.connect(g);
+    const o1 = ac.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = 50; o1.connect(lp); o1.start();
+    const o2 = ac.createOscillator(); o2.type = 'square'; o2.frequency.value = 25; const g2 = ac.createGain(); g2.gain.value = 0.5; o2.connect(g2); g2.connect(lp); o2.start();
+    eng = { g, lp, o1, o2 };
+    const sg = ac.createGain(); sg.gain.value = 0; sg.connect(sfx);
+    const s = ac.createBufferSource(); s.buffer = noise; s.loop = true; const bf = ac.createBiquadFilter(); bf.type = 'bandpass'; bf.frequency.value = 1800; bf.Q.value = 3; s.connect(bf); bf.connect(sg); s.start();
+    skid = { g: sg, s };
+  }
+  function stopEngine() { if (eng) { try { eng.o1.stop(); eng.o2.stop(); } catch (_) {} eng = null; } if (skid) { try { skid.s.stop(); } catch (_) {} skid = null; } }
+  const S = {
+    crash(k) { nz('lowpass', 1600, 60, 0.5 + k * 0.4, 0.5 + k * 0.4); tone('sine', 120, 40, 0.4, 0.5 * (0.5 + k)); for (let i = 0; i < 3; i++) setTimeout(() => nz('bandpass', 2500 + Math.random() * 1500, 900, 0.12, 0.2 * k, 2), 40 + i * 70); },
+    honk() { tone('square', 415, 410, 0.35, 0.09); tone('square', 520, 515, 0.35, 0.07); },
+    honk2() { tone('square', 330, 325, 0.25, 0.04); },
+    cash() { [1319, 1568, 2093].forEach((f, i) => setTimeout(() => tone('triangle', f, f, 0.25, 0.18), i * 70)); setTimeout(() => nz('highpass', 6000, 4000, 0.25, 0.15), 230); },
+    pickup() { [660, 880, 1100].forEach((f, i) => setTimeout(() => tone('triangle', f, f, 0.12, 0.15), i * 60)); nz('bandpass', 900, 600, 0.15, 0.1, 2); },
+    lost() { [440, 330, 220].forEach((f, i) => setTimeout(() => tone('sawtooth', f, f * 0.9, 0.2, 0.1), i * 140)); },
+    near() { tone('triangle', 1200, 1800, 0.12, 0.12); },
+    boost() { nz('bandpass', 300, 3000, 0.6, 0.35, 1.5); tone('sawtooth', 120, 400, 0.5, 0.12); },
+    scream() { tone('sawtooth', 900 + Math.random() * 300, 1300, 0.25, 0.05); },
+    beep(f) { tone('square', f, f, 0.13, 0.1); },
+    go() { tone('square', 1046, 1046, 0.4, 0.15); },
+    over() { [523, 392, 330, 262].forEach((f, i) => setTimeout(() => tone('triangle', f, f, 0.4, 0.2), i * 200)); }
+  };
+  // musique : rock ensoleillé
+  const BASS = [0, 0, 12, 0, 7, 0, 10, 12, 0, 0, 12, 0, 5, 7, 10, 7];
+  const LEAD = [12, null, 16, null, 19, null, 16, 14, 12, null, 9, null, 7, null, null, null];
+  function sched() {
+    const sp = 60 / 156 / 4;
+    while (mNext < ac.currentTime + 0.2) {
+      const s = mStep % 16, bar = Math.floor(mStep / 16) % 4, root = [45, 45, 41, 43][bar], t = mNext;
+      if (s % 4 === 0 || s === 7) tone('sine', 150, 45, 0.16, 0.9, musicG, t);
+      if (s === 4 || s === 12) nz('bandpass', 2000, 900, 0.15, 0.5, 0.7, musicG, t);
+      if (s % 2 === 1) nz('highpass', 7000, 6000, 0.03, 0.16, 0, musicG, t);
+      const fb = 440 * Math.pow(2, (root + BASS[s] - 69 - 12) / 12); tone('sawtooth', fb, fb, sp * 0.85, 0.2, musicG, t);
+      if (Math.floor(mStep / 64) % 2 === 1 && LEAD[s] != null) { const fl = 440 * Math.pow(2, (root + 12 + LEAD[s] - 69) / 12); tone('square', fl, fl, sp * 1.7, 0.055, musicG, t); }
+      mNext += sp; mStep++;
+    }
+  }
+  return {
+    init, S,
+    play(n, a) { if (!ac || muted) return; try { S[n] && S[n](a); } catch (_) {} },
+    engine(on, speed, gas, drift, boost) {
+      if (!ac) return;
+      if (!on || muted) { stopEngine(); return; }
+      startEngine(); if (!eng) return;
+      const t = ac.currentTime, gear = speed % 12;
+      const f = 42 + gear * 7 + speed * 1.6 + (gas ? 10 : 0) + (boost ? 25 : 0);
+      eng.o1.frequency.setTargetAtTime(f, t, 0.05); eng.o2.frequency.setTargetAtTime(f / 2, t, 0.05);
+      eng.lp.frequency.setTargetAtTime(400 + speed * 30 + (gas ? 600 : 0), t, 0.08);
+      eng.g.gain.setTargetAtTime(gas ? 0.13 : 0.08, t, 0.1);
+      skid.g.gain.setTargetAtTime(drift ? 0.12 : 0, t, 0.05);
+    },
+    say(txt) {
+      if (muted) return;
+      try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(txt); u.lang = 'fr-FR'; if (voice) u.voice = voice; u.rate = 1.12; u.pitch = 0.8 + Math.random() * 0.6; speechSynthesis.speak(u); } catch (_) {}
+    },
+    music(on) { if (!ac) return; if (on && !musicT) { mNext = ac.currentTime + 0.1; mStep = 0; musicT = setInterval(sched, 40); } if (!on && musicT) { clearInterval(musicT); musicT = null; } },
+    stopAll() { stopEngine(); try { speechSynthesis.cancel(); } catch (_) {} },
+    get muted() { return muted; },
+    setMuted(m) { muted = m; try { localStorage.setItem('tt-mute', m ? '1' : '0'); } catch (_) {} if (master) master.gain.value = m ? 0 : 0.9; if (m) this.stopAll(); }
+  };
+})();
+/* =====================================================================
+   INTERFACE : écrans, commandes, HUD, mini-carte, boucle
+   ===================================================================== */
+(() => {
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} } };
+const cv = $('gl');
+let ok = false; try { ok = R.init(cv); } catch (e) { console.error(e); }
+if (!ok) { $('nogl').hidden = false; return; }
+let VW = 0, VH = 0, scale = Math.min(window.devicePixelRatio || 1, 1.75);
+function resize() { VW = window.innerWidth; VH = window.innerHeight; cv.width = Math.round(VW * scale); cv.height = Math.round(VH * scale); }
+window.addEventListener('resize', resize); resize();
+const setup = Object.assign({ taxi: 0, mode: 'arcade', night: false }, store.get('tt-setup', {}));
+const save = () => store.set('tt-setup', setup);
+const MODES = { arcade: 'Arcade', t3: '3 minutes', t5: '5 minutes' };
+
+/* ---------------- commandes ---------------- */
+const keys = {}, btn = { L: false, R: false, gas: false, brake: false, boost: false, horn: false };
+let state = 'title', paused = false;
+window.addEventListener('keydown', e => { keys[e.code] = true; if (state === 'game' && ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault(); if (e.code === 'Escape' || e.code === 'KeyP') pauseGame(); if (e.code === 'KeyH' && state === 'game') AU.play('honk'); });
+window.addEventListener('keyup', e => { keys[e.code] = false; });
+window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; for (const k in btn) btn[k] = false; });
+for (const [id, k] of [['bL', 'L'], ['bR', 'R'], ['bGas', 'gas'], ['bBrake', 'brake'], ['bBoost', 'boost'], ['bHorn', 'horn']]) {
+  const b = $(id);
+  b.addEventListener('pointerdown', e => { e.preventDefault(); AU.init(); btn[k] = true; b.classList.add('on'); try { b.setPointerCapture(e.pointerId); } catch (_) {} if (k === 'horn') AU.play('honk'); });
+  const off = () => { btn[k] = false; b.classList.remove('on'); };
+  b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('lostpointercapture', off);
+  b.addEventListener('contextmenu', e => e.preventDefault());
+}
+function readInput() {
+  const tx = T.taxi; if (!tx) return;
+  const L = btn.L || keys.ArrowLeft || keys.KeyA || keys.KeyQ, Rr = btn.R || keys.ArrowRight || keys.KeyD;
+  tx.inp.steer = (Rr ? 1 : 0) - (L ? 1 : 0);
+  tx.inp.gas = (btn.gas || keys.ArrowUp || keys.KeyW || keys.KeyZ) ? 1 : 0;
+  tx.inp.brake = (btn.brake || keys.ArrowDown || keys.KeyS || keys.Space) ? 1 : 0;
+  tx.inp.boost = btn.boost || keys.ShiftLeft || keys.ShiftRight;
+}
+
+/* ---------------- événements ---------------- */
+let bubbleT = 0, nearT = 0;
+function announce(txt, sub, col) { const a = $('announce'); a.innerHTML = esc(txt) + (sub ? `<small>${esc(sub)}</small>` : ''); a.style.color = col || ''; a.classList.remove('on'); void a.offsetWidth; a.classList.add('on'); }
+function handleEvents() {
+  for (const e of T.events) {
+    switch (e.type) {
+      case 'crash': AU.play('crash', Math.min(1, e.imp / 25)); break;
+      case 'honk': AU.play('honk2'); break;
+      case 'near': AU.play('near'); $('near').textContent = `FRÔLÉ ! +1 € ${e.n > 1 ? '×' + e.n : ''}`; $('near').style.opacity = 1; nearT = 1; break;
+      case 'boost': AU.play('boost'); break;
+      case 'scream': if (Math.random() < 0.3) AU.play('scream'); break;
+      case 'pickup': AU.play('pickup'); break;
+      case 'drop': AU.play('cash'); announce(`${e.rating} +${e.total} €`, `course ${e.base} € · vitesse ${e.speedBonus} € · confort ${e.comfortTip} €${e.tips ? ' · frôlés ' + e.tips + ' €' : ''}${e.bonusT ? ' · +' + e.bonusT + ' s' : ''}`, '#7dff9a'); break;
+      case 'lost': AU.play('lost'); announce(e.why === 'angry' ? 'CLIENT FURIEUX !' : 'TROP TARD !', 'le client est descendu', '#ff6a5a'); break;
+      case 'say': { const b = $('bubble'); b.textContent = e.txt; b.classList.add('on'); bubbleT = 2.6; AU.say(e.txt); break; }
+      case 'over': AU.play('over'); announce('FIN DU SERVICE !', '', '#ffcf1a'); setTimeout(results, 2200); break;
+    }
+  }
+  T.events.length = 0;
+}
+
+/* ---------------- HUD ---------------- */
+const mapC = $('map'), mg = mapC.getContext('2d');
+function hud(dt) {
+  const tx = T.taxi;
+  const tEl = $('time'); tEl.textContent = Math.ceil(T.time); tEl.classList.toggle('low', T.time < 10);
+  $('money').textContent = T.money + ' €';
+  $('fares').textContent = T.fares + (T.fares > 1 ? ' COURSES' : ' COURSE');
+  $('speed').firstChild.nodeValue = Math.round(tx.speed * 3.6);
+  $('turboBar').firstChild.style.width = (tx.boost > 0 ? 100 : clamp(1 - tx.boostCd / 5, 0, 1) * 100) + '%';
+  const P = tx.pass, tc = $('tc');
+  tc.hidden = !P || P.boardT > 0;
+  if (P && P.boardT <= 0) {
+    const d = V3.sub(P.dest.drop, tx.p), cam = T.cam.view, cf = V3.norm([cam.target[0] - cam.pos[0], 0, cam.target[2] - cam.pos[2]]), cr = [-cf[2], 0, cf[0]];
+    const a = Math.atan2(V3.dot(d, cr), V3.dot(d, cf));
+    $('arrow').style.transform = `rotate(${a}rad)`;
+    $('dest').textContent = `${P.dest.name} · ${Math.round(P.dist)} m`;
+    const f = $('fare'); f.textContent = Math.ceil(P.left) + ' s'; f.classList.toggle('low', P.left < 6);
+    $('cbar').style.width = P.comfort + '%'; $('cbar').style.background = P.comfort > 60 ? '' : P.comfort > 30 ? '#ffcf1a' : '#ff4a3a';
+    $('face').textContent = P.comfort > 80 ? '😄' : P.comfort > 60 ? '🙂' : P.comfort > 40 ? '😐' : P.comfort > 20 ? '😠' : '😡';
+  }
+  bubbleT -= dt; if (bubbleT <= 0) $('bubble').classList.remove('on');
+  nearT -= dt; if (nearT <= 0) $('near').style.opacity = 0;
+  drawMap();
+}
+function drawMap() {
+  const tx = T.taxi, W = mapC.width, c = W / 2, s = 0.42 * (W / 264);
+  const f = [Math.sin(tx.yaw), 0, Math.cos(tx.yaw)], r = [-f[2], 0, f[0]];
+  const P2 = (x, z) => { const d = [x - tx.p[0], 0, z - tx.p[2]]; return [c + V3.dot(d, r) * s, c - V3.dot(d, f) * s]; };
+  mg.save(); mg.clearRect(0, 0, W, W); mg.beginPath(); mg.arc(c, c, c, 0, 6.3); mg.clip();
+  mg.fillStyle = T.C.night ? '#1e2a1e' : '#3e5a34'; mg.fillRect(0, 0, W, W);
+  // mer
+  { const a = P2(-2000, HALF + 30), b = P2(2000, HALF + 30), a2 = P2(2000, HALF + 2000), b2 = P2(-2000, HALF + 2000); mg.fillStyle = '#2f86c9'; mg.beginPath(); mg.moveTo(a[0], a[1]); mg.lineTo(b[0], b[1]); mg.lineTo(a2[0], a2[1]); mg.lineTo(b2[0], b2[1]); mg.fill(); }
+  mg.strokeStyle = '#8a8f9a'; mg.lineWidth = ROADW * s; mg.lineCap = 'square';
+  for (let i = 0; i <= NB; i++) { const k = roadC(i); let a = P2(k, -HALF), b = P2(k, HALF); mg.beginPath(); mg.moveTo(a[0], a[1]); mg.lineTo(b[0], b[1]); mg.stroke(); a = P2(-HALF, k); b = P2(HALF, k); mg.beginPath(); mg.moveTo(a[0], a[1]); mg.lineTo(b[0], b[1]); mg.stroke(); }
+  for (const pl of T.C.places) { const q = P2(pl.drop[0], pl.drop[2]); mg.fillStyle = pl.col; mg.fillRect(q[0] - 5, q[1] - 5, 10, 10); }
+  if (!tx.pass) for (const cl of T.clients) { const q = P2(cl.p[0], cl.p[2]); mg.fillStyle = `rgb(${cl.ring.map(v => Math.round(v * 255)).join(',')})`; mg.beginPath(); mg.arc(q[0], q[1], 6, 0, 6.3); mg.fill(); mg.strokeStyle = '#000'; mg.lineWidth = 2; mg.stroke(); }
+  else { let q = P2(tx.pass.dest.drop[0], tx.pass.dest.drop[2]); const dx = q[0] - c, dy = q[1] - c, l = Math.hypot(dx, dy); if (l > c - 14) q = [c + dx / l * (c - 14), c + dy / l * (c - 14)]; mg.fillStyle = '#2fd27a'; mg.beginPath(); mg.arc(q[0], q[1], 11, 0, 6.3); mg.fill(); mg.strokeStyle = '#fff'; mg.lineWidth = 3; mg.stroke(); }
+  // le taxi
+  mg.fillStyle = tx.ty.col; mg.strokeStyle = '#000'; mg.lineWidth = 3; mg.beginPath(); mg.moveTo(c, c - 14); mg.lineTo(c + 10, c + 10); mg.lineTo(c - 10, c + 10); mg.closePath(); mg.fill(); mg.stroke();
+  mg.restore();
+}
+
+/* ---------------- écrans ---------------- */
+const scr = $('screen');
+function show(html) { scr.innerHTML = html; scr.hidden = false; scr.scrollTop = 0; }
+function hideScreen() { scr.hidden = true; scr.innerHTML = ''; }
+function goLandscape() { try { const el = document.documentElement; const p = !document.fullscreenElement && el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' }) : Promise.resolve(); Promise.resolve(p).then(() => { if (screen.orientation && screen.orientation.lock) return screen.orientation.lock('landscape'); }).catch(() => {}); } catch (_) {} }
+function demo() { startGame({ night: setup.night, mode: 'arcade', taxi: setup.taxi, demo: true }); }
+function title() {
+  state = 'title'; $('pad').hidden = true; $('hud').hidden = true; AU.music(false); AU.stopAll();
+  if (!T.demo) demo();
+  const rec = store.get('tt-rec', {});
+  show(`<div class="wrap center">
+    <div class="checker"></div>
+    <h1 class="logo">TAXI<span>TURBO</span></h1>
+    <div class="checker"></div>
+    <p class="hint" style="max-width:56ch">Prends les clients au bord de la route, fonce les déposer où ils veulent… mais sans trop les secouer, sinon ils descendent furieux !</p>
+    <div class="row" style="justify-content:center"><button class="btn" id="go">EN ROUTE !</button><button class="btn ghost" id="help">Comment jouer</button></div>
+    ${Object.keys(MODES).some(m => rec[m]) ? `<p class="hint">Records : ${Object.keys(MODES).filter(m => rec[m]).map(m => `${MODES[m]} ${rec[m]} €`).join(' · ')}</p>` : ''}
+  </div>`);
+  $('go').addEventListener('click', () => { AU.init(); goLandscape(); AU.play('beep', 880); select(); });
+  $('help').addEventListener('click', () => { AU.init(); helpPanel(); });
+}
+function select() {
+  state = 'select';
+  show(`<div class="wrap">
+    <div><span class="eyebrow">Taxi Turbo</span><h2 class="h1">Choisis ton taxi</h2></div>
+    <div class="drivers">${TAXIS.map((t, i) => `<button class="drv" data-t="${i}" style="--c:${t.col}" aria-pressed="${setup.taxi === i}"><b>${esc(t.name)}</b><small>${esc(t.car)}</small><span>${esc(t.desc)}</span></button>`).join('')}</div>
+    <div class="card">
+      <div class="row" style="gap:22px;align-items:flex-start">
+        <div class="opt"><span>Mode</span><div class="seg" id="md">${Object.entries(MODES).map(([k, n]) => `<button data-v="${k}" aria-pressed="${setup.mode === k}">${n}</button>`).join('')}</div></div>
+        <div class="opt"><span>Moment</span><div class="seg" id="nt"><button data-v="0" aria-pressed="${!setup.night}">☀ Jour</button><button data-v="1" aria-pressed="${setup.night}">☾ Nuit</button></div></div>
+      </div>
+      <p class="hint">${setup.mode === 'arcade' ? 'Arcade : tu commences avec 60 secondes. Chaque client déposé vite te rajoute du temps.' : 'Tu as ' + (setup.mode === 't3' ? '3' : '5') + ' minutes pour gagner le plus d\'argent possible.'}</p>
+      <div class="row" style="justify-content:space-between"><button class="btn ghost" id="back">Retour</button><button class="btn" id="play">GO !</button></div>
+    </div>
+  </div>`);
+  scr.querySelectorAll('[data-t]').forEach(b => b.addEventListener('click', () => { setup.taxi = +b.dataset.t; save(); AU.play('beep', 660); select(); }));
+  $('md').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { setup.mode = b.dataset.v; save(); AU.play('beep', 520); select(); }));
+  $('nt').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { setup.night = b.dataset.v === '1'; save(); AU.play('beep', 520); demo(); select(); }));
+  $('back').addEventListener('click', title);
+  $('play').addEventListener('click', () => { goLandscape(); play(); });
+}
+function play() {
+  AU.init();
+  startGame({ night: setup.night, mode: setup.mode, taxi: setup.taxi });
+  hideScreen(); $('pad').hidden = false; $('hud').hidden = false; $('tc').hidden = true;
+  state = 'game'; paused = false;
+  AU.music(true);
+  announce('PRÊT ?', '', '#fff'); AU.play('beep', 660);
+  setTimeout(() => { if (state === 'game') { announce('C\'EST PARTI !', 'les cercles colorés = des clients', '#ffcf1a'); AU.play('go'); } }, 1300);
+}
+function grade(m) {
+  const k = setup.mode === 'arcade' ? 1 : setup.mode === 't3' ? 1.4 : 2.3;
+  return m >= 600 * k ? 'S' : m >= 400 * k ? 'A' : m >= 250 * k ? 'B' : m >= 150 * k ? 'C' : m >= 70 * k ? 'D' : 'E';
+}
+function results() {
+  if (state !== 'game') return;
+  state = 'results'; $('pad').hidden = true; $('hud').hidden = true; AU.music(false); AU.stopAll();
+  const rec = store.get('tt-rec', {}), was = rec[setup.mode] || 0, isRec = T.money > was;
+  if (isRec) { rec[setup.mode] = T.money; store.set('tt-rec', rec); }
+  show(`<div class="wrap center">
+    <span class="eyebrow">Fin du service · ${MODES[setup.mode]}</span>
+    <div class="grade">${grade(T.money)}</div>
+    <div class="card" style="width:100%;max-width:520px">
+      <table class="tbl"><tbody>
+        <tr><td>Argent gagné</td><td style="font-size:22px;color:#7dff9a">${T.money} €</td></tr>
+        <tr><td>Clients déposés</td><td>${T.fares}</td></tr>
+        <tr><td>Meilleure course</td><td>${T.best} €</td></tr>
+        <tr><td>Record</td><td>${isRec ? 'NOUVEAU RECORD !' : was + ' €'}</td></tr>
+      </tbody></table>
+    </div>
+    <div class="row" style="justify-content:center"><button class="btn ghost" id="menu">Menu</button><button class="btn" id="again">ENCORE !</button></div>
+  </div>`);
+  $('again').addEventListener('click', () => { goLandscape(); play(); });
+  $('menu').addEventListener('click', () => { demo(); title(); });
+}
+const HELP = `<div class="moves">
+  <b>Clients</b><span>Les gens dans un cercle de couleur attendent un taxi. Vert = trajet court, jaune = moyen, rouge = long (mieux payé). Arrête-toi dans le cercle pour qu'il monte.</span>
+  <b>Flèche verte</b><span>En haut de l'écran, elle montre où aller. Le lieu est aussi marqué par une colonne de lumière verte. Arrête-toi dedans pour le déposer.</span>
+  <b>Vite !</b><span>Chaque client a un temps limite. Plus tu arrives vite, plus il paie (et en Arcade tu gagnes des secondes).</span>
+  <b>Confort</b><span>Chaque choc contre une voiture ou un mur secoue le client. Plus il est content, plus le pourboire est gros. Si le confort tombe à zéro, il descend furieux !</span>
+  <b>Frôler</b><span>Passer très près d'une voiture sans la toucher rapporte 1 € de pourboire.</span>
+  <b>Commandes</b><span>◀ ▶ tourner · GAZ accélérer · FREIN freiner puis reculer · FREIN + virage à grande vitesse = dérapage · TURBO coup d'accélérateur · 📯 klaxon</span>
+  <b>Clavier</b><span>Flèches ou ZQSD · Espace frein · Maj turbo · H klaxon · Échap pause</span>
+</div>`;
+function helpPanel(back) {
+  $('panelBody').innerHTML = `<span class="h1">Comment jouer</span>${HELP}<button class="btn" id="hClose">${back ? 'Retour' : 'OK'}</button>`;
+  $('panel').hidden = false;
+  $('hClose').addEventListener('click', () => { $('panel').hidden = true; if (back) back(); });
+}
+function pauseGame() {
+  if (state !== 'game' || paused || T.over) return;
+  paused = true; AU.music(false); AU.stopAll();
+  $('panelBody').innerHTML = `<span class="h1">PAUSE</span><button class="btn" id="pRes">Reprendre</button><button class="btn ghost" id="pHelp">Comment jouer</button><button class="btn ghost" id="pRe">Recommencer</button><button class="btn ghost" id="pQuit">Quitter</button>`;
+  $('panel').hidden = false;
+  $('pRes').addEventListener('click', () => { $('panel').hidden = true; paused = false; AU.music(true); });
+  $('pHelp').addEventListener('click', () => helpPanel(() => { paused = false; pauseGame(); }));
+  $('pRe').addEventListener('click', () => { $('panel').hidden = true; play(); });
+  $('pQuit').addEventListener('click', () => { $('panel').hidden = true; paused = false; demo(); title(); });
+}
+$('pause').addEventListener('click', pauseGame);
+const mb = $('mute'); mb.textContent = AU.muted ? '✕' : '♪';
+mb.addEventListener('click', () => { AU.init(); AU.setMuted(!AU.muted); mb.textContent = AU.muted ? '✕' : '♪'; if (!AU.muted && state === 'game') AU.music(true); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
+
+/* ---------------- boucle ---------------- */
+let last = performance.now(), acc = 0, slow = 0, perfT = 0;
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  perfT += dt; if (dt > 0.026) slow++;
+  if (perfT > 3) { if (slow > 60 && scale > 1) { scale = Math.max(1, scale - 0.25); resize(); } perfT = 0; slow = 0; }
+  if (state === 'game' && VW < VH && !paused && !T.over) pauseGame();
+  if (T.C && !(state === 'game' && paused)) {
+    if (state === 'game') readInput();
+    else if (T.taxi) { // démo : le taxi roule tout seul
+      const tx = T.taxi; tx.inp.gas = 0.6; tx.inp.brake = 0; tx.inp.steer = Math.sin(T.t * 0.3) * 0.15;
+    }
+    acc += dt; let n = 0;
+    while (acc >= 1 / 60 && n < 4) { tstep(1 / 60); handleEvents(); acc -= 1 / 60; n++; }
+    if (acc > 0.1) acc = 0;
+    tcamera(dt);
+    drawTaxiScene();
+    R.render(T.cam.view, T.C.env, T.C.statics, cv.width, cv.height, T.t);
+    if (state === 'game') { hud(dt); const tx = T.taxi; AU.engine(true, tx.speed, tx.inp.gas, tx.drift > 4, tx.boost > 0); }
+    else AU.engine(false);
+  }
+  requestAnimationFrame(loop);
+}
+title();
+window.__tt = { T, setup, get state() { return state; }, play,
+  sim(n, inp) { for (let i = 0; i < n; i++) { if (inp) Object.assign(T.taxi.inp, typeof inp === 'function' ? inp(i) : inp); tstep(1 / 60); handleEvents(); } } };
+requestAnimationFrame(loop);
+})();
+</script>

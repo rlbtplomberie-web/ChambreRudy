@@ -82,7 +82,13 @@ html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;touch-action
   background:rgba(20,8,45,.75);color:#ffd6ff;font-size:22px;line-height:42px;text-align:center;cursor:pointer;
   box-shadow:0 0 12px rgba(255,80,230,.55);-webkit-tap-highlight-color:transparent;user-select:none}
 #musique.off{opacity:.55;box-shadow:none}
+#borneJeu{position:fixed;inset:0;z-index:95;display:none;background:#000}#borneJeu iframe{width:100%;height:100%;border:0;display:block}
+#borneQuit{position:absolute;top:60px;right:10px;z-index:2;width:40px;height:40px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:10px;font:900 20px/1 Arial,sans-serif;color:#fff;background:rgba(170,20,30,.75);border:1px solid rgba(255,255,255,.45);touch-action:none;user-select:none;-webkit-user-select:none}
 #rudy{position:absolute;left:0;top:0;width:2172px;height:724px;pointer-events:none}
+#bulleF{position:absolute;left:880px;top:372px;z-index:3000;transform:translate(-50%,-100%) scale(.6);transform-origin:50% 100%;opacity:0;pointer-events:none;max-width:420px;width:max-content;padding:16px 24px;background:#fff;color:#111;border:4px solid #111;border-radius:40px;font:900 30px/1.2 'Comic Sans MS','Trebuchet MS',system-ui,sans-serif;text-align:center;box-shadow:6px 6px 0 rgba(0,0,0,.35);transition:opacity .18s,transform .18s cubic-bezier(.3,1.6,.5,1)}
+#bulleF.vu{opacity:1;transform:translate(-50%,-100%) scale(1)}
+#bulleF::after{content:'';position:absolute;left:50%;bottom:-26px;margin-left:-14px;border:14px solid transparent;border-top:24px solid #111}
+#bulleF::before{content:'';position:absolute;left:50%;bottom:-17px;margin-left:-10px;border:10px solid transparent;border-top:18px solid #fff;z-index:1}
 .chip{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:20;padding:7px 14px;border-radius:999px;background:rgba(20,8,45,.6);border:1px solid rgba(255,140,255,.45);font:700 14px system-ui,sans-serif;letter-spacing:.04em;color:#ffe6ff;text-shadow:0 0 8px #ff4fd8;pointer-events:none}
 #joy{position:fixed;left:4.5vmin;bottom:5vmin;width:30vmin;height:30vmin;border-radius:50%;z-index:40;touch-action:none;
  background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.10),rgba(0,0,0,.34));border:2px solid rgba(255,226,122,.45);box-shadow:0 6px 18px rgba(0,0,0,.5)}
@@ -100,7 +106,8 @@ html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;touch-action
 <div id="musique" title="Musique">♪</div>
 <div class="chip">Salle d'arcade</div>
 <div id="zoneJoy"></div><div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="btnSortir" style="display:none">SORTIR</div></div>
+<div id="actions"><div class="btn" id="btnJouer" style="display:none">JOUER</div><div class="btn" id="btnSortir" style="display:none">SORTIR</div></div>
+<div id="borneJeu"><div id="borneQuit" title="Quitter">✕</div></div>
 <div id="vue"><div id="cadre"><div id="scene">
   <div id="deco"></div>
   <div class="ombre" style="left:822px;top:600px;width:150px;height:26px"></div>
@@ -276,6 +283,7 @@ joueur('mec3',D.g[2],1100);
     while(prochain<ctx.currentTime+1.2){mesure(pas,prochain);prochain+=NOIRE*4;pas=(pas+1)%grille.length;}
   }
   function demarre(){
+    if(window.ARC_PAUSE) return;
     if(!ctx){init();prochain=ctx.currentTime+.15;minuteur=setInterval(planif,250);planif();}
     if(ctx.state==='suspended')ctx.resume();
   }
@@ -287,7 +295,9 @@ joueur('mec3',D.g[2],1100);
     maitre.gain.setTargetAtTime(coupe?0:.55,ctx.currentTime,.15);
   });
   window.ARCADE_COUPE=()=>{coupe=true;try{if(ctx)ctx.suspend();}catch(e){}};
-  document.addEventListener('visibilitychange',()=>{if(!ctx)return;if(document.hidden)ctx.suspend();else if(!coupe)ctx.resume();});
+  // pendant une partie sur une borne, la musique de la salle se tait
+  window.ARCADE_PAUSE=on=>{window.ARC_PAUSE=on;try{if(ctx){if(on)ctx.suspend();else if(!coupe)ctx.resume();}}catch(e){}};
+  document.addEventListener('visibilitychange',()=>{if(!ctx)return;if(document.hidden)ctx.suspend();else if(!coupe&&!window.ARC_PAUSE)ctx.resume();});
 })();
 // Mise à l'échelle : la salle remplit la hauteur de l'écran, on fait glisser pour voir les côtés
 const vue=document.getElementById('vue'),cadre=document.getElementById('cadre'),scene=document.getElementById('scene');
@@ -312,10 +322,13 @@ const sc=document.getElementById('scene'), cv=document.getElementById('rudy'), g
 const XMIN=40, XMAX=2132, YMIN=522, YMAX=716;          // le carrelage de la salle
 const PORTE={x:1086, y:700};                           // la porte d'entrée, en bas (côté rue)
 // les endroits où il ne peut pas marcher : les joueurs assis aux bornes et la femme au carton
-const BLOC=[[0,232,500,562],[1828,2172,500,562],[1680,1880,480,530],[795,1005,600,652]];
+const BLOC=[[0,232,500,562],[1828,1985,500,562],[1680,1880,480,530],[795,1005,600,652]];
 const libre=(x,y)=>!BLOC.some(b=>x>b[0]&&x<b[1]&&y>b[2]&&y<b[3]);
 const RUDY={x:PORTE.x,y:688,dir:'haut',pas:0,bouge:false};   // il arrive par la porte, de dos
-let joyX=0,joyY=0, sortie=false;
+let joyX=0,joyY=0, sortie=false, enJeu=false;
+// les bornes avec un jeu : debout devant → flèche jaune + JOUER
+const BORNES=[{x:270,jeu:'coach-des-bleus'},{x:351,jeu:'crazy-bazooka'},{x:430,jeu:'duel-de-minuit'},{x:588,w:70,jeu:'taxi-turbo'},{x:760,w:70,jeu:'taxi-turbo'},{x:1455,w:70,jeu:'lets-dance'},{x:1645,w:70,jeu:'lets-dance'},{x:1015,w:60,panne:true},{x:1167,w:60,panne:true},{x:2022,w:32,jeu:'operation-tonnerre'},{x:2108,w:40,jeu:'tempete-de-ki'}];
+const devantBorne=()=>enJeu||sortie?null:(RUDY.y<578?BORNES.find(b=>Math.abs(RUDY.x-b.x)<(b.w||36)):null)||null;
 const taille=y=>250+(y-YMIN)*0.55;                     // plus grand quand il s'approche (en bas)
 function dessine(set,i,x,y,phase){
   const R=RB[set], im=R.fr[i%R.fr.length]; if(!im.complete||!im.naturalWidth) return;
@@ -338,12 +351,19 @@ function fleche(t){
   g.beginPath(); g.moveTo(x-22,y-40); g.lineTo(x+22,y-40); g.lineTo(x+22,y); g.lineTo(x+46,y); g.lineTo(x,y+50); g.lineTo(x-46,y); g.lineTo(x-22,y); g.closePath();
   g.fill(); g.stroke(); g.restore();
 }
+function flecheHaut(t){
+  const h=taille(RUDY.y), x=RUDY.x, y=RUDY.y-h-40-Math.abs(Math.sin(t*4.2))*18;
+  g.save(); g.shadowColor='rgba(255,220,40,1)'; g.shadowBlur=28; g.fillStyle='#ffe400'; g.strokeStyle='#fff6a8'; g.lineWidth=4; g.lineJoin='round';
+  g.beginPath(); g.moveTo(x,y-50); g.lineTo(x+46,y); g.lineTo(x+22,y); g.lineTo(x+22,y+40); g.lineTo(x-22,y+40); g.lineTo(x-22,y); g.lineTo(x-46,y); g.closePath();
+  g.fill(); g.stroke(); g.restore();
+}
+const bJ=document.getElementById('btnJouer'), bJeu=document.getElementById('borneJeu');
 const bS=document.getElementById('btnSortir'), vue=document.getElementById('vue');
 let prev=performance.now()/1000, camX=null;
 function frame(){
   const now=performance.now()/1000, dt=Math.min(0.05,now-prev); prev=now;
   const m=Math.hypot(joyX,joyY);
-  if(m>0.18&&!sortie){
+  if(m>0.18&&!sortie&&!enJeu){
     const v=260*Math.min(1,m);
     let nx=Math.max(XMIN,Math.min(XMAX,RUDY.x+joyX/m*v*dt)), ny=Math.max(YMIN,Math.min(YMAX,RUDY.y+joyY/m*v*0.6*dt));
     if(!libre(nx,ny)){ if(libre(nx,RUDY.y)) ny=RUDY.y; else if(libre(RUDY.x,ny)) nx=RUDY.x; else { nx=RUDY.x; ny=RUDY.y; } }   // il glisse le long des obstacles
@@ -355,6 +375,8 @@ function frame(){
   g.clearRect(0,0,2172,724);
   dessine(RUDY.dir,RUDY.bouge?Math.floor(RUDY.pas/(h*0.13)):0,RUDY.x,RUDY.y,RUDY.bouge?RUDY.pas/(h*0.34):null);
   const p=presPorte(); if(p) fleche(now);
+  const bo=devantBorne(); if(bo) flecheHaut(now);
+  bJ.style.display=bo?'block':'none';
   bS.style.display=p?'block':'none';
   // la caméra suit Rudy
   const k=sc.getBoundingClientRect().width/2172||1, cible=Math.max(0,RUDY.x*k-innerWidth/2);
@@ -367,6 +389,25 @@ function appui(el,fn){ let t=0; const go=e=>{ if(e&&e.cancelable) e.preventDefau
 appui(bS,()=>{ if(!presPorte()) return; sortie=true; joyX=joyY=0; bS.style.display='none';
   try{ window.ARCADE_COUPE&&window.ARCADE_COUPE(); }catch(e){}
   try{ parent.postMessage({type:'arcade:sortie'},'*'); }catch(e){} });
+appui(bJ,()=>{ const bo=devantBorne(); if(!bo) return;
+  if(bo.panne){ parleFemme('Désolée, ces 2 machines sont en panne.'); return; }
+  enJeu=bo; joyX=joyY=0; bJ.style.display='none';
+  try{ window.ARCADE_PAUSE&&window.ARCADE_PAUSE(true); }catch(e){}
+  const f=document.createElement('iframe'); f.setAttribute('allow','autoplay; fullscreen'); f.src='/assets/shinato/jeux/'+bo.jeu+'.html';
+  bJeu.appendChild(f); bJeu.style.display='block'; setTimeout(()=>{ try{ f.focus(); }catch(e){} },300); });
+/* la femme qui travaille à la salle répond en bulle manga */
+const bulle=document.createElement('div'); bulle.id='bulleF'; sc.appendChild(bulle); let bulleT=0;
+function parleFemme(txt){ bulle.textContent=txt; bulle.classList.remove('vu'); void bulle.offsetWidth; bulle.classList.add('vu'); clearTimeout(bulleT); bulleT=setTimeout(()=>bulle.classList.remove('vu'),3200); }
+function quitteJeu(){
+  const f=bJeu.querySelector('iframe'); if(f){ try{ f.src='about:blank'; }catch(_){} f.remove(); }
+  bJeu.style.display='none'; if(enJeu){ RUDY.x=enJeu.x; RUDY.y=548; RUDY.dir='haut'; camX=null; } enJeu=false; joyX=joyY=0;
+  try{ window.ARCADE_PAUSE&&window.ARCADE_PAUSE(false); }catch(e){} try{ window.focus(); }catch(e){}
+}
+(function(){ const q=document.getElementById('borneQuit'); let a=false;
+  q.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();a=true;});
+  q.addEventListener('pointercancel',()=>{a=false;});
+  q.addEventListener('pointerup',e=>{e.preventDefault();e.stopPropagation();if(!a)return;a=false;quitteJeu();});
+})();
 /* joystick : toutes les directions */
 const z=document.getElementById('zoneJoy'), joy=document.getElementById('joy'), stick=document.getElementById('stick');
 let actif=null, ox=0, oy=0, RJ=0;
