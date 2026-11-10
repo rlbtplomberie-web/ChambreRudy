@@ -1,1 +1,1 @@
-maj-296 : bornes jouables de la salle d'arcade (Coach Bleu, Crazy Bazooka, Duel de Minuit, Let's Dance x2, Taxi Turbo x2, Opération Tonnerre, Tempête de Ki) + machines à peluches en panne — à mettre après la maj-295
+maj-297 partie 2 sur 7 : vérification complète + chargement rapide (déposer les 7 parties ensemble, après la maj-296)
