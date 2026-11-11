@@ -411,11 +411,14 @@ let cbOuv=cbOuvert(); setInterval(()=>{ cbOuv=cbOuvert(); },2000);
 function devantCB(){ return cbOuv&&!menu&&(etat==='repos'||etat==='marche')&&Math.abs(rx-CB_X)<60; }
 // les vidéos de K.O. du Carré Blanc (à venir) : une par ennemie → la vidéo, puis l'infirmière et l'hôpital de Vaviel
 const KO_CB={};
-function lanceCB(){ menu=true; dir=dirY=0; btnCB.style.display='none'; btnE.style.display='none';
+let musiqueAvantCB=false;
+function lanceCB(){ try{ const a=window.parent.RUDY_AUDIO; musiqueAvantCB=!!(a&&!a.paused); if(a) a.pause(); }catch(_){}   // le Carré Blanc a sa propre musique
+  menu=true; dir=dirY=0; btnCB.style.display='none'; btnE.style.display='none';
   rx=CB_X; ry=Math.max(YMIN,Math.min(YMAX,590)); sens=1;
   const f=document.createElement('iframe'); f.setAttribute('allow','autoplay; fullscreen'); f.src='/assets/shinato/jeux/carre-blanc.html';
   cbJeu.appendChild(f); cbJeu.style.display='block'; setTimeout(()=>{ try{ f.focus(); }catch(e){} },300); }
-function fermeCB(){ const f=cbJeu.querySelector('iframe'); if(f){ try{ f.src='about:blank'; }catch(_){} f.remove(); }
+function fermeCB(remet){ if(remet!==false&&musiqueAvantCB){ try{ const q=window.parent.RUDY_AUDIO.play(); if(q&&q.catch) q.catch(()=>{}); }catch(_){} } musiqueAvantCB=false;
+  const f=cbJeu.querySelector('iframe'); if(f){ try{ f.src='about:blank'; }catch(_){} f.remove(); }
   cbJeu.style.display='none'; menu=false; dir=dirY=0; rx=CB_X; ry=590; sens=1; etat='repos'; try{ window.focus(); }catch(_){} }
 (function(){ const q=document.getElementById('cbQuit'); let a=false;
   q.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();a=true;});
@@ -428,7 +431,7 @@ addEventListener('message',e=>{
     // Rudy K.O. : (la vidéo de l'ennemie, quand elle existera) puis l'infirmière, l'hôpital de Vaviel et la question « Retourner au château de glace ? »
     try{ localStorage.setItem('cblanc_retour','1'); }catch(_){}
     const hopital=()=>{ try{ window.parent.postMessage({type:'impasse:ko'},'*'); }catch(_){} };
-    const src=KO_CB[e.data.qui]; fermeCB(); menu=true;
+    const src=KO_CB[e.data.qui]; fermeCB(false); menu=true;
     if(!src){ hopital(); return; }
     const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:99;background:#000';
     vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);

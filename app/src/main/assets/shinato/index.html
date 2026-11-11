@@ -97,54 +97,7 @@
    }
    fr.forEach(function(f){ if(visible(f,w)){ try{ garde(f.contentDocument,prof+1); }catch(e){} } });
   }
-  // ---- Moins de travail pour le téléphone ----
-  // Un lieu entièrement caché par un jeu (ou un autre lieu) ouvert par-dessus ne se redessine plus :
-  // ses animations attendent et reprennent dès que le jeu se ferme. Le jeu a tout le téléphone pour lui.
-  function figeable(w){
-   if(!w||w===window||w.__figeRaf) return; var raf0=w.requestAnimationFrame, cbs=[];
-   if(typeof raf0!=="function") return; raf0=raf0.bind(w); w.__figeRaf=true; w.__fige=false;
-   w.requestAnimationFrame=function(cb){ if(w.__fige){ cbs.push(cb); return 0; } return raf0(cb); };
-   w.__defige=function(){ var a=cbs; cbs=[]; a.forEach(function(cb){ raf0(cb); }); };
-  }
-  var JEU=/(^|\/)(jeux|lieux)\/[^\/?#]+\.html/;
-  function couvert(doc,prof,etat){
-   if(!doc||prof>6) return; var w=doc.defaultView; if(!w) return;
-   var fr=[].slice.call(doc.getElementsByTagName("iframe")), dessus=false;
-   fr.forEach(function(f){
-    if(f.id==="telFrame"||!visible(f,w)||!plein(f,w)) return;
-    var src=f.getAttribute("src")||"";
-    if(JEU.test(src)){ dessus=true; if(/(^|\/)jeux\//.test(src)) etat.jeu=true; }
-    else if(prof===0&&f.id==="moto"){ /* le lieu ouvert dans la rue */ }
-   });
-   if(prof>0){
-    figeable(w);
-    if(dessus&&!w.__fige){ w.__fige=true; }
-    else if(!dessus&&w.__fige){ w.__fige=false; try{ w.__defige(); }catch(e){} }
-   }
-   fr.forEach(function(f){ if(visible(f,w)){ try{ couvert(f.contentDocument,prof+1,etat); }catch(e){} } });
-  }
-  // Musique de la ville : elle se tait pendant qu'un jeu (qui a sa propre musique) est ouvert, et revient après.
-  var coupeeParJeu=false;
-  function videoEnCours(doc,prof){
-   if(!doc||prof>6) return false;
-   var v=doc.getElementsByTagName("video");
-   for(var i=0;i<v.length;i++){ if(!v[i].paused&&!v[i].ended) return true; }
-   var fr=doc.getElementsByTagName("iframe");
-   for(var j=0;j<fr.length;j++){ try{ if(videoEnCours(fr[j].contentDocument,prof+1)) return true; }catch(e){} }
-   return false;
-  }
-  function musiqueJeu(jeu){
-   var a=window.RUDY_AUDIO; if(!a) return;
-   if(jeu){ if(!a.paused){ try{ a.pause(); }catch(e){} coupeeParJeu=true; } }
-   else if(coupeeParJeu){
-    if(!a.paused){ coupeeParJeu=false; return; }          // quelqu'un l'a déjà remise
-    if(videoEnCours(document,0)) return;                    // on attend la fin de la vidéo (infirmière, entrée…)
-    coupeeParJeu=false; try{ var pr=a.play(); if(pr&&pr.catch) pr.catch(function(){}); }catch(e){}
-   }
-  }
-  (function boucle(){ try{ garde(document,0); }catch(e){}
-   try{ var etat={jeu:false}; couvert(document,0,etat); musiqueJeu(etat.jeu); }catch(e){}
-   window.minuterieLibre(boucle,400); })();
+  (function boucle(){ try{ garde(document,0); }catch(e){} window.minuterieLibre(boucle,400); })();
  })();
  // Jamais de changement de lieu pendant qu'un doigt est posé sur l'écran.
  // Si une page (un lieu, la moto, un jeu) est remplacée pendant qu'un doigt la touche, certains téléphones
@@ -2475,11 +2428,8 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
   if(couv){ document.getElementById("voyageTxt").textContent="En route vers "+({plage:"la plage",vaviel:"Vaviel",ville:"la ville délabrée",delabree:"la ville délabrée",boulevard:"le boulevard",mitsuda:"Mitsuda",rembourg:"Rembourg",aeroport:"l'aéroport",chaliaville:"Chaliaville",garrett:"Garrett Parc",palais:"Miria City"}[lieu]||"là-bas")+"…"; couv.style.display="flex"; }
   var fini=false, cache=function(){ if(fini) return; fini=true; window.minuterieLibre(function(){ if(couv) couv.style.display="none"; },250); };
   cm.onload=cache; window.minuterieLibre(cache,8000);
-  // l'écran « En route vers… » s'affiche d'abord, ensuite seulement le lieu se charge (sinon l'écran reste figé sur l'ancien lieu)
-  window.minuterieLibre(function(){
-   cm.style.pointerEvents="auto"; cm.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/"+dest+".html")); cm.style.display="block";
-   window.minuterieLibre(function(){ try{ cm.focus(); }catch(e){} },300);
-  },couv?60:0);
+  cm.style.pointerEvents="auto"; cm.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/"+dest+".html")); cm.style.display="block";
+  window.minuterieLibre(function(){ try{ cm.focus(); }catch(e){} },300);
  };
  // le téléphone : une fille a dit « oui » -> Rudy rentre chez lui, elle arrive
  window.addEventListener("message",function(e){
