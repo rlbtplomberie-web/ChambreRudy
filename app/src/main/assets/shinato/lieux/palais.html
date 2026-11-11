@@ -33,6 +33,8 @@
 #zoom b.zp::after{width:.6vmin;height:3vmin;margin:-1.5vmin 0 0 -.3vmin}
 #zoomRail{position:relative;flex:1;width:.7vmin;border-radius:1vmin;background:rgba(243,223,160,.45);box-shadow:0 0 3px rgba(0,0,0,.8);margin:2.5vmin 0}
 #zoomBout{position:absolute;left:50%;width:4vmin;height:4vmin;margin:-2vmin 0 0 -2vmin;border-radius:50%;background:radial-gradient(circle at 45% 38%,#f6e3a1,#a07a24);border:1px solid #3b2a08;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+#cbJeu{position:fixed;inset:0;z-index:95;display:none;background:#000}#cbJeu iframe{width:100%;height:100%;border:0;display:block}
+#cbQuit{position:absolute;top:60px;right:10px;z-index:2;width:40px;height:40px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border-radius:10px;font:900 20px/1 Arial,sans-serif;color:#fff;background:rgba(170,20,30,.75);border:1px solid rgba(255,255,255,.45);touch-action:none;user-select:none;-webkit-user-select:none}
 </style>
 </head>
 <body>
@@ -41,12 +43,13 @@
 <div class="chip">Miria City</div>
 <div id="zoom"><b class="zp" data-z="1"></b><div id="zoomRail"><div id="zoomBout"></div></div><b class="zm" data-z="-1"></b></div>
 <div id="zoneJoy"></div><div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="btnEntrer" style="display:none">ENTRER</div><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
+<div id="actions"><div class="btn" id="btnEntrer" style="display:none">ENTRER</div><div class="btn" id="btnCB" style="display:none">ENTRER</div><div class="btn" id="btnFumer">FUMER</div><div class="btn off" id="btnJeter">JETER</div></div>
 <div id="depart"><div class="carte">
  <div class="fermer" id="departFermer">&#10005;</div>
  <h2>OÙ VOULEZ-VOUS ALLER&nbsp;?</h2>
  <div class="choix" data-d="boulevard">BOULEVARD</div>
 </div></div>
+<div id="cbJeu"><div id="cbQuit" title="Quitter">&#10005;</div></div>
 <script>
 (function(){
 const IMG_SRC = "/assets/shinato/m/palais_fond.jpg";
@@ -369,12 +372,13 @@ function majRudy(dt){
   if(rx>230) arme=true;
   if(arme&&!menu&&rx<=XMIN+10) montreMenu();
   btnE.style.display=devantGlabar()?'block':'none';
+  btnCB.style.display=devantCB()?'block':'none';
 }
 /* devant la porte du GlaBar Givré (à droite de Miria City) : flèche jaune + ENTRER */
 const GLABAR_X=2015, btnE=document.getElementById('btnEntrer');
 function devantGlabar(){ return !menu&&(etat==='repos'||etat==='marche')&&Math.abs(rx-GLABAR_X)<62; }
 function flecheGlabar(){
-  if(!devantGlabar()) return;
+  if(!devantGlabar()&&!devantCB()) return;
   const t=performance.now()/1000, h=hRudy(), s=h*0.0042;
   const x=rx, y=ry-h*1.2-14-Math.abs(Math.sin(t*4.2))*h*0.09;   // pointe vers le haut, au-dessus de sa tête
   ctx.save(); ctx.translate(offX,offY); ctx.scale(scale,scale); ctx.translate(x,y); ctx.scale(s,s);
@@ -398,6 +402,45 @@ function dessineRudy(){
 pose(RIMGS.fumer[0]); majBoutons();
 // on ressort du GlaBar Givré : Rudy réapparaît devant la porte
 try{ if(localStorage.getItem('palais_retour_glabar')==='1'){ localStorage.removeItem('palais_retour_glabar'); rx=GLABAR_X; ry=590; sens=-1; arme=true; } }catch(e){}
+
+/* ---------- la porte du palais (en haut des marches, sous la gardienne) : le Carré Blanc ----------
+   ouverte quand Rudy a le Carré Bleu, le Carré Orange, Astra (l'usine), la Reine des vampires (le château) et la Forêt Maudite */
+const CB_X=965, btnCB=document.getElementById('btnCB'), cbJeu=document.getElementById('cbJeu');
+function cbOuvert(){ try{ return ['carre_bleu_gagne','carre_orange_gagne','mitsuda_usine_gagnee','rembourg_chateau_gagne','foret_gagnee'].every(k=>localStorage.getItem(k)==='1'); }catch(e){ return false; } }
+let cbOuv=cbOuvert(); setInterval(()=>{ cbOuv=cbOuvert(); },2000);
+function devantCB(){ return cbOuv&&!menu&&(etat==='repos'||etat==='marche')&&Math.abs(rx-CB_X)<60; }
+// les vidéos de K.O. du Carré Blanc (à venir) : une par ennemie → la vidéo, puis l'infirmière et l'hôpital de Vaviel
+const KO_CB={};
+function lanceCB(){ menu=true; dir=dirY=0; btnCB.style.display='none'; btnE.style.display='none';
+  rx=CB_X; ry=Math.max(YMIN,Math.min(YMAX,590)); sens=1;
+  const f=document.createElement('iframe'); f.setAttribute('allow','autoplay; fullscreen'); f.src='/assets/shinato/jeux/carre-blanc.html';
+  cbJeu.appendChild(f); cbJeu.style.display='block'; setTimeout(()=>{ try{ f.focus(); }catch(e){} },300); }
+function fermeCB(){ const f=cbJeu.querySelector('iframe'); if(f){ try{ f.src='about:blank'; }catch(_){} f.remove(); }
+  cbJeu.style.display='none'; menu=false; dir=dirY=0; rx=CB_X; ry=590; sens=1; etat='repos'; try{ window.focus(); }catch(_){} }
+(function(){ const q=document.getElementById('cbQuit'); let a=false;
+  q.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();a=true;});
+  q.addEventListener('pointercancel',()=>{a=false;});
+  q.addEventListener('pointerup',e=>{e.preventDefault();e.stopPropagation();if(!a)return;a=false;fermeCB();});
+})();
+addEventListener('message',e=>{
+  if(!e.data||cbJeu.style.display!=='block') return;
+  if(e.data.type==='carreblanc:ko'){
+    // Rudy K.O. : (la vidéo de l'ennemie, quand elle existera) puis l'infirmière, l'hôpital de Vaviel et la question « Retourner au château de glace ? »
+    try{ localStorage.setItem('cblanc_retour','1'); }catch(_){}
+    const hopital=()=>{ try{ window.parent.postMessage({type:'impasse:ko'},'*'); }catch(_){} };
+    const src=KO_CB[e.data.qui]; fermeCB(); menu=true;
+    if(!src){ hopital(); return; }
+    const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:99;background:#000';
+    vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+    const v=vb.querySelector('video'); let fini=false;
+    const fin=()=>{ if(fini) return; fini=true; hopital(); setTimeout(()=>vb.remove(),400); };
+    v.addEventListener('ended',fin); v.addEventListener('error',fin); v.src=src; const q=v.play(); if(q&&q.catch) q.catch(()=>{});
+  }
+  // victoire (la vidéo de fin est passée dans le jeu) : Rudy se retrouve devant la porte du palais
+  if(e.data.type==='carreblanc:victoire'){ try{ localStorage.setItem('carre_blanc_gagne','1'); }catch(_){} fermeCB(); }
+});
+// retour depuis l'hôpital de Vaviel (« Retourner au château de glace ») : le Carré Blanc recommence au début
+try{ if(localStorage.getItem('palais_lance_cblanc')==='1'){ localStorage.removeItem('palais_lance_cblanc'); rx=CB_X; ry=590; sens=1; arme=true; setTimeout(lanceCB,600); } }catch(e){}
 
 /* joystick : toutes les directions */
 (function(){
@@ -427,6 +470,7 @@ try{ if(localStorage.getItem('palais_retour_glabar')==='1'){ localStorage.remove
 function appui(el,fn){ let t=0; const go=e=>{ if(e&&e.cancelable) e.preventDefault(); const n=performance.now(); if(n-t<350) return; t=n; fn(); };
   el.addEventListener('touchstart',go,{passive:false}); el.addEventListener('click',go); }
 appui(btnF,rudyFume); appui(btnJ,rudyJette);
+appui(btnCB,()=>{ if(!devantCB()) return; lanceCB(); });
 appui(btnE,()=>{ if(!devantGlabar()) return; dir=dirY=0; btnE.style.display='none'; menu=true;
   try{ parent.postMessage({type:'palais:glabar'},'*'); }catch(e){} });
 

@@ -432,7 +432,7 @@ const BOS={}; for (const k in SPR5) BOS[k]=SPR5[k].map(s=>{ const im=new Image()
 let BOSS=null, bossMort=false, bossT=0, ORBES=[], tentaZone=null;
 const BOSS_PV=40, BOSS_D=90, BOSS_ECH=1.35;
 let sireneVue=false, geanteVue=false, ANNEAUX=[], anneauT=3, soinT=0;
-const GEA={}; for (const k of ['face','cote','tir','ecrase','coups']) GEA[k]=SPR4[k].map(s=>{ const im=new Image(); im.src=s.src; return Object.assign({img:im},s); });
+const GEA={}; for (const k of ['face','cote','tir','ecrase','coups']) GEA[k]=SPR4[k].map(s=>{ const im=new Image(); if(s.src) im.src=s.src; return Object.assign({img:im},s); });
 const GEA_H={face:Math.max(...SPR4.face.map(s=>s.h)), cote:Math.max(...SPR4.cote.map(s=>s.h)), tir:Math.max(...SPR4.tir.map(s=>s.h))};
 
 function initJ(){ J={x:0,z:0,yaw:0,v:0,dir:0,gaz:0}; sillage=[]; hautRudy=null; }
