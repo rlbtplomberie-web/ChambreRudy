@@ -1,1 +1,1 @@
-maj-299 : Shinato et l'impasse remis comme avant la maj-297 (le combat de l'impasse) — après la maj-298
+maj-300 : Grand Terrain (Pont-l'Ades) — les 5 diamants toujours aux mêmes endroits, joystick et touches fiabilisés — après la maj-299

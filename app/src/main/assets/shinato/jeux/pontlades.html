@@ -1755,23 +1755,30 @@ function addGem(x,y,z,why){const g=new THREE.Group();g.position.set(x,y,z);const
   const h=new THREE.Sprite(GEM_GLOW);h.scale.setScalar(1.6);h.position.y=.75;g.add(h);const s=new THREE.Sprite(GEM_STAR.clone());s.position.set(.22,1.05,0);g.add(s);
   const sh=new THREE.Mesh(new THREE.CircleGeometry(.28,16).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0,transparent:true,opacity:.35,depthWrite:false}));sh.position.y=.03;g.add(sh);
   scene.add(g);GEMS.push({g,m,s,x,y,z,taken:false,ph:Math.random()*6,why})}
-// choix des cachettes
-{const start={x:5.8,z:5.8},spots=[],far=(x,z,m)=>Math.hypot(x-start.x,z-start.z)>m&&spots.every(s=>Math.hypot(s.x-x,s.z-z)>38);
-  const W=ENEMIES.filter(o=>o.v>=4),S=ENEMIES.filter(o=>o.v<4);
-  // 4 dans des immeubles gardés par une femme (jaune, rouge, requine) : à l'étage
-  for(const v of[4,5,6,4]){const cands=W.filter(o=>o.v===v&&!spots.some(s=>s.b===o.b));cands.sort(()=>Math.random()-.5);
-    for(const o of cands){const ps=o.posts.filter(p=>p[3]>=1);if(!ps.length)continue;const p=ps[(Math.random()*ps.length)|0];if(!far(p[0],p[1],30))continue;spots.push({x:p[0],z:p[1],y:p[2],b:o.b,why:'immeuble'});break}}
-  // 3 sur des toits avec échelle, au-dessus de la ronde d'une soldate
-  const Ls=ladders.slice().sort(()=>Math.random()-.5);let roofs=0;
-  for(const L of Ls){if(roofs>=3)break;const b=L.b,x=L.fx-L.n.x*2.6,z=L.fz-L.n.z*2.6;if(Math.abs(groundAt(x,z,L.top+.1)-L.top)>.05)continue;
-    if(!S.some(o=>{const p=o.posts[o.home];return Math.hypot(p[0]-x,p[1]-z)<26}))continue;if(!far(x,z,35))continue;spots.push({x,z,y:L.top,why:'toit'});roofs++}
-  // le reste dans la rue, à côté du poste d'une soldate
-  const SS=S.slice().sort(()=>Math.random()-.5);
-  for(const o of SS){if(spots.length>=10)break;const p=o.posts[(o.home+2)%o.posts.length],x=p[0]+1.2,z=p[1]+1.2;if(!far(x,z,35))continue;const y=groundAt(x,z,H(x,z)+.4);spots.push({x,z,y,why:'rue'})}
-  // seulement 5 diamants, éparpillés aux quatre coins du terrain (on garde les cachettes les plus éloignées les unes des autres)
-  const garde=[];if(spots.length){garde.push(spots[(Math.random()*spots.length)|0]);
-    while(garde.length<5&&garde.length<spots.length){let best=null,bd=-1;for(const c of spots){if(garde.includes(c))continue;const m=Math.min(...garde.map(g=>Math.hypot(g.x-c.x,g.z-c.z)));if(m>bd){bd=m;best=c}}garde.push(best)}}
-  for(const s of garde)addGem(s.x,s.y,s.z,s.why)}
+// les 5 diamants : TOUJOURS aux mêmes endroits (demandé par Rudy)
+//  - 3 sur des toits, juste après le haut d'une échelle : rien autour, rien au-dessus, on les prend en marchant
+//  - 2 au rez-de-chaussée de deux immeubles différents, juste derrière la porte
+{const libre=(x,z,y0,y1,r)=>!crates.some(c=>x+r>c.x0&&x-r<c.x1&&z+r>c.z0&&z-r<c.z1&&c.top>y0+.05&&c.bot<y1);
+  const panneau=b=>buildings.indexOf(b)%5===2;              // les immeubles avec un grand panneau sur le toit sont évités
+  const TOITS=[[-103.46,60],[16,-113.54],[113.54,26]], RDC=[[-66,101.1],[101.1,-66]];
+  const pris=[];
+  // toits : l'échelle la plus proche de l'endroit prévu, puis 3 à 7 m après son sommet, sur le toit
+  for(const [tx,tz] of TOITS){
+    const Ls=ladders.filter(L=>!pris.includes(L.b)&&!panneau(L.b)).sort((a,b)=>Math.hypot(a.fx-tx,a.fz-tz)-Math.hypot(b.fx-tx,b.fz-tz));
+    let ok=null;
+    for(const L of Ls){const b=L.b;
+      for(const d of[3,4,5,6,7]){const x=L.fx-L.n.x*d,z=L.fz-L.n.z*d;if(x<b.x0+1.2||x>b.x1-1.2||z<b.z0+1.2||z>b.z1-1.2)continue;
+        if(Math.abs(groundAt(x,z,L.top+.1)-L.top)>.05||!libre(x,z,L.top,L.top+8,1.2))continue;ok={x,z,y:L.top,b};break}
+      if(ok)break}
+    if(ok){pris.push(ok.b);addGem(ok.x,ok.y,ok.z,'toit')}}
+  // rez-de-chaussée : la porte la plus proche de l'endroit prévu, 1,6 à 3,4 m à l'intérieur
+  for(const [tx,tz] of RDC){
+    const Ds=doors.filter(D=>!pris.includes(D.b)).sort((a,b)=>Math.hypot(a.face.x-tx,a.face.z-tz)-Math.hypot(b.face.x-tx,b.face.z-tz));
+    let ok=null;
+    for(const D of Ds){for(const d of[1.6,2.2,2.8,3.4]){const x=D.face.x-D.n.x*d,z=D.face.z-D.n.z*d;
+        if(Math.abs(groundAt(x,z,D.floor+.3)-D.floor)>.05||!libre(x,z,D.floor,D.floor+2.4,.8))continue;ok={x,z,y:D.floor,b:D.b};break}
+      if(ok)break}
+    if(ok){pris.push(ok.b);addGem(ok.x,ok.y,ok.z,'immeuble')}}}
 function gemSfx(){const out=audioOut();if(!out)return;[880,1175,1568,2093].forEach((f,i)=>tone(out,{f,dur:.22,vol:.16,type:'triangle',delay:i*.07}))}
 function updateGems(dt,now){if(BOSSF.active)return;for(const G of GEMS){if(G.taken){if(G.g.visible){G.k=(G.k||0)+dt*2.5;G.g.position.y=G.y+G.k*1.2;G.g.scale.setScalar(Math.max(.01,1-G.k));if(G.k>=1)G.g.visible=false}continue}
     G.m.rotation.y=now*1.1+G.ph;G.m.position.y=.75+Math.sin(now*2+G.ph)*.09;const v=Math.max(0,Math.sin(now*2.6+G.ph*3));G.s.scale.setScalar(.12+.5*v);G.s.material.opacity=v;
@@ -2360,32 +2367,51 @@ function addHole(hit){const n=hit.face.normal.clone().transformDirection(hit.obj
 /* ---------- contrôles ---------- */
 const joy=$('joy'),knob=joy.firstElementChild;let joyId=null,joyO={x:0,y:0},lookId=null,lookLast={x:0,y:0};
 const BTN={bBino:binoc,bZoomIn:()=>zoom(1),bZoomOut:()=>zoom(-1),bKnock:knock,bDash:dash,bAct:doorAction,bJump:ctxAction,bDive:diveStick,bAim:aim,bCrouch:crouch,bPunch:punch,bReload:reload};
-for(const id in BTN){$(id).addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();audioOut();if(GR.on){grabTap();return}if((P.paraT>0||P.relHide>0))return;BTN[id]()})}
-$('bFire').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();fireHeld=true;fire()});
-$('bFire').addEventListener('pointerup',()=>fireHeld=false);$('bFire').addEventListener('pointercancel',()=>fireHeld=false);
-$('help').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();$('intro').hidden=false;$('go').textContent='REPRENDRE'});
+// un appui = une action, que le téléphone envoie le doigt en « pointer » ou en « touch » (jamais deux fois)
+function appui(el,f,fin){if(!el)return;let t=0;const go=e=>{if(e.cancelable)e.preventDefault();e.stopPropagation();const n=performance.now();if(n-t<300)return;t=n;f(e)};
+  el.addEventListener('pointerdown',go);el.addEventListener('touchstart',go,{passive:false});
+  if(fin){el.addEventListener('pointerup',fin);el.addEventListener('pointercancel',fin);el.addEventListener('touchend',fin);el.addEventListener('touchcancel',fin)}}
+for(const id in BTN)appui($(id),()=>{audioOut();if(GR.on){grabTap();return}if((P.paraT>0||P.relHide>0))return;BTN[id]()});
+appui($('bFire'),()=>{audioOut();if(GR.on){grabTap();return}fireHeld=true;fire()},()=>fireHeld=false);
+appui($('help'),()=>{$('intro').hidden=false;$('go').textContent='REPRENDRE'});
 const gameEl=renderer.domElement;
-gameEl.addEventListener('pointerdown',e=>{if(e.isPrimary&&e.pointerType!=='mouse')libereTouches();audioOut();if(GR.on){grabTap();return}
-  if(e.pointerType==='mouse'){if(e.button===2){aim();return}if(e.button===0&&(P.mode==='fps'||e.shiftKey||keys.shift)){fireHeld=true;fire()}
-    lookId=e.pointerId;lookLast={x:e.clientX,y:e.clientY};return}
-  // un doigt « oublié » (relâché sans que le téléphone l'ait signalé) ne bloque plus jamais les touches :
-  // un nouveau doigt à gauche reprend toujours le joystick, un nouveau doigt à droite reprend toujours la caméra
-  if(e.clientX<innerWidth*.45){if(joyId!==null&&joyId!==e.pointerId){input.x=input.y=0}
-    joyId=e.pointerId;joyO={x:e.clientX,y:e.clientY};joy.style.display='block';joy.style.left=e.clientX+'px';joy.style.top=e.clientY+'px';knob.style.transform='';if(lookId===e.pointerId)lookId=null}
-  else{lookId=e.pointerId;lookLast={x:e.clientX,y:e.clientY};if(joyId===e.pointerId){joyId=null;input.x=input.y=0;joy.style.display='none'}}
-  try{gameEl.setPointerCapture(e.pointerId)}catch(_){}});
-addEventListener('pointermove',e=>{
-  if(e.pointerId===joyId){let dx=e.clientX-joyO.x,dy=e.clientY-joyO.y;const d=Math.hypot(dx,dy),R=55;if(d>R){dx*=R/d;dy*=R/d}
-    knob.style.transform=`translate(${dx}px,${dy}px)`;input.x=dx/R;input.y=-dy/R}
-  else if(e.pointerId===lookId){input.lookDX+=e.clientX-lookLast.x;input.lookDY+=e.clientY-lookLast.y;lookLast={x:e.clientX,y:e.clientY}}});
-function libereTouches(){try{joyId=null;lookId=null;input.x=input.y=0;input.lookDX=input.lookDY=0;joy.style.display='none';knob.style.transform='';fireHeld=false}catch(e){}}
-function endPtr(e){if(e.pointerId===joyId){joyId=null;input.x=input.y=0;joy.style.display='none'}if(e.pointerId===lookId)lookId=null;if(e.pointerType==='mouse')fireHeld=false}
-addEventListener('pointerup',endPtr);addEventListener('pointercancel',endPtr);addEventListener('blur',libereTouches);document.addEventListener('visibilitychange',libereTouches);
-gameEl.addEventListener('lostpointercapture',endPtr);
-document.addEventListener('fullscreenchange',libereTouches);document.addEventListener('webkitfullscreenchange',libereTouches);addEventListener('orientationchange',libereTouches);
-// filet de sécurité : quand plus aucun doigt ne touche l'écran, plus rien ne reste appuyé
-addEventListener('touchend',e=>{if(e.touches.length===0&&(joyId!==null||lookId!==null||fireHeld))libereTouches()},{passive:true,capture:true});
-addEventListener('touchcancel',e=>{if(e.touches.length===0)libereTouches()},{passive:true,capture:true});
+// ---- souris (ordinateur) ----
+gameEl.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')return;audioOut();if(GR.on){grabTap();return}
+  if(e.button===2){aim();return}if(e.button===0&&(P.mode==='fps'||e.shiftKey||keys.shift)){fireHeld=true;fire()}
+  lookId='m';lookLast={x:e.clientX,y:e.clientY};try{gameEl.setPointerCapture(e.pointerId)}catch(_){}});
+addEventListener('pointermove',e=>{if(e.pointerType==='touch'||lookId!=='m')return;input.lookDX+=e.clientX-lookLast.x;input.lookDY+=e.clientY-lookLast.y;lookLast={x:e.clientX,y:e.clientY}});
+const finSouris=e=>{if(e.pointerType==='touch')return;if(lookId==='m')lookId=null;fireHeld=false};
+addEventListener('pointerup',finSouris);addEventListener('pointercancel',finSouris);
+// ---- doigts (téléphone) : suivis par leur numéro, directement avec les événements tactiles ----
+// · un doigt à gauche = joystick, un doigt à droite = caméra, chacun indépendant des boutons ;
+// · à chaque événement, on compare avec la liste RÉELLE des doigts posés : un doigt « fantôme » est oublié tout seul ;
+// · un doigt dont le téléphone a perdu le début est quand même repris dès qu'il bouge ;
+// · plus rien ne relâche le joystick tant que le doigt est posé (le focus qui change, une vidéo, un panneau… n'y font rien).
+const HORS_JEU='button,.b,#prDuel,#escape,#win,#koVid,#over,#rotate,#startVid,#intro,#zoomBox,#mapBox';
+const surJeu=el=>!el||!el.closest||!el.closest(HORS_JEU);
+function lacheJoy(){joyId=null;input.x=input.y=0;joy.style.display='none';knob.style.transform=''}
+function prend(t){if(t.clientX<innerWidth*.45){if(joyId!==null&&joyId!==t.identifier)lacheJoy();
+    joyId=t.identifier;joyO={x:t.clientX,y:t.clientY};joy.style.display='block';joy.style.left=t.clientX+'px';joy.style.top=t.clientY+'px';knob.style.transform='';if(lookId===t.identifier)lookId=null}
+  else{lookId=t.identifier;lookLast={x:t.clientX,y:t.clientY};if(joyId===t.identifier)lacheJoy()}}
+function verifie(e){const ids=new Set();for(const t of e.touches)ids.add(t.identifier);
+  if(joyId!==null&&!ids.has(joyId))lacheJoy();if(lookId!==null&&lookId!=='m'&&!ids.has(lookId))lookId=null;
+  if(fireHeld&&![...e.touches].some(t=>t.target&&t.target.id==='bFire'))fireHeld=false}
+addEventListener('touchstart',e=>{verifie(e);audioOut();
+  for(const t of e.changedTouches){if(!surJeu(t.target))continue;if(e.cancelable)e.preventDefault();if(GR.on){grabTap();continue}prend(t)}},{passive:false,capture:true});
+addEventListener('touchmove',e=>{if(e.cancelable)e.preventDefault();
+  for(const t of e.changedTouches){
+    if(t.identifier!==joyId&&t.identifier!==lookId){if(!surJeu(t.target)||GR.on)continue;
+      if(t.clientX<innerWidth*.45?joyId===null:lookId===null)prend(t);else continue}
+    if(t.identifier===joyId){let dx=t.clientX-joyO.x,dy=t.clientY-joyO.y;const d=Math.hypot(dx,dy),R=55;if(d>R){dx*=R/d;dy*=R/d}
+      knob.style.transform=`translate(${dx}px,${dy}px)`;input.x=dx/R;input.y=-dy/R}
+    else if(t.identifier===lookId){input.lookDX+=t.clientX-lookLast.x;input.lookDY+=t.clientY-lookLast.y;lookLast={x:t.clientX,y:t.clientY}}}
+  verifie(e)},{passive:false,capture:true});
+const finDoigt=e=>{for(const t of e.changedTouches){if(t.identifier===joyId)lacheJoy();if(t.identifier===lookId)lookId=null}verifie(e)};
+addEventListener('touchend',finDoigt,{passive:true,capture:true});addEventListener('touchcancel',finDoigt,{passive:true,capture:true});
+function libereTouches(){try{lacheJoy();lookId=null;input.lookDX=input.lookDY=0;fireHeld=false}catch(e){}}
+// l'écran caché (appli en arrière-plan, écran éteint) ou tourné : tout est relâché
+document.addEventListener('visibilitychange',()=>{if(document.hidden)libereTouches()});
+addEventListener('orientationchange',libereTouches);
 gameEl.addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('wheel',e=>{if(P.mode==='binoview'){e.preventDefault();zoom(e.deltaY<0?1:-1)}},{passive:false});
 addEventListener('resize',()=>{if(P.mode==='binoview')drawBinoMask()});
@@ -2393,7 +2419,7 @@ addEventListener('keydown',e=>{const k=e.key.toLowerCase();if(GR.on&&!e.repeat){
   if(k===' '){e.preventDefault();ctxAction()}else if(k==='f')aim();else if(k==='e'){if(P.mode==='cover')knock();else doorAction()}else if(k==='k')knock();else if(k==='b')binoc();else if(k==='+'||k==='=')zoom(1);else if(k==='-')zoom(-1);else if(k==='x')dash();else if(k==='c')crouch();else if(k==='shift')diveStick();
   else if(k==='v')punch();else if(k==='g'){fireHeld=true;fire()}else if(k==='r')reload();else if(k==='escape'&&P.mode==='fps')exitFps()});
 addEventListener('keyup',e=>{const k=e.key.toLowerCase();keys[k]=false;if(k==='g')fireHeld=false});
-addEventListener('blur',()=>{for(const k in keys)keys[k]=false;fireHeld=false});
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
 function keyAxes(){let x=0,y=0;if(keys.z||keys.w||keys.arrowup)y+=1;if(keys.s||keys.arrowdown)y-=1;if(keys.q||keys.a||keys.arrowleft)x-=1;if(keys.d||keys.arrowright)x+=1;
   const l=Math.hypot(x,y);return l?{x:x/l,y:y/l}:null}
 $('go').addEventListener('click',()=>{audioOut();$('intro').hidden=true});
