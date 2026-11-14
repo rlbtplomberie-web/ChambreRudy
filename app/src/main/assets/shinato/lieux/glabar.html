@@ -880,21 +880,13 @@ st.textContent=`#bulle{position:fixed;z-index:60;display:none;max-width:min(62vw
 document.head.appendChild(st);
 const bulle=document.createElement('div'); bulle.id='bulle'; bulle.innerHTML='<div id="bulleTxt"></div><div id="bulleSuite">▼</div>'; document.body.appendChild(bulle);
 const bulleTxt=bulle.querySelector('#bulleTxt');
-const bP=document.createElement('div'); bP.className='btn'; bP.id='btnParler'; bP.textContent='PARLER'; bP.style.display='none';
-document.getElementById('actions').appendChild(bP);
-const AVANT=[['f',"J'en ai marre de passer le balai… et de ce mari qui ne me donne pas de plaisir."],
-             ['f',"Tiens, un petit jeune comme toi ! Tu peux m'aider à remplacer une ampoule dans la chambre ?"],
-             ['r',"Oui, bien sûr."],
-             ['f',"Ah, merci ! Viens avec moi."]];
-const APRES=[['r',"Et l'ampoule, alors ?"],
-             ['f',"Quelle ampoule ? C'était une excuse. Reviens me voir plus tard pour la remplacer."]];
-let lignes=null, li=0, tAuto=null, ensuite=null, occupe=false;
+let lignes=null, li=0, tAuto=null, ensuite=null, occupe=false, avec=null;
 function place(){
   if(!lignes) return;
-  const qui=lignes[li][0], F=window.FEMME_GB||{x:900,haut:380};
-  RUDY.dir=F.x>RUDY.x?'droite':'gauche'; window.FEMME_VERS=RUDY.x;     // ils se regardent
+  const qui=lignes[li][0], P=avec.ou()||{x:RUDY.x,tete:300};          // P : où est la personne (x, tête), sur la scène
+  RUDY.dir=P.x>RUDY.x?'droite':'gauche'; if(avec.regarde) avec.regarde(RUDY.x);     // ils se regardent
   let wx, wy;
-  if(qui==='r'){ wx=RUDY.x; wy=RUDY.y-taille(RUDY.y)*1.02; } else { wx=F.x; wy=F.haut+40; }
+  if(qui==='r'){ wx=RUDY.x; wy=RUDY.y-taille(RUDY.y)*1.02; } else { wx=P.x; wy=P.tete; }
   const sx=(VUE.camX||0)+wx*VUE.s, sy=VUE.ty+wy*VUE.s-10, W=innerWidth;
   const w=bulle.offsetWidth||200, mx=Math.max(w/2+8,Math.min(W-w/2-8,sx));
   bulle.style.left=mx+'px'; bulle.style.top=Math.max(bulle.offsetHeight+8,sy)+'px';
@@ -910,25 +902,54 @@ function montre(){
   tAuto=setTimeout(suite,1800+lignes[li][1].length*55);       // passe toute seule si on ne touche pas
 }
 function suite(){ if(!lignes) return; li++; montre(); }
-function discute(l,f){ lignes=l; li=0; ensuite=f; parle=true; joyX=joyY=0; window.FEMME_STOP=true;
-  const F=window.FEMME_GB; if(F) RUDY.dir=F.x>RUDY.x?'droite':'gauche'; montre(); }
+function discute(c,l,f){ if(!l||!l.length){ if(f) f(); return; } avec=c; lignes=l; li=0; ensuite=f; parle=true; joyX=joyY=0;
+  if(c.pause) c.pause(true); montre(); }
 setInterval(place,60);
 document.addEventListener('pointerdown',e=>{ if(!lignes) return; e.preventDefault(); e.stopPropagation(); suite(); },true);
 // la vidéo : la musique du bar se tait pendant qu'elle passe
 const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:70;background:#000;display:none';
 vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
 document.body.appendChild(vb); const v=vb.querySelector('video'); let fini=true, musVille=false;
+let quand=null;
 function finVideo(){ if(fini) return; fini=true; try{ v.pause(); }catch(e){} vb.style.display='none'; v.removeAttribute('src'); try{ v.load(); }catch(e){}
   try{ if(SFX.ctx&&SFX.ctx.resume) SFX.ctx.resume(); }catch(e){}
   if(musVille){ try{ const q=parent.RUDY_AUDIO.play(); if(q&&q.catch) q.catch(()=>{}); }catch(e){} } musVille=false;
-  discute(APRES,()=>{ parle=false; occupe=false; window.FEMME_STOP=false; window.FEMME_VERS=null; }); }
+  const f=quand; quand=null; if(f) f(); }
 v.addEventListener('ended',finVideo); v.addEventListener('error',finVideo);
-function video(){ fini=false;
+function video(src,f){ fini=false; quand=f;
   try{ if(SFX.ctx&&SFX.ctx.suspend) SFX.ctx.suspend(); }catch(e){}
   try{ const a=parent.RUDY_AUDIO; musVille=!!(a&&parent!==window&&!a.paused); if(musVille) a.pause(); }catch(e){ musVille=false; }
-  v.src='/assets/shinato/m/glabar_femme_balai.mp4'; vb.style.display='block'; const q=v.play(); if(q&&q.catch) q.catch(()=>{}); }
-setInterval(()=>{ const F=window.FEMME_GB; bP.style.display=(F&&!occupe&&!sortie&&Math.abs(RUDY.x-F.x)<130)?'block':'none'; },150);
-appui(bP,()=>{ if(occupe) return; occupe=true; bP.style.display='none'; discute(AVANT,video); });
+  v.src=src; vb.style.display='block'; const q=v.play(); if(q&&q.catch) q.catch(()=>{}); }
+// une personne à qui parler : son bouton PARLER apparaît quand Rudy est près d'elle
+function parlerA(c){
+  const b=document.createElement('div'); b.className='btn'; b.textContent='PARLER'; b.style.display='none';
+  document.getElementById('actions').appendChild(b);
+  setInterval(()=>{ const P=c.ou(); b.style.display=(P&&!occupe&&!sortie&&Math.abs(RUDY.x-P.x)<c.pres)?'block':'none'; },150);
+  appui(b,()=>{ if(occupe) return; occupe=true; b.style.display='none';
+    discute(c,c.avant,()=>video(c.video,()=>discute(c,c.apres,()=>{ parle=false; occupe=false; if(c.pause) c.pause(false); if(c.fini) c.fini(); }))); });
+}
+// la femme au balai : elle reste sur place pendant la discussion et se tourne vers Rudy
+parlerA({ pres:130, video:'/assets/shinato/m/glabar_femme_balai.mp4',
+  ou:()=>{ const F=window.FEMME_GB; return F&&{x:F.x,tete:F.haut+40}; },
+  regarde:x=>{ window.FEMME_VERS=x; },
+  pause:on=>{ window.FEMME_STOP=on; if(!on) window.FEMME_VERS=null; },
+  avant:[['f',"J'en ai marre de passer le balai… et de ce mari qui ne me donne pas de plaisir."],
+         ['f',"Tiens, un petit jeune comme toi ! Tu peux m'aider à remplacer une ampoule dans la chambre ?"],
+         ['r',"Oui, bien sûr."],
+         ['f',"Ah, merci ! Viens avec moi."]],
+  apres:[['r',"Et l'ampoule, alors ?"],
+         ['f',"Quelle ampoule ? C'était une excuse. Reviens me voir plus tard pour la remplacer."]] });
+// le barman, derrière le comptoir
+parlerA({ pres:150, video:'/assets/shinato/m/glabar_barman.mp4',
+  fini:()=>{ try{ localStorage.setItem('glabar_barman_parle','1'); }catch(e){} },   // il faut lui avoir parlé pour entrer dans le Carré Blanc (la porte du palais)
+  ou:()=>{ const bm=document.getElementById('barman'); if(!bm) return null; const q=bm.getBoundingClientRect();
+    return {x:((q.left+q.width/2)-(VUE.camX||0))/VUE.s, tete:(q.top-VUE.ty)/VUE.s+6}; },
+  avant:[['f',"Salut ! Un petit verre ?"],
+         ['r',"Non merci. J'ai juste besoin de conseils pour aller dans ce château."],
+         ['f',"J'espère que tu ne me parles pas du Château de glace…"],
+         ['r',"Finalement, je veux bien un verre. Mais parle-moi plus de ce château."]],
+  apres:[['f',"Tu vas quand même y aller ?"],
+         ['r',"Oui, je vais y aller. Je n'ai pas le choix."]] });
 }
 })();
 </script>

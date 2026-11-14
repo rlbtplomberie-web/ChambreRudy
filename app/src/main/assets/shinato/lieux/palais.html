@@ -404,9 +404,9 @@ pose(RIMGS.fumer[0]); majBoutons();
 try{ if(localStorage.getItem('palais_retour_glabar')==='1'){ localStorage.removeItem('palais_retour_glabar'); rx=GLABAR_X; ry=590; sens=-1; arme=true; } }catch(e){}
 
 /* ---------- la porte du palais (en haut des marches, sous la gardienne) : le Carré Blanc ----------
-   ouverte quand Rudy a le Carré Bleu, le Carré Orange, Astra (l'usine), la Reine des vampires (le château) et la Forêt Maudite */
+   ouverte quand Rudy a le Carré Bleu, le Carré Orange, Astra (l'usine), la Reine des vampires (le château), la Forêt Maudite, et qu'il a parlé au barman du GlaBar Givré */
 const CB_X=965, btnCB=document.getElementById('btnCB'), cbJeu=document.getElementById('cbJeu');
-function cbOuvert(){ try{ return ['carre_bleu_gagne','carre_orange_gagne','mitsuda_usine_gagnee','rembourg_chateau_gagne','foret_gagnee'].every(k=>localStorage.getItem(k)==='1'); }catch(e){ return false; } }
+function cbOuvert(){ try{ return ['carre_bleu_gagne','carre_orange_gagne','mitsuda_usine_gagnee','rembourg_chateau_gagne','foret_gagnee','glabar_barman_parle'].every(k=>localStorage.getItem(k)==='1'); }catch(e){ return false; } }
 let cbOuv=cbOuvert(); setInterval(()=>{ cbOuv=cbOuvert(); },2000);
 function devantCB(){ return cbOuv&&!menu&&(etat==='repos'||etat==='marche')&&Math.abs(rx-CB_X)<60; }
 // les vidéos de K.O. du Carré Blanc (à venir) : une par ennemie → la vidéo, puis l'infirmière et l'hôpital de Vaviel
