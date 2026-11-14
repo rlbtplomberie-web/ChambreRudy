@@ -1419,7 +1419,7 @@ function updatePlayer(dt){
       const step=p.t<0.7?0:p.t<1.8?1:p.t<2.9?2:p.t<4.0?3:4;
       if(step!==p.kissStep){p.kissStep=step;if(step===0)SFX.kiss();else SFX.freeze();}
       if(p.mash>=1&&step<4){ release(true); break; }
-      if(step===4){ p.kissStep=4; SFX.crack(); state='icedeath'; stateT=0; }
+      if(step===4){ p.kissStep=4; SFX.crack(); if(w&&w.kind)quiKO=w.kind; state='icedeath'; stateT=0; }
       break;}
     case 'thrown': {
       const g=p.grabber; if(!g||g.dead){release();break;}
@@ -2151,6 +2151,7 @@ function hitPlayer(src,dmg,kd,dir,proj,ground,punch){
   if(p.dash){ shieldFx(p.x+(dir?-dir*45:0)); return false; }
   if(shielded()&&p.inv<=0){ shieldFx(p.x+(dir?-dir*45:0)); return false; }
   if(p.inv>0||['kiss','grabbed','pulled','eaten','swallowed','buried','cloneheld','snowtomb','bellied','throwing','snowgulp','thrown','pillared','fall'].includes(p.st))return false;
+  try{ if(src&&src.kind){ coupDe=src.kind; coupT=performance.now(); } }catch(e){}   // qui vient de toucher Rudy (pour la bonne vidéo de K.O.)
   if(!ground&&p.st==='guard'&&p.face===-dir){ SFX.block(); fx.push({type:'block',x:p.x+p.face*40,y:p.y-170,t:0,d:0.2}); p.x-=p.face*8; p.energy=Math.min(100,p.energy+2); return true; }
   if(p.st==='frozen'){ p.frozen=false; SFX.crack(); for(let i=0;i<14;i++)fx.push({type:'shard',x:p.x+rnd(-40,40),y:p.y-rnd(40,250),t:0,d:0.7,vx:rnd(-200,200),vy:rnd(-300,-50)}); }
   if(punch&&!proj&&!ground&&src&&src.kind&&p.face===-dir&&src.face===dir&&Math.random()<0.06){ dmg*=1.7; critFx(p.x+p.face*12,p.y-228,false); }
@@ -2838,12 +2839,14 @@ const introEl=document.getElementById('intro'), introV=document.getElementById('
 const CUTS=window.CUTS||{}, cutSeen={};
 // ====== DANS L'APPLI (lancé depuis la porte du palais de Miria City) ======
 const DANS_APPLI=(()=>{ try{ return window.parent!==window; }catch(e){ return false; } })();
-let quiKO='', finEnvoyee=false;
+let quiKO='', finEnvoyee=false, coupDe='', coupT=-1e9;
 function noteQui(p){ // l'ennemie la plus proche quand Rudy perd de la vie (pour les vidéos de K.O. à venir)
+  if(coupDe&&performance.now()-coupT<400){ quiKO=coupDe; return; }   // touché par un coup ou un tir : c'est celle qui l'a lancé
   let best=null,bd=1e9; for(const e of ents){ if(e.dead)continue; const d=Math.abs(e.x-p.x)+Math.abs(e.y-p.y)*0.5; if(d<bd){bd=d;best=e;} } if(best&&bd<700) quiKO=best.kind||''; }
 function finAppli(type){ if(finEnvoyee)return; finEnvoyee=true;
   if(type==='carreblanc:victoire'){ try{ localStorage.setItem('carre_blanc_gagne','1'); }catch(e){} }
   try{ if(AC&&AC.suspend)AC.suspend(); }catch(e){}
+  try{ const g=player&&player.grabber; if(type==='carreblanc:ko'&&g&&g.kind) quiKO=g.kind; }catch(e){}   // tué pendant une prise : c'est celle qui le tient
   try{ window.parent.postMessage({type:type,qui:quiKO},'*'); }catch(e){} }
 let introOn=false;
 function endIntro(){ if(!introOn)return; introOn=false; try{introV.pause();}catch(e){} introEl.style.display='none'; introV.removeAttribute('src'); try{introV.load();}catch(e){} last=performance.now(); }

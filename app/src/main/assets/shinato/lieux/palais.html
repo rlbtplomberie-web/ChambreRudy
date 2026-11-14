@@ -410,7 +410,7 @@ function cbOuvert(){ try{ return ['carre_bleu_gagne','carre_orange_gagne','mitsu
 let cbOuv=cbOuvert(); setInterval(()=>{ cbOuv=cbOuvert(); },2000);
 function devantCB(){ return cbOuv&&!menu&&(etat==='repos'||etat==='marche')&&Math.abs(rx-CB_X)<60; }
 // les vidéos de K.O. du Carré Blanc (à venir) : une par ennemie → la vidéo, puis l'infirmière et l'hôpital de Vaviel
-const KO_CB={};
+const KO_CB={wolf:'/assets/shinato/m/cbl_ko_louve.mp4',bear:'/assets/shinato/m/cbl_ko_ourse.mp4',crystal:'/assets/shinato/m/cbl_ko_cristal.mp4',dancer:'/assets/shinato/m/cbl_ko_danseuse.mp4',giant:'/assets/shinato/m/cbl_ko_geante_bleue.mp4',queen:'/assets/shinato/m/cbl_ko_dame_neiges.mp4',qcopy:'/assets/shinato/m/cbl_ko_dame_neiges.mp4',blue:'/assets/shinato/m/cbl_ko_geante_glace.mp4',fumee:'/assets/shinato/m/cbl_ko_fumee.mp4',lancer:'/assets/shinato/m/cbl_ko_gardienne.mp4',mclone:'/assets/shinato/m/cbl_ko_gardienne.mp4',snow:'/assets/shinato/m/cbl_ko_femme_neige.mp4',fboss:'/assets/shinato/m/cbl_ko_reine.mp4',fcopy:'/assets/shinato/m/cbl_ko_reine.mp4',giga:'/assets/shinato/m/cbl_ko_reine.mp4'};
 let musiqueAvantCB=false;
 function lanceCB(){ try{ const a=window.parent.RUDY_AUDIO; musiqueAvantCB=!!(a&&!a.paused); if(a) a.pause(); }catch(_){}   // le Carré Blanc a sa propre musique
   menu=true; dir=dirY=0; btnCB.style.display='none'; btnE.style.display='none';
