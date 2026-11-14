@@ -42,6 +42,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;color:#fff;f
  background:linear-gradient(rgba(12,12,14,.9),rgba(40,40,46,.9));border:2px solid rgba(255,226,122,.7)}
 #departAero .choix:active{transform:scale(.95)}
 #departAero .fermer{position:absolute;top:1.6vmin;right:2.2vmin;color:#ffe27a;font:900 clamp(16px,4vmin,30px)/1 Arial;cursor:pointer;opacity:.7}
+/* bulles de dialogue façon manga */
+#bulle{position:fixed;z-index:60;display:none;max-width:min(62vw,420px);min-width:120px;padding:18px 28px 22px;box-sizing:border-box;
+ background:#fff;color:#111;border:3px solid #111;border-radius:50%/42%;box-shadow:4px 5px 0 rgba(0,0,0,.55);
+ font:800 clamp(14px,3.6vmin,24px)/1.25 "Comic Neue","Comic Sans MS","Chalkboard SE","Trebuchet MS",sans-serif;text-align:center;letter-spacing:.2px;
+ transform:translate(-50%,-100%);pointer-events:auto;animation:bullePop .18s ease-out}
+#bulle::after{content:'';position:absolute;bottom:-22px;left:var(--queue,50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:24px solid #111;transform:translateX(-50%) skewX(var(--penche,-18deg))}
+#bulle::before{content:'';position:absolute;bottom:-16px;left:var(--queue,50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:18px solid #fff;transform:translateX(-50%) skewX(var(--penche,-18deg));z-index:1}
+#bulleSuite{position:absolute;right:16px;bottom:4px;font-size:12px;opacity:.6;animation:bulleClig .8s infinite}
+@keyframes bullePop{from{transform:translate(-50%,-100%) scale(.6);opacity:0}to{transform:translate(-50%,-100%) scale(1);opacity:1}}
+@keyframes bulleClig{50%{opacity:.1}}
 </style>
 </head>
 <body>
@@ -53,6 +63,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#05060a;color:#fff;f
 <div id="actions">
  <div class="btn" id="btnParlerMeca" hidden>PARLER</div>
 </div>
+<div id="bulle"><div id="bulleTxt"></div><div id="bulleSuite">▼</div></div>
 <div id="charge">CHARGEMENT…</div>
 <div id="departAero"><div class="carte">
  <div class="fermer" id="departFermer">&#10005;</div>
@@ -128,6 +139,7 @@ function boucle(t){
  // direction
  var ix=input.x, iy=input.y;
  if(clav.l) ix=-1; if(clav.r) ix=1; if(clav.u) iy=-1; if(clav.d) iy=1;
+ if(window.EN_DIALOGUE){ ix=0; iy=0; }
  var m=Math.min(1,Math.hypot(ix,iy));
  if(m>.2){
   var a=Math.atan2(iy,ix), s=Math.round(a/(Math.PI/4)); s=(s+8)%8;
@@ -263,6 +275,68 @@ function appui(el,f){ var t0=0; function go(e){ if(e.cancelable)e.preventDefault
  appui(b,function(){ if(occupe) return; occupe=true; fini=false; b.hidden=true; input.x=input.y=0; clav={};
   v.src="/assets/shinato/m/aero_mecanicien.mp4"; vb.style.display="block"; var q=v.play(); if(q&&q.catch) q.catch(function(){}); });
 })();
+/* ---------- PARLER à une femme de l'aéroport : la discussion en bulles manga, sa vidéo, puis (s'il y en a) un dernier mot ---------- */
+var parleA=(function(){
+ var bulle=document.getElementById("bulle"), bulleTxt=document.getElementById("bulleTxt");
+ var lignes=null, i=0, tAuto=null, apres=null, avec=null, occupe=false;
+ function place(){
+  if(!lignes) return;
+  var qui=lignes[i][0], wx, wy;
+  if(qui==="r"){ wx=R.x; wy=R.y-taille(R.y)*1.04; }
+  else{ var h=taille(avec.y)*avec.f, M=META[avec.id]; wx=avec.x; wy=avec.y-M.h*h/(avec.ref||330)*.92; }
+  var sx=(wx-cam.x)*ZOOM, sy=(wy-cam.y)*ZOOM-10;
+  var w=bulle.offsetWidth||200, mx=Math.max(w/2+8,Math.min(W-w/2-8,sx));
+  bulle.style.left=mx+"px"; bulle.style.top=Math.max(bulle.offsetHeight+8,sy)+"px";
+  bulle.style.setProperty("--queue",Math.max(18,Math.min(w-18,w/2+(sx-mx)))+"px");
+  bulle.style.setProperty("--penche",qui==="r"?"18deg":"-18deg");
+ }
+ function montre(){
+  clearTimeout(tAuto);
+  if(i>=lignes.length){ var f=apres; lignes=null; window.EN_DIALOGUE=false; bulle.style.display="none"; apres=null; if(f) f(); return; }
+  bulleTxt.textContent=lignes[i][1]; bulle.style.display="block";
+  bulle.style.animation="none"; void bulle.offsetWidth; bulle.style.animation="";
+  place();
+  tAuto=setTimeout(suite,1800+lignes[i][1].length*55);          // passe toute seule si on ne touche pas
+ }
+ function suite(){ if(!lignes) return; i++; montre(); }
+ function discute(p,l,ensuite){ if(!l||!l.length){ if(ensuite) ensuite(); return; }
+  avec=p; lignes=l; i=0; apres=ensuite; window.EN_DIALOGUE=true; input.x=input.y=0; clav={};
+  R.bouge=false; R.dir=p.x>R.x?"right":"left"; montre(); }
+ setInterval(place,60);
+ document.addEventListener("pointerdown",function(e){ if(!lignes) return; e.preventDefault(); e.stopPropagation(); suite(); },true);
+
+ // la vidéo (la musique de la ville se tait pendant qu'elle passe)
+ var vb=document.createElement("div"); vb.style.cssText="position:fixed;inset:0;z-index:70;background:#000;display:none";
+ vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+ document.body.appendChild(vb); var v=vb.querySelector("video"), fini=true, musique=false, quand=null;
+ function finVideo(){ if(fini) return; fini=true; try{ v.pause(); }catch(e){} vb.style.display="none"; v.removeAttribute("src"); try{ v.load(); }catch(e){}
+  if(musique){ try{ var q=window.parent.RUDY_AUDIO.play(); if(q&&q.catch) q.catch(function(){}); }catch(e){} } musique=false;
+  var f=quand; quand=null; if(f) f(); }
+ v.addEventListener("ended",finVideo); v.addEventListener("error",finVideo);
+ function video(src,ensuite){ fini=false; quand=ensuite;
+  try{ var a=window.parent.RUDY_AUDIO; musique=!!(a&&!a.paused&&window.parent!==window); if(musique) a.pause(); }catch(e){ musique=false; }
+  v.src=src; vb.style.display="block"; var q=v.play(); if(q&&q.catch) q.catch(function(){}); }
+
+ // une femme à qui on peut parler : son bouton PARLER apparaît quand Rudy est près d'elle
+ return function(c){
+  var b=document.createElement("div"); b.className="btn"; b.textContent="PARLER"; b.hidden=true;
+  document.getElementById("actions").appendChild(b);
+  var p=PNJ.filter(function(q){return q.id===c.id})[0];
+  setInterval(function(){ var d=Math.hypot(R.x-p.x,(R.y-p.y)*1.6); b.hidden=!(!occupe&&d<taille(p.y)*.9); },150);
+  appui(b,function(){ if(occupe) return; occupe=true; b.hidden=true;
+   discute(p,c.avant,function(){ video(c.video,function(){ discute(p,c.apres,function(){ occupe=false; }); }); }); });
+ };
+})();
+// la fille au chien
+parleA({id:"punk", video:"/assets/shinato/m/aero_fille_chien.mp4",
+ avant:[["f","Tu as vu mon Mico ? Il est beau, hein ?"],["r","Oui, il est mignon."],
+        ["f","T'es gentil, toi. Regarde, je vais te montrer ce que je sais faire… et après, je te donnerai du plaisir."]],
+ apres:[["f","J'espère que t'as aimé. Reviens me voir quand tu veux."]]});
+// l'hôtesse d'accueil (devant « Departures »)
+parleA({id:"hotesse1", video:"/assets/shinato/m/aero_hotesse.mp4",
+ avant:[["f","Qu'est-ce que tu veux, toi ?"]], apres:[]});
+// l'hôtesse de l'air (en rouge) : la vidéo se lance directement
+parleA({id:"hotesse2", video:"/assets/shinato/m/aero_hotesse_air.mp4", avant:[], apres:[]});
 function depart(){ mesure(); document.getElementById("charge").hidden=true; requestAnimationFrame(boucle); }
 </script>
 <style>/* « Où voulez-vous aller ? » sur 2 colonnes : toutes les destinations se voient */

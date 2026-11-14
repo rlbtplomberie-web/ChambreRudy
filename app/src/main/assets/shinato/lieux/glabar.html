@@ -501,6 +501,7 @@ const WDATA={"CW":354,"CH":350,"cols":6,"order":["A0","A1","A2","A3","A4","A5","
   const SMOKE_SIDE =[[2,1],[1,.6],[0,1.6,'puff'],[5,1.1,'exhale'],[3,.7],[4,1.5,'puff'],[1,.9,'exhale'],[2,.9]];
 
   function choose(){
+    if(window.FEMME_STOP) return start('sweep');
     // enchaînement : balayer de face -> (fumer de face) -> marcher en balayant -> (fumer de profil)
     if(lastAct==='walk'){
       if(Math.random()<.4) return start('smokeSide');
@@ -540,6 +541,7 @@ const WDATA={"CW":354,"CH":350,"cols":6,"order":["A0","A1","A2","A3","A4","A5","
 
   function update(dt,t){
     st+=dt; stepT+=dt;
+    if(window.FEMME_STOP){ if(state==='walk') start('sweep'); if(window.FEMME_VERS!=null) dir=window.FEMME_VERS>x?1:-1; }
     if(state==='sweep'){
       if(stepT>=SWEEP_DT){
         stepT-=SWEEP_DT;
@@ -600,6 +602,7 @@ const WDATA={"CW":354,"CH":350,"cols":6,"order":["A0","A1","A2","A3","A4","A5","
     // placement et sens
     const lft=x-CW/2*S+(dir<0?0:CW*S);
     box.style.transform='translate('+lft.toFixed(2)+'px,'+(FEET-(CH-4)*S).toFixed(2)+'px) scale('+(dir<0?S:-S)+','+S+')';
+    window.FEMME_GB={x:x,haut:FEET-(CH-4)*S};
     if(ready){
       const a=off(prevF), b=off(cur);
       gl.viewport(0,0,CW,CH);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
@@ -782,14 +785,15 @@ const stage=document.getElementById('stage'), cv=document.getElementById('rudy')
 const femme=document.getElementById('femme'), FEET_FEMME=662;
 const XMIN=70, XMAX=2110, YMIN=594, YMAX=664;          // le parquet, devant le comptoir
 const RUDY={x:XMIN+30,y:632,dir:'droite',pas:0,bouge:false};   // il arrive tout à gauche
-let joyX=0,joyY=0, sortie=false, devant=null, dernierPas=0;
+let joyX=0,joyY=0, sortie=false, parle=false, devant=null, dernierPas=0;
 const taille=y=>262+(y-YMIN)*0.42;                      // un peu plus grand quand il s'approche
 /* la caméra suit Rudy (la scène remplit la hauteur de l'écran) */
-let camX=null;
+let camX=null; const VUE={s:1,ty:0};
 window.GB_CAMERA=function(){
   const W=innerWidth,H=innerHeight; let s=H/724; if(2172*s<W) s=W/2172;
-  const ty=(H-724*s)/2, cible=Math.max(W-2172*s,Math.min(0,W/2-RUDY.x*s));
+  const ty=(H-724*s)/2; VUE.s=s; VUE.ty=ty; const cible=Math.max(W-2172*s,Math.min(0,W/2-RUDY.x*s));
   camX=camX===null?cible:camX+(cible-camX)*0.12;
+  VUE.camX=camX;
   stage.style.transform='translate('+camX.toFixed(1)+'px,'+ty.toFixed(1)+'px) scale('+s+')';
 };
 function dessine(set,i,x,y,phase){
@@ -810,7 +814,7 @@ let prev=performance.now()/1000;
 function frame(){
   const now=performance.now()/1000, dt=Math.min(0.05,now-prev); prev=now;
   const m=Math.hypot(joyX,joyY);
-  if(m>0.18&&!sortie){
+  if(m>0.18&&!sortie&&!parle){
     const v=250*Math.min(1,m), ax=RUDY.x, ay=RUDY.y;
     RUDY.x=Math.max(XMIN,Math.min(XMAX,RUDY.x+joyX/m*v*dt));
     RUDY.y=Math.max(YMIN,Math.min(YMAX,RUDY.y+joyY/m*v*0.55*dt));
@@ -860,6 +864,72 @@ addEventListener('keydown',e=>{ if(e.key.startsWith('Arrow')){ K[e.key]=true; ma
 addEventListener('keyup',e=>{ if(e.key.startsWith('Arrow')){ K[e.key]=false; majK(); } });
 addEventListener('blur',lache); document.addEventListener('visibilitychange',lache);
 window.RUDY_GB=()=>({x:RUDY.x,y:RUDY.y,dir:RUDY.dir}); window.RUDY_GBSET=(x,y)=>{ RUDY.x=x; RUDY.y=y; camX=null; };
+
+/* ================= PARLER à la femme au balai : la discussion en bulles manga, sa vidéo, puis la fin ================= */
+{
+const st=document.createElement('style');
+st.textContent=`#bulle{position:fixed;z-index:60;display:none;max-width:min(62vw,420px);min-width:120px;padding:18px 28px 22px;box-sizing:border-box;
+ background:#fff;color:#111;border:3px solid #111;border-radius:50%/42%;box-shadow:4px 5px 0 rgba(0,0,0,.55);
+ font:800 clamp(14px,3.6vmin,24px)/1.25 "Comic Neue","Comic Sans MS","Chalkboard SE","Trebuchet MS",sans-serif;text-align:center;letter-spacing:.2px;
+ transform:translate(-50%,-100%);pointer-events:auto;animation:bullePop .18s ease-out}
+#bulle::after{content:'';position:absolute;bottom:-22px;left:var(--queue,50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:24px solid #111;transform:translateX(-50%) skewX(var(--penche,-18deg))}
+#bulle::before{content:'';position:absolute;bottom:-16px;left:var(--queue,50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:18px solid #fff;transform:translateX(-50%) skewX(var(--penche,-18deg));z-index:1}
+#bulleSuite{position:absolute;right:16px;bottom:4px;font-size:12px;opacity:.6;animation:bulleClig .8s infinite}
+@keyframes bullePop{from{transform:translate(-50%,-100%) scale(.6);opacity:0}to{transform:translate(-50%,-100%) scale(1);opacity:1}}
+@keyframes bulleClig{50%{opacity:.1}}`;
+document.head.appendChild(st);
+const bulle=document.createElement('div'); bulle.id='bulle'; bulle.innerHTML='<div id="bulleTxt"></div><div id="bulleSuite">▼</div>'; document.body.appendChild(bulle);
+const bulleTxt=bulle.querySelector('#bulleTxt');
+const bP=document.createElement('div'); bP.className='btn'; bP.id='btnParler'; bP.textContent='PARLER'; bP.style.display='none';
+document.getElementById('actions').appendChild(bP);
+const AVANT=[['f',"J'en ai marre de passer le balai… et de ce mari qui ne me donne pas de plaisir."],
+             ['f',"Tiens, un petit jeune comme toi ! Tu peux m'aider à remplacer une ampoule dans la chambre ?"],
+             ['r',"Oui, bien sûr."],
+             ['f',"Ah, merci ! Viens avec moi."]];
+const APRES=[['r',"Et l'ampoule, alors ?"],
+             ['f',"Quelle ampoule ? C'était une excuse. Reviens me voir plus tard pour la remplacer."]];
+let lignes=null, li=0, tAuto=null, ensuite=null, occupe=false;
+function place(){
+  if(!lignes) return;
+  const qui=lignes[li][0], F=window.FEMME_GB||{x:900,haut:380};
+  RUDY.dir=F.x>RUDY.x?'droite':'gauche'; window.FEMME_VERS=RUDY.x;     // ils se regardent
+  let wx, wy;
+  if(qui==='r'){ wx=RUDY.x; wy=RUDY.y-taille(RUDY.y)*1.02; } else { wx=F.x; wy=F.haut+40; }
+  const sx=(VUE.camX||0)+wx*VUE.s, sy=VUE.ty+wy*VUE.s-10, W=innerWidth;
+  const w=bulle.offsetWidth||200, mx=Math.max(w/2+8,Math.min(W-w/2-8,sx));
+  bulle.style.left=mx+'px'; bulle.style.top=Math.max(bulle.offsetHeight+8,sy)+'px';
+  bulle.style.setProperty('--queue',Math.max(18,Math.min(w-18,w/2+(sx-mx)))+'px');
+  bulle.style.setProperty('--penche',qui==='r'?'18deg':'-18deg');
+}
+function montre(){
+  clearTimeout(tAuto);
+  if(li>=lignes.length){ const f=ensuite; lignes=null; ensuite=null; bulle.style.display='none'; if(f) f(); return; }
+  bulleTxt.textContent=lignes[li][1]; bulle.style.display='block';
+  bulle.style.animation='none'; void bulle.offsetWidth; bulle.style.animation='';
+  place();
+  tAuto=setTimeout(suite,1800+lignes[li][1].length*55);       // passe toute seule si on ne touche pas
+}
+function suite(){ if(!lignes) return; li++; montre(); }
+function discute(l,f){ lignes=l; li=0; ensuite=f; parle=true; joyX=joyY=0; window.FEMME_STOP=true;
+  const F=window.FEMME_GB; if(F) RUDY.dir=F.x>RUDY.x?'droite':'gauche'; montre(); }
+setInterval(place,60);
+document.addEventListener('pointerdown',e=>{ if(!lignes) return; e.preventDefault(); e.stopPropagation(); suite(); },true);
+// la vidéo : la musique du bar se tait pendant qu'elle passe
+const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:70;background:#000;display:none';
+vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>';
+document.body.appendChild(vb); const v=vb.querySelector('video'); let fini=true, musVille=false;
+function finVideo(){ if(fini) return; fini=true; try{ v.pause(); }catch(e){} vb.style.display='none'; v.removeAttribute('src'); try{ v.load(); }catch(e){}
+  try{ if(SFX.ctx&&SFX.ctx.resume) SFX.ctx.resume(); }catch(e){}
+  if(musVille){ try{ const q=parent.RUDY_AUDIO.play(); if(q&&q.catch) q.catch(()=>{}); }catch(e){} } musVille=false;
+  discute(APRES,()=>{ parle=false; occupe=false; window.FEMME_STOP=false; window.FEMME_VERS=null; }); }
+v.addEventListener('ended',finVideo); v.addEventListener('error',finVideo);
+function video(){ fini=false;
+  try{ if(SFX.ctx&&SFX.ctx.suspend) SFX.ctx.suspend(); }catch(e){}
+  try{ const a=parent.RUDY_AUDIO; musVille=!!(a&&parent!==window&&!a.paused); if(musVille) a.pause(); }catch(e){ musVille=false; }
+  v.src='/assets/shinato/m/glabar_femme_balai.mp4'; vb.style.display='block'; const q=v.play(); if(q&&q.catch) q.catch(()=>{}); }
+setInterval(()=>{ const F=window.FEMME_GB; bP.style.display=(F&&!occupe&&!sortie&&Math.abs(RUDY.x-F.x)<130)?'block':'none'; },150);
+appui(bP,()=>{ if(occupe) return; occupe=true; bP.style.display='none'; discute(AVANT,video); });
+}
 })();
 </script>
 </body>
