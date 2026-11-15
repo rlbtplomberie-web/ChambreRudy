@@ -437,7 +437,7 @@ function fermeHotel(){
    après Astra et la Reine des vampires → flèche jaune + ENTRER → le jeu se lance directement ;
    K.O. → l'infirmière puis l'hôpital de Vaviel ; victoire → retour ici ================= */
 const CR_X=415;
-const KO_CR={rouge:'/assets/shinato/m/crg_ko_rouge.mp4',fee:'/assets/shinato/m/crg_ko_fee.mp4',fouet:'/assets/shinato/m/crg_ko_fouet.mp4',mamie:'/assets/shinato/m/crg_ko_mamie.mp4',demone:'/assets/shinato/m/crg_ko_demone.mp4',blanche:'/assets/shinato/m/crg_ko_diablesse.mp4',jaune:'/assets/shinato/m/crg_ko_jaune.mp4'};   // les vidéos de K.O. du Carré Rouge, par ennemie
+const KO_CR={rouge:'/assets/shinato/m/crg_ko_rouge.mp4',fee:'/assets/shinato/m/crg_ko_fee.mp4',fouet:'/assets/shinato/m/crg_ko_fouet.mp4',mamie:'/assets/shinato/m/crg_ko_mamie.mp4',demone:'/assets/shinato/m/crg_ko_demone.mp4',blanche:'/assets/shinato/m/crg_ko_diablesse.mp4',jaune:'/assets/shinato/m/crg_ko_jaune.mp4',pom:'/assets/shinato/m/crg_ko_pompom.mp4',geante:'/assets/shinato/m/crg_ko_geante.mp4',latex:'/assets/shinato/m/crg_ko_latex.mp4',goth:'/assets/shinato/m/crg_ko_gothique.mp4',reine:'/assets/shinato/m/crg_ko_boss.mp4',clone:'/assets/shinato/m/crg_ko_boss.mp4'};   // les vidéos de K.O. du Carré Rouge, par ennemie
 const crQuit=document.createElement('div'); crQuit.textContent='✕ LA RUE';
 crQuit.style.cssText=hotelQuit.style.cssText; crQuit.style.left='auto'; crQuit.style.right='10px'; crQuit.style.top='calc(11vmin + 10px)'; crQuit.style.display='none'; document.body.appendChild(crQuit);   // à droite, sous le bouton ♪ du jeu (à gauche il y a la vie de Rudy)
 let crMusiqueCoupee=false;
@@ -450,7 +450,9 @@ function lanceCR(){
   dedans=true; dir=0; fl.style.display=ent.style.display='none';
   setTimeout(()=>{ try{ fr.focus(); }catch(e){} },300);
 }
+let crMusiqueApres=false;
 function fermeCR(remet){
+  if(remet===false) crMusiqueApres=crMusiqueCoupee;   // la musique de la rue reviendra après la vidéo
   const fr=document.getElementById('crJeu'); if(fr){ fr.style.display='none'; fr.src='about:blank'; }
   crQuit.style.display='none';
   if(remet!==false&&crMusiqueCoupee){ try{ const m=musiqueVilleH(); if(m){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} }
@@ -460,7 +462,10 @@ appui(crQuit,()=>{ fermeCR(); dedans=false; x=CR_X; sens=1; dir=0; cadre(true); 
 addEventListener('message',e=>{
   const t=e.data&&e.data.type; const fr=document.getElementById('crJeu');
   if(!fr||fr.style.display!=='block') return;
-  if(t==='carrerouge:victoire'){ try{ localStorage.setItem('carre_rouge_gagne','1'); }catch(err){} fermeCR(); dedans=false; x=CR_X; sens=1; dir=0; cadre(true); }
+  if(t==='carrerouge:victoire'){ try{ localStorage.setItem('carre_rouge_gagne','1'); }catch(err){} fermeCR(false); dedans=true; dir=0;
+    // la vidéo de la victoire, puis Rudy de retour dans la rue, devant l'entrée (la musique de la rue revient)
+    videoHotel('/assets/shinato/m/crg_victoire.mp4',vb=>{ vb.remove(); dedans=false; x=CR_X; sens=1; dir=0; cadre(true);
+      if(crMusiqueApres){ try{ const m=musiqueVilleH(); if(m){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} } crMusiqueApres=false; }); }
   else if(t==='carrerouge:ko'){ fermeCR(false); dedans=true; dir=0;
     // K.O. : la vidéo de celle qui l'a mis K.O. (s'il y en a une), puis l'infirmière et devant l'hôpital de Vaviel
     const hopital=()=>{ try{ parent.postMessage({type:'impasse:ko'},'*'); }catch(err){} };

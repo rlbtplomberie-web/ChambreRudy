@@ -713,10 +713,21 @@ function drawBeam(q){const L=q.len||0;const t=q.t;const life=q.life;const fadeK=
  ctx.restore();}
 
 // ---------- niveau ----------
+// la vidéo à l'arrivée dans la salle du boss (une seule fois par partie) : le jeu attend qu'elle soit finie
+let vuArrivee=false;
+function videoBoss(ensuite){
+ if(vuArrivee){ ensuite(); return; } vuArrivee=true;
+ const vb=document.createElement('div'); vb.style.cssText='position:fixed;inset:0;z-index:50;background:#000';
+ vb.innerHTML='<video playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain"></video>'; document.body.appendChild(vb);
+ const v=vb.querySelector('video'); const avant=scene; scene='cut'; try{ if(AC&&AC.suspend) AC.suspend(); }catch(e){}
+ let fini=false; const fin=()=>{ if(fini) return; fini=true; vb.remove(); if(scene==='cut') scene=avant; try{ if(AC&&AC.resume) AC.resume(); }catch(e){} ensuite(); };
+ v.addEventListener('ended',fin); v.addEventListener('error',fin);
+ v.src='/assets/shinato/m/crg_boss_arrivee.mp4'; const q=v.play(); if(q&&q.catch) q.catch(()=>{ v.muted=true; const q2=v.play(); if(q2&&q2.catch) q2.catch(fin); });
+}
 function startLevel(mapKey,keepStats){grabber=null;dog=null;fem=null;lastAtk=null;tpParts=[];level={map:mapKey,killed:0,total:mapKey==='map3'?1:mapKey==='map2'?20:10,bag:[],spawned:0,spawnT:1.2,phase:'fight',goT:0};enemies=[];projs=[];eprojs=[];fx=[];hearts=[];parts=[];texts=[];
  const hp=player?player.hp:100,en=player?player.en:60;player=newPlayer();if(keepStats){player.hp=Math.max(hp,40);player.en=en;}
  player.x=mapKey==='map3'?380:260;player.y=mapKey==='map3'?600:620;camX=0;banner={t:MAPS[mapKey].name,life:2.6};
- if(mapKey==='map3'){level.spawnT=999;setTimeout(()=>{if(level&&level.map==='map3'){const b=spawnEnemy('reine',1500,560);b.face=-1;banner={t:'LA BOSS',life:2.4,red:true};sfx('blast',1);shake=8;level.spawned=1;}},1800);}
+ if(mapKey==='map3'){level.spawnT=999;videoBoss(()=>setTimeout(()=>{if(level&&level.map==='map3'){const b=spawnEnemy('reine',1500,560);b.face=-1;banner={t:'LA BOSS',life:2.4,red:true};sfx('blast',1);shake=8;level.spawned=1;}},1800));}
  document.getElementById('bEnter').classList.remove('show');}
 function updateLevel(dt){const p=player;
  if(level.map!=='map3'&&level.phase==='fight'){level.spawnT-=dt;const alive=enemies.filter(e=>!e.dead&&e.st!=='dying').length;const maxA=level.spawned<4?2:3;
