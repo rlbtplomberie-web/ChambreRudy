@@ -206,11 +206,12 @@ const RUDY_H=238,K=RUDY_H/395;
 let T=0,camX=0,shake=0,hitStop=0,S=1,viewW=1000;
 // ====== DANS L'APPLI (lancé depuis la rue de nuit) ======
 const DANS_APPLI=(()=>{ try{ return window.parent!==window; }catch(e){ return false; } })();
-let finEnvoyee=false, finT=0;
+let finEnvoyee=false, finT=0, quiKO='';
 function finAppli(type){ if(finEnvoyee)return; finEnvoyee=true;
   if(type==='carrerouge:victoire'){ try{ localStorage.setItem('carre_rouge_gagne','1'); }catch(e){} }
   try{ if(AC&&AC.suspend)AC.suspend(); }catch(e){}
-  try{ window.parent.postMessage({type:type},'*'); }catch(e){} }
+  try{ if(player&&player.dogged) quiKO='reine'; }catch(e){}   // transformé en chien : c'est la boss
+  try{ window.parent.postMessage({type:type,qui:quiKO},'*'); }catch(e){} }
 let scene='title',level=null,player=null,enemies=[],projs=[],eprojs=[],fx=[],hearts=[],parts=[],texts=[];
 let fade=0,fadeDir=0,fadeCb=null,banner=null;
 
@@ -380,6 +381,7 @@ function doEnemyHit(e,A){const p=player;if(A.k==='fireball'){const sc=e.sc;eproj
  if(A.k==='slam'){shake=9;sfx('hit2',1.2);fx.push({k:'ring',x:e.x,y:e.y,t:0});if(Math.abs(p.y-e.y)<45&&Math.abs(p.x-e.x)<240)hurtPlayer(15,p.x>e.x?1:-1,true);return;}
  sfx('whoosh',0.7);const dx=(p.x-e.x)*e.face;if(dx>-10&&dx<A.r*e.sc&&Math.abs(p.y-e.y)<30)hurtPlayer(e.d.dmg,e.face,e.d.boss&&Math.random()<0.35);}
 function hurtPlayer(dmg,dir,knock){const p=player;
+ if(p.inv<=0&&!['dead','down','grabbed'].includes(p.st)){ try{ if(lastAtk) quiKO=lastAtk.type; else { let best=null,bd=1e9; for(const e of enemies){ if(e.dead||e.st==='dying')continue; const d=Math.abs(e.x-p.x)+Math.abs(e.y-p.y)*0.5; if(d<bd){bd=d;best=e;} } if(best) quiKO=best.type; } }catch(_){} }   // celle qui vient de le toucher
  if(p.st==='guard'&&dir===-p.face&&p.inv<=0){p.hp-=Math.min(2,dmg*0.1);p.blockT=0.18;p.vx=dir*170;sfx2('block');fx.push({k:'block',x:p.x+p.face*40,y:p.y-RUDY_H*0.62,t:0});texts.push({t:'PARÉ !',x:p.x,y:p.y-RUDY_H*1.1,life:0.5,c:'#bfe7ff',s:24});shake=Math.max(shake,2);if(p.hp<=0)p.hp=1;return;}
  if(p.inv>0||p.st==='dead'||p.st==='down'||p.st==='grabbed')return;p.hp-=dmg;chargeSound(false);if(p.st==='fire'){beamSound(false);projs=projs.filter(q=>q.k!=='beam');}
  sfx2('rudyhurt',1);if(knock)sfx2('heavy',0.8);shake=Math.max(shake,4);fx.push({k:'hit',x:p.x,y:p.y-RUDY_H*0.6,t:0,big:knock,red:true});p.flashT=0.12;
@@ -497,7 +499,7 @@ function updateRouge(e,dt){const p=player,m=MAPS[level.map],KT=KITS[e.type];e.t+
   if(e.type==='fouet'){e.x=p.x-e.face*125;e.y=p.y+1;}else{e.x=p.x;e.y=p.y+1;}const fr=e.type==='fouet'?(e.t<0.4?-1:Math.floor((e.t-0.4)*5)):(e.type==='mamie'||e.type==='jaune')?Math.floor(e.t*5):(e.type==='demone'||e.type==='blanche'||e.type==='pom'||e.type==='latex')?(e.t<0.45?-1:Math.floor((e.t-0.45)*6)):e.type==='goth'?(e.t<1.2?-1:Math.floor((e.t-1.2)*5)):e.type==='geante'?(e.t<0.35?-1:Math.floor((e.t-0.35)*3.5)):e.type==='reine'?(e.gkind==='pole'?Math.floor(e.t*5):(e.t<0.95?-1:Math.floor((e.t-0.95)*6))):Math.floor(e.t*7);if(((e.type==='mamie'||e.type==='jaune')&&fr%2===0)||(e.type==='geante'&&fr>=0&&fr%5%2===0&&fr%5!==4)){e.gfr=fr;}else if(fr>=0&&fr!==e.gfr){e.gfr=fr;p.hp-=2.2;if(e.type==='geante'){p.hp-=3.5;shake=Math.max(shake,9);sfx2('heavy',1.2);}sfx2('punch',0.9);if(fr%2===0)sfx2('rudyhurt',0.6);shake=Math.max(shake,2.5);fx.push({k:'hit',x:p.x+rnd(-20,20),y:p.y-30,t:0,red:true});
    if(p.hp<=0&&e.type==='goth'){p.hp=0;grabber=null;startFem(e);return;}
    if(p.hp<=0&&bossAlive()){p.hp=0;grabber=null;e.st='idle';e.t=0;startDog();return;}
-   if(p.hp<=0){p.hp=0;p.st='dead';p.t=0;p.vx=0;p.vz=0;p.z=0;grabber=null;e.st='idle';e.t=0;e.x=p.x-e.face*120;setTimeout(()=>{if(scene==='play')scene='over';},1600);}}
+   if(p.hp<=0){p.hp=0;quiKO=e.type;p.st='dead';p.t=0;p.vx=0;p.vz=0;p.z=0;grabber=null;e.st='idle';e.t=0;e.x=p.x-e.face*120;setTimeout(()=>{if(scene==='play')scene='over';},1600);}}
   return;}
  if(e.st==='down'){e.x+=e.vx*dt;e.vx*=Math.pow(0.08,dt);e.z+=e.vz*dt;e.vz-=1500*dt;if(e.z<=0){e.z=0;if(e.vz<-200){e.vz=-e.vz*0.3;shake=Math.max(shake,2);}else e.vz=0;}
   e.x=clamp(e.x,40,MAPW-40);if(e.z===0&&!e.landT)e.landT=e.t;
