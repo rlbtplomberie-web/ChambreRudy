@@ -1,1 +1,1 @@
-maj-335 en 9 fichiers (à mettre tous) : fluidité et contrôles — les jeux retrouvent leurs images à l'intérieur (comme tu les envoies), planche de chute de la femme verte (jeu d'Astra) redécoupée, le joystick et les boutons ne lâchent plus en pleine partie, téléphone en mode horizontal — après la maj-334
+maj-338 (contient aussi les maj-336 et 337) : nouvelles attaques de copies — Astra (lumière bleue), la Reine des vampires (chauves-souris), la Rousse 2e forme (lianes) — après la maj-335

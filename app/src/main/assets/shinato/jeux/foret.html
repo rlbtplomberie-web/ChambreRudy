@@ -588,6 +588,7 @@ function tryGrab(){
   let best = null, bd = 1e9;
   for (const e of living()){
     if (!targetable(e)) continue;
+    if (e.copie) continue;                       // on n'attrape pas une copie : coup de poing
     const d = Math.abs(e.x-rudy.x);
     const reach = e.K.boss===1 ? 140 : 98;
     if (d < reach && Math.abs(e.y-rudy.y) < 30 && d < bd){ best = e; bd = d; }
@@ -603,6 +604,11 @@ function tryGrab(){
 
 // ------------------------------------------------------------- ENNEMIES
 function hurtEnemy(e, dmg, knock){
+  if (e.copie){ if (e.st==='apparition' || e.st==='eclate') return;
+    e.coups++; addFx('spark', e.x - rudy.face*10, e.y - 110*depth(e.y));
+    if (e.coups >= 3 || dmg >= 60) eclaterCopieR(e);                // 3 coups (ou la boule d'énergie) : elle disparaît
+    else { e.st = 'hurt'; e.t = 0; e.face = Math.sign(rudy.x-e.x)||e.face; }
+    return; }
   e.hp -= dmg; e.hpShow = 2.2; e.flash = 0.1;
   addFx('spark', e.x - rudy.face*10, e.y - (e.K.fly ? e.z : 0) - 110*depth(e.y));
   if (e.K.boss){
@@ -645,12 +651,90 @@ function loopFrame(n, t, intro, step){
   return seq[Math.floor((t-intro)/0.19) % seq.length];
 }
 
+// ---------- les copies de la Rousse : des lianes sortent du sol et prennent sa silhouette ;
+//            elles frappent et lancent des boules, n'attrapent jamais ; 3 coups et elles disparaissent ----------
+const K_COPIE_R = Object.assign({}, KINDS.rou, {name:'Copie de la Rousse', boss:0, copie:true, noGrab:false, dmg:10});
+function invoquerCopiesR(){
+  const ww = worldW(), m = MAPS[game.map];
+  for (const cote of [-1, 1]){
+    const c = makeEnemy('rou', clamp(rudy.x + cote*170, 60, ww-60), clamp(rudy.y + cote*10, m.yMin, m.yMax));
+    c.K = K_COPIE_R; c.copie = true; c.coups = 0; c.hp = 999; c.face = Math.sign(rudy.x - c.x)||1; c.side = Math.sign(c.x - rudy.x)||cote;
+    c.st = 'apparition'; c.t = 0;
+    game.ents.push(c);
+  }
+  SFX.vine();
+}
+function eclaterCopieR(c){
+  if (c.st === 'eclate') return;
+  c.st = 'eclate'; c.t = 0; SFX.vine();
+  const d = depth(c.y);
+  for (let i=0;i<22;i++) game.parts.push({type:'leaf', x:c.x + (Math.random()-0.5)*70*d, y:c.y - Math.random()*190*d, vx:(Math.random()-0.5)*260, vy:-60-Math.random()*160, t:0, life:0.7, free:true});
+}
+function updateCopieR(e, dt, dx, dy, adx){
+  const r = rudy, b = game.boss;
+  if (e.st !== 'eclate' && (!b || b.dead || b.st === 'down')){ eclaterCopieR(e); }     // la Rousse battue : ses copies retournent au sol
+  if (e.st === 'apparition'){ e.fr = 0; if (e.t > 1.4){ e.st = 'walk'; e.t = 0; e.cd = 0.5+Math.random()*0.6; } return true; }
+  if (e.st === 'eclate'){ e.fr = 0; if (e.t > 0.7){ e.dead = true; e.alpha = 0; } return true; }
+  if (e.st === 'cast'){ // elle lance une boule verte
+    const n = nf('rou_cast');
+    e.fr = Math.min(n-1, e.t/0.12); e.face = Math.sign(dx)||e.face;
+    if (e.fr >= 3 && !e.cast){
+      e.cast = true; const d = depth(e.y), hx = e.x + e.face*60*d, hz = 120*d, sp = 520;
+      const T = Math.max(0.35, Math.abs(r.x - hx)/sp), zT = 100*depth(r.y);
+      game.shots.push({type:'gfire', x:hx, y:e.y, z:hz, vx:e.face*sp, vy:(r.y - e.y)/T, vz:(zT - hz)/T, T, t:0, last:false, trail:[], ko:'rou'});
+      SFX.fireball();
+    }
+    if (e.t > n*0.12 + 0.25){ e.cast = false; e.st = 'walk'; e.t = 0; e.cd = 1.0 + Math.random()*0.8; }
+    return true; }
+  if (e.st === 'walk' && e.cd <= 0 && adx > 200 && Math.abs(dy) < 34 && !['grabbed','grabbing','dead','tied'].includes(r.st) && Math.random() < 0.03){
+    e.st = 'cast'; e.t = 0; e.cast = false; SFX.charge(); return true; }
+  return false;
+}
+// copie : la silhouette de la Rousse faite de lianes vertes (coupe : la part visible depuis le sol, de 0 à 1)
+const _tcR = document.createElement('canvas'), _txR = _tcR.getContext('2d');
+function drawCopieR(k, n, x, y, face, alpha, sc, coupe){
+  const s = SPR[k]; if (!s) return;
+  const [sx, sy, sw, sh, ax, gy] = s.f[Math.max(0, Math.min(n|0, s.f.length-1))];
+  const vis = coupe==null ? 1 : Math.max(0, Math.min(1, coupe)), hv = Math.round(sh*vis);
+  if (hv <= 0 || alpha <= 0) return;
+  if (_tcR.width < sw) _tcR.width = sw; if (_tcR.height < sh) _tcR.height = sh;
+  _txR.globalCompositeOperation = 'source-over'; _txR.clearRect(0, 0, sw, sh);
+  _txR.drawImage(IMG[k], sx, sy, sw, sh, 0, 0, sw, sh);
+  _txR.globalCompositeOperation = 'source-atop';
+  const g = _txR.createLinearGradient(0, 0, 0, sh); g.addColorStop(0, 'rgba(140,230,95,0.8)'); g.addColorStop(1, 'rgba(30,115,40,0.88)');
+  _txR.fillStyle = g; _txR.fillRect(0, 0, sw, sh);
+  _txR.strokeStyle = 'rgba(14,62,22,0.75)'; _txR.lineWidth = Math.max(2, sw/55);       // les lianes qui forment le corps
+  for (let i=0;i<8;i++){ const x0 = sw*(0.06 + i*0.125); _txR.beginPath(); _txR.moveTo(x0, sh);
+    _txR.bezierCurveTo(x0 + sw*0.22*Math.sin(i*2.1), sh*0.66, x0 - sw*0.22*Math.cos(i*1.3), sh*0.33, x0 + sw*0.1*Math.sin(i), 0); _txR.stroke(); }
+  _txR.globalCompositeOperation = 'source-over';
+  ctx.save(); ctx.globalAlpha = Math.min(1, alpha);
+  ctx.translate(Math.round(x), Math.round(y)); if (s.dir !== face) ctx.scale(-1, 1);
+  const k2 = sc/Q;
+  ctx.drawImage(_tcR, 0, sh-hv, sw, hv, -ax*k2, -(hv+gy)*k2, sw*k2, hv*k2);
+  ctx.restore();
+}
+// les lianes qui sortent du sol et montent (u : de 0 à 1)
+function drawLianesSol(x, y, d, u, a){
+  if (u <= 0 || a <= 0) return;
+  ctx.save(); ctx.globalAlpha = Math.min(1, a); ctx.lineCap = 'round';
+  for (let i=0;i<10;i++){
+    const bx = x + (i-4.5)*16*d*(1.6 - u*0.6), H = (90 + (i*37 % 110))*d*u;
+    const pts = []; for (let j=0;j<=8;j++){ const t = j/8; pts.push([bx + (x - bx)*t*0.5 + Math.sin(t*7 + i + game.t*4)*9*d, y - H*t]); }
+    for (const [w, c] of [[4.2, '#1f5a1c'], [1.6, 'rgba(150,225,100,0.85)']]){
+      ctx.strokeStyle = c; ctx.lineWidth = w*d; ctx.beginPath();
+      pts.forEach((p, j)=> j ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke();
+    }
+    const tp = pts[8]; ctx.fillStyle = '#62b843'; ctx.beginPath(); ctx.ellipse(tp[0] + 4*d, tp[1], 5*d, 2.4*d, -0.6, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
 function updateEnemy(e, dt){
   const K = e.K, k = e.kind, m = MAPS[game.map], r = rudy;
   e.t += dt; e.bob += dt; if (e.flash>0) e.flash -= dt;
   if (e.hpShow>0) e.hpShow -= dt;
   if (e.dead){ e.alpha -= dt*1.1; return; }
   const dx = r.x - e.x, dy = r.y - e.y, adx = Math.abs(dx);
+  if (K.copie && updateCopieR(e, dt, dx, dy, adx)) return;
   if (K.boss===1) return updateCentaur(e, dt, dx, dy, adx);
   if (K.boss===2) { if (updateRousse(e, dt, dx, dy, adx)) return; }
 
@@ -713,7 +797,7 @@ function updateEnemy(e, dt){
     if (r.st==='grabbed'||r.st==='grabbing'||r.st==='dead'||r.st==='tied') break;
     if (e.cd<=0 && adx < K.reach+14 && Math.abs(dy) < 22 && r.st!=='down' && r.inv<=0){
       const grabChance = 0.5;
-      if (game.grabCD<=0 && Math.random() < grabChance && !game.ents.some(o=>o.st==='grab')){ enemyGrab(e); break; }
+      if (!K.copie && game.grabCD<=0 && Math.random() < grabChance && !game.ents.some(o=>o.st==='grab')){ enemyGrab(e); break; }
       e.st='attack'; e.t=0; e.lastHitF=-1; e.face = Math.sign(dx)||e.face; SFX.whoosh();
     }
     break;
@@ -967,6 +1051,12 @@ function updateRousse(e, dt, dx, dy, adx){
     }
     if (e.t > n*0.13 + 0.3){ e.cast = false; e.st = 'walk'; e.t = 0; e.cd = 1.2 + Math.random()*0.8; }
     return true; }
+  case 'invoque': { // elle lève les mains : les lianes sortent du sol
+    const n = nf('rou_cast');
+    e.fr = Math.min(n-1, e.t/0.13); e.face = Math.sign(dx)||e.face;
+    if (e.t >= 0.4 && !e.invoque){ e.invoque = true; invoquerCopiesR(); }
+    if (e.t > 1.0){ e.st = 'walk'; e.t = 0; e.cd = 0.6; }
+    return true; }
   case 'tpOut': { // mains sur le pendentif, cristaux, elle disparaît
     const n = nf('rou_tp');
     e.fr = Math.min(n-1, e.t/0.17);
@@ -1015,6 +1105,9 @@ function updateRousse(e, dt, dx, dy, adx){
       if (Math.random()<0.25){ e.st = 'cast'; e.t = 0; e.cast = false; e.spell = Math.random()<0.5?'tornado':'vine'; e.x -= Math.sign(dx)*40; return true; }
       e.st='attack'; e.t=0; e.lastHitF=-1; e.face = Math.sign(dx)||e.face; SFX.whoosh();
     }
+    // elle fait apparaître 2 copies d'elle-même : des lianes sortent du sol de chaque côté de Rudy
+    e.copieCd = (e.copieCd==null ? 9 : e.copieCd) - dt;
+    if (e.copieCd<=0 && r.st!=='down' && !game.ents.some(o=>o.copie && !o.dead)){ e.copieCd = 14+Math.random()*4; e.st = 'invoque'; e.t = 0; e.invoque = false; SFX.charge(); return true; }
     // téléportation : quand elle veut, de près comme de loin
     if (e.cd<=0 && game.grabCD<=0 && r.st!=='down' && Math.random()<0.012){ e.st = 'tpOut'; e.t = 0; e.fr = 0; SFX.charge(); return true; }
     if (e.cd < -2.5 && Math.random()<0.03){ e.st = 'cast'; e.t = 0; e.cast = false; e.spell = Math.random()<0.5?'tornado':'vine'; }
@@ -1047,7 +1140,7 @@ function updateShots(dt){
       s.trail.push({x:s.x, y:s.y - s.z, t:0}); if (s.trail.length>12) s.trail.shift();
       if (Math.random()<0.7) game.parts.push({type:'spark', x:s.x + (Math.random()-0.5)*20, y:s.y - s.z + (Math.random()-0.5)*20, vx:-Math.sign(s.vx)*(40+Math.random()*80), vy:(Math.random()-0.5)*70, t:0, life:0.3, green:true});
       if (!r.hidden && Math.abs(s.x-r.x) < 44 && Math.abs(s.y-r.y) < 28 && r.inv<=0 && !['down','dead','tied','grabbed','grabbing'].includes(r.st)){
-        s.done = true; if (hurtRudy(10, s.last, {x:s.x - s.vx, ko:'cen_feu'})) addFx('burstG', r.x, r.y-100*depth(r.y));
+        s.done = true; if (hurtRudy(10, s.last, {x:s.x - s.vx, ko:s.ko||'cen_feu'})) addFx('burstG', r.x, r.y-100*depth(r.y));
       }
       if (s.t > 3) s.done = true;
       continue;
@@ -1186,7 +1279,13 @@ function drawEnemy(e){
       break;
     case 'attack': sheet = k+'_atk'; break;
     case 'hurt': case 'down': case 'rise': sheet = k+'_fall'; break;
-    case 'cast': sheet = 'rou_cast'; break;
+    case 'cast': case 'invoque': sheet = 'rou_cast'; break;
+    case 'apparition': case 'eclate': {   // copie : les lianes sortent du sol et prennent sa silhouette / y retournent
+      const d = depth(y), T = e.t, ap = e.st==='apparition';
+      const u = ap ? Math.min(1, T/0.8) : Math.max(0, 1 - T/0.6);
+      drawLianesSol(x, y, d, u, ap ? (T < 1.1 ? 1 : (1.4-T)/0.3) : 1);
+      drawCopieR('rou_atk', 0, x, y, face, 0.92, d, ap ? (T-0.45)/0.85 : 1 - T/0.55);
+      return; }
     case 'tpOut': case 'tpIn': sheet = 'rou_tp'; break;
     case 'gone': return;
     case 'prep': sheet = 'cen_atk'; n = 0; break;
@@ -1204,9 +1303,10 @@ function drawEnemy(e){
   const d = depth(y);
   let a = e.dead ? Math.max(0, e.alpha) * (Math.floor(game.t*16)%2 ? 1 : 0.35) : (e.alpha==null ? 1 : e.alpha);
   if (K.boss===1 && e.phased) a = Math.max(0, e.alpha);
+  if (e.copie) drawCopieR(sheet, n, x, y - z, face, a*0.92, d); else
   drawFrame(sheet, n, x, y - z, face, a, d);
   e._sheet = sheet; e._n = n; e._face = face; e._x = x; e._y = y; e._ax = null;
-  if (e.flash>0){ ctx.save(); ctx.globalCompositeOperation = 'lighter'; drawFrame(sheet, n, x, y - z, face, e.flash*4, d); ctx.restore(); }
+  if (e.flash>0 && !e.copie){ ctx.save(); ctx.globalCompositeOperation = 'lighter'; drawFrame(sheet, n, x, y - z, face, e.flash*4, d); ctx.restore(); }
   if (e.st==='beam') drawLaser(e, n, d);
   if (e.st==='fire'){ // boule verte qui se forme dans la main
     const hp = handPos(e), hx = hp.x, hy = e.y - hp.z, rad = 10 + Math.sin(game.t*30)*2;
@@ -1215,7 +1315,7 @@ function drawEnemy(e){
     g.addColorStop(0, 'rgba(230,255,230,0.9)'); g.addColorStop(0.4, 'rgba(90,255,110,0.7)'); g.addColorStop(1, 'rgba(0,180,40,0)');
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(hx, hy, rad*2.4, 0, Math.PI*2); ctx.fill(); ctx.restore();
   }
-  if (!K.boss && e.hpShow>0 && !e.dead){
+  if (!K.boss && !e.copie && e.hpShow>0 && !e.dead){
     const h = Math.min(frameH(sheet, n)*d, 250);
     const by = y - z - h - 14;
     ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(x-31, by-1, 62, 8);

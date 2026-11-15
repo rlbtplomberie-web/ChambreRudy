@@ -456,6 +456,7 @@ function coupTouche(r, e) {
 
 function hitEnemy(e, dmg, kind) {
   if (!canBeHit(e)) return false;
+  if (e.type === 'clone') return hitClone(e, kind);
   const d = dirTo(rudy, e);
   e.hp -= dmg; e.barT = 2.6; e.hits++;
   hitStop = kind === 'kick' ? 0.07 : 0.045; shake = kind === 'kick' ? 5 : 3;
@@ -472,6 +473,7 @@ function hitEnemy(e, dmg, kind) {
   return true;
 }
 function knock(e, d) {
+  if (e.type === 'clone') return;
   e.state = 'knock'; e.st = 0; e.vx = d * 210; e.face = -d;
   if (e.type === 'boss') setAnim(e, 'boss_fall', [2, 3, 4, 5], 9, false);
   else { const n = NFR(e.K.fall); setAnim(e, e.K.fall, [...Array(n).keys()], n > 4 ? 12 : 9, false); }
@@ -532,6 +534,7 @@ function tryHeroGrab() {
   for (const e of ents) {
     if (!['idle', 'move', 'atk', 'hurt', 'lunge', 'laser', 'orbe'].includes(e.state)) continue;
     if (e.type === 'enemy' && !e.K.hg) continue;
+    if (e.type === 'clone') continue;                       // on n'attrape pas un clone
     const dx = (e.x - r.x) * r.face, dy = Math.abs(e.y - r.y);
     if (dx > 8 && dx < 92 && dy < 26 && dx < bd) { best = e; bd = dx; }
   }
@@ -831,6 +834,13 @@ function updBoss(b, dt) {
           b.state = 'laser'; b.st = 0; b.fired = false; setAnim(b, 'boss_laser', [0, 1, 2], 5, false); SFX.charge(); break;
         }
       }
+      // Astra fait apparaître 2 clones : des lueurs bleues partent d'elle et s'assemblent de chaque côté de Rudy
+      b.cloneCd = (b.cloneCd == null ? 8 : b.cloneCd) - dt;
+      if (!rudyBusy && b.cloneCd <= 0 && !ents.some(o => o.type === 'clone')) {
+        b.cloneTo = [-1, 1].map(s => ({ x: clamp(r.x + s * 170, 80, WW - 80), y: clamp(r.y + s * 10, f[0], f[1]), cote: s }));
+        b.state = 'clones'; b.st = 0; b.clonesFaits = false; b.cloneCd = rnd(14, 18);
+        setAnim(b, 'boss_laser', [0, 1, 2], 5, false); SFX.charge(); break;
+      }
       // Astra se téléporte : sa silhouette devient bleue et lumineuse, elle disparaît et réapparaît près de Rudy
       b.teleCd = (b.teleCd == null ? 6 : b.teleCd) - dt;
       if (!rudyBusy && b.teleCd <= 0 && (adx > 300 || Math.random() < 0.01)) {
@@ -855,6 +865,11 @@ function updBoss(b, dt) {
         b.x = clamp(nx, 80, WW - 80); b.y = clamp(r.y, f[0], f[1]); b.face = (r.x - b.x) >= 0 ? 1 : -1; SFX.tele();
       }
       if (b.st > 1.5) { idle(); b.cd = 0.25; b.teleCd = 7 + Math.random() * 4; }
+      break;
+    }
+    case 'clones': {
+      if (b.st > 1.2 && !b.clonesFaits) { b.clonesFaits = true; for (const p of b.cloneTo) ents.push(makeClone(p.x, p.y, p.cote)); SFX.tele(); }
+      if (b.st > 1.5) { b.cd = 0.4; idle(); }
       break;
     }
     case 'orbe': {
@@ -945,6 +960,123 @@ function bossGrab(b, type) {
   setAnim(b, 'g_boss_throw', [1, 2, 3, 4, 5], 6, false); SFX.grab();
 }
 
+// ---------- les clones d'Astra : sa silhouette en lumière bleue ; coups et tirs, mais jamais de prise ; 3 coups et ils disparaissent ----------
+function makeClone(x, y, cote) {
+  const c = { type: 'clone', kind: 'boss', x, y, z: 0, vz: 0, face: x < rudy.x ? 1 : -1, hp: 3, max: 3, state: 'appear', st: 0, inv: 0, cd: 0.8,
+    laserCd: rnd(1.5, 3), barT: 0, vx: 0, hits: 0, cote, K: { h: 192, fall: 'boss_fall' } };
+  setAnim(c, 'boss_kick', [0], 1, true); return c;
+}
+function updClone(c, dt) {
+  const r = rudy, f = MAP().floor; c.st += dt; if (c.inv > 0) c.inv -= dt; c.laserCd -= dt;
+  const boss = ents.find(o => o.type === 'boss');
+  if (c.state !== 'vanish' && (!boss || ['dead', 'gone'].includes(boss.state))) { c.state = 'vanish'; c.st = 0; }   // Astra battue : les clones s'effacent
+  const dx = r.x - c.x, dy = r.y - c.y, adx = Math.abs(dx);
+  const idle = () => { c.state = 'idle'; c.st = 0; setAnim(c, 'boss_kick', [0], 1, true); };
+  switch (c.state) {
+    case 'appear': if (c.st > 0.6) { idle(); c.cd = rnd(0.4, 1); } break;
+    case 'idle': case 'move': {
+      c.face = dx >= 0 ? 1 : -1; c.cd -= dt;
+      const busy = r.state === 'grabbed' || r.state === 'dead' || r.state === 'thrownByBoss';
+      if (!busy && c.cd <= 0) {
+        if (adx < 105 && Math.abs(dy) < 24) {
+          const fists = Math.random() < 0.6;
+          c.state = 'atk'; c.st = 0; c.hitDone = [];
+          c.atk = fists ? { hits: [2, 3], reach: 84, dmg: 5 } : { hits: [2], reach: 116, dmg: 8, heavy: true };
+          if (fists) setAnim(c, 'boss_fists', [1, 2, 3, 4, 5, 6], 7, false); else setAnim(c, 'boss_kick', [1, 2, 3, 4, 5], 9, false);
+          break;
+        }
+        if (Math.abs(dy) < 30 && adx > 170 && c.laserCd <= 0) {
+          c.state = 'orbe'; c.st = 0; c.ot = 0; c.tire = false; c.nb = 0; c.nbT = 0; setAnim(c, 'boss_laser', [0, 1, 2], 8, false); SFX.charge(); break;
+        }
+      }
+      // chaque clone se place de son côté de Rudy
+      const tx = clamp(r.x - c.cote * 85, 80, WW - 80), ty = r.y;
+      const mx = tx - c.x, my = ty - c.y, moving = Math.abs(mx) > 12 || Math.abs(my) > 6;
+      if (moving && !busy) {
+        c.x += Math.sign(mx) * Math.min(Math.abs(mx), 115 * dt); c.y += Math.sign(my) * Math.min(Math.abs(my), 70 * dt);
+        if (c.state !== 'move') { c.state = 'move'; setAnim(c, 'boss_run', R6, 12, true); }
+        if (Math.abs(mx) > 12 && Math.sign(mx) !== c.face) c.face = Math.sign(mx);
+      } else if (c.state !== 'idle') idle();
+      break;
+    }
+    case 'orbe': {
+      if (!c.tire) {
+        if (c.adone) c.ot += dt;
+        if (c.ot >= 0.8) { c.tire = true; setAnim(c, 'boss_laser', [3, 4, 5, 4, 5, 4], 12, false); }
+      } else {
+        c.nbT -= dt;
+        if (c.nb < 8 && c.nbT <= 0) {
+          c.nb++; c.nbT = 0.06;
+          const t = A.sheets.boss_laser.tip[2], sc = ds(c.y);
+          billes.push({ x: c.x + c.face * t[0] / SS * sc, h: -t[1] / SS * sc + (Math.random() - 0.5) * 22, gy: c.y + (Math.random() - 0.5) * 14,
+            vx: c.face * (520 + Math.random() * 180), dir: c.face, t: 0, r: 4 + Math.random() * 3 });
+          SFX.bille();
+        }
+        if (c.adone && c.nb >= 8) { c.laserCd = rnd(3, 5); c.cd = 0.6; idle(); }
+      }
+      break;
+    }
+    case 'atk': {
+      for (const hi of c.atk.hits) if (c.ai >= hi && !c.hitDone.includes(hi)) {
+        c.hitDone.push(hi); if (inFront(c, r, c.atk.reach, 26)) hitRudy(c.atk.dmg, c, c.atk.heavy);
+      }
+      if (c.adone) { c.cd = rnd(0.8, 1.6); idle(); }
+      break;
+    }
+    case 'hurt': { c.x += c.vx * dt; c.vx *= 0.85; if (c.st > 0.25) { c.cd = Math.max(c.cd, 0.3); idle(); } break; }
+    case 'vanish': if (c.st > 0.6) c.state = 'gone'; break;
+  }
+  if (c.state !== 'gone') { c.x = clamp(c.x, 40, WW - 40); c.y = clamp(c.y, f[0], f[1]); stepAnim(c, dt); }
+}
+function hitClone(c, kind) {
+  if (['appear', 'vanish', 'gone'].includes(c.state)) return false;
+  const d = dirTo(rudy, c); c.hits++;
+  hitStop = 0.045; shake = 3; spark(c.x - d * 12, c.y - 118 * ds(c.y), kind === 'kick'); (kind === 'kick' ? SFX.kick : SFX.hit)();
+  if (c.hits >= 3) { c.state = 'vanish'; c.st = 0; SFX.tele(); }                    // 3 coups : le clone disparaît
+  else { c.state = 'hurt'; c.st = 0; c.vx = d * (kind === 'kick' ? 120 : 70); c.face = -d; c.inv = 0.15; setAnim(c, 'boss_fall', [1, 2], 9, false); }
+  return true;
+}
+function drawClone(c, t) {
+  const sc = ds(c.y), y = c.y - c.z; let a = 0.85, ex = 1, ey = 1, brille = 0;
+  if (c.state === 'appear') { const u = Math.min(1, c.st / 0.6); a = 0.85 * u; ex = 0.25 + 0.75 * u; ey = 1.2 - 0.2 * u; brille = 1 - u; }
+  if (c.state === 'vanish') { const u = Math.min(1, c.st / 0.6); a = 0.85 * (1 - u); ex = 1 - 0.8 * u; ey = 1 + 0.3 * u; brille = 1 - u; }
+  if (c.state === 'hurt') a = 0.5 + 0.35 * (Math.floor(c.st * 20) % 2);
+  drawSilBleue(c.ak, curFrame(c), c.x, y, c.face, sc, a, ex, ey);
+  if (brille > 0) {
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (let n = 0; n < 14; n++) {
+      const an = n * 2.4 + t * 3, rr = 26 + ((n * 37 + t * 90) % 50), hy = 20 + (n * 53 % 170);
+      ctx.globalAlpha = brille * (0.4 + 0.6 * Math.abs(Math.sin(t * 9 + n)));
+      ctx.fillStyle = n % 3 ? '#8ff0ff' : '#ffffff';
+      ctx.beginPath(); ctx.arc(c.x - cam + Math.cos(an) * rr * ex, y - hy * sc, 2.2, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+// les lueurs bleues qui partent d'Astra et s'assemblent là où les clones vont apparaître
+function drawLueursClones(b, t) {
+  if (!b.cloneTo || b.clonesFaits) return;
+  const sc = ds(b.y), u = Math.min(1, b.st / 1.2), bx = b.x - cam, by = b.y - 110 * sc;
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  for (const p of b.cloneTo) {
+    const px = p.x - cam, ps = ds(p.y);
+    for (let n = 0; n < 22; n++) {
+      const k = Math.min(1, Math.max(0, u * 1.25 - (n % 7) * 0.04)), e2 = k * k * (3 - 2 * k);
+      const ox = Math.sin(n * 7.3 + t * 4) * 40 * (1 - e2), oy = Math.cos(n * 4.1 + t * 5) * 60 * (1 - e2);
+      const x = bx + (px - bx) * e2 + ox, y = by + (p.y - (40 + (n * 29 % 140)) * ps - by) * e2 + oy;
+      ctx.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(t * 8 + n));
+      ctx.fillStyle = n % 4 ? '#6fe4ff' : '#ffffff';
+      ctx.beginPath(); ctx.arc(x, y, 2 + 2.5 * e2, 0, Math.PI * 2); ctx.fill();
+    }
+    if (u > 0.6) {   // la lueur se forme à la place du clone
+      const g = (u - 0.6) / 0.4, gr = ctx.createRadialGradient(px, p.y - 95 * ps, 4, px, p.y - 95 * ps, 90 * ps);
+      gr.addColorStop(0, 'rgba(160,240,255,' + (0.7 * g) + ')'); gr.addColorStop(1, 'rgba(40,160,255,0)');
+      ctx.globalAlpha = 1; ctx.fillStyle = gr; ctx.fillRect(px - 90 * ps, p.y - 190 * ps, 180 * ps, 190 * ps);
+    }
+  }
+  ctx.restore();
+}
+
 // ---------- boucle ----------
 function goNext() {
   if (fadeDir) return;
@@ -975,7 +1107,7 @@ function update(dt) {
   updRudy(dt);
   updWorld(dt);
   tokenT -= dt; if (tokenT <= 0) { tokenT = 0.5; assignTokens(); }
-  for (const e of ents) e.type === 'boss' ? updBoss(e, dt) : updEnemy(e, dt);
+  for (const e of ents) e.type === 'boss' ? updBoss(e, dt) : e.type === 'clone' ? updClone(e, dt) : updEnemy(e, dt);
   ents = ents.filter(e => e.state !== 'gone');
   if (mapIdx < 2) {
     const alive = ents.filter(e => e.type === 'enemy').length;
@@ -1056,7 +1188,9 @@ function drawTele(e, t) {
   }
 }
 function drawEntity(e, t) {
+  if (e.type === 'clone') { drawClone(e, t); return; }
   if (e.state === 'tele') { drawTele(e, t); return; }
+  if (e.type === 'boss' && e.state === 'clones') drawLueursClones(e, t);
   const sc = ds(e.y);
   if (e.state === 'grabbing' || e.state === 'throwing') {
     shadow(e.gx, e.gy, 62 * sc);

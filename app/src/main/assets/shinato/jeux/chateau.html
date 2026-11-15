@@ -424,6 +424,7 @@ function tryGrab(){
   let best = null, bd = 1e9;
   for (const e of living()){
     if (e.st==='down' || e.st==='intro' || e.st==='grab' || e.st==='tele') continue;
+    if (e.copie) continue;
     const d = Math.abs(e.x-rudy.x);
     if (d < 95 && Math.abs(e.y-rudy.y) < 28 && d < bd){ best = e; bd = d; }
   }
@@ -443,6 +444,10 @@ function tryGrab(){
 // ---------- ENNEMIS ----------
 function hurtEnemy(e, dmg, knock){
   if (e.st==='tele') return;
+  if (e.copie){ if (e.st==='apparition' || e.st==='eclate') return;
+    e.coups++; addFx('spark', e.x - rudy.face*10, e.y - 120);
+    if (e.coups >= 3) eclaterCopie(e); else { e.st = 'hurt'; e.t = 0; e.face = Math.sign(rudy.x-e.x)||e.face; }
+    return; }
   e.hp -= dmg; e.hpShow = 2.2;
   addFx('spark', e.x - rudy.face*10, e.y - (e.K.fly?e.z:0) - 120);
   if (e.K.boss) knock = knock && Math.random()<0.2;
@@ -451,6 +456,7 @@ function hurtEnemy(e, dmg, knock){
   e.st = 'hurt'; e.t = 0; e.face = Math.sign(rudy.x-e.x)||e.face;
 }
 function knockDown(e, dead){
+  if (e.copie){ eclaterCopie(e); return; }          // la boule d'énergie de Rudy la fait éclater d'un coup
   e.st = 'down'; e.t = 0; e.willDie = dead; e.face = Math.sign(rudy.x-e.x)||e.face;
   SFX.fall(); game.shake = 0.12;
 }
@@ -463,11 +469,33 @@ function enemyGrab(e){
   SFX.grab();
 }
 
+// ---------- les copies de la Reine : elles arrivent en nuée de chauves-souris, frappent et lancent des boules,
+//            n'attrapent jamais ; 3 coups et elles éclatent en chauves-souris ----------
+const K_COPIE = Object.assign({}, KINDS.k, {name:'Copie de la Reine', boss:false, copie:true, dmg:11, grabbable:true});
+function invoquerCopies(reine){
+  const ww = worldW(), m = MAPS[game.map];
+  for (const cote of [-1, 1]){
+    const c = makeEnemy('k', Math.max(60, Math.min(ww-60, rudy.x + cote*170)), Math.max(m.yMin, Math.min(m.yMax, rudy.y + cote*10)));
+    c.K = K_COPIE; c.copie = true; c.coups = 0; c.hp = 999; c.face = Math.sign(rudy.x - c.x) || 1;
+    c.st = 'apparition'; c.t = 0.75; preparerChauves(c, false);      // même arrivée que la téléportation de la Reine : les chauves-souris se rassemblent
+    game.ents.push(c);
+  }
+  SFX.tele && SFX.tele();
+}
+function eclaterCopie(c){
+  if (c.st === 'eclate') return;
+  c.st = 'eclate'; c.t = 0; c.batsIn = null; preparerChauves(c, true); SFX.tele && SFX.tele();
+}
 function updateEnemy(e, dt){
   const K = e.K, k = e.kind, m = MAPS[game.map];
   e.t += dt; e.bob += dt;
   if (e.hpShow>0) e.hpShow -= dt;
   if (e.dead){ e.alpha -= dt*1.2; return; }
+  if (e.copie){
+    if (e.st !== 'eclate' && !game.ents.some(o=>o.K.boss && !o.dead && !o.willDie)) eclaterCopie(e);   // la Reine battue : ses copies s'envolent
+    if (e.st === 'apparition'){ e.fr = 0; if (e.t > 1.6){ e.st = 'walk'; e.t = 0; e.cd = 0.6+Math.random()*0.6; e.batsIn = null; } return; }
+    if (e.st === 'eclate'){ e.fr = 0; if (e.t > 0.95){ e.dead = true; e.alpha = 0; } return; }
+  }
   const r = rudy;
   const dx = r.x - e.x, dy = r.y - e.y, adx = Math.abs(dx);
 
@@ -563,6 +591,11 @@ function updateEnemy(e, dt){
     if (e.laser) e.laser.t += dt;
     if (T > 0.82){ e.tir=false; e.laser=null; e.st='walk'; e.t=0; e.cd = 0.5+Math.random()*0.7; }
     break; }
+  case 'invoque': { // la reine lève le bras : ses copies arrivent
+    e.fr = Math.min(3, Math.floor(e.t/0.12));
+    if (e.t >= 0.35 && !e.invoque){ e.invoque = true; invoquerCopies(e); }
+    if (e.t > 1.1){ e.st='walk'; e.t=0; e.cd = 0.5; }
+    return; }
   case 'cast': { // la reine envoie une boule rouge
     e.fr = Math.min(5, Math.floor(e.t/0.11));
     if (e.fr>=3 && !e.cast){ e.cast = true; game.balls.push({x:e.x+e.face*70, y:e.y, z:150, vx:e.face*470, t:0}); SFX.ball(); }
@@ -588,6 +621,9 @@ function updateEnemy(e, dt){
     else e.fr = moved ? Math.floor(e.t/0.09)%6 : 0;
     if (!moved && k!=='t' && !K.fly) e.fr = 0;
     if (busy) break;
+    // la reine fait apparaître 2 copies d'elle-même (les chauves-souris s'assemblent de chaque côté de Rudy)
+    if (K.boss){ e.copieCd = (e.copieCd==null ? 9 : e.copieCd) - dt;
+      if (e.copieCd<=0 && !game.ents.some(o=>o.copie && !o.dead)){ e.copieCd = 14+Math.random()*4; e.st='invoque'; e.t=0; e.invoque=false; break; } }
     // la reine se téléporte (nuée de chauves-souris) pour réapparaître près de Rudy
     if (K.boss){ e.teleCd = (e.teleCd==null ? 5 : e.teleCd) - dt;
       if (e.teleCd<=0 && (adx > 250 || Math.random()<0.012)){ e.st='tele'; e.t=0; e.teleArrive=false; preparerChauves(e, true); SFX.tele && SFX.tele(); break; } }
@@ -596,9 +632,10 @@ function updateEnemy(e, dt){
       if (Math.random() < 0.5){ e.st='laser'; e.t=0; e.tir=false; e.laser=null; SFX.chargeR(); }
       else { e.st='cast'; e.t=0; e.cast=false; }
       break; }
+    if (K.copie && e.cd<=0 && adx > 170 && Math.abs(dy) < 40 && Math.random()<0.05){ e.st='cast'; e.t=0; e.cast=false; break; }
     if (e.cd<=0 && adx < K.reach+15 && Math.abs(dy) < 20 && r.st!=='down' && r.inv<=0){
       const grabChance = K.boss ? 0.4 : (k==='t' ? 0.38 : 0.32);
-      if (game.grabCD<=0 && Math.random() < grabChance && !game.ents.some(o=>o.st==='grab')){ enemyGrab(e); break; }
+      if (!K.copie && game.grabCD<=0 && Math.random() < grabChance && !game.ents.some(o=>o.st==='grab')){ enemyGrab(e); break; }
       if (k==='t'){ e.st='headbutt'; e.t=0; e.hbHit=false; break; }
       e.st='attack'; e.t=0; e.lastHitF=-1; SFX.whoosh();
     }
@@ -904,7 +941,12 @@ function drawEnemy(e){
     case 'intro': case 'walk': sheet = k+'_run'; break;
     case 'attack': sheet = k+'_atk'; break;
     case 'hurt': case 'down': sheet = k+'_fall'; break;
-    case 'cast': sheet = 'k_cast'; break;
+    case 'cast': case 'invoque': sheet = 'k_cast'; break;
+    case 'apparition': case 'eclate': {     // copie : arrivée / départ en nuée de chauves-souris
+      const al = alphaTele(e);
+      if (al > 0) drawFrame(k+'_run', 0, x, y, face, al*0.85);
+      dessinerNuee(e);
+      return; }
     case 'laser': {
       drawFrame('k_cast', n, x, y, face, 1);
       e._sheet = 'k_cast'; e._n = n; e._face = face; e._x = x; e._y = y; e._ax = null;
@@ -928,9 +970,10 @@ function drawEnemy(e){
   if (e.st==='walk' && k==='t'){ sheet='t_run'; }
   const yy = y - ((e.st==='down' || e.st==='hurt') && e.K.fly ? e.z : z);
   e._sheet = sheet; e._n = n; e._face = face; e._x = x; e._y = y; e._ax = anchor!=null ? anchor*ASSETS[sheet].f[Math.max(0, Math.min(n, ASSETS[sheet].f.length-1))][2] : null;
-  drawFrame(sheet, n, x, yy, face, (e.dead ? Math.max(0,e.alpha) * (Math.floor(game.t*16)%2?1:0.3) : 1) * (e.K.ghost?0.93:1), anchor);
+  if (e.copie) brumeVampire(x, yy - 110, 0.45, 120);          // une copie : brume rouge sombre autour d'elle, un peu transparente
+  drawFrame(sheet, n, x, yy, face, (e.dead ? Math.max(0,e.alpha) * (Math.floor(game.t*16)%2?1:0.3) : 1) * (e.K.ghost?0.93:1) * (e.copie?0.82:1), anchor);
   // petite barre de vie au-dessus de la tête
-  if (!e.K.boss && e.hpShow>0 && !e.dead){
+  if (!e.K.boss && !e.copie && e.hpShow>0 && !e.dead){
     const h = ASSETS[sheet].f[0][3]/Q;
     const by = yy - Math.min(h, 230) - 14;
     ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(x-31, by-1, 62, 8);
