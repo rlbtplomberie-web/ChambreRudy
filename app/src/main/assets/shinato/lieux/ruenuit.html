@@ -104,6 +104,7 @@ const TAILLE=0.30;        // hauteur du personnage par rapport à l'image
 const PORTES=[                 // les entrées de la rue de nuit
   {x:1432, lieu:'barding.html',     sortie:'barding:sortie'},     // la porte ouverte du Barding
   {x:835,  lieu:'supermarche.html', sortie:'supermarche:sortie'}, // les portes vitrées du supermarché
+  {x:415, lieu:null, carreRouge:true, si:()=>{ try{ return ['mitsuda_usine_gagnee','rembourg_chateau_gagne'].every(k=>localStorage.getItem(k)==='1'); }catch(e){ return false; } }},  // le Carré Rouge : après avoir battu Astra (l'usine) et la Reine des vampires (Rembourg)
   {x:2020, lieu:null, hotel:true, si:()=>{ try{ return localStorage.getItem('shinato_valor_parle')==='1'; }catch(e){ return false; } }}  // l'entrée de l'hôtel : après avoir parlé au noir en panique à Shinato (rien derrière pour l'instant)
 ];
 let porteIci=null;
@@ -193,7 +194,8 @@ appui(btnF,fumer); appui(btnJ,jeter);
 /* ENTRER : le bar Barding ; « ◀ LA RUE » dans le bar ramène devant la porte */
 appui(ent,function(){
   const P=porteIci; if(!P) return;
-  if(P.hotel){ lanceHotel(); return; }            // l'hôtel : la mission « Hôtel Palace »
+  if(P.hotel){ lanceHotel(); return; }
+  if(P.carreRouge){ lanceCR(); return; }          // le jeu « Carré Rouge »            // l'hôtel : la mission « Hôtel Palace »
   if(!P.lieu) return;
   const idf='lieu_'+P.lieu.replace(/\W/g,'_');
   let fr=document.getElementById(idf);
@@ -431,6 +433,37 @@ function fermeHotel(){
   if(hotelMusiqueCoupee){ try{ const m=musiqueVilleH(); if(m){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} }
   hotelMusiqueCoupee=false;
 }
+/* ================= Le Carré Rouge (entre le gars à la casquette et la fille gothique) :
+   après Astra et la Reine des vampires → flèche jaune + ENTRER → le jeu se lance directement ;
+   K.O. → l'infirmière puis l'hôpital de Vaviel ; victoire → retour ici ================= */
+const CR_X=415;
+const crQuit=document.createElement('div'); crQuit.textContent='✕ LA RUE';
+crQuit.style.cssText=hotelQuit.style.cssText; crQuit.style.left='auto'; crQuit.style.right='10px'; crQuit.style.top='calc(11vmin + 10px)'; crQuit.style.display='none'; document.body.appendChild(crQuit);   // à droite, sous le bouton ♪ du jeu (à gauche il y a la vie de Rudy)
+let crMusiqueCoupee=false;
+function lanceCR(){
+  let fr=document.getElementById('crJeu');
+  if(!fr){ fr=document.createElement('iframe'); fr.id='crJeu'; fr.setAttribute('allow','autoplay; fullscreen');
+    fr.style.cssText='position:fixed;inset:0;width:100%;height:100%;border:0;z-index:90;background:#000;display:none'; document.body.appendChild(fr); }
+  const m=musiqueVilleH(); crMusiqueCoupee=!!(m&&!m.paused); try{ if(m) m.pause(); }catch(e){}   // le jeu a sa propre musique
+  fr.src='/assets/shinato/jeux/carre-rouge.html'; fr.style.display='block'; crQuit.style.display='block';
+  dedans=true; dir=0; fl.style.display=ent.style.display='none';
+  setTimeout(()=>{ try{ fr.focus(); }catch(e){} },300);
+}
+function fermeCR(remet){
+  const fr=document.getElementById('crJeu'); if(fr){ fr.style.display='none'; fr.src='about:blank'; }
+  crQuit.style.display='none';
+  if(remet!==false&&crMusiqueCoupee){ try{ const m=musiqueVilleH(); if(m){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} }
+  crMusiqueCoupee=false; try{ window.focus(); }catch(e){}
+}
+appui(crQuit,()=>{ fermeCR(); dedans=false; x=CR_X; sens=1; dir=0; cadre(true); });
+addEventListener('message',e=>{
+  const t=e.data&&e.data.type; const fr=document.getElementById('crJeu');
+  if(!fr||fr.style.display!=='block') return;
+  if(t==='carrerouge:victoire'){ try{ localStorage.setItem('carre_rouge_gagne','1'); }catch(err){} fermeCR(); dedans=false; x=CR_X; sens=1; dir=0; cadre(true); }
+  else if(t==='carrerouge:ko'){ fermeCR(false); dedans=true; dir=0;
+    // K.O. : l'infirmière, puis devant l'hôpital de Vaviel (comme les autres jeux)
+    try{ parent.postMessage({type:'impasse:ko'},'*'); }catch(err){} }
+});
 appui(hotelQuit,()=>{ fermeHotel(); dedans=false; x=2020; sens=1; dir=0; cadre(true); });
 addEventListener('message',e=>{
   const t=e.data&&e.data.type;
