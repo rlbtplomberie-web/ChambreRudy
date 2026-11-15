@@ -500,7 +500,11 @@ const DONJONS=[
   [TROIS,"Bats aussi Astra, la Reine des vampires et la Forêt Maudite."],
   ['glabar_barman_parle',"À Miria City, entre au GlaBar Givré et PARLE au barman, derrière le comptoir : il te parle du Château de glace."],
   ['carre_blanc_gagne',"Va à Miria City (avec la MAP du téléphone, ou avec la voiture de Fred au boulevard) et place-toi en bas des marches du palais, juste sous la gardienne de glace : flèche jaune + ENTRER."],
-  ['carre_blanc_gagne',"Traverse le palais de glace et bats la Reine des Glaces."]]}
+  ['carre_blanc_gagne',"Traverse le palais de glace et bats la Reine des Glaces."]]},
+ {nom:"Le Carré Rouge", img:'statue/gem_carre_rouge.webp', fin:'carre_rouge_gagne', etapes:[
+  [()=>['mitsuda_usine_gagnee','rembourg_chateau_gagne'].every(k=>lit(k)==='1'),"Bats d'abord Astra (l'usine) et la Reine des vampires (le château de Rembourg)."],
+  ['carre_rouge_gagne',"Prends la flèche jaune de Shinato vers la rue de nuit et place-toi entre le gars à la casquette et la fille gothique : flèche jaune + ENTRER."],
+  ['carre_rouge_gagne',"Bats 10 ennemies dans la rue, 20 sur le boulevard du cinéma, puis la boss dans le grand hall."]]}
 ];
 function faite(c){ return typeof c==='function' ? c() : lit(c)==='1'; }
 function listeAstuces(){
