@@ -2493,5 +2493,66 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
  tic();
 })();
 </script>
+<script>
+/* ---------- les 13 pierres réunies (3 losanges, 3 ronds, 3 plaques, 4 carrés) : dès que la dernière est gagnée,
+   Rudy sent quelque chose (bulles manga), puis la vidéo du passage final se lance — une seule fois ---------- */
+(function(){
+ var CLES=['mitsuda_usine_gagnee','rembourg_chateau_gagne','foret_gagnee','hotel_palace_gagne','pontlades_gagne','chasseur_gagne',
+  'impasse_combat_gagne','grotte_gagnee','plaquette_gagnee','carre_bleu_gagne','carre_orange_gagne','carre_blanc_gagne','carre_rouge_gagne'];
+ var VU='passage_final_video_vue', enCours=false, calme=0;
+ function lit(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+ function toutes(){ for(var i=0;i<CLES.length;i++) if(lit(CLES[i])!=='1') return false; return true; }
+ function medias(doc,p,l){ if(!doc||p>6) return l; try{
+   var m=doc.querySelectorAll('video,audio'); for(var i=0;i<m.length;i++) l.push(m[i]);
+   var f=doc.getElementsByTagName('iframe'); for(var j=0;j<f.length;j++){ try{ medias(f[j].contentDocument,p+1,l); }catch(e){} } }catch(e){} return l; }
+ function videoQuiJoue(){ var l=medias(document,0,[]); for(var i=0;i<l.length;i++) if(l[i].tagName==='VIDEO'&&!l[i].paused&&!l[i].ended) return true; return false; }
+ var st=document.createElement('style');
+ st.textContent='#passageFinal{position:fixed;inset:0;z-index:2147483000;display:none;background:rgba(0,0,0,.72);overflow:hidden}'+
+  '#passageFinal .lignes{position:absolute;inset:-50%;background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.13) 0deg 1.2deg,transparent 1.2deg 7deg);animation:pfTourne 9s linear infinite}'+
+  '#passageFinal .bulle{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%) scale(.2);min-width:34vmin;max-width:78vw;padding:4vmin 6vmin;background:#fff;color:#111;'+
+  'border:1vmin solid #111;border-radius:50%/42%;font:900 7vmin/1.1 "Bangers","Comic Sans MS","Arial Black",sans-serif;text-align:center;letter-spacing:.04em;'+
+  'box-shadow:1.2vmin 1.2vmin 0 #111;opacity:0;transition:transform .28s cubic-bezier(.2,1.6,.4,1),opacity .2s}'+
+  '#passageFinal .bulle.on{transform:translate(-50%,-50%) scale(1);opacity:1}'+
+  '#passageFinal .bulle:after{content:"";position:absolute;left:30%;bottom:-6vmin;border:3vmin solid transparent;border-top:6.5vmin solid #111;border-bottom:0}'+
+  '#passageFinal .bulle:before{content:"";position:absolute;left:calc(30% + 1.4vmin);bottom:-3.4vmin;z-index:1;border:1.8vmin solid transparent;border-top:4vmin solid #fff;border-bottom:0}'+
+  '#passageFinal .nom{position:absolute;left:50%;top:calc(46% + 17vmin);transform:translateX(-80%);color:#ffd84a;font:900 4.4vmin "Bangers","Arial Black",sans-serif;'+
+  'letter-spacing:.12em;text-shadow:0 0 1.5vmin #000,.3vmin .3vmin 0 #000}'+
+  '#passageFinal video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:none}'+
+  '@keyframes pfTourne{to{transform:rotate(360deg)}}';
+ document.head.appendChild(st);
+ var o=document.createElement('div'); o.id='passageFinal';
+ o.innerHTML='<div class="lignes"></div><div class="bulle"></div><div class="nom">RUDY</div><video playsinline preload="none"></video>';
+ document.body.appendChild(o);
+ var bulle=o.querySelector('.bulle'), nom=o.querySelector('.nom'), v=o.querySelector('video');
+ var T=window.minuterieLibre||setTimeout;
+ function dit(t){ bulle.classList.remove('on'); T(function(){ bulle.textContent=t; bulle.classList.add('on'); },180); }
+ function lance(){
+  enCours=true;
+  var coupes=medias(document,0,[]).filter(function(m){ return !m.paused&&!m.muted; });   // on coupe les autres sons pendant la scène
+  coupes.forEach(function(m){ m.muted=true; });
+  o.style.display='block'; nom.style.display='block';
+  dit("Qu'est-ce que c'est… ?");
+  T(function(){ dit("Je sens un truc…"); },2600);
+  T(function(){
+   bulle.classList.remove('on'); nom.style.display='none';
+   v.src='/assets/shinato/m/passage_final.mp4'; v.style.display='block';
+   var fini=false;
+   function fin(){ if(fini) return; fini=true; try{ v.pause(); }catch(e){} v.removeAttribute('src'); v.style.display='none'; o.style.display='none';
+    try{ localStorage.setItem(VU,'1'); }catch(e){}
+    coupes.forEach(function(m){ m.muted=false; }); enCours=false; }
+   v.onended=fin; v.onerror=fin;
+   var q=v.play(); if(q&&q.catch) q.catch(function(){ v.muted=true; v.play().catch(fin); });
+  },5200);
+ }
+ function veille(){
+  if(!enCours && lit(VU)!=='1' && toutes()){
+   if(videoQuiJoue()) calme=0;                // on attend la fin de la vidéo de victoire
+   else if(++calme>=2) lance();
+  } else calme=0;
+  T(veille,800);
+ }
+ veille();
+})();
+</script>
 </body>
 </html>
