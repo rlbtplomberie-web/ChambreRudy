@@ -405,6 +405,34 @@ var RRSon=(function(){
     var maint=Date.now(); sv['1']={creee:maint,maj:maint,donnees:{}}; ecrireSauvegardes(sv); ranger('1');
     try{ localStorage.setItem(ACTIF,'1'); }catch(e){} })();
 
+  /* ================== Récupérer ma progression (une seule fois) ==================
+     Après la réinstallation (la nouvelle clé de signature), les données d'avant sont perdues.
+     Sur une appli vide, on propose une seule fois de remettre tout ce qui avait été débloqué :
+     les 13 pierres de la statue, les lieux, les accès et le Combat final ouvert (pas gagné). */
+  var RECUP=["mitsuda_usine_gagnee", "mitsuda_usine_ok", "rembourg_chateau_gagne", "foret_gagnee", "hotel_palace_gagne", "pontlades_debloque", "pontlades_gagne", "chasseur_gagne", "impasse_combat_gagne", "grotte_gagnee", "plaquette_gagnee", "carre_bleu_gagne", "carre_orange_gagne", "carre_blanc_gagne", "carre_rouge_gagne", "glabar_barman_parle", "passage_final_video_vue", "intro_irisa_gagne", "rudyjet_gagne", "baril_plaquette_vu", "blvd_reveur_parti", "chalia_clochard_vu", "cirque_loyal_balance", "cirque_loyal_parle", "cirque_loyal_personne_vu", "mitsuda_beret_vu", "mitsuda_carnet_ami", "mitsuda_carnet_vu", "mitsuda_vampire_partie", "mitsuda_aurore_infos", "mitsuda_cafe_nerveuse", "pixelbar_quoi_vu", "shinato_valor_parle", "shinato_diamant_jaune_vu", "vaviel_chat_parle"];
+  (function(){
+    try{ if(localStorage.getItem('rr_recup_fait')==='1') return; }catch(e){ return; }
+    if(Object.keys(lireSauvegardes()).length||actif()||clesDuJeu().length){ try{ localStorage.setItem('rr_recup_fait','1'); }catch(e){} return; }
+    var v=document.createElement('div'); v.id='recupVoile';
+    v.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,10,.72);font-family:RRPinceau,Georgia,serif';
+    v.innerHTML='<div style="max-width:86vw;padding:5vmin 6vmin;border-radius:3vmin;background:linear-gradient(#2a1d10,#140c05);border:3px solid #e8c25a;box-shadow:0 0 30px rgba(232,194,90,.5);text-align:center;color:#fff2cc">'+
+      '<div style="font-size:min(6vmin,34px);margin-bottom:2vmin">RÉCUPÉRER MA PROGRESSION ?</div>'+
+      '<div style="font-size:min(3.6vmin,19px);opacity:.9;margin-bottom:4vmin">Les 13 pierres, les lieux et le Combat final ouvert, comme avant la réinstallation.</div>'+
+      '<div style="display:flex;gap:4vmin;justify-content:center">'+
+      '<div id="recupOui" style="padding:2.4vmin 5vmin;border-radius:2vmin;background:#c8961e;color:#1a0f00;font-size:min(4.4vmin,24px);cursor:pointer">OUI</div>'+
+      '<div id="recupNon" style="padding:2.4vmin 5vmin;border-radius:2vmin;background:#3a2c1c;border:2px solid #e8c25a;font-size:min(4.4vmin,24px);cursor:pointer">NON</div></div></div>';
+    document.body.appendChild(v);
+    function fin(){ try{ localStorage.setItem('rr_recup_fait','1'); }catch(e){} v.remove(); }
+    document.getElementById('recupNon').addEventListener('pointerup',function(e){ e.preventDefault(); e.stopPropagation(); fin(); });
+    document.getElementById('recupOui').addEventListener('pointerup',function(e){ e.preventDefault(); e.stopPropagation();
+      RECUP.forEach(function(k){ try{ localStorage.setItem(k,'1'); }catch(er){} });
+      var maint=Date.now(), sv=lireSauvegardes(); sv['1']={creee:maint,maj:maint,donnees:{}}; ecrireSauvegardes(sv); ranger('1');
+      try{ localStorage.setItem(ACTIF,'1'); }catch(er){}
+      fin(); try{ afficherMessage('PROGRESSION RÉCUPÉRÉE : CHARGER LA PARTIE 1'); }catch(er){}
+    });
+    ['pointerdown','touchstart','click'].forEach(function(t){ v.addEventListener(t,function(e){ e.stopPropagation(); },true); });
+  })();
+
   /* ================== Écran : remplissage plein écran ================== */
   var cv=document.getElementById('fx'),ctx=cv.getContext('2d');
   var menu=document.getElementById('menu');

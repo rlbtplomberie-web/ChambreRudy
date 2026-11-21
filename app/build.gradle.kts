@@ -56,13 +56,27 @@ android {
         checkReleaseBuilds = false
     }
 
+    /* UNE SEULE CLE DE SIGNATURE, toujours la meme (app/chambre-rudy.keystore).
+       Avant, GitHub fabriquait une nouvelle cle a chaque construction : un nouvel APK
+       ne pouvait pas s'installer par-dessus l'ancien, ni reprendre les donnees gardees.
+       Avec cette cle fixe, chaque mise a jour s'installe par-dessus et garde la progression.
+       NE JAMAIS SUPPRIMER NI REMPLACER CE FICHIER. */
+    signingConfigs {
+        create("rudy") {
+            storeFile = file("chambre-rudy.keystore")
+            storePassword = "chambrerudy"
+            keyAlias = "chambrerudy"
+            keyPassword = "chambrerudy"
+        }
+    }
+
     buildTypes {
-        release { isMinifyEnabled = false }
+        release { isMinifyEnabled = false; signingConfig = signingConfigs.getByName("rudy") }
         /* L'APK qu'on installe est celui-ci. Par defaut il tourne en mode
            « mise au point », qui surveille chaque operation et ralentit
            l'affichage. On le desactive : l'application garde sa signature
            d'essai, donc elle s'installe toujours, mais elle tourne vite. */
-        debug { isDebuggable = false }
+        debug { isDebuggable = false; signingConfig = signingConfigs.getByName("rudy") }
     }
     compileOptions {
         /*
