@@ -195,7 +195,7 @@ html,body{margin:0;height:100%;background:var(--fond);overflow:hidden;touch-acti
 const PAGES=["statue/890d180b34.webp","statue/a3dd3c0457.webp","statue/e030d6cd4d.webp","statue/2a8ce3a127.webp","statue/0c7a0a26c7.webp","statue/bcb4d4aff7.webp","statue/7e7350bfa4.webp","statue/d3c3cbf6f9.webp","statue/0b360bb486.webp","statue/817e5ba814.webp","statue/19e73a0771.webp"];
 const NB_PERSOS=87;          // tous les personnages des pages (sans l'emblème)
 const NB_CONTACTS=11;      // les filles qu'on peut avoir dans le téléphone
-const NB_VIDEOS=704;          // toutes les vidéos du jeu (Déverrouillage)
+const NB_VIDEOS=754;          // toutes les vidéos du jeu (Déverrouillage)
 let APERCU=false;
 const $=id=>document.getElementById(id);
 function lit(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
@@ -504,7 +504,12 @@ const DONJONS=[
  {nom:"Le Carré Rouge", img:'statue/gem_carre_rouge.webp', fin:'carre_rouge_gagne', etapes:[
   [()=>['mitsuda_usine_gagnee','rembourg_chateau_gagne'].every(k=>lit(k)==='1'),"Bats d'abord Astra (l'usine) et la Reine des vampires (le château de Rembourg)."],
   ['carre_rouge_gagne',"Prends la flèche jaune de Shinato vers la rue de nuit et place-toi entre le gars à la casquette et la fille gothique : flèche jaune + ENTRER."],
-  ['carre_rouge_gagne',"Bats 10 ennemies dans la rue, 20 sur le boulevard du cinéma, puis la boss dans le grand hall."]]}
+  ['carre_rouge_gagne',"Bats 10 ennemies dans la rue, 20 sur le boulevard du cinéma, puis la boss dans le grand hall."]]},
+ {nom:"Le Combat final", img:'statue/gem_carre_rouge.webp', fin:'combat_final_gagne', etapes:[
+  [()=>['mitsuda_usine_gagnee','rembourg_chateau_gagne','foret_gagnee','hotel_palace_gagne','pontlades_gagne','chasseur_gagne','impasse_combat_gagne','grotte_gagnee','plaquette_gagnee','carre_bleu_gagne','carre_orange_gagne','carre_blanc_gagne','carre_rouge_gagne'].every(k=>lit(k)==='1'),
+   "Réunis les 13 pierres de la Statue (les 3 losanges, les 3 ronds, les 3 plaques et les 4 carrés) : le passage vers le combat final s'ouvre."],
+  ['combat_final_gagne',"Au bout de la rue de Shinato, choisis COMBAT FINAL dans « Où voulez-vous aller ? » (ou COMBAT FINAL dans la MAP du téléphone)."],
+  ['combat_final_gagne',"Bats l'Impératrice de la nuit, puis l'Impératrice en furie et l'Impératrice céleste."]]}
 ];
 function faite(c){ return typeof c==='function' ? c() : lit(c)==='1'; }
 function listeAstuces(){

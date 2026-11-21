@@ -1323,9 +1323,33 @@ else carte.addEventListener("load",demarre);
  <button class="choix" id="versAeroport" style="margin-top:2.4vmin">L'AÉROPORT</button>
  <button class="choix" id="versChaliaville" style="margin-top:2.4vmin">CHALIAVILLE</button>
  <button class="choix" id="versGarrett" style="margin-top:2.4vmin">GARRETT PARC</button>
+ <button class="choix" id="versCombatFinal" style="margin-top:2.4vmin;display:none">COMBAT FINAL</button>
 </div></div>
+<script>/* COMBAT FINAL : la case n'apparaît que quand les 13 pierres de la Statue sont débloquées */
+window.COMBAT_FINAL_OUVERT=function(){ try{ return ['mitsuda_usine_gagnee','rembourg_chateau_gagne','foret_gagnee','hotel_palace_gagne','pontlades_gagne','chasseur_gagne',
+  'impasse_combat_gagne','grotte_gagnee','plaquette_gagnee','carre_bleu_gagne','carre_orange_gagne','carre_blanc_gagne','carre_rouge_gagne'].every(function(k){ return localStorage.getItem(k)==='1'; }); }catch(e){ return false; } };
+setInterval(function(){ var b=document.getElementById('versCombatFinal'); if(b) b.style.display=window.COMBAT_FINAL_OUVERT()?'':'none'; },400);</script>
 <script>/* PONT-L'ADES : le choix n'apparaît qu'après « INFORMATION SUR MIDA » (le costaud du Barding) */
 setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) return; var ok=false; try{ ok=localStorage.getItem('pontlades_debloque')==='1'; }catch(e){} b.style.display=ok?'':'none'; },400);</script>
+<script>
+/* ---------- COMBAT FINAL : le jeu dans le cadre de la moto ; à la fin, Rudy rentre directement dans sa chambre ---------- */
+window.lanceCombatFinal=function(){
+ var cm=document.getElementById("moto");
+ if(!cm){ cm=document.createElement("iframe"); cm.id="moto"; cm.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(cm); }
+ try{ if(window.RUDY_AUDIO){ window.PONTLADES_MUSIQUE=!window.RUDY_AUDIO.paused; window.RUDY_AUDIO.pause(); } }catch(err){}
+ var couv=document.getElementById("voyageCouv"); if(couv) couv.style.display="none";
+ cm.removeAttribute("srcdoc"); cm.src="/assets/shinato/jeux/combat-final.html"; cm.style.pointerEvents="auto"; cm.style.display="block";
+ window.pontladesQuitte(true);
+ var qp=document.getElementById("pontladesQuitter"); if(qp){ qp.style.left="10px"; qp.style.transform=""; }
+ window.minuterieLibre(function(){ try{ cm.focus(); }catch(e){} },300);
+};
+window.addEventListener("message",function(e){
+ if(!e.data||e.data.type!=="combatfinal:fin") return;
+ window.PONTLADES_MUSIQUE=false; window.pontladesFin(true);          // le jeu se ferme
+ try{ if(window.Chambre&&window.Chambre.rentrer){ window.Chambre.rentrer(); return; } }catch(er){}
+ window.teleporteVers("home");
+});
+</script>
 <script>
 /* ---------- PONT-L'ADES (« Le Grand Terrain ») : quitter, K.O. (l'infirmière puis devant l'hôpital de Vaviel), victoire (retour à Shinato) ---------- */
 (function(){
@@ -1465,6 +1489,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
  window.appuiSur(document.getElementById("versBoulevard"),function(){ partEnMoto("boulevard"); });
  window.appuiSur(document.getElementById("versMitsuda"),function(){ partEnMoto("mitsuda"); });
  window.appuiSur(document.getElementById("versPontLades"),function(){ partEnMoto("pontlades"); });
+ window.appuiSur(document.getElementById("versCombatFinal"),function(){ partEnMoto("combatfinal"); });
  window.appuiSur(document.getElementById("versRembourg"),function(){ partEnMoto("rembourg"); });
  window.appuiSur(document.getElementById("versAeroport"),function(){ partEnMoto("aeroport"); });
  window.appuiSur(document.getElementById("versChaliaville"),function(){ partEnMoto("chaliaville"); });
@@ -1547,6 +1572,11 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
    var om=LIEU_OCTETS("lieux/moto.html");
    cm.srcdoc=new TextDecoder("utf-8").decode(om);        // la plage est déchargée, seule la moto tourne
    window.minuterieLibre(function(){ try{ cm.focus(); }catch(err){} },300);
+   return;
+  }
+  if(e.data && e.data.type==="rudyMoto:arrivee" && window.DESTINATION_MOTO==="combatfinal"){
+   // COMBAT FINAL : après la moto, le jeu se lance directement (sa propre musique : celle de la ville se tait)
+   window.minuterieLibre(function(){ window.lanceCombatFinal(); },300);
    return;
   }
   if(e.data && e.data.type==="rudyMoto:arrivee" && window.DESTINATION_MOTO==="pontlades"){
@@ -2410,6 +2440,7 @@ setInterval(function(){ var b=document.getElementById('versPontLades'); if(!b) r
  /* MAP du téléphone : Rudy est téléporté là où il a choisi d'aller (la musique de la ville continue) */
  window.teleporteVers=function(lieu){
   telAncien=true;                                    // après le voyage, le téléphone se recharge à neuf
+  if(lieu==="combatfinal"){ window.libereLieux(); window.DESTINATION_MOTO="combatfinal"; dir=0; window.pauseRue(); window.lanceCombatFinal(); return; }   // MAP : directement dans le combat final
   var dest={plage:"plage",vaviel:"vaviel",ville:"delabree",delabree:"delabree",boulevard:"boulevard",mitsuda:"mitsuda",rembourg:"rembourg",aeroport:"aeroport",chaliaville:"chaliaville",garrett:"garrett",palais:"palais"}[lieu];
   if(lieu==="home"){ try{ if(window.Chambre&&window.Chambre.rentrer) window.Chambre.rentrer(); }catch(e){} return; }
   try{ if(window.RUDY_AUDIO&&window.RUDY_AUDIO.paused){ var pr=window.RUDY_AUDIO.play(); if(pr&&pr.catch) pr.catch(function(){}); } }catch(e){}
