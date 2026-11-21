@@ -1901,7 +1901,31 @@ function bGrab(){const B=BOSSF;if(P.mode==='fps')setMode('free');P.paraT=0;stand
   const out=audioOut();if(out){burst(out,{dur:.25,type:'lowpass',f:500,vol:.6});tone(out,{f:120,f2:50,dur:.3,vol:.4})}}
 function bossEscape(){const B=BOSSF;GR.on=false;GR.boss=false;$('escape').hidden=true;setMode('free');B.state='stun';B.t=0;B.stun=2;B.grabCd=7;
   const{R:r}=camVectors(cam.curYaw);P.pos.addScaledVector(r,-1.2);collide(P.pos,P.y);hint('Libéré !')}
-function updateBoss(dt,now){const B=BOSSF;updateHearts(dt);
+/* contre la dernière boss : toutes les 10 s un cœur de vie tombe du ciel près de Rudy (doré, pour ne pas le confondre avec ses cœurs à elle) ;
+   Rudy le ramasse en marchant dessus : toute sa vie revient. Pas ramassé : il clignote puis disparaît au bout de 6 s */
+const SOIN_MAT=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');const x=64,y=62,s=40;
+  g.shadowColor='rgba(255,215,80,1)';g.shadowBlur=20;const gr=g.createLinearGradient(0,y-s,0,y+s);gr.addColorStop(0,'#ff8aa0');gr.addColorStop(.5,'#ff1f45');gr.addColorStop(1,'#b0001e');g.fillStyle=gr;
+  g.beginPath();g.moveTo(x,y+s*.9);g.bezierCurveTo(x-s*1.25,y+s*.05,x-s*1.05,y-s*1.05,x,y-s*.4);g.bezierCurveTo(x+s*1.05,y-s*1.05,x+s*1.25,y+s*.05,x,y+s*.9);g.closePath();g.fill();
+  g.shadowBlur=0;g.lineWidth=6;g.strokeStyle='#ffd65a';g.stroke();g.fillStyle='#fff';g.fillRect(x-5,y-18,10,30);g.fillRect(x-15,y-8,30,10);
+  const t=new THREE.CanvasTexture(c);return new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false})})();
+const SOINS=[];let soinT=0;
+function updSoins(dt){const B=BOSSF,combat=B.active&&B.state!=='down'&&P.mode!=='dead';
+  if(!combat){soinT=0;for(const c of SOINS)scene.remove(c.s);SOINS.length=0;return}
+  soinT+=dt;
+  if(soinT>=10){soinT=0;if(!SOINS.length){let x=P.pos.x,z=P.pos.z;
+    for(let k=0;k<12;k++){const a=Math.random()*Math.PI*2,r=1.8+Math.random()*2.2,tx=P.pos.x+Math.cos(a)*r,tz=P.pos.z+Math.sin(a)*r;
+      if(Math.hypot(tx,tz)<AR-1.2&&!segBlocked(P.pos.x,AY+1,P.pos.z,tx,AY+1,tz,false)){x=tx;z=tz;break}}
+    const sp=new THREE.Sprite(SOIN_MAT);sp.scale.setScalar(.6);sp.position.set(x,AY+6,z);sp.renderOrder=10;scene.add(sp);SOINS.push({s:sp,v:0,sol:false,age:0})}}
+  for(let i=SOINS.length-1;i>=0;i--){const c=SOINS[i];
+    if(!c.sol){c.v+=9*dt;c.s.position.y-=c.v*dt;if(c.s.position.y<=AY+.4){c.s.position.y=AY+.4;c.sol=true}}
+    else{c.age+=dt;c.s.position.y=AY+.4+Math.sin(c.age*4)*.05;c.s.visible=!(c.age>4.2&&Math.floor(c.age*10)%2)}
+    if(c.age>6){scene.remove(c.s);SOINS.splice(i,1);continue}
+    if(c.s.position.y<AY+1.2&&Math.abs(P.y-AY)<1.5&&Math.hypot(c.s.position.x-P.pos.x,c.s.position.z-P.pos.z)<1){setNRG(NRGMAX);hint('VIE MAX !');
+      const out=audioOut();if(out){[660,880,1320].forEach((f,j)=>tone(out,{f,f2:f*1.5,dur:.25,vol:.18,type:'triangle',delay:j*.07}))}
+      scene.remove(c.s);SOINS.splice(i,1)}}
+}
+window.__PC={SOINS,t:v=>{soinT=v},P:()=>P,nrg:()=>[NRG,NRGMAX],set:v=>setNRG(v),go:()=>enterBoss(),B:()=>BOSSF.state};
+function updateBoss(dt,now){const B=BOSSF;updateHearts(dt);updSoins(dt);
   if(bMuzzle.visible){bMuzzle.userData.t-=dt;if(bMuzzle.userData.t<=0)bMuzzle.visible=false}if(bTracer.visible){bTracer.userData.t-=dt;if(bTracer.userData.t<=0)bTracer.visible=false}
   // Rudy reste dans la salle
   {const r=Math.hypot(P.pos.x,P.pos.z);if(r>AR-.6){P.pos.x*=(AR-.6)/r;P.pos.z*=(AR-.6)/r}}

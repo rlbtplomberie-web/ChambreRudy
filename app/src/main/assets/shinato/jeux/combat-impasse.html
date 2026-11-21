@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script src="/assets/shinato/coeurs-boss.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Combat dans l'impasse</title>
@@ -1220,6 +1221,11 @@ document.getElementById('plein').onclick = () => {
 
 /* =================== OUTILS =================== */
 const libre = f => ['garde','marche','intro'].includes(f.etat);
+// combat final de l'impasse : toutes les 10 s un cœur de vie tombe du ciel (doré, pour ne pas le confondre avec ceux des ennemies), il rend toute la vie
+const CB = CoeurBoss({ actif: () => phase === 'combat' && !scene && !!rudy && !!enn && !!enn.P && !!enn.P.boss && enn.pv > 0 && rudy.pv > 0,
+  rudy: () => rudy && { x: rudy.x, y: rudy.y, libre: !['ko','sol','chute','projete','englue','paralyse','touche','victoire','scene','releve','recul'].includes(rudy.etat) },
+  soigne: () => { rudy.pv = PERSOS.rudy.pv; }, zone: () => ({ x0: 90, x1: W - 90, y0: SOL_HAUT + 20, y1: SOL_BAS - 15 }), rx: 70, ry: 40, croix: true });
+window.__CB = CB;
 const aTerre = f => ['chute','sol','releve','ko','projete','bulle','forme'].includes(f.etat);
 function hauteur(f){ return f.P.h * prof(f.y); }
 function portH(f){ return Math.max(hauteur(f), 290 * prof(f.y)); }   // portée mini, même pour la petite poupée
@@ -2572,6 +2578,7 @@ function dessiner(){
     bisous.forEach(b => liste.push({ y: b.y + 1, d: () => dessinerBisou(b) }));
     if (bulle) liste.push({ y: 9999, d: dessinerBulle });
     liste.sort((a, b) => a.y - b.y).forEach(o => o.d());
+    CB.dessine(ctx, (x, y) => [x, y, prof(y) * 1.9]);
     // étincelles des coups
     ctx.save(); ctx.globalCompositeOperation = 'lighter';
     for (const s of etincelles){
@@ -2638,7 +2645,7 @@ function boucle(t){
       if (phase === 'annonce' && rudy.etat === 'garde' && phaseT < 2.4) {}
     } else { rudy.t += dt * 1000; enn.t += dt * 1000; }
     if (phase === 'annonce' && enn.etat === 'intro' && enn.qui === 'aventuriere' && enn.t > 1600) { enn.etat = 'garde'; jouer(enn, 'garde'); }
-    majBoules(dt); majLasers(dt); majCoeurs(dt); majFeux(dt); majBisous(dt);
+    majBoules(dt); majLasers(dt); majCoeurs(dt); majFeux(dt); majBisous(dt); CB.maj(dt);
     for (let i = etincelles.length - 1; i >= 0; i--){
       const s = etincelles[i]; s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 500 * dt; s.vie -= dt * (s.flash ? 4 : 2.2);
       if (s.vie <= 0) etincelles.splice(i, 1);

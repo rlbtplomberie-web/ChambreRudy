@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8">
+<html lang="fr"><head><script src="/assets/shinato/coeurs-boss.js"></script><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Carré Blanc</title>
 <style>
@@ -369,6 +369,10 @@ function drawMap(key,t,dt){
 let camLead=0, cam=0, mapKey='m0', kills=0, toKill=10, spawned=0, state='play', stateT=0, banner=null, fade=0, fadeTo=null, shake=0, zoom=1, zoomT=1, zoomX=0, zoomY=0;
 let deathTitle='', deathBy='', spikes=[], ents=[], shots=[], fx=[], items=[], texts=[], hitStop=0, lastTarget=null, lastTargetT=0, paused=false;
 let player=null, boss=null, exitReady=false, enterAvail=false;
+// combat contre la boss finale (la Reine des Glaces, puis la géante) : toutes les 10 s un cœur tombe du ciel, il rend toute la vie
+const CB=CoeurBoss({actif:()=>state==='play'&&!!boss&&!boss.dead&&boss.hp>0&&!!player&&player.hp>0,
+  rudy:()=>player&&{x:player.x,y:player.y,libre:!['kiss','grabbed','pulled','eaten','swallowed','buried','cloneheld','snowtomb','bellied','throwing','snowgulp','thrown','pillared','down','fall','dead','ko','getup'].includes(player.st)},
+  soigne:()=>{player.hp=100},zone:()=>({x0:80,x1:MAPW-80,y0:FLOOR_TOP+10,y1:FLOOR_BOT-10}),rx:55,ry:30});window.__CB=CB;
 const KILLS_PER_MAP=10;
 
 function newPlayer(x,y){
@@ -2882,7 +2886,7 @@ function loop(now){
     updatePlayer(dt);
     for(const e of ents)if(!e.dead)updateEnemy(e,dt);
     ents=ents.filter(e=>!e.dead);
-    updateShots(dt); updateSpikes(dt); updateItems(dt); updateTransition(dt);
+    updateShots(dt); updateSpikes(dt); updateItems(dt); updateTransition(dt); CB.maj(dt);
     if(p.hp<hpAvant) noteQui(p);
     // apparitions
     if(mapKey!=='m3'&&mapKey!=='m0'&&mapKey!=='m2'&&mapKey!=='m4'){
@@ -2931,6 +2935,7 @@ function loop(now){
   drawItems();
   const list=[...ents.filter(e=>!e.dead).map(e=>({y:e.y,f:()=>drawEnemy(e)})),{y:p.y,f:()=>{drawRudy(p);drawGrab();}},...spikes.map(k=>({y:k.y+1,f:()=>drawSpike(k)})),...ents.filter(e=>e.leg&&e.st==='stomp').map(e=>({y:e.leg.y+2,f:()=>drawLeg(e.leg)}))];
   list.sort((a,b)=>a.y-b.y); for(const o of list)o.f();
+  CB.dessine(ctx,(x,y)=>[x,y,1.6]);
   drawGo(perf);
   drawShots(); drawFx(dt); drawTexts(dt);
   ctx.restore();
