@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8">
+<html lang="fr"><head><script src="/assets/shinato/coeurs-boss.js"></script><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Carré Orange</title>
 <style>
@@ -498,6 +498,10 @@ function drawBoss(e){if(e.state==='grab')return;const k=depthK(e.y);let f;
 // ====================== FINAL BOSS ======================
 const RB=['#ff3b3b','#ff9a1f','#ffe83a','#4dff6a','#38d9ff','#5b6bff','#c64dff'];
 function rbGrad(x0,y0,x1,y1,a=1){const g=ctx.createLinearGradient(x0,y0,x1,y1);RB.forEach((c,i)=>g.addColorStop(i/(RB.length-1),c));return g;}
+// combat contre la boss finale : toutes les 10 s un cœur tombe du ciel, il rend toute la vie
+const CB=CoeurBoss({actif:()=>G.state==='play'&&G.map&&G.map.kind==='boss'&&G.boss&&G.boss.fb&&G.boss.hp>0&&!G.fbDead&&R.state!=='dead',
+  rudy:()=>({x:R.x,y:R.y,libre:!['grabbed','throwing','bossthrow','dead','down','getup'].includes(R.state)}),
+  soigne:()=>{R.hp=R.maxhp},zone:()=>({x0:100,x1:MAPW-100,y0:pathTop(R.x),y1:pathBot(R.x)}),rx:55,ry:30});window.__CB=CB;
 function spawnFB(){const x=Math.min(MAPW-200,G.camX+VW+150);const e={type:'fb',fb:true,boss:true,rad:35,title:"LA DÉESSE ARC-EN-CIEL — BOSS FINAL",x,y:(pathTop(x)+pathBot(x))/2+10,face:-1,hp:1500,maxhp:1500,state:'intro',t:0,fi:0,cool:1.2,stag:0,blocks:0,alpha:1,alive:true,entering:false,hitDone:{},hx:0};
  G.ents.push(e);G.boss=e;titleCard('LA DÉESSE ARC-EN-CIEL','BOSS FINAL');}
 function fbHand(e,f,frac){const k=depthK(e.y);return {x:e.x+e.face*(f.ax-6)*k,h:f.h*frac*k};}
@@ -963,7 +967,7 @@ function frame(now){let dt=Math.min(0.05,(now-last)/1000);last=now;G.t+=dt;if(G.
  ctx.setTransform(1,0,0,1,0,0);
  if(G.state==='play'||G.state==='over'||G.state==='win'){
   const I=inp();
-  if(G.state==='play'&&!G.fadeDir&&!G.paused){updRudy(dt,I);enemySlots();for(const e of G.ents)if(e.alive)updEnemy(e,dt);G.ents=G.ents.filter(e=>e.alive);updProjs(dt);updItems(dt);updLevel(dt);updBflies(dt);
+  if(G.state==='play'&&!G.fadeDir&&!G.paused){updRudy(dt,I);enemySlots();for(const e of G.ents)if(e.alive)updEnemy(e,dt);G.ents=G.ents.filter(e=>e.alive);updProjs(dt);updItems(dt);updLevel(dt);updBflies(dt);CB.maj(dt);
    if(I.enter&&G.exitReady)goNext();}
   else if(G.state==='over'){updProjs(dt);}
   updMapFx(dt);updAmb(G.paused?0:dt);updExtraFx(G.paused?0:dt);G.msgT-=dt;G.lastHitT-=dt;
@@ -979,6 +983,7 @@ function frame(now){let dt=Math.min(0.05,(now-last)/1000);last=now;G.t+=dt;if(G.
   // sort entities
   const list=[...G.ents.map(e=>({y:e.y,f:()=>drawEnemy(e)})),{y:R.y,f:()=>{drawRudy();drawCombined();}}];
   list.sort((a,b)=>a.y-b.y);for(const l of list)l.f();
+  CB.dessine(ctx,(x,y)=>[(x-G.camX)*SC,(y-G.camY)*SC,depthK(y)*SC*1.4]);
   drawProjs();drawFx();drawExtraFx();drawBflies();ctx.restore();
   for(const f of G.fx)if(f.kind==='flash'){ctx.fillStyle=`rgba(255,240,200,${0.55*(1-f.t/0.18)})`;ctx.fillRect(0,0,cv.width,cv.height);}
   drawHUD();

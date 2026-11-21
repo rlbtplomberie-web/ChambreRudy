@@ -1114,6 +1114,29 @@ function resetEnemy(e){const p=e.def.path[0];e.pos.set(p[0],0,p[1]);e.face=e.wan
 ENEMY_DEF.forEach(makeEnemy);
 const pickups=[];
 const ammoTex=canvasTex(64,64,(g,w,h)=>{g.fillStyle='#2a2420';g.fillRect(14,8,36,48);g.fillStyle='#d9a441';for(let i=0;i<4;i++)g.fillRect(20,14+i*10,24,6);g.strokeStyle='#120d10';g.lineWidth=3;g.strokeRect(14,8,36,48)},false);
+/* contre la boss (dernier étage) : toutes les 10 s un cœur tombe du ciel près de Rudy ; il le ramasse en marchant dessus : toute sa vie revient.
+   Pas ramassé : il clignote puis disparaît au bout de 6 s */
+const coeurTex=canvasTex(128,128,(g,w,h)=>{const x=64,y=60,s=40;g.shadowColor='rgba(255,40,80,.95)';g.shadowBlur=16;
+  const gr=g.createLinearGradient(0,y-s,0,y+s);gr.addColorStop(0,'#ff8aa0');gr.addColorStop(.5,'#ff1f45');gr.addColorStop(1,'#b0001e');g.fillStyle=gr;
+  g.beginPath();g.moveTo(x,y+s*.9);g.bezierCurveTo(x-s*1.25,y+s*.05,x-s*1.05,y-s*1.05,x,y-s*.4);g.bezierCurveTo(x+s*1.05,y-s*1.05,x+s*1.25,y+s*.05,x,y+s*.9);g.closePath();g.fill();
+  g.shadowBlur=0;g.lineWidth=5;g.strokeStyle='rgba(255,255,255,.85)';g.stroke();g.fillStyle='rgba(255,255,255,.75)';g.beginPath();g.ellipse(x-17,y-15,9,5,-.6,0,7);g.fill()});
+const coeurs=[];let coeurT=0;window.__HC={coeurs,P:()=>P,t:v=>{coeurT=v},hp:v=>setHP(v),max:()=>HPMAX,go4:()=>startLevel4(),lvl:()=>LEVEL,q:()=>Q.state};
+function updCoeurs3D(dt,active){
+  const combat=typeof LEVEL!=='undefined'&&LEVEL===4&&typeof Q!=='undefined'&&Q&&Q.state!=='dead'&&Q.state!=='dying'&&P.hp>0;
+  if(!combat){coeurT=0;for(const c of coeurs)scene.remove(c.s);coeurs.length=0;return}
+  coeurT+=dt;
+  if(coeurT>=10){coeurT=0;if(!coeurs.length){
+    let x=P.pos.x,z=P.pos.z;camera.getWorldDirection(tmpV);const fa=Math.atan2(tmpV.z,tmpV.x);   // devant Rudy, dans le champ de la caméra
+    for(let k=0;k<12;k++){const a=k<8?fa+(Math.random()-.5)*1.4:Math.random()*Math.PI*2,r=1.8+Math.random()*2;const tx=P.pos.x+Math.cos(a)*r,tz=P.pos.z+Math.sin(a)*r;
+      if(lineClear(P.pos.x,1,P.pos.z,tx,1,tz)){x=tx;z=tz;break}}
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:coeurTex,transparent:true,depthWrite:false}));sp.scale.setScalar(.55);sp.position.set(x,5,z);scene.add(sp);
+    coeurs.push({s:sp,v:0,sol:false,age:0})}}
+  for(let i=coeurs.length-1;i>=0;i--){const c=coeurs[i];
+    if(!c.sol){c.v+=9*dt;c.s.position.y-=c.v*dt;if(c.s.position.y<=.35){c.s.position.y=.35;c.sol=true}}
+    else{c.age+=dt;c.s.position.y=.35+Math.sin(c.age*4)*.05;c.s.visible=!(c.age>4.2&&Math.floor(c.age*10)%2)}
+    if(c.age>6){scene.remove(c.s);coeurs.splice(i,1);continue}
+    if(active&&c.s.position.y<1&&Math.hypot(c.s.position.x-P.pos.x,c.s.position.z-P.pos.z)<.9){setHP(HPMAX);toast('VIE MAX !');sfx('eat');scene.remove(c.s);coeurs.splice(i,1)}}
+}
 function dropAmmo(p){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:ammoTex,transparent:true}));s.scale.setScalar(.32);s.position.set(p.x,.22,p.z);scene.add(s);pickups.push({s,t:0})}
 function zoneOf(x,z){if(x>50)return{room:null,hall:false};if(Math.abs(x)>2.15){const side=x<0?-1:1;let best=null;for(const d of doors)if(d.side===side&&Math.abs(d.cz-z)<4.3)best=d;return{room:best}}return{room:null,hall:z>0}}
 function navTarget(e,gx,gz){ // prochain point de passage (portes des chambres, entrée du couloir)
@@ -1184,6 +1207,7 @@ function updateEnemies(dt,active){
   for(let i=efx.length-1;i>=0;i--){efx[i].t-=dt;if(efx[i].t<=0){scene.remove(efx[i].o);efx.splice(i,1)}}
   for(let i=pickups.length-1;i>=0;i--){const pk=pickups[i];pk.t+=dt;pk.s.position.y=.22+Math.sin(pk.t*3)*.05;
     if(active&&Math.hypot(pk.s.position.x-P.pos.x,pk.s.position.z-P.pos.z)<.9){P.reserve+=12;updateAmmo();toast('+12 BALLES');sfx('reload');scene.remove(pk.s);pickups.splice(i,1)}}
+  updCoeurs3D(dt,active);
   if(hurtT>0){hurtT-=dt;if(hurtT<=0)$('hurt').style.opacity=0}
   for(const e of enemies){
     if(e.state==='grabbed'||e.off)continue;

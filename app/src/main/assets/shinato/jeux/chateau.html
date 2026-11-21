@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script src="/assets/shinato/coeurs-boss.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Nuit au Château</title>
@@ -120,6 +121,13 @@ function zoomAvant(){
 function zoomApres(){ if (zoomPose) ctx.restore(); }
 const SON_PARE = new Audio('/assets/shinato/m/prise_pare.mp3'); SON_PARE.loop = true;
 function sonPare(on){ try{ if (on){ SON_PARE.currentTime = 0; const q = SON_PARE.play(); if (q && q.catch) q.catch(()=>{}); } else SON_PARE.pause(); }catch(err){} }
+// combat contre le boss final : toutes les 10 s un cœur tombe du ciel, il rend toute la vie
+const CB = CoeurBoss({
+  actif: ()=> game.state==='play' && !!game.boss && !game.boss.dead && !game.boss.willDie && game.boss.st!=='intro' && !!rudy && rudy.st!=='dead',
+  rudy: ()=> rudy && {x:rudy.x, y:rudy.y, libre: !rudy.hidden && !['dead','grabbed','grabbing','down','headbutted','tied'].includes(rudy.st)},
+  soigne: ()=>{ rudy.hp = RUDY_MAX; },
+  zone: ()=>{ const m = MAPS[game.map]; return {x0:40, x1:worldW()-40, y0:m.yMin, y1:m.yMax}; } });
+window.__CB = CB;
 const SFX = {
   whoosh(){ noise(0.12, 1800, 0.18, 'bandpass'); },
   hit(){ noise(0.15, 900, 0.5); tone(160,60,0.12,0.25,'square'); },
@@ -273,6 +281,7 @@ function update(dt){
   game.t += dt;
   if (game.fadeDir){ game.fade += game.fadeDir*dt*2; if (game.fade<=0){ game.fade=0; game.fadeDir=0; } if (game.fade>=1 && game.fadeDir>0){ game.fade=1; game.fadeDir=0; game.onFade && game.onFade(); } }
   if (game.state!=='play') return;
+  CB.maj(dt);
   if (game.banner>0) game.banner -= dt;
   if (game.grabCD>0) game.grabCD -= dt;
   readInput();
@@ -873,6 +882,7 @@ function drawWorld(){
   for (const c of game.chickens) list.push({chicken:c, y:c.y, x:c.x});
   list.sort((a,b)=>sy(a)-sy(b));
   for (const e of list){ if (e.crate) drawCrate(e.crate); else if (e.chicken) drawChicken(e.chicken); else if (e.isRudy) drawRudy(); else drawEnemy(e); }
+  CB.dessine(ctx, (x,y)=>[x, y, 1]);
   // boules
   for (const b of game.balls){
     const x = b.x, y = b.y - b.z;

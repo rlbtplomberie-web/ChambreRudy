@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script src="/assets/shinato/coeurs-boss.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Rudy contre l'usine</title>
@@ -254,6 +255,10 @@ const HGRABS = {
   h_noire: { fr: [1, 2, 3], side: 'L' }, h_boss: { fr: [1, 2, 3], side: 'R' },
 };
 const NFR = k => A.sheets[k].f.length;
+// combat contre Astra : toutes les 10 s un cœur tombe du ciel, il rend toute la vie
+const CB = CoeurBoss({ actif: () => scene === 'play' && !!boss && !['dead', 'intro'].includes(boss.state) && !!rudy && rudy.state !== 'dead',
+  rudy: () => rudy && { x: rudy.x, y: rudy.y, libre: ['idle', 'walk', 'punch', 'kick', 'hurt'].includes(rudy.state) },
+  soigne: () => { rudy.hp = rudy.max; }, zone: () => ({ x0: 40, x1: WW - 40, y0: MAP().floor[0], y1: MAP().floor[1] }) }); window.__CB = CB;
 
 // ---------- état ----------
 let zoom = 1, zfx = 480, zfy = 300;
@@ -1129,6 +1134,7 @@ function update(dt) {
     if (fadeDir > 0) return;
   }
   if (bannerT > 0) bannerT -= dt;
+  CB.maj(dt);
   updRudy(dt);
   updWorld(dt);
   tokenT -= dt; if (tokenT <= 0) { tokenT = 0.5; assignTokens(); }
@@ -1459,6 +1465,7 @@ function render(t) {
   for (const it of items) list.push({ y: it.y - 0.1, d: () => drawChicken(it, t) });
   for (const d of debris) list.push({ y: d.y + 0.05, d: () => drawDebris(d) });
   list.sort((a, b) => a.y - b.y).forEach(o => o.d());
+  CB.dessine(ctx, (x, y) => [x - cam, y, ds(y)]);
   if (boss) drawCharge(boss, t);
   if (boss) drawOrbe(boss, t);
   billes.forEach(drawBille);

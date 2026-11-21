@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script src="/assets/shinato/coeurs-boss.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>La Forêt Maudite</title>
@@ -227,6 +228,13 @@ function zoomAvant(){
 function zoomApres(){ if (zoomPose) ctx.restore(); }
 const SON_PARE = new Audio('/assets/shinato/m/prise_pare.mp3'); SON_PARE.loop = true;
 function sonPare(on){ try{ if (on){ SON_PARE.currentTime = 0; const q = SON_PARE.play(); if (q && q.catch) q.catch(()=>{}); } else SON_PARE.pause(); }catch(err){} }
+// combat contre le boss final : toutes les 10 s un cœur tombe du ciel, il rend toute la vie
+const CB = CoeurBoss({
+  actif: ()=> game.state==='play' && !!game.boss && !game.boss.dead && !game.boss.willDie && game.boss.st!=='intro' && !!rudy && rudy.st!=='dead',
+  rudy: ()=> rudy && {x:rudy.x, y:rudy.y, libre: !rudy.hidden && !['dead','grabbed','grabbing','down','headbutted','tied'].includes(rudy.st)},
+  soigne: ()=>{ rudy.hp = RUDY_MAX; },
+  zone: ()=>{ const m = MAPS[game.map]; return {x0:40, x1:worldW()-40, y0:m.yMin, y1:m.yMax}; } });
+window.__CB = CB;
 const SFX = {
   whoosh(){ noise(0.12, 1800, 0.16, 'bandpass'); },
   hit(){ noise(0.15, 900, 0.5); tone(160,60,0.12,0.22,'square'); },
@@ -402,6 +410,7 @@ function update(dt){
   game.gust = lerp(game.gust, game.gustT>2.5 ? (game.gustAim||0) : 0, dt*1.5);
   updateAmbient(dt);
   if (game.state!=='play') return;
+  CB.maj(dt);
   if (game.banner>0) game.banner -= dt;
   if (game.grabCD>0) game.grabCD -= dt;
   readInput();
@@ -1257,6 +1266,7 @@ function drawWorld(){
   list.sort((a,b)=>sy(a)-sy(b));
   for (const e of list) if (!e.crate && !e.chicken) drawShadow(e);
   for (const e of list){ if (e.crate) drawCrate(e.crate); else if (e.chicken) drawChicken(e.chicken); else if (e.isRudy) drawRudy(); else drawEnemy(e); }
+  CB.dessine(ctx, (x,y)=>[x, y, 1]);
   for (const s of game.shots) drawShot(s);
   drawParticles();
   drawFx();

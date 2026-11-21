@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
+<head><script src="/assets/shinato/coeurs-boss.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>La Plaquette Dorée</title>
@@ -331,6 +331,10 @@ function kOf(y){const b=band();return .9+.16*(y-b.y0)/(b.y1-b.y0)}
 function newRudy(){const b=band();return {x:150,y:(b.y0+b.y1)/2,face:1,hp:100,en:0,st:'idle',t:0,f:0,inv:0,pIdx:-1,pBuf:0,kIdx:0,hitDone:false,anim:0,flash:0}}
 const MAPNAMES=['La plage','La crique','Le temple','La salle du temple'];
 let titleT=0,combo=0,comboT=0,hpShow=100,bossSpawned=false,bossDead=false,bossIntro=0,bossShow=1;
+// combat contre la boss de la salle du temple : toutes les 10 s un cœur tombe du ciel, il rend toute la vie
+const CB=CoeurBoss({actif:()=>state==='play'&&mapI===3&&bossSpawned&&!bossDead&&R&&R.hp>0,
+  rudy:()=>R&&{x:R.x,y:R.y,libre:!['bossheld','eaten','fall','getup','grabbed','gummed','ko','mounted','trapped','whipped','throw'].includes(R.st)},
+  soigne:()=>{R.hp=100},zone:()=>{const b=band();return {x0:40,x1:MW-40,y0:b.y0,y1:b.y1};},rx:55,ry:32});window.__CB=CB;
 function loadMap(i,keep){mapI=i;if(typeof bossMusic==='function')bossMusic(false);kills=0;spawned=0;spawnT=1.0;goReady=false;EN=[];VINES=[];FB=[];SPEARS=[];BOOMS=[];CRACKS=[];PARTS=[];PLANTS=[];ITEMS=[];hold=null;
   const en=R?R.en:0;R=newRudy();if(keep)R.en=en;cam=0;hpShow=100;combo=0;titleT=2.6;bossSpawned=false;bossDead=false;bossIntro=0;bossShow=1;if(i===3)spawnT=2.8;ambientInit()}
 function startGame(){audio();musicStart();hideAll();document.getElementById('muteB').classList.remove('hide');R=null;loadMap(0);state='play';document.getElementById('pauseB').classList.remove('hide');if(isTouch)document.getElementById('touch').classList.remove('hide');fadeIn()}
@@ -1209,6 +1213,7 @@ function render(){
   for(const c of CRACKS)drawCrack(c);
   const list=[{y:R.y,d:drawRudy}];for(const e of EN)list.push({y:e.y,d:()=>drawEnemy(e)});for(const it of ITEMS)list.push({y:it.y-1,d:()=>drawItem(it)});
   list.sort((a,b)=>a.y-b.y);for(const o of list)o.d();
+  CB.dessine(ctx,(x,y)=>[x,y,1.5]);
   for(const s of SPEARS)drawSpear(s);
   for(const b of BOOMS)drawBoom(b);
   for(const f of FB){if(f.lvl===2)drawBall2(f.x,f.y-f.h,f.r,f.t,f.dir);else drawBall(f.x,f.y-f.h,f.r,f.t)}
@@ -1496,7 +1501,7 @@ function loop(now){
     if(fadeDir>0)ax={x:0,y:0,mag:0};
     if(shake>0)shake=Math.max(0,shake-dt*40);
     if(hitstop>0){hitstop-=dt;updateParts(dt*.3)}
-    else{updateRudy(dt,ax);updateHold(dt);updateEnemies(dt);updateVines(dt);updateSpears(dt);updateBooms(dt);updateCracks(dt);updateFB(dt);updateParts(dt);updateItems(dt)}
+    else{updateRudy(dt,ax);updateHold(dt);updateEnemies(dt);updateVines(dt);updateSpears(dt);updateBooms(dt);updateCracks(dt);updateFB(dt);updateParts(dt);updateItems(dt);CB.maj(dt)}
     updateAmb(dt);if(GOOMAP===mapI)updGoo(dt);if(titleT>0)titleT-=dt;if(comboT>0){comboT-=dt;if(comboT<=0)combo=0}hpShow+=(R.hp-hpShow)*Math.min(1,dt*(hpShow>R.hp?2.2:20));
     if(goReady){goT+=dt;if(mapI===3&&bossDead&&!EN.length&&state==='play'&&goT>1.6){state='win';finVictoire()}}
     const target=clamp(R.x-VW*.42,0,Math.max(0,MW-VW));cam+=(target-cam)*Math.min(1,dt*6);

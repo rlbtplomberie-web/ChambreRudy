@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8">
+<html lang="fr"><head><script src="/assets/shinato/coeurs-boss.js"></script><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Carré Rouge</title>
 <style>
@@ -545,6 +545,10 @@ function drawRouge(e){if(e.hideDog||e.st==='thrown')return;if(e.type==='reine'&&
 
 // ===== LA BOSS (dernière map) =====
 let tpParts=[],bossBeams=[],dog=null;
+// combat contre la boss : toutes les 10 s un cœur tombe du ciel, il rend toute la vie
+const CB=CoeurBoss({actif:()=>scene==='play'&&bossAlive()&&player&&player.hp>0&&player.st!=='dead',
+  rudy:()=>player&&{x:player.x,y:player.y,libre:!['grabbed','dog','fem','dead','down','throw'].includes(player.st)},
+  soigne:()=>{player.hp=100},zone:()=>{const m=MAPS[level.map];return {x0:60,x1:MAPW-60,y0:m.yMin,y1:m.yMax};},rx:55,ry:34});window.__CB=CB;
 function bossAlive(){return level&&level.map==='map3'&&enemies.some(e=>e.type==='reine'&&!e.dead&&e.st!=='dying'&&e.hp>0);}
 function blockFx(e){const sc=e.sc;fx.push({k:'block',x:e.x-e.face*-30*sc,y:e.y-e.h*0.65*sc,t:0});sfx2('block');texts.push({t:'BLOQUÉ',x:e.x,y:e.y-e.h*sc-20,life:0.5,c:'#bfe7ff',s:22});}
 function bossThink(e,dt,dx,dy){e.spCd=(e.spCd==null?rnd(2.5,4):e.spCd)-dt;const p=player;
@@ -755,7 +759,7 @@ function loop(now){let dt=Math.min(0.05,(now-last)/1000);last=now;T+=dt;
  if(scene==='play'){if(hitStop>0){hitStop-=dt;}else step(dt);}
  else if(scene==='title'){camX=(Math.sin(T*0.08)*0.5+0.5)*(MAPW-viewW);ambient(dt,'map1');updParts(dt);}
  render();requestAnimationFrame(loop);}
-function step(dt){updBossFx(dt);updatePlayer(player,dt);for(const e of enemies)updateEnemy(e,dt);enemies=enemies.filter(e=>!e.dead);updProjs(dt);updateLevel(dt);
+function step(dt){updBossFx(dt);CB.maj(dt);updatePlayer(player,dt);for(const e of enemies)updateEnemy(e,dt);enemies=enemies.filter(e=>!e.dead);updProjs(dt);updateLevel(dt);
  for(const h of hearts){h.t+=dt;if(h.z>0||h.vz>0){h.z+=h.vz*dt;h.vz-=900*dt;if(h.z<0){h.z=0;h.vz=h.vz<-120?-h.vz*0.4:0;}}
   if(h.t>0.4&&Math.abs(h.x-player.x)<55&&Math.abs(h.y-player.y)<38&&player.st!=='dead'){h.got=true;sfx('heart');if(h.k==='red'){player.hp=Math.min(100,player.hp+25);texts.push({t:'+ VIE',x:h.x,y:h.y-120,life:1,c:'#ff4d6d',s:30});}else{player.en=Math.min(100,player.en+30);texts.push({t:'+ ÉNERGIE',x:h.x,y:h.y-120,life:1,c:'#ffe14d',s:30});}for(let i=0;i<14;i++)parts.push({k:'spark2',x:h.x,y:h.y-40,vx:rnd(-150,150),vy:rnd(-220,-40),life:0.6,c:h.k==='red'?'#ff4d6d':'#ffe14d'});}
   if(h.t>16)h.got=true;}
@@ -786,6 +790,7 @@ function render(){ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#000';ctx.fillRec
   const ents=[];ents.push({y:player.y,draw:()=>drawPlayer(player)});for(const e of enemies)ents.push({y:e.y,draw:()=>e.d.spr?drawRouge(e):drawGhoul(e)});for(const h of hearts)ents.push({y:h.y,draw:()=>drawHeart(h)});
   for(const e of [player,...enemies]){if(e===player&&(e.st==='grabbed'||e.st==='dog'))continue;if(e.st==='tp'||e.hideDog||e.st==='thrown')continue;const sc=e===player?depthSc(e.y):e.sc*(e.d&&e.d.boss&&!e.d.spr?1.45:e.d&&e.d.big?1.7:1);ctx.fillStyle=`rgba(0,0,0,${(0.45-Math.min(0.3,e.z/400))*(e.alpha==null?1:e.alpha)})`;ctx.beginPath();ctx.ellipse(e.x,e.y+2,58*sc*(1-Math.min(0.4,e.z/300)),13*sc,0,0,7);ctx.fill();}
   ents.sort((a,b)=>a.y-b.y).forEach(o=>o.draw());
+  CB.dessine(ctx,(x,y)=>[x,y,depthSc(y)*1.5]);
   for(const q of projs){if(q.k==='ball')drawEnergyBall(q.x,q.y,q.r,q.lv,q.t);else drawBeam(q);}
   for(const q of eprojs){ctx.save();ctx.globalCompositeOperation='lighter';ctx.drawImage(GLOW.g,q.x-40,q.y-40,80,80);ctx.restore();ctx.fillStyle='#d8ffc4';ctx.beginPath();ctx.arc(q.x,q.y,12,0,7);ctx.fill();}
   for(const f of fx)drawFx(f);drawBossFx();}
