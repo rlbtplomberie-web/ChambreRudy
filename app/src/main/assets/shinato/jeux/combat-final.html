@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script src="/assets/shinato/garde-tactile.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Château — Beat Them Up</title>
@@ -5742,22 +5743,18 @@ window.XEN_ADD=function(d,src){
 function xenSuivante(){
   if(!XEN_ATTENTE.length) return;
   // pas plus de 16 planches en mémoire : on libère la plus ancienne qui n'est pas en jeu
-  while(XEN_PRETES.length>=10){
-    const j=XEN_PRETES.findIndex(t=>!ENEMIES.some(o=>o.type===t&&o.st!=='gone') && !(G0&&G0.e&&G0.e.type===t));
-    if(j<0) return;
-    const t=XEN_PRETES.splice(j,1)[0]; XEN_ATTENTE.push(t.slice(2)); try{ TYPES[t].S.img.src=''; }catch(e){}
-  }
   const s=document.createElement('script'); s.src='/assets/shinato/jeux/combat-final/xen/'+XEN_ATTENTE.shift()+'.js';
   s.onload=s.onerror=()=>{ s.remove(); }; document.head.appendChild(s);
 }
 let xenCharge=false;
+// fluidité : 6 ennemies seulement, chargées une seule fois (pendant la vidéo d'intro), puis plus rien ne se charge ni ne se libère en plein combat
 window.XEN_CHARGE=function(){ if(xenCharge) return; xenCharge=true;
-  let n=0; (function suite(){ if(n++<10){ xenSuivante(); setTimeout(suite,250); } })(); };
+  let n=0; (function suite(){ if(n++<6){ xenSuivante(); setTimeout(suite,700); } })(); };
+setTimeout(()=>{ try{ XEN_CHARGE(); }catch(e){} },1500);
 // au moment d'appeler des méchants : quelques ennemies des autres diamants (et on en prépare 2 nouvelles pour la suite)
 window.XEN_POOL=function(n){
   const l=XEN_PRETES.filter(t=>TYPES[t]&&TYPES[t].S.img.complete&&TYPES[t].S.img.naturalWidth>0), out=[];
   while(out.length<n&&l.length) out.push(l.splice(Math.floor(Math.random()*l.length),1)[0]);
-  if(xenCharge){ setTimeout(xenSuivante,1500); setTimeout(xenSuivante,3000); }
   return out;
 };
 </script>

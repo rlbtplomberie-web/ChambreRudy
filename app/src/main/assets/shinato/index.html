@@ -1342,6 +1342,15 @@ window.lanceCombatFinal=function(){
  window.pontladesQuitte(true);
  var qp=document.getElementById("pontladesQuitter"); if(qp){ qp.style.left="10px"; qp.style.transform=""; }
  window.minuterieLibre(function(){ try{ cm.focus(); }catch(e){} },300);
+ // sécurité : tant que le Combat final est ouvert, la musique de Shinato reste coupée (même si quelque chose la relance)
+ var garde=++window.__cfGarde||(window.__cfGarde=1);
+ (function veille(){
+  if(garde!==window.__cfGarde) return;
+  var f=document.getElementById("moto");
+  if(!f||f.style.display==="none"||(f.getAttribute("src")||"").indexOf("combat-final")<0) return;
+  try{ if(window.RUDY_AUDIO&&!window.RUDY_AUDIO.paused) window.RUDY_AUDIO.pause(); }catch(e){}
+  window.minuterieLibre(veille,400);   // minuterie jamais mise en pause
+ })();
 };
 window.addEventListener("message",function(e){
  if(!e.data||e.data.type!=="combatfinal:fin") return;

@@ -417,7 +417,10 @@ function lanceCB(){ try{ const a=window.parent.RUDY_AUDIO; musiqueAvantCB=!!(a&&
   menu=true; dir=dirY=0; btnCB.style.display='none'; btnE.style.display='none';
   rx=CB_X; ry=Math.max(YMIN,Math.min(YMAX,590)); sens=1;
   const f=document.createElement('iframe'); f.setAttribute('allow','autoplay; fullscreen'); f.src='/assets/shinato/jeux/carre-blanc.html';
-  cbJeu.appendChild(f); cbJeu.style.display='block'; setTimeout(()=>{ try{ f.focus(); }catch(e){} },300); }
+  cbJeu.appendChild(f); cbJeu.style.display='block'; setTimeout(()=>{ try{ f.focus(); }catch(e){} },300);
+  // sécurité : tant que le Carré Blanc est ouvert, la musique de Shinato reste coupée (même si quelque chose la relance)
+  const minut=(()=>{ try{ return window.parent.minuterieLibre||setTimeout; }catch(_){ return setTimeout; } })();
+  (function veille(){ if(cbJeu.style.display!=='block') return; try{ const m=musiqueShinato(); if(m&&!m.paused) m.pause(); }catch(_){} minut(veille,400); })(); }
 function fermeCB(remet){ if(remet!==false&&musiqueAvantCB){ try{ const q=window.parent.RUDY_AUDIO.play(); if(q&&q.catch) q.catch(()=>{}); }catch(_){} } musiqueAvantCB=false;
   const f=cbJeu.querySelector('iframe'); if(f){ try{ f.src='about:blank'; }catch(_){} f.remove(); }
   cbJeu.style.display='none'; menu=false; dir=dirY=0; rx=CB_X; ry=590; sens=1; etat='repos'; try{ window.focus(); }catch(_){} }
@@ -501,7 +504,8 @@ boiteD.querySelectorAll('.choix').forEach(b=>appui(b,()=>{ boiteD.style.display=
 
 /* la musique : la même que Shinato */
 function musiqueShinato(){ for(const w of [window.parent,window.top]){ try{ if(w&&w.RUDY_AUDIO) return w.RUDY_AUDIO; }catch(e){} } return null; }
-function joueMusique(){ try{ const m=musiqueShinato(); if(m&&m.paused){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} }
+function joueMusique(){ try{ if(cbJeu&&cbJeu.style.display==='block') return;   // dans le château de glace (le Carré Blanc a sa propre musique) : jamais celle de Shinato
+  const m=musiqueShinato(); if(m&&m.paused){ const q=m.play(); if(q&&q.catch) q.catch(()=>{}); } }catch(e){} }
 joueMusique(); setTimeout(joueMusique,600);
 ['touchstart','pointerdown','keydown'].forEach(ev=>addEventListener(ev,joueMusique,{passive:true}));
 window.RUDY_PX=()=>({x:rx,y:ry,menu,dir}); window.RUDY_PSET=(x,y)=>{ rx=x; ry=y; camPan=null; arme=true; };
