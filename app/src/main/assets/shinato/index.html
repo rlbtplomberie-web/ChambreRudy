@@ -1538,6 +1538,30 @@ window.addEventListener("message",function(e){
    window.minuterieLibre(function(){ try{ cs.focus(); }catch(err){} },300);
    return;
   }
+  // plage -> le salon de Noël (porte n°16) : la musique de Shinato est coupée, le salon a sa propre musique
+  if(e.data && e.data.type==="plage:noel"){
+   var cn=document.getElementById("moto"); if(!cn) return;
+   window.NOEL_OUVERT=true; try{ if(window.RUDY_AUDIO) window.RUDY_AUDIO.pause(); }catch(err){}
+   cn.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/salon-noel.html"));
+   var gn=window.__noelGarde=(window.__noelGarde||0)+1;
+   (function veille(){ if(gn!==window.__noelGarde||!window.NOEL_OUVERT) return;
+    try{ if(window.RUDY_AUDIO&&!window.RUDY_AUDIO.paused) window.RUDY_AUDIO.pause(); }catch(err){}
+    window.minuterieLibre(veille,400); })();
+   window.minuterieLibre(function(){ try{ cn.focus(); }catch(err){} },300);
+   return;
+  }
+  // SORTIE (tout à gauche du salon) : devant la porte n°16 ; défaite (après la vidéo) : devant l'hôpital de Vaviel
+  if(e.data && (e.data.type==="noel:sortie"||e.data.type==="noel:ko")){
+   window.NOEL_OUVERT=false; window.__noelGarde=(window.__noelGarde||0)+1;
+   try{ if(window.RUDY_AUDIO){ var pn=window.RUDY_AUDIO.play(); if(pn&&pn.catch) pn.catch(function(){}); } }catch(err){}
+   if(e.data.type==="noel:ko"){ window.postMessage({type:"hopital:fin"},"*"); return; }
+   var cpn=document.getElementById("moto"); if(!cpn) return;
+   var hpn=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/plage.html"));
+   hpn=hpn.replace("</body>","<script>addEventListener('load',function(){setTimeout(function(){x=largeurMonde*0.284;sens=1;if(typeof cadre==='function')cadre(true)},60)});<\/script></body>");
+   cpn.srcdoc=hpn;
+   window.minuterieLibre(function(){ try{ cpn.focus(); }catch(err){} },300);
+   return;
+  }
   // plage -> le bureau de nuit (porte de la maison) : la musique de Shinato est coupée, le bureau a sa propre musique
   if(e.data && e.data.type==="plage:bureau"){
    var cb=document.getElementById("moto"); if(!cb) return;
