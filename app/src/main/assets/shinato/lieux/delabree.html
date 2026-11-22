@@ -261,7 +261,7 @@ function ouvreRouge(){busy=true;P.speed=0;jx=jy=0;fade.style.opacity=1;musiqueSh
 addEventListener('message',e=>{if(!e.data||e.data.type!=='rouge:sortie'||!gameFrame)return;
   rougeGarde++;closeGame();musiqueShinato(true);setTimeout(()=>{document.getElementById('quit').style.display='';P.x=589;P.y=ROAD_TOP+3;P.face=1;P.speed=0;jstop();snap=true;try{window.focus()}catch(_){}},330)});
 // Lola a gagné le combat (sa vidéo est passée, -1000 €) : directement devant l'hôpital de Vaviel
-addEventListener('message',e=>{if(!e.data||e.data.type!=='rouge:ko')return;rougeGarde++;try{window.parent.postMessage({type:'hopital:fin'},'*')}catch(_){}});
+addEventListener('message',e=>{if(!e.data||e.data.type!=='rouge:ko')return;rougeGarde++;musiqueShinato(true);try{window.parent.postMessage({type:'hopital:fin'},'*')}catch(_){}});
 // ---------- l'impasse : par le passage sous le pont, on en ressort devant le passage ----------
 let sortieImpasseT=0;
 function ouvreImpasse(){if(Date.now()-sortieImpasseT<900)return;busy=true;P.speed=0;jx=jy=0;fade.style.opacity=1;setTimeout(()=>{

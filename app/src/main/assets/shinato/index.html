@@ -1514,6 +1514,32 @@ window.addEventListener("message",function(e){
    window.minuterieLibre(function(){ try{ cg.focus(); }catch(err){} },300);
    return;
   }
+  // plage -> le bureau de nuit (porte de la maison) : la musique de Shinato est coupée, le bureau a sa propre musique
+  if(e.data && e.data.type==="plage:bureau"){
+   var cb=document.getElementById("moto"); if(!cb) return;
+   window.BUREAU_OUVERT=true; try{ if(window.RUDY_AUDIO) window.RUDY_AUDIO.pause(); }catch(err){}
+   var ob=LIEU_OCTETS("lieux/bureau-de-nuit.html");
+   cb.srcdoc=new TextDecoder("utf-8").decode(ob);
+   var gb=++window.__bureauGarde||(window.__bureauGarde=1);
+   (function veille(){ if(gb!==window.__bureauGarde||!window.BUREAU_OUVERT) return;
+    try{ if(window.RUDY_AUDIO&&!window.RUDY_AUDIO.paused) window.RUDY_AUDIO.pause(); }catch(err){}
+    window.minuterieLibre(veille,400); })();
+   window.minuterieLibre(function(){ try{ cb.focus(); }catch(err){} },300);
+   return;
+  }
+  // SORTIR dans le bureau de nuit : retour à la plage, devant la porte de la maison, la musique de Shinato reprend
+  if(e.data && (e.data.type==="bureau:sortie"||e.data.type==="bureau:ko")){
+   window.BUREAU_OUVERT=false; window.__bureauGarde=(window.__bureauGarde||0)+1;
+   try{ if(window.RUDY_AUDIO){ var pb=window.RUDY_AUDIO.play(); if(pb&&pb.catch) pb.catch(function(){}); } }catch(err){}
+   if(e.data.type==="bureau:ko"){ window.postMessage({type:"hopital:fin"},"*"); return; }   // K.O. : devant l'hôpital de Vaviel
+   var cpb=document.getElementById("moto"); if(!cpb) return;
+   var opb=LIEU_OCTETS("lieux/plage.html");
+   var hpb=new TextDecoder("utf-8").decode(opb);
+   hpb=hpb.replace("</body>","<script>addEventListener('load',function(){setTimeout(function(){x=largeurMonde*0.502;sens=1;if(typeof cadre==='function')cadre(true)},60)});<\/script></body>");
+   cpb.srcdoc=hpb;
+   window.minuterieLibre(function(){ try{ cpb.focus(); }catch(err){} },300);
+   return;
+  }
   // SORTIR sur la plage de Gisèle : retour à la plage, entre les deux petits garçons
   if(e.data && e.data.type==="gisele:sortie"){
    var cp=document.getElementById("moto"); if(!cp) return;
