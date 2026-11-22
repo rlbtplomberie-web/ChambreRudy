@@ -250,14 +250,18 @@ function ouvreRelais(){busy=true;P.speed=0;jx=jy=0;fade.style.opacity=1;setTimeo
 addEventListener('message',e=>{if(!e.data||e.data.type!=='relais:sortie'||!gameFrame)return;
   closeGame();setTimeout(()=>{document.getElementById('quit').style.display='';P.x=3337;P.y=ROAD_TOP+3;P.face=1;snap=true},330)});
 // ---------- chez Lola (la chambre rouge) : on y entre par la porte, on en ressort devant la porte ----------
-function ouvreRouge(){busy=true;P.speed=0;jx=jy=0;fade.style.opacity=1;setTimeout(()=>{
+// la musique de Shinato est coupée tant qu'on est chez Lola (la chambre a sa propre musique)
+let rougeGarde=0;
+function musiqueShinato(on){try{window.parent.postMessage({type:on?'musique:reprise':'musique:pause'},'*')}catch(_){}}
+function veilleRouge(g){if(g!==rougeGarde||!gameFrame||(gameFrame.getAttribute('src')||'').indexOf('chambre-rouge')<0)return;musiqueShinato(false);setTimeout(()=>veilleRouge(g),500);}
+function ouvreRouge(){busy=true;P.speed=0;jx=jy=0;fade.style.opacity=1;musiqueShinato(false);setTimeout(()=>{
   gameUrl=null;gameFrame=document.createElement('iframe');gameFrame.src='lieux/chambre-rouge.html';gameFrame.allow='fullscreen; autoplay';
   document.getElementById('quit').style.display='none';                       // pas de « Quitter » : on sort à droite de la chambre, avec SORTIR
-  gameBox.appendChild(gameFrame);gameBox.classList.add('show');fade.style.opacity=0;setTimeout(()=>gameFrame&&gameFrame.focus(),300)},320)}
+  gameBox.appendChild(gameFrame);gameBox.classList.add('show');fade.style.opacity=0;veilleRouge(++rougeGarde);setTimeout(()=>gameFrame&&gameFrame.focus(),300)},320)}
 addEventListener('message',e=>{if(!e.data||e.data.type!=='rouge:sortie'||!gameFrame)return;
-  closeGame();setTimeout(()=>{document.getElementById('quit').style.display='';P.x=589;P.y=ROAD_TOP+3;P.face=1;P.speed=0;jstop();snap=true;try{window.focus()}catch(_){}},330)});
+  rougeGarde++;closeGame();musiqueShinato(true);setTimeout(()=>{document.getElementById('quit').style.display='';P.x=589;P.y=ROAD_TOP+3;P.face=1;P.speed=0;jstop();snap=true;try{window.focus()}catch(_){}},330)});
 // Lola a gagné le combat (sa vidéo est passée, -1000 €) : directement devant l'hôpital de Vaviel
-addEventListener('message',e=>{if(!e.data||e.data.type!=='rouge:ko')return;try{window.parent.postMessage({type:'hopital:fin'},'*')}catch(_){}});
+addEventListener('message',e=>{if(!e.data||e.data.type!=='rouge:ko')return;rougeGarde++;try{window.parent.postMessage({type:'hopital:fin'},'*')}catch(_){}});
 // ---------- l'impasse : par le passage sous le pont, on en ressort devant le passage ----------
 let sortieImpasseT=0;
 function ouvreImpasse(){if(Date.now()-sortieImpasseT<900)return;busy=true;P.speed=0;jx=jy=0;fade.style.opacity=1;setTimeout(()=>{
