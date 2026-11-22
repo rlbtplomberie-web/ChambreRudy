@@ -762,7 +762,7 @@ let deathOn=false;const VURL={};
 function playVid(b64,onEnd){
   deathOn=true;musicStop();
   show(UI.fight,false);show(UI.hud,false);show(UI.mash,false);show(UI.banner,false);show($('joy'),false);show(UI.talk,false);sitSound(false);
-  const v=$('deathVid');v.muted=false;v.src=b64;          // les vidéos sont des fichiers à part (assets/shinato/m/aeroport_*.mp4)show($('deathBox'),true);v.currentTime=0;
+  const v=$('deathVid');v.muted=false;v.src=b64;/* les vidéos sont des fichiers à part (assets/shinato/m/aeroport_*.mp4) */show($('deathBox'),true);v.currentTime=0;
   const p=v.play();if(p&&p.catch)p.catch(()=>{v.muted=true;v.play();});
   v.onended=()=>{deathOn=false;show($('deathBox'),false);v.removeAttribute('src');v.load();onEnd&&onEnd();};
 }
