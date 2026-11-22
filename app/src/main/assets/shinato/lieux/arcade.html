@@ -107,8 +107,24 @@ html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;touch-action
 <div id="musique" title="Musique">♪</div>
 <div class="chip">Salle d'arcade</div>
 <div id="zoneJoy"></div><div id="joy"><div id="stick"></div></div>
-<div id="actions"><div class="btn" id="btnJouer" style="display:none">JOUER</div><div class="btn" id="btnSortir" style="display:none">SORTIR</div></div>
+<div id="actions"><div class="btn" id="btnJouer" style="display:none">JOUER</div><div class="btn" id="btnSortir" style="display:none">SORTIR</div><div class="btn" id="btnParler" style="display:none">PARLER</div></div>
 <div id="borneJeu"><div id="borneQuit" title="Quitter">✕</div></div>
+<style>
+.bulleM{position:absolute;z-index:3001;transform:translate(-50%,-100%) scale(.6);transform-origin:50% 100%;opacity:0;pointer-events:none;max-width:460px;width:max-content;padding:16px 24px;background:#fff;color:#111;border:4px solid #111;border-radius:40px;font:900 28px/1.22 'Comic Sans MS','Trebuchet MS',system-ui,sans-serif;text-align:center;box-shadow:6px 6px 0 rgba(0,0,0,.35);transition:opacity .18s,transform .18s}
+.bulleM.vu{opacity:1;transform:translate(-50%,-100%) scale(1)}
+.bulleM::after{content:'';position:absolute;left:50%;bottom:-26px;margin-left:-14px;border:14px solid transparent;border-top:24px solid #111}
+.bulleM::before{content:'';position:absolute;left:50%;bottom:-17px;margin-left:-10px;border:10px solid transparent;border-top:18px solid #fff;z-index:1}
+.bulleM .nom{display:block;font-size:17px;letter-spacing:.08em;color:#c2187a;margin-bottom:4px}
+#discZone{position:fixed;inset:0;z-index:60;display:none}
+#discChoix{position:fixed;left:50%;bottom:7vmin;transform:translateX(-50%);z-index:61;display:none;flex-direction:column;gap:2.4vmin;align-items:center}
+#discChoix .btn{min-width:50vmin;font-size:clamp(14px,3.4vmin,26px)}
+#discSuite{position:fixed;right:4vmin;bottom:5vmin;z-index:61;display:none;font:900 clamp(12px,2.8vmin,20px) Arial,sans-serif;color:#ffe27a;text-shadow:0 1px 3px #000;pointer-events:none;animation:clig 1s infinite alternate}
+@keyframes clig{from{opacity:.35}to{opacity:1}}
+#discVid{position:fixed;inset:0;z-index:120;display:none;background:#000}
+#discVid video{width:100%;height:100%;object-fit:contain;background:#000}
+</style>
+<div id="discZone"></div><div id="discChoix"></div><div id="discSuite">touche pour continuer ▸</div>
+<div id="discVid"><video id="discV" playsinline preload="auto"></video></div>
 <div id="vue"><div id="cadre"><div id="scene">
   <div id="deco"></div>
   <div class="ombre" style="left:822px;top:600px;width:150px;height:26px"></div>
@@ -364,7 +380,7 @@ let prev=performance.now()/1000, camX=null;
 function frame(){
   const now=performance.now()/1000, dt=Math.min(0.05,now-prev); prev=now;
   const m=Math.hypot(joyX,joyY);
-  if(m>0.18&&!sortie&&!enJeu){
+  if(m>0.18&&!sortie&&!enJeu&&!window.DISCUTE){
     const v=260*Math.min(1,m);
     let nx=Math.max(XMIN,Math.min(XMAX,RUDY.x+joyX/m*v*dt)), ny=Math.max(YMIN,Math.min(YMAX,RUDY.y+joyY/m*v*0.6*dt));
     if(!libre(nx,ny)){ if(libre(nx,RUDY.y)) ny=RUDY.y; else if(libre(RUDY.x,ny)) nx=RUDY.x; else { nx=RUDY.x; ny=RUDY.y; } }   // il glisse le long des obstacles
@@ -377,8 +393,9 @@ function frame(){
   dessine(RUDY.dir,RUDY.bouge?Math.floor(RUDY.pas/(h*0.13)):0,RUDY.x,RUDY.y,RUDY.bouge?RUDY.pas/(h*0.34):null);
   const p=presPorte(); if(p) fleche(now);
   const bo=devantBorne(); if(bo) flecheHaut(now);
-  bJ.style.display=bo?'block':'none';
+  bJ.style.display=(bo&&!window.DISCUTE)?'block':'none';
   bS.style.display=p?'block':'none';
+  if(window.majParler) window.majParler();
   // la caméra suit Rudy
   const k=sc.getBoundingClientRect().width/2172||1, cible=Math.max(0,RUDY.x*k-innerWidth/2);
   camX=camX===null?cible:camX+(cible-camX)*0.14; vue.scrollLeft=camX;
@@ -399,6 +416,61 @@ appui(bJ,()=>{ const bo=devantBorne(); if(!bo) return;
 /* la femme qui travaille à la salle répond en bulle manga */
 const bulle=document.createElement('div'); bulle.id='bulleF'; sc.appendChild(bulle); let bulleT=0;
 function parleFemme(txt){ bulle.textContent=txt; bulle.classList.remove('vu'); void bulle.offsetWidth; bulle.classList.add('vu'); clearTimeout(bulleT); bulleT=setTimeout(()=>bulle.classList.remove('vu'),3200); }
+/* ---------- discuter avec la femme au carton (bulles manga, sans cacher les personnages) ---------- */
+(function(){
+ const bP=document.getElementById('btnParler'), zone=document.getElementById('discZone'), choix=document.getElementById('discChoix'),
+       suite=document.getElementById('discSuite'), vid=document.getElementById('discVid'), V=document.getElementById('discV');
+ const bF=document.createElement('div'); bF.className='bulleM'; sc.appendChild(bF);
+ const bR=document.createElement('div'); bR.className='bulleM'; sc.appendChild(bR);
+ const FX=900, FY=318;                                   // au-dessus de la tête de la femme
+ const presFemme=()=>!sortie&&!enJeu&&!window.DISCUTE&&Math.abs(RUDY.x-FX)<240&&RUDY.y>=560;
+ window.majParler=()=>{ bP.style.display=presFemme()?'block':'none'; };
+ let file=[], fin=null;
+ function bulle(qui,txt){
+  const b=qui==='f'?bF:bR, autre=qui==='f'?bR:bF; autre.classList.remove('vu');
+  b.innerHTML='<span class="nom">'+(qui==='f'?'LA FEMME':'RUDY')+'</span>'+txt;
+  if(qui==='f'){ b.style.left=FX+'px'; b.style.top=FY+'px'; }
+  else { const h=taille(RUDY.y); b.style.left=Math.max(240,Math.min(1932,RUDY.x))+'px'; b.style.top=(RUDY.y-h-6)+'px'; }
+  b.classList.remove('vu'); void b.offsetWidth; b.classList.add('vu');
+ }
+ function suivant(){
+  if(!file.length){ const f=fin; fin=null; if(f) f(); return; }
+  const l=file.shift();
+  if(l.choix){ suite.style.display='none'; choix.innerHTML=''; choix.style.display='flex';
+   l.choix.forEach(([t,fn])=>{ const d=document.createElement('div'); d.className='btn'; d.textContent=t; appui(d,()=>{ choix.style.display='none'; fn(); }); choix.appendChild(d); });
+   return; }
+  bulle(l[0],l[1]); suite.style.display='block';
+ }
+ function dit(lignes,ensuite){ file=lignes.slice(); fin=ensuite||null; suivant(); }
+ function finDisc(){ bF.classList.remove('vu'); bR.classList.remove('vu'); zone.style.display='none'; suite.style.display='none'; choix.style.display='none'; window.DISCUTE=false; }
+ zone.addEventListener('pointerdown',e=>{ e.preventDefault(); if(choix.style.display==='flex') return; suivant(); });
+ function video(){
+  bF.classList.remove('vu'); bR.classList.remove('vu'); suite.style.display='none';
+  try{ window.ARCADE_PAUSE&&window.ARCADE_PAUSE(true); }catch(e){}
+  vid.style.display='block'; V.src='/assets/shinato/m/arcade_femme.mp4'; V.currentTime=0;
+  const p=V.play(); if(p&&p.catch) p.catch(()=>{ V.muted=true; V.play().catch(()=>{}); });
+ }
+ V.addEventListener('ended',()=>{ V.pause(); vid.style.display='none'; V.removeAttribute('src'); V.load();
+  try{ window.ARCADE_PAUSE&&window.ARCADE_PAUSE(false); }catch(e){}
+  dit([['f',"C'était très sympathique. Reviens me voir quand tu veux."]],finDisc); });
+ function jeux(){ dit([
+   ['f',"Ici, on a un jeu de coaching de football très sympathique."],
+   ['f',"Un jeu de course de moto, ça donne pas mal de sensations !"],
+   ['f',"Un jeu de course de voiture, les gens aiment bien y jouer."],
+   ['f',"Un jeu de combat en 3D, très aimé par les joueurs."],
+   ['f',"Et un jeu de combat avec des objets, qui vient de sortir !"],
+   ['f',"Par contre, désolée, mais ma machine attrape-doudou est en panne."],
+   ['r',"Merci, je vais tester !"],
+   ['f',"Amusez-vous bien !"]],finDisc); }
+ function petillante(){ dit([
+   ['r',"Vous êtes pétillante."],
+   ['f',"Comment ça ?"],
+   ['r',"Je vous trouve juste très belle et sympathique."]],video); }
+ appui(bP,()=>{ if(!presFemme()) return; window.DISCUTE=true; joyX=joyY=0; bP.style.display='none'; bJ.style.display='none';
+  RUDY.dir=RUDY.x<FX?'droite':'gauche'; zone.style.display='block';
+  dit([['f',"Bienvenue dans la meilleure salle d'arcade de la région ! Est-ce que je peux te renseigner ?"],
+       {choix:[["Parle-moi des jeux",jeux],["Vous êtes pétillante",petillante]]}]); });
+})();
 function quitteJeu(){
   const f=bJeu.querySelector('iframe'); if(f){ try{ f.src='about:blank'; }catch(_){} f.remove(); }
   bJeu.style.display='none'; if(enJeu){ RUDY.x=enJeu.x; RUDY.y=548; RUDY.dir='haut'; camX=null; } enJeu=false; joyX=joyY=0;
