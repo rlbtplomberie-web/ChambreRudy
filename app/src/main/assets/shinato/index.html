@@ -1514,6 +1514,30 @@ window.addEventListener("message",function(e){
    window.minuterieLibre(function(){ try{ cg.focus(); }catch(err){} },300);
    return;
   }
+  // aéroport -> l'intérieur de l'aéroport (au bout du chemin) : la musique de Shinato est coupée, le hall a sa propre musique
+  if(e.data && e.data.type==="aeroport:interieur"){
+   var ca=document.getElementById("moto"); if(!ca) return;
+   window.AEROINT_OUVERT=true; try{ if(window.RUDY_AUDIO) window.RUDY_AUDIO.pause(); }catch(err){}
+   ca.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/interieur-aeroport.html"));
+   var ga=window.__aeroGarde=(window.__aeroGarde||0)+1;
+   (function veille(){ if(ga!==window.__aeroGarde||!window.AEROINT_OUVERT) return;
+    try{ if(window.RUDY_AUDIO&&!window.RUDY_AUDIO.paused) window.RUDY_AUDIO.pause(); }catch(err){}
+    window.minuterieLibre(veille,400); })();
+   window.minuterieLibre(function(){ try{ ca.focus(); }catch(err){} },300);
+   return;
+  }
+  // SORTIE (tout à gauche du hall) : devant l'entrée de l'aéroport ; K.O. (après chaque vidéo) : devant l'hôpital de Vaviel
+  if(e.data && (e.data.type==="aeroportint:sortie"||e.data.type==="aeroportint:ko")){
+   window.AEROINT_OUVERT=false; window.__aeroGarde=(window.__aeroGarde||0)+1;
+   try{ if(window.RUDY_AUDIO){ var pa=window.RUDY_AUDIO.play(); if(pa&&pa.catch) pa.catch(function(){}); } }catch(err){}
+   if(e.data.type==="aeroportint:ko"){ window.postMessage({type:"hopital:fin"},"*"); return; }
+   var cs=document.getElementById("moto"); if(!cs) return;
+   var ha=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/aeroport.html"));
+   ha=ha.replace("</body>","<script>R.x=1024;R.y=556;R.dir='down';<\/script></body>");
+   cs.srcdoc=ha;
+   window.minuterieLibre(function(){ try{ cs.focus(); }catch(err){} },300);
+   return;
+  }
   // plage -> le bureau de nuit (porte de la maison) : la musique de Shinato est coupée, le bureau a sa propre musique
   if(e.data && e.data.type==="plage:bureau"){
    var cb=document.getElementById("moto"); if(!cb) return;
