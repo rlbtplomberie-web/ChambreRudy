@@ -65,7 +65,7 @@ const W=2172,H=724,OY=200,OH=300;          // zone extérieure (derrière les vi
 const BAND0=58,BAND1=632;                 // partie utile de l'image
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
 const out=document.createElement('canvas');out.width=W*2;out.height=OH*2;const oc=out.getContext('2d');oc.setTransform(2,0,0,2,0,0);
-function load(src){return new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=src;});}
+function load(src){return new Promise(r=>{const i=new Image();i.onload=()=>{if(i.decode)i.decode().then(()=>r(i),()=>r(i));else r(i);};i.onerror=()=>r(i);i.src=src;});}
 let bg,mask,atl=[];
 const rnd=(a,b)=>a+Math.random()*(b-a);
 const pick=a=>a[(Math.random()*a.length)|0];
@@ -941,7 +941,12 @@ const SN=Object.keys(IMG.sheets);
 Promise.all([load(IMG.bg),load(IMG.mask),load(IMG.recep),load(IMG.over),load(IMG.rudy),...IMG.a.map(load),...SN.map(n=>load(IMG.sheets[n]))]).then(r=>{
   bg=r[0];mask=r[1];recImg=r[2];overImg=r[3];rudyImg=r[4];atl=r.slice(5,11);SN.forEach((n,i)=>SIMG[n]=r[11+i]);
   pnjs=META.map((m,i)=>new Pnj(i));
-  layout();cam.x=rudy.x;requestAnimationFrame(loop);
+  layout();cam.x=rudy.x;
+  // préchauffe : chaque image est dessinée une fois (cachée sous le noir) pour que le téléphone la garde prête ;
+  // le jeu n'apparaît qu'ensuite, en fondu, et tourne tout de suite à pleine vitesse
+  try{ctx.setTransform(1,0,0,1,0,0);for(const im of r){if(im&&im.width)ctx.drawImage(im,0,0,8,8);}ctx.fillStyle='#000';ctx.fillRect(0,0,cv.width,cv.height);}catch(e){}
+  const voile=document.createElement('div');voile.style.cssText='position:fixed;inset:0;background:#000;z-index:200;pointer-events:none;transition:opacity .45s';document.body.appendChild(voile);
+  requestAnimationFrame(t=>{last=t;requestAnimationFrame(loop);setTimeout(()=>{voile.style.opacity=0;setTimeout(()=>voile.remove(),500);},250);});
   try{musicPlay('airport');}catch(e){}            // la musique démarre dès l'entrée, sans toucher l'écran
   addEventListener('pointerdown',()=>{try{if(AC&&AC.state!=='running')AC.resume();}catch(e){}},true);   // si le téléphone l'a bloquée : elle repart au premier toucher
 });
