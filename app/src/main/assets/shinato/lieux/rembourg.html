@@ -332,8 +332,8 @@ const flP=document.createElement('div'); flP.id='flechePorte';
 flP.innerHTML='<svg viewBox="0 0 100 120" width="100%" height="100%"><path d="M50 4 L94 52 L66 52 L66 116 L34 116 L34 52 L6 52 Z" fill="#ffe400" stroke="#fff7b0" stroke-width="5" stroke-linejoin="round"/></svg>';
 pano.appendChild(flP);
 /* le château est fermé (cadenas) tant que Rudy n'a pas fait à Mitsuda : la vampire partie après la victoire contre Astra à l'usine,
-   ET « Je suis un ami d'Ange » à la fille au carnet */
-function chateauOuvert(){ try{ return localStorage.getItem('mitsuda_vampire_partie')==='1'&&localStorage.getItem('mitsuda_carnet_ami')==='1'; }catch(e){ return false; } }
+   ET « Je suis un ami d'Ange » à la fille au carnet, ET la chambre abandonnée de la ville délabrée (les deux femmes vaincues) */
+function chateauOuvert(){ try{ return localStorage.getItem('mitsuda_vampire_partie')==='1'&&localStorage.getItem('mitsuda_carnet_ami')==='1'&&localStorage.getItem('delabree_chambre_gagnee')==='1'; }catch(e){ return false; } }
 const cadenas=document.createElement('div');
 cadenas.style.cssText='position:absolute;z-index:31;display:none;transform:translate(-50%,0);pointer-events:none;font-size:clamp(26px,6vmin,54px);line-height:1;filter:drop-shadow(0 0 8px rgba(255,214,60,.9))';
 cadenas.textContent='🔒'; pano.appendChild(cadenas);
