@@ -1562,6 +1562,41 @@ window.addEventListener("message",function(e){
    window.minuterieLibre(function(){ try{ cpn.focus(); }catch(err){} },300);
    return;
   }
+  // plage -> la chambre rose (maison aux piliers « 22 ») : la musique de Shinato est coupée, la chambre a sa propre musique
+  if(e.data && e.data.type==="plage:rose"){
+   var cr=document.getElementById("moto"); if(!cr) return;
+   window.ROSE_OUVERT=true; try{ if(window.RUDY_AUDIO) window.RUDY_AUDIO.pause(); }catch(err){}
+   cr.srcdoc=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/chambre-rose.html"));
+   var gr=window.__roseGarde=(window.__roseGarde||0)+1;
+   (function veille(){ if(gr!==window.__roseGarde||!window.ROSE_OUVERT) return;
+    try{ if(window.RUDY_AUDIO&&!window.RUDY_AUDIO.paused) window.RUDY_AUDIO.pause(); }catch(err){}
+    window.minuterieLibre(veille,400); })();
+   window.minuterieLibre(function(){ try{ cr.focus(); }catch(err){} },300);
+   return;
+  }
+  // SORTIE (porte tout à gauche, avant le combat), victoire (+3000 €), clé trouvée (+5000 €) : devant la maison de la plage ;
+  // K.O. (après la dernière vidéo) : devant l'hôpital de Vaviel
+  if(e.data && (e.data.type==="rose:sortie"||e.data.type==="rose:ko"||e.data.type==="rose:gagne"||e.data.type==="rose:cle")){
+   window.ROSE_OUVERT=false; window.__roseGarde=(window.__roseGarde||0)+1;
+   try{ if(window.RUDY_AUDIO){ var prr=window.RUDY_AUDIO.play(); if(prr&&prr.catch) prr.catch(function(){}); } }catch(err){}
+   if(e.data.type==="rose:ko"){ window.postMessage({type:"hopital:fin"},"*"); return; }
+   if(e.data.type==="rose:gagne") window.argentGain(3000);
+   if(e.data.type==="rose:cle") window.argentGain(5000);
+   var cpr=document.getElementById("moto"); if(!cpr) return;
+   var hpr=new TextDecoder("utf-8").decode(LIEU_OCTETS("lieux/plage.html"));
+   var bul="";
+   if(e.data.type==="rose:cle") bul="var L=[\"Qu'est-ce que c'est que ce carré noir dans les clés ?…\",\"Waouh, 5000 € ! Génial !\",\"Ça m'embête de les lui avoir pris… Mais les lui rendre risque d'être risqué…\"];"+
+    "var m=document.getElementById('monde'),b=document.createElement('div'),q=document.createElement('div');"+
+    "b.style.cssText='position:absolute;z-index:7;transform:translate(-50%,-100%);max-width:44vmin;min-width:22vmin;padding:1.6vmin 2.4vmin;background:#fff;color:#111;border:0.5vmin solid #000;border-radius:3vmin;font:bold 3vmin/1.3 \\'Comic Sans MS\\',\\'Comic Neue\\',\\'Chalkboard SE\\',sans-serif;text-align:center;box-shadow:0.6vmin 0.6vmin 0 rgba(0,0,0,.55);pointer-events:none';"+
+    "q.style.cssText='position:absolute;left:50%;bottom:-2.1vmin;width:3vmin;height:3vmin;margin-left:-1.5vmin;background:#fff;border-right:0.5vmin solid #000;border-bottom:0.5vmin solid #000;transform:rotate(45deg)';"+
+    "var t=document.createElement('span');b.appendChild(t);b.appendChild(q);m.appendChild(b);"+
+    "var i=0,iv=setInterval(function(){var hp=hauteurScene*TAILLE;b.style.left=x+'px';b.style.top=(hauteurScene*SOL-hp*1.08)+'px';},60);"+
+    "(function suite(){if(i>=L.length){clearInterval(iv);b.remove();return;}t.textContent=L[i++];setTimeout(suite,3600);})();";
+   hpr=hpr.replace("</body>","<script>addEventListener('load',function(){setTimeout(function(){x=largeurMonde*0.40;sens=1;if(typeof cadre==='function')cadre(true);"+bul+"},60)});<\/script></body>");
+   cpr.srcdoc=hpr;
+   window.minuterieLibre(function(){ try{ cpr.focus(); }catch(err){} },300);
+   return;
+  }
   // plage -> le bureau de nuit (porte de la maison) : la musique de Shinato est coupée, le bureau a sa propre musique
   if(e.data && e.data.type==="plage:bureau"){
    var cb=document.getElementById("moto"); if(!cb) return;
