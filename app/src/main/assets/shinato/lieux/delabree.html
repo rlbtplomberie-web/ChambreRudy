@@ -183,6 +183,7 @@ const SCENES={
     clamp(p){p.y=Math.max(428,Math.min(905,p.y));const back=p.y<600;p.x=Math.max(back?478:505,Math.min(back?1225:1180,p.x))},
     size(y){return 230+(y-428)/(905-428)*290},
     zone(p){
+      if(p.x>1110&&p.y<520)return{label:'Salle privée',arrow:'up',potions:true};   // la porte de droite, au fond : la salle des potions
       if(p.x<620&&p.y<660)return{label:'Parler',arrow:'up',carlos:true};        // Carlos, sur la banquette de gauche
       if(p.y<640&&Math.abs(p.x-793)<120)return{label:'Parler',arrow:'up',danseuse:true};   // devant la scène, face à la danseuse
       return p.y>838&&p.x>545&&p.x<1130?{label:'Sortir',arrow:'down',go:'rue',door:3195}:null}},
@@ -280,6 +281,18 @@ addEventListener('message',e=>{if(!e.data||e.data.type!=='abandonnee:sortie'||!g
   abandGarde++;closeGame();musiqueShinato(true);setTimeout(()=>{document.getElementById('quit').style.display='';P.x=1320;P.y=ROAD_TOP+3;P.face=1;P.speed=0;jstop();snap=true;try{window.focus()}catch(_){}},330)});
 // une des femmes a tué Rudy (sa vidéo est passée) : directement devant l'hôpital de Vaviel
 addEventListener('message',e=>{if(!e.data||e.data.type!=='abandonnee:ko')return;abandGarde++;musiqueShinato(true);try{window.parent.postMessage({type:'hopital:fin'},'*')}catch(_){}});
+// ---------- la salle des potions (porte de droite, au fond du Désir) : la musique du bar est coupée, le jeu a la sienne ----------
+let potionsGarde=0;
+function veillePotions(g){if(g!==potionsGarde||!gameFrame||(gameFrame.getAttribute('src')||'').indexOf('salle-des-potions')<0)return;musiqueShinato(false);setTimeout(()=>veillePotions(g),500);}
+function ouvrePotions(){busy=true;P.speed=0;jx=jy=0;fade.style.opacity=1;musiqueShinato(false);setTimeout(()=>{
+  gameUrl=null;gameFrame=document.createElement('iframe');gameFrame.src='lieux/salle-des-potions.html';gameFrame.allow='fullscreen; autoplay';
+  document.getElementById('quit').style.display='none';                       // pas de « Quitter » : on sort par la porte, avec SORTIE
+  gameBox.appendChild(gameFrame);gameBox.classList.add('show');fade.style.opacity=0;veillePotions(++potionsGarde);setTimeout(()=>gameFrame&&gameFrame.focus(),300)},320)}
+// SORTIE : retour devant la porte de droite du Désir
+addEventListener('message',e=>{if(!e.data||e.data.type!=='potions:sortie'||!gameFrame)return;
+  potionsGarde++;closeGame();musiqueShinato(true);setTimeout(()=>{document.getElementById('quit').style.display='';P.x=1170;P.y=450;P.dir4='b';P.speed=0;jstop();snap=true;try{window.focus()}catch(_){}},330)});
+// K.O. (sa vidéo est passée) : directement devant l'hôpital de Vaviel
+addEventListener('message',e=>{if(!e.data||e.data.type!=='potions:ko')return;potionsGarde++;musiqueShinato(true);try{window.parent.postMessage({type:'hopital:fin'},'*')}catch(_){}});
 // ---------- l'appartement de nuit : on y entre par la porte, on en ressort devant la porte (musique de Shinato coupée dedans) ----------
 let appartGarde=0;
 function veilleAppart(g){if(g!==appartGarde||!gameFrame||(gameFrame.getAttribute('src')||'').indexOf('appartement-nuit')<0)return;musiqueShinato(false);setTimeout(()=>veilleAppart(g),500);}
@@ -340,7 +353,7 @@ addEventListener('message',e=>{if(e.data&&e.data.type==='brasdefer:sortie'){clos
  if(e.data&&e.data.type==='premierVerre:partir'){P.x=640;P.y=600;P.dir4='h';snap=true;closeGame();if(premierOuvert)musiqueVille(true);setTimeout(()=>{quit.textContent=QUIT_TXT},700)}});
 quit.addEventListener('click',()=>{if(evasionEnCours)return;if(premierOuvert)musiqueVille(true);if(scene===SCENES.rencontre){P.x=640;P.y=600;P.dir4='h';snap=true}setTimeout(()=>{quit.textContent=QUIT_TXT},700)});
 
-function doAction(){if(busy||!zoneNow)return;if(zoneNow.relais){ouvreRelais();return}if(zoneNow.rouge){ouvreRouge();return}if(zoneNow.appart){ouvreAppart();return}if(zoneNow.abandonnee){ouvreAbandonnee();return}if(zoneNow.fermee){porteFermee();return}if(zoneNow.impasse){ouvreImpasse();return}if(zoneNow.carlos){parlerCarlos();return}if(zoneNow.policier){parlerPolicier();return}if(zoneNow.gerant){parlerPolicier('/assets/shinato/m/arcade_gerant.mp4');return}if(zoneNow.danseuse){parlerDanseuse();return}if(zoneNow.evasion){evasion();return}if(zoneNow.talk){parler();return}if(zoneNow.play){openGame(zoneNow.play);return}busy=true;fade.style.opacity=1;
+function doAction(){if(busy||!zoneNow)return;if(zoneNow.relais){ouvreRelais();return}if(zoneNow.rouge){ouvreRouge();return}if(zoneNow.appart){ouvreAppart();return}if(zoneNow.abandonnee){ouvreAbandonnee();return}if(zoneNow.potions){ouvrePotions();return}if(zoneNow.fermee){porteFermee();return}if(zoneNow.impasse){ouvreImpasse();return}if(zoneNow.carlos){parlerCarlos();return}if(zoneNow.policier){parlerPolicier();return}if(zoneNow.gerant){parlerPolicier('/assets/shinato/m/arcade_gerant.mp4');return}if(zoneNow.danseuse){parlerDanseuse();return}if(zoneNow.evasion){evasion();return}if(zoneNow.talk){parler();return}if(zoneNow.play){openGame(zoneNow.play);return}busy=true;fade.style.opacity=1;
   const z=zoneNow;setTimeout(()=>{if(z.go!=='rue'){scene=SCENES[z.go];P.x=836;P.y=872;P.face=1;P.dir4='h'}else{scene=SCENES.rue;P.x=z.door;P.y=ROAD_TOP+3;P.face=1}
     P.speed=0;snap=true;fade.style.opacity=0;setTimeout(()=>busy=false,300)},320)}
 act.addEventListener('click',doAction);
