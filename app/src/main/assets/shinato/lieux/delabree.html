@@ -161,6 +161,7 @@ const SCENES={
       if(p.x>1288&&p.x<1352)return abandonneeOuverte()?{label:'Entrée',arrow:'up',abandonnee:true}:{label:'🔒 Fermée',arrow:'up',fermee:true};   // la petite porte sous l'enseigne BAR : la chambre abandonnée          // la porte sous l'escalier (après « RÊVES EN CENDRES ») : l'appartement de nuit     // la porte entre le tabac et « LA LOI DU PLUS FORT » : la chambre rouge
       if(p.x>2865&&p.x<3035)return{label:'Entrer',arrow:'up',go:'rencontre'};        // salle de rencontre
       if(p.x>2665&&p.x<2810)return{label:'Entrer',arrow:'up',impasse:true};          // le passage sous le pont : l'impasse
+      if(p.x>3750&&p.x<3880)return{label:'Entrée',arrow:'up',commissariat:true};      // la porte du commissariat
       if(p.x>4015&&p.x<4155)return{label:'Entrer',arrow:'up',go:'hall'};             // portail de la prison
       return null}},
   arcade:{w:1672,h:941,speed:3.8,vspeed:.6,rain:false,refl:.28,
@@ -281,19 +282,36 @@ addEventListener('message',e=>{if(!e.data||e.data.type!=='abandonnee:sortie'||!g
   abandGarde++;closeGame();musiqueShinato(true);setTimeout(()=>{document.getElementById('quit').style.display='';P.x=1320;P.y=ROAD_TOP+3;P.face=1;P.speed=0;jstop();snap=true;try{window.focus()}catch(_){}},330)});
 // une des femmes a tué Rudy (sa vidéo est passée) : directement devant l'hôpital de Vaviel
 addEventListener('message',e=>{if(!e.data||e.data.type!=='abandonnee:ko')return;abandGarde++;musiqueShinato(true);try{window.parent.postMessage({type:'hopital:fin'},'*')}catch(_){}});
+// ---------- écran noir tant qu'un jeu n'est pas prêt : il apparaît d'un coup quand ses images sont prêtes et qu'il tourne sans à-coups ----------
+function apparaitQuandPret(fr){fr.style.opacity='0';fr.style.transition='opacity .35s';
+  const t0=Date.now();let fluide=0,der=0,pret=0;const montre=()=>{fr.style.opacity='1'};
+  const suit=()=>{if(!fr.isConnected||fr.style.opacity==='1')return;if(Date.now()-t0>8000){montre();return}
+    let w=null;try{w=fr.contentWindow}catch(_){}
+    if(!w||!w.document||w.document.readyState!=='complete'){setTimeout(suit,100);return}
+    if(!pret)pret=Date.now();if(Date.now()-pret>3000){montre();return}         // chargé depuis 3 s : on montre quoi qu'il arrive
+    w.requestAnimationFrame(n=>{const dt=der?n-der:99;der=n;fluide=dt<70?fluide+1:0;if(fluide>=10)setTimeout(montre,150);else suit()})};
+  setTimeout(suit,200)}
+// ---------- le commissariat (porte du commissariat, dans la rue) : la musique de Shinato est coupée, le jeu a la sienne ----------
+let commGarde=0;
+function veilleComm(g){if(g!==commGarde||!gameFrame||(gameFrame.getAttribute('src')||'').indexOf('commissariat-prison')<0)return;musiqueShinato(false);setTimeout(()=>veilleComm(g),500);}
+function ouvreCommissariat(){busy=true;P.speed=0;jx=jy=0;fade.style.opacity=1;musiqueShinato(false);setTimeout(()=>{
+  gameUrl=null;gameFrame=document.createElement('iframe');gameFrame.src='lieux/commissariat-prison.html';gameFrame.allow='fullscreen; autoplay';
+  apparaitQuandPret(gameFrame);
+  document.getElementById('quit').style.display='none';                       // pas de « Quitter » : on sort tout à gauche, avec SORTIE
+  gameBox.appendChild(gameFrame);gameBox.classList.add('show');fade.style.opacity=0;veilleComm(++commGarde);setTimeout(()=>gameFrame&&gameFrame.focus(),300)},320)}
+// SORTIE : retour devant la porte du commissariat
+addEventListener('message',e=>{if(!e.data||e.data.type!=='commissariat:sortie'||!gameFrame)return;
+  commGarde++;closeGame();musiqueShinato(true);setTimeout(()=>{document.getElementById('quit').style.display='';scene=SCENES.rue;P.x=3815;P.y=ROAD_TOP+3;P.dir4='b';P.speed=0;jstop();snap=true;try{window.focus()}catch(_){}},330)});
+// elle est battue : +1000 €
+addEventListener('message',e=>{if(!e.data||e.data.type!=='commissariat:gagne')return;try{(window.top.argentGain||window.parent.argentGain)(1000)}catch(_){}});
+// K.O. (la vidéo de la prison est passée) : directement devant l'hôpital de Vaviel
+addEventListener('message',e=>{if(!e.data||e.data.type!=='commissariat:ko')return;commGarde++;musiqueShinato(true);try{window.parent.postMessage({type:'hopital:fin'},'*')}catch(_){}});
 // ---------- la salle des potions (porte de droite, au fond du Désir) : la musique du bar est coupée, le jeu a la sienne ----------
 let potionsGarde=0;
 function veillePotions(g){if(g!==potionsGarde||!gameFrame||(gameFrame.getAttribute('src')||'').indexOf('salle-des-potions')<0)return;musiqueShinato(false);setTimeout(()=>veillePotions(g),500);}
 function ouvrePotions(){busy=true;P.speed=0;jx=jy=0;fade.style.opacity=1;musiqueShinato(false);setTimeout(()=>{
   gameUrl=null;gameFrame=document.createElement('iframe');gameFrame.src='lieux/salle-des-potions.html';gameFrame.allow='fullscreen; autoplay';
-  // écran noir tant que le jeu n'est pas prêt : il apparaît d'un coup quand ses images sont prêtes et qu'il tourne sans à-coups
-  gameFrame.style.opacity='0';gameFrame.style.transition='opacity .35s';
-  {const fr=gameFrame,t0=Date.now();let fluide=0,der=0;const montre=()=>{fr.style.opacity='1'};
-   const suit=()=>{if(!fr.isConnected||fr.style.opacity==='1')return;if(Date.now()-t0>9000){montre();return}
-     let w=null;try{w=fr.contentWindow}catch(_){}
-     if(!w||!w.document||w.document.readyState!=='complete'){setTimeout(suit,100);return}
-     w.requestAnimationFrame(n=>{const dt=der?n-der:99;der=n;fluide=dt<40?fluide+1:0;if(fluide>=20)setTimeout(montre,150);else suit()})};
-   setTimeout(suit,200)}
+  apparaitQuandPret(gameFrame);
   document.getElementById('quit').style.display='none';                       // pas de « Quitter » : on sort par la porte, avec SORTIE
   gameBox.appendChild(gameFrame);gameBox.classList.add('show');fade.style.opacity=0;veillePotions(++potionsGarde);setTimeout(()=>gameFrame&&gameFrame.focus(),300)},320)}
 // SORTIE : retour devant la porte de droite du Désir
@@ -361,7 +379,7 @@ addEventListener('message',e=>{if(e.data&&e.data.type==='brasdefer:sortie'){clos
  if(e.data&&e.data.type==='premierVerre:partir'){P.x=640;P.y=600;P.dir4='h';snap=true;closeGame();if(premierOuvert)musiqueVille(true);setTimeout(()=>{quit.textContent=QUIT_TXT},700)}});
 quit.addEventListener('click',()=>{if(evasionEnCours)return;if(premierOuvert)musiqueVille(true);if(scene===SCENES.rencontre){P.x=640;P.y=600;P.dir4='h';snap=true}setTimeout(()=>{quit.textContent=QUIT_TXT},700)});
 
-function doAction(){if(busy||!zoneNow)return;if(zoneNow.relais){ouvreRelais();return}if(zoneNow.rouge){ouvreRouge();return}if(zoneNow.appart){ouvreAppart();return}if(zoneNow.abandonnee){ouvreAbandonnee();return}if(zoneNow.potions){ouvrePotions();return}if(zoneNow.fermee){porteFermee();return}if(zoneNow.impasse){ouvreImpasse();return}if(zoneNow.carlos){parlerCarlos();return}if(zoneNow.policier){parlerPolicier();return}if(zoneNow.gerant){parlerPolicier('/assets/shinato/m/arcade_gerant.mp4');return}if(zoneNow.danseuse){parlerDanseuse();return}if(zoneNow.evasion){evasion();return}if(zoneNow.talk){parler();return}if(zoneNow.play){openGame(zoneNow.play);return}busy=true;fade.style.opacity=1;
+function doAction(){if(busy||!zoneNow)return;if(zoneNow.relais){ouvreRelais();return}if(zoneNow.rouge){ouvreRouge();return}if(zoneNow.appart){ouvreAppart();return}if(zoneNow.abandonnee){ouvreAbandonnee();return}if(zoneNow.potions){ouvrePotions();return}if(zoneNow.commissariat){ouvreCommissariat();return}if(zoneNow.fermee){porteFermee();return}if(zoneNow.impasse){ouvreImpasse();return}if(zoneNow.carlos){parlerCarlos();return}if(zoneNow.policier){parlerPolicier();return}if(zoneNow.gerant){parlerPolicier('/assets/shinato/m/arcade_gerant.mp4');return}if(zoneNow.danseuse){parlerDanseuse();return}if(zoneNow.evasion){evasion();return}if(zoneNow.talk){parler();return}if(zoneNow.play){openGame(zoneNow.play);return}busy=true;fade.style.opacity=1;
   const z=zoneNow;setTimeout(()=>{if(z.go!=='rue'){scene=SCENES[z.go];P.x=836;P.y=872;P.face=1;P.dir4='h'}else{scene=SCENES.rue;P.x=z.door;P.y=ROAD_TOP+3;P.face=1}
     P.speed=0;snap=true;fade.style.opacity=0;setTimeout(()=>busy=false,300)},320)}
 act.addEventListener('click',doAction);
