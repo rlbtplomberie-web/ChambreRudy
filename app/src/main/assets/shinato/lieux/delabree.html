@@ -285,10 +285,11 @@ addEventListener('message',e=>{if(!e.data||e.data.type!=='abandonnee:ko')return;
 // ---------- écran noir tant qu'un jeu n'est pas prêt : il apparaît d'un coup quand ses images sont prêtes et qu'il tourne sans à-coups ----------
 function apparaitQuandPret(fr){fr.style.opacity='0';fr.style.transition='opacity .35s';
   const t0=Date.now();let fluide=0,der=0,pret=0;const montre=()=>{fr.style.opacity='1'};
-  const suit=()=>{if(!fr.isConnected||fr.style.opacity==='1')return;if(Date.now()-t0>8000){montre();return}
+  const suit=()=>{if(!fr.isConnected||fr.style.opacity==='1')return;if(Date.now()-t0>15000){montre();return}
     let w=null;try{w=fr.contentWindow}catch(_){}
     if(!w||!w.document||w.document.readyState!=='complete'){setTimeout(suit,100);return}
-    if(!pret)pret=Date.now();if(Date.now()-pret>3000){montre();return}         // chargé depuis 3 s : on montre quoi qu'il arrive
+    if(w.document.getElementById('load')){setTimeout(suit,100);return}         // le jeu prépare encore ses images : on attend
+    if(!pret)pret=Date.now();if(Date.now()-pret>3000){montre();return}         // prêt depuis 3 s : on montre quoi qu'il arrive
     w.requestAnimationFrame(n=>{const dt=der?n-der:99;der=n;fluide=dt<70?fluide+1:0;if(fluide>=10)setTimeout(montre,150);else suit()})};
   setTimeout(suit,200)}
 // ---------- le commissariat (porte du commissariat, dans la rue) : la musique de Shinato est coupée, le jeu a la sienne ----------

@@ -48,7 +48,7 @@ const TX0=400,TY0=195,TX1=1662,TY1=400;
 const GLASS=[[407,197,825,392],[1358,197,1650,392]];
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
 let DPR=Math.min(window.devicePixelRatio||1,3),S=1,camX=0,vw=0,vh=0;
-function load(src){return new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=src;});}
+function load(src){return new Promise(r=>{const i=new Image();i.onload=()=>{if(i.decode)i.decode().then(()=>r(i),()=>r(i));else r(i);};i.onerror=()=>r(i);i.src=src;});}   /* l'image est décodée avant d'être utilisée (sinon le téléphone la décode en plein jeu : à-coups) */
 function resize(){DPR=Math.min(window.devicePixelRatio||1,3);vw=innerWidth;vh=innerHeight;cv.width=Math.round(vw*DPR);cv.height=Math.round(vh*DPR);S=vh/IH;clampCam();}
 function maxCam(){return Math.max(0,(PRISON_OPEN?WORLD:IW)-vw/S);}
 function clampCam(){camX=Math.max(0,Math.min(maxCam(),camX));}
@@ -1545,8 +1545,44 @@ function goFull(){const d=document.documentElement;if(!document.fullscreenElemen
 
 Promise.all([load(IMG_BG1),load(IMG_BG2),load(IMG_TREES),load(IMG_OV),load(IMG_WALK),load(IMG_COPS),load(IMG_SMOKER),load(IMG_FEM)]).then(([a,b,c,d,w,cp,smk,fm])=>{
   femImg=fm;FFW=fm.width/FEM.n;FFH=fm.height;smImg=smk;SFW=smk.width/6;SFH=smk.height;copsImg=cp;CFW=cp.width/COPS_N;CFH=cp.height;walkImg=w;FW=w.width/WALK_N;FH=w.height;bg1=a;bg2=b;treesImg=c;ovImg=d;try{initGL(c);}catch(e){treesOK=false;}
-  resize();document.getElementById('load').remove();setTimeout(loadFight,50);requestAnimationFrame(t=>{last=t;frame(t);});
+  resize();
+  /* Shinato : AVANT de commencer, toutes les images (décor, personnages ET combat) sont décodées, puis celles de l'arrivée sont
+     dessinées une fois sous le noir pour que le téléphone les garde prêtes. Le jeu ne démarre qu'ensuite : plus d'à-coups au début. */
+  const ks=Object.keys(FD);
+  Promise.all(ks.map(k=>load(FD[k]).then(im=>{FI[k]=im;})).concat(KISS_IMG.map(im=>im.decode?im.decode().catch(()=>{}):0))).then(()=>{
+    fightReady=true;
+    try{ctx.setTransform(1,0,0,1,0,0);for(const im of [a,b,c,d,w,cp,smk,fm])if(im&&im.width)ctx.drawImage(im,0,0,8,8);ctx.fillStyle='#000';ctx.fillRect(0,0,cv.width,cv.height);}catch(e){}
+    document.getElementById('load').remove();requestAnimationFrame(t=>{last=t;frame(t);});
+  });
 });
+
+/* ---------- Shinato : ce qui faisait ramer le jeu ----------
+   Les personnages sont dessinés avec un filtre de luminosité (ctx.filter = brightness/sepia) à CHAQUE image.
+   Sur téléphone ce filtre est calculé par le processeur, image après image : c'est très lent.
+   Ici chaque dessin filtré est fait UNE seule fois puis gardé tout prêt : même rendu, sans le ralentissement. */
+(function(){
+  const C=ctx,o=C.drawImage;const RE=/^(\s*(brightness|sepia)\(\s*[\d.]+\s*\)\s*)+$/;
+  const ids=new WeakMap();let nid=0;const cache=new Map();let px=0;const BUDGET=24e6;
+  const idOf=im=>{let i=ids.get(im);if(!i){i=++nid;ids.set(im,i);}return i;};
+  C.drawImage=function(im){
+    const f=this.filter;
+    if(!f||f==='none'||!(im instanceof HTMLImageElement)||!RE.test(f)||!im.naturalWidth)return o.apply(this,arguments);
+    let sx=0,sy=0,sw=im.naturalWidth,sh=im.naturalHeight,dx,dy,dw,dh;const n=arguments.length;
+    if(n>=9){sx=arguments[1];sy=arguments[2];sw=arguments[3];sh=arguments[4];dx=arguments[5];dy=arguments[6];dw=arguments[7];dh=arguments[8];}
+    else if(n>=5){dx=arguments[1];dy=arguments[2];dw=arguments[3];dh=arguments[4];}
+    else{dx=arguments[1];dy=arguments[2];dw=sw;dh=sh;}
+    const rx=Math.round(sx),ry=Math.round(sy),rw=Math.max(1,Math.round(sw)),rh=Math.max(1,Math.round(sh));
+    const fk=f.replace(/[\d.]+/g,v=>(Math.round(parseFloat(v)*50)/50).toString());
+    const key=idOf(im)+'|'+rx+'|'+ry+'|'+rw+'|'+rh+'|'+fk;
+    let cv2=cache.get(key);
+    if(!cv2){cv2=document.createElement('canvas');cv2.width=rw;cv2.height=rh;const c2=cv2.getContext('2d');c2.filter=fk;o.call(c2,im,rx,ry,rw,rh,0,0,rw,rh);
+      cache.set(key,cv2);px+=rw*rh;
+      while(px>BUDGET&&cache.size>1){const k0=cache.keys().next().value;const v0=cache.get(k0);px-=v0.width*v0.height;cache.delete(k0);}}
+    else{cache.delete(key);cache.set(key,cv2);}
+    this.filter='none';
+    try{o.call(this,cv2,0,0,rw,rh,dx,dy,dw,dh);}finally{this.filter=f;}
+  };
+})();
 
 /* ---------- Shinato : tout à gauche, flèche jaune vers la gauche + SORTIE (jamais pendant le combat, les discussions, les scènes ni la prison) ---------- */
 (function(){
