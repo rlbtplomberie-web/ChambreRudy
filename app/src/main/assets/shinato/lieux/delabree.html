@@ -161,6 +161,7 @@ const SCENES={
       if(p.x>1288&&p.x<1352)return abandonneeOuverte()?{label:'Entrée',arrow:'up',abandonnee:true}:{label:'🔒 Fermée',arrow:'up',fermee:true};   // la petite porte sous l'enseigne BAR : la chambre abandonnée          // la porte sous l'escalier (après « RÊVES EN CENDRES ») : l'appartement de nuit     // la porte entre le tabac et « LA LOI DU PLUS FORT » : la chambre rouge
       if(p.x>2865&&p.x<3035)return{label:'Entrer',arrow:'up',go:'rencontre'};        // salle de rencontre
       if(p.x>2665&&p.x<2810)return{label:'Entrer',arrow:'up',impasse:true};          // le passage sous le pont : l'impasse
+      if(p.x>1950&&p.x<2060)return{label:'Entrée',arrow:'up',tente:true};            // la porte sous la lampe, avant « TROP TARD » : la tente de la voyante
       if(p.x>3750&&p.x<3880)return{label:'Entrée',arrow:'up',commissariat:true};      // la porte du commissariat
       if(p.x>4015&&p.x<4155)return{label:'Entrer',arrow:'up',go:'hall'};             // portail de la prison
       return null}},
@@ -288,10 +289,23 @@ function apparaitQuandPret(fr){fr.style.opacity='0';fr.style.transition='opacity
   const suit=()=>{if(!fr.isConnected||fr.style.opacity==='1')return;if(Date.now()-t0>15000){montre();return}
     let w=null;try{w=fr.contentWindow}catch(_){}
     if(!w||!w.document||w.document.readyState!=='complete'){setTimeout(suit,100);return}
-    if(w.document.getElementById('load')){setTimeout(suit,100);return}         // le jeu prépare encore ses images : on attend
+    if(w.document.getElementById('load')||(w.__attendreShinato&&!w.__pretShinato)){setTimeout(suit,100);return}         // le jeu prépare encore ses images : on attend
     if(!pret)pret=Date.now();if(Date.now()-pret>3000){montre();return}         // prêt depuis 3 s : on montre quoi qu'il arrive
     w.requestAnimationFrame(n=>{const dt=der?n-der:99;der=n;fluide=dt<70?fluide+1:0;if(fluide>=10)setTimeout(montre,150);else suit()})};
   setTimeout(suit,200)}
+// ---------- la tente de la voyante (porte sous la lampe, dans la rue) : la musique de Shinato est coupée, le jeu a la sienne ----------
+let tenteGarde=0;
+function veilleTente(g){if(g!==tenteGarde||!gameFrame||(gameFrame.getAttribute('src')||'').indexOf('tente-voyante')<0)return;musiqueShinato(false);setTimeout(()=>veilleTente(g),500);}
+function ouvreTente(){busy=true;P.speed=0;jx=jy=0;fade.style.opacity=1;musiqueShinato(false);setTimeout(()=>{
+  gameUrl=null;gameFrame=document.createElement('iframe');gameFrame.src='lieux/tente-voyante.html';gameFrame.allow='fullscreen; autoplay';
+  apparaitQuandPret(gameFrame);
+  document.getElementById('quit').style.display='none';                       // pas de « Quitter » : on sort tout à droite, avec SORTIE
+  gameBox.appendChild(gameFrame);gameBox.classList.add('show');fade.style.opacity=0;veilleTente(++tenteGarde);setTimeout(()=>gameFrame&&gameFrame.focus(),300)},320)}
+// SORTIE : retour exactement devant la porte par où on est entré
+addEventListener('message',e=>{if(!e.data||e.data.type!=='tente:sortie'||!gameFrame)return;
+  tenteGarde++;closeGame();musiqueShinato(true);setTimeout(()=>{document.getElementById('quit').style.display='';scene=SCENES.rue;P.x=2005;P.y=ROAD_TOP+3;P.dir4='b';P.speed=0;jstop();snap=true;try{window.focus()}catch(_){}},330)});
+// K.O. (sa vidéo est passée) : directement devant l'hôpital de Vaviel
+addEventListener('message',e=>{if(!e.data||e.data.type!=='tente:ko')return;tenteGarde++;musiqueShinato(true);try{window.parent.postMessage({type:'hopital:fin'},'*')}catch(_){}});
 // ---------- le commissariat (porte du commissariat, dans la rue) : la musique de Shinato est coupée, le jeu a la sienne ----------
 let commGarde=0;
 function veilleComm(g){if(g!==commGarde||!gameFrame||(gameFrame.getAttribute('src')||'').indexOf('commissariat-prison')<0)return;musiqueShinato(false);setTimeout(()=>veilleComm(g),500);}
@@ -380,7 +394,7 @@ addEventListener('message',e=>{if(e.data&&e.data.type==='brasdefer:sortie'){clos
  if(e.data&&e.data.type==='premierVerre:partir'){P.x=640;P.y=600;P.dir4='h';snap=true;closeGame();if(premierOuvert)musiqueVille(true);setTimeout(()=>{quit.textContent=QUIT_TXT},700)}});
 quit.addEventListener('click',()=>{if(evasionEnCours)return;if(premierOuvert)musiqueVille(true);if(scene===SCENES.rencontre){P.x=640;P.y=600;P.dir4='h';snap=true}setTimeout(()=>{quit.textContent=QUIT_TXT},700)});
 
-function doAction(){if(busy||!zoneNow)return;if(zoneNow.relais){ouvreRelais();return}if(zoneNow.rouge){ouvreRouge();return}if(zoneNow.appart){ouvreAppart();return}if(zoneNow.abandonnee){ouvreAbandonnee();return}if(zoneNow.potions){ouvrePotions();return}if(zoneNow.commissariat){ouvreCommissariat();return}if(zoneNow.fermee){porteFermee();return}if(zoneNow.impasse){ouvreImpasse();return}if(zoneNow.carlos){parlerCarlos();return}if(zoneNow.policier){parlerPolicier();return}if(zoneNow.gerant){parlerPolicier('/assets/shinato/m/arcade_gerant.mp4');return}if(zoneNow.danseuse){parlerDanseuse();return}if(zoneNow.evasion){evasion();return}if(zoneNow.talk){parler();return}if(zoneNow.play){openGame(zoneNow.play);return}busy=true;fade.style.opacity=1;
+function doAction(){if(busy||!zoneNow)return;if(zoneNow.relais){ouvreRelais();return}if(zoneNow.rouge){ouvreRouge();return}if(zoneNow.appart){ouvreAppart();return}if(zoneNow.abandonnee){ouvreAbandonnee();return}if(zoneNow.potions){ouvrePotions();return}if(zoneNow.commissariat){ouvreCommissariat();return}if(zoneNow.tente){ouvreTente();return}if(zoneNow.fermee){porteFermee();return}if(zoneNow.impasse){ouvreImpasse();return}if(zoneNow.carlos){parlerCarlos();return}if(zoneNow.policier){parlerPolicier();return}if(zoneNow.gerant){parlerPolicier('/assets/shinato/m/arcade_gerant.mp4');return}if(zoneNow.danseuse){parlerDanseuse();return}if(zoneNow.evasion){evasion();return}if(zoneNow.talk){parler();return}if(zoneNow.play){openGame(zoneNow.play);return}busy=true;fade.style.opacity=1;
   const z=zoneNow;setTimeout(()=>{if(z.go!=='rue'){scene=SCENES[z.go];P.x=836;P.y=872;P.face=1;P.dir4='h'}else{scene=SCENES.rue;P.x=z.door;P.y=ROAD_TOP+3;P.face=1}
     P.speed=0;snap=true;fade.style.opacity=0;setTimeout(()=>busy=false,300)},320)}
 act.addEventListener('click',doAction);
