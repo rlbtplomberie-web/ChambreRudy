@@ -180,7 +180,7 @@
    ["AudioContext","webkitAudioContext"].forEach(function(n){ var C=win[n]; if(!C||!C.prototype) return; var P=C.prototype;
     ["createGain","createOscillator","createBufferSource","createMediaElementSource","createBiquadFilter","createDynamicsCompressor","createPanner","createStereoPanner","resume"].forEach(function(m){
      var o=P[m]; if(typeof o!=="function"||o.__sonEquipe) return;
-     var f=function(){ try{ if(!this.__docSon) this.__docSon=docSon; ctxs.add(this); }catch(e){} return o.apply(this,arguments); }; f.__sonEquipe=true; try{ P[m]=f; }catch(e){} }); });
+     var f=function(){ try{ if(!this.__docSon){ var dd=null; try{ dd=win.document; }catch(e){} this.__docSon=dd||docSon; } ctxs.add(this); }catch(e){} return o.apply(this,arguments); }; /* la page du moment : un cadre qui change de page garde la même fenêtre */ f.__sonEquipe=true; try{ P[m]=f; }catch(e){} }); });
   }
   function ramasse(p,complet){
    try{ var as=p.doc.getElementsByTagName("audio"); for(var i=0;i<as.length;i++) audios.add(as[i]); }catch(e){}

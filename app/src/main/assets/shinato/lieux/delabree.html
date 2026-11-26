@@ -286,6 +286,14 @@ let potionsGarde=0;
 function veillePotions(g){if(g!==potionsGarde||!gameFrame||(gameFrame.getAttribute('src')||'').indexOf('salle-des-potions')<0)return;musiqueShinato(false);setTimeout(()=>veillePotions(g),500);}
 function ouvrePotions(){busy=true;P.speed=0;jx=jy=0;fade.style.opacity=1;musiqueShinato(false);setTimeout(()=>{
   gameUrl=null;gameFrame=document.createElement('iframe');gameFrame.src='lieux/salle-des-potions.html';gameFrame.allow='fullscreen; autoplay';
+  // écran noir tant que le jeu n'est pas prêt : il apparaît d'un coup quand ses images sont prêtes et qu'il tourne sans à-coups
+  gameFrame.style.opacity='0';gameFrame.style.transition='opacity .35s';
+  {const fr=gameFrame,t0=Date.now();let fluide=0,der=0;const montre=()=>{fr.style.opacity='1'};
+   const suit=()=>{if(!fr.isConnected||fr.style.opacity==='1')return;if(Date.now()-t0>9000){montre();return}
+     let w=null;try{w=fr.contentWindow}catch(_){}
+     if(!w||!w.document||w.document.readyState!=='complete'){setTimeout(suit,100);return}
+     w.requestAnimationFrame(n=>{const dt=der?n-der:99;der=n;fluide=dt<40?fluide+1:0;if(fluide>=20)setTimeout(montre,150);else suit()})};
+   setTimeout(suit,200)}
   document.getElementById('quit').style.display='none';                       // pas de « Quitter » : on sort par la porte, avec SORTIE
   gameBox.appendChild(gameFrame);gameBox.classList.add('show');fade.style.opacity=0;veillePotions(++potionsGarde);setTimeout(()=>gameFrame&&gameFrame.focus(),300)},320)}
 // SORTIE : retour devant la porte de droite du Désir
