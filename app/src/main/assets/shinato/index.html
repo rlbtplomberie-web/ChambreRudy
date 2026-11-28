@@ -2134,6 +2134,15 @@ window.addEventListener("message",function(e){
    dedans=false; dir=0; window.repriseRue();
   }
  });
+ // K.O. dans la chambre du cuisinier (le jeu ouvert depuis le restaurant) : directement devant l'hôpital de Vaviel
+ window.addEventListener("message",function(e){
+  if(!e.data || e.data.type!=="dragon:hopital") return;
+  window.pauseRue(); window.fermeAutresCadres("moto"); dedans=false;
+  var mh=document.getElementById("moto");
+  if(!mh){ mh=document.createElement("iframe"); mh.id="moto"; mh.setAttribute("allow","autoplay; fullscreen"); document.body.appendChild(mh); }
+  mh.style.pointerEvents="auto"; mh.style.display="block";
+  window.postMessage({type:"hopital:fin"},"*");
+ });
  window.FERMETURES.resto=function(f){ try{ f.blur(); }catch(e){} f.style.pointerEvents="none"; f.style.display="none"; f.removeAttribute("data-charge"); f.srcdoc=""; dedans=false; };
 })();
 </script>
